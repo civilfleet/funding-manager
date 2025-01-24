@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://funding-manager:Qn*7aEM>sAau9tUnA{UE@51.159.25.67:63431/funding-manager"
+}
+
+model Manager {
+  id    String  @id @default(uuid())  @unique       // Unique identifier
+  email String  @unique                      // Unique email for each manager
+  name  String?                              // Optional name
+  roles String                               // Roles of the manager
+  organizations Organization[] 
+}
+
+model Organization {
+  id                      String      @id @default(uuid()) @unique // Unique identifier
+  name                    String?      @db.VarChar(255)           // Organization name
+  address                 String?     @db.VarChar(255)           // Organization address
+  contactPerson           String?                                // Name of the contact person
+  email                   String                                // Organization email
+  phone                   String?                                // Organization phone number
+  bankDetailsId           String?    @unique
+  Managers                Manager[]   
+
+  bankDetails             BankDetail?        @relation(fields: [bankDetailsId], references: [id])
+  fundingRequests         FundingRequest[]                     // Organizations can submit multiple funding requests
+  taxExemptionCertificate File? @relation("OrganizationTaxExemptionCertificate") 
+  articlesOfAssociation   File? @relation("OrganizationArticlesOfAssociation")    
+
+  createdAt               DateTime    @default(now()) @db.Timestamptz(6) // Creation timestamp
+  updatedAt               DateTime    @updatedAt @db.Timestamptz(6) // Last update timestamp
+}
+
+
+model BankDetail {
+  id              String    @id @default(uuid()) @unique        // Unique identifier
+  bankName        String                                // Bank name
+  accountHolder   String                                // Name of the account holder
+  iban            String                                // IBAN
+  bic             String                                // BIC
+  createdAt       DateTime @default(now()) @db.Timestamptz(6) // Creation timestamp
+  updatedAt       DateTime @updatedAt @db.Timestamptz(6) // Last update timestamp
+  organization    Organization? @relation
+  organizationId  String @unique
+}
+
+
+
+enum FundingStatus {
+  Pending
+  UnderReview
+  Approved
+  Rejected
+}
+model FundingRequest {
+  id                        String    @id @default(uuid()) @unique    
+  organizationId            String                                
+  organization              Organization @relation(fields: [organizationId], references: [id])
+  description               String                                
+  purpose                   String                                
+  amountRequested           Decimal                               
+  amountAgreed              Decimal                             
+  refinancingConcept        String                                
+  sustainability            String                                
+  expectedCompletionDate    DateTime                              
+  status                    FundingStatus @default(Pending)       
+  createdAt                 DateTime @default(now()) @db.Timestamptz(6) // Creation timestamp
+  updatedAt                 DateTime @updatedAt @db.Timestamptz(6) // Last update timestamp
+  files                     File[]                               // Multiple files attached to a funding request
+}
+
+model File {
+  id          String    @id @default(uuid()) @unique 
+  content     String                             
+  createdBy   String                            
+  updatedBy   String                             
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6) 
+
+  OrganizationTaxExemptionCertificate Organization? @relation("OrganizationTaxExemptionCertificate", fields: [organizationId], references: [id], map: "File_organizationId_fkey1")
+  OrganizationArticlesOfAssociation     Organization? @relation("OrganizationArticlesOfAssociation", fields: [organizationId], references: [id], map: "File_organizationId_fkey2")
+  
+  organizationId String? @unique
+  fundingRequestId String?
+  FundingRequest FundingRequest? @relation(fields: [fundingRequestId], references: [id])
+}
+
