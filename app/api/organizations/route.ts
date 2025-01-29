@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { createOrganizationSchema } from "@/validations/organizations";
 import { getErrorMessage } from "../helpers";
 import { createOrganization } from "@/services/organizations/create";
 
-let organizations = [
+const organizations = [
   { id: 1, name: "Org 1", description: "First organization" },
   { id: 2, name: "Org 2", description: "Second organization" },
 ];

@@ -33,7 +33,7 @@ const createOrganization = async (formData: Organization) => {
   const contactPerson = null;
   if (formData?.contactPerson?.email) {
     console.log("create organization!!!!");
-    const response = await prisma.contactPerson.create({
+    const contactPerson = await prisma.contactPerson.create({
       data: {
         name: formData?.contactPerson.name,
         address: formData?.contactPerson.address,
@@ -44,6 +44,7 @@ const createOrganization = async (formData: Organization) => {
         country: formData?.contactPerson.country,
       },
     });
+    console.log("contact person", contactPerson);
   }
 
   const response = await prisma.organization.create({

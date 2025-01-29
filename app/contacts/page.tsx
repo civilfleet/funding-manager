@@ -1,5 +1,4 @@
 import ContactForm from "@/components/forms/contact";
-import OrganizationForm from "@/components/forms/organization-form";
 
 export default function Page() {
   return (

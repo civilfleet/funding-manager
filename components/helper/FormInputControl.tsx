@@ -13,6 +13,7 @@ export default function FormInputControl({
   label,
   placeholder,
 }: {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   form: UseFormReturn | any | undefined;
   name: string;
   label?: string;
