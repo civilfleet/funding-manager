@@ -59,7 +59,7 @@ const createOrganization = async (formData: Organization) => {
       taxID: formData.taxID,
     },
   });
-  console.log("response", response);
+
   return { ...response };
 };
 
