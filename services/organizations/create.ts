@@ -44,8 +44,6 @@ const createOrganization = async (formData: Organization) => {
         country: formData?.contactPerson.country,
       },
     });
-    console.log(response.id);
-    console.log(response);
   }
 
   const response = await prisma.organization.create({
