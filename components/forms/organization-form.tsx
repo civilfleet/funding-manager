@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormInputControl from "../helper/FormInputControl";
 import { createOrganizationSchema } from "@/validations/organizations";
+import { useToast } from "@/hooks/use-toast";
 
 export default function OrganizationForm() {
+  const { toast } = useToast();
   const form = useForm<z.infer<typeof createOrganizationSchema>>({
     resolver: zodResolver(createOrganizationSchema),
     defaultValues: {
@@ -20,7 +22,7 @@ export default function OrganizationForm() {
       country: "",
       postalCode: "",
       website: "",
-      taxEemptionCertificate: "",
+      taxExemptionCertificate: "",
       taxID: "",
       bankDetails: {
         bankName: "",
@@ -37,8 +39,38 @@ export default function OrganizationForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof createOrganizationSchema>) {
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof createOrganizationSchema>) {
+    try {
+      console.log("values,,", values);
+      // call for the api
+      const response = await fetch("/api/organizations", {
+        method: "POST",
+        body: JSON.stringify(values),
+      });
+
+      // check for error
+      if (response.status == 400) {
+        toast({
+          title: "Error",
+          description: response.statusText,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const data = await response.json();
+      console.log("data", data);
+      toast({
+        title: "Success",
+        description: "Organization has been created",
+        variant: "default",
+      });
+    } catch (e) {
+      toast({
+        title: "Error",
+        description: JSON.stringify(e),
+      });
+    }
   }
   return (
     <Form {...form}>
@@ -85,7 +117,7 @@ export default function OrganizationForm() {
           <FormInputControl form={form} name="taxID" placeholder="Tax ID" />
           <FormInputControl
             form={form}
-            name="taxEemptionCertificate"
+            name="taxExemptionCertificate"
             placeholder="Tax exemption certificate"
           />
         </div>

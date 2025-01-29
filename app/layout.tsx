@@ -18,6 +18,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "Funding Manager",
@@ -59,6 +60,7 @@ export default function RootLayout({
             </SidebarInset>
           </SidebarProvider>
         </main>
+        <Toaster />
       </body>
     </html>
   );

@@ -56,22 +56,27 @@ const data = {
     },
     {
       title: "Donation Agreements",
-      url: "#",
+      url: "/donations-agreement",
       icon: Bot,
     },
     {
       title: "Funding Requests",
-      url: "#",
+      url: "funding-requests",
       icon: BookOpen,
     },
     {
       title: "Reports",
-      url: "#",
+      url: "reports",
+      icon: Settings2,
+    },
+    {
+      title: "Contacts",
+      url: "contacts",
       icon: Settings2,
     },
     {
       title: "Files",
-      url: "#",
+      url: "files",
       icon: Frame,
     },
   ],
