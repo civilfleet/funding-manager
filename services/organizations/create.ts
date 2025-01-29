@@ -45,6 +45,7 @@ const createOrganization = async (formData: Organization) => {
       },
     });
     console.log(response.id);
+    console.log(response);
   }
 
   const response = await prisma.organization.create({
