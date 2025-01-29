@@ -26,7 +26,7 @@ export default function OrganizationForm() {
       taxID: "",
       bankDetails: {
         bankName: "",
-        account_holder: "",
+        accountHolder: "",
         iban: "",
         bic: "",
       },
@@ -134,7 +134,7 @@ export default function OrganizationForm() {
           />
           <FormInputControl
             form={form}
-            name="bankDetails.account_holder"
+            name="bankDetails.accountHolder"
             placeholder="Account holder"
           />
           <FormInputControl

@@ -32,7 +32,7 @@ model Organization {
   bankDetailsId           String?    @unique
   Managers                Manager[]   
 
-  bankDetails             BankDetail?        @relation(fields: [bankDetailsId], references: [id])
+  bankDetails             BankDetails?        @relation(fields: [bankDetailsId], references: [id])
   fundingRequests         FundingRequest[]                
   taxExemptionCertificate File? @relation("OrganizationTaxExemptionCertificate") 
   articlesOfAssociation   File? @relation("OrganizationArticlesOfAssociation")    
@@ -42,16 +42,15 @@ model Organization {
 }
 
 
-model BankDetail {
-  id              String    @id @default(uuid()) @unique       
+model BankDetails {
+  id              String     @id @default(uuid()) @unique       
   bankName        String     @db.VarChar(255)                  
   accountHolder   String     @db.VarChar(255)                  
   iban            String     @db.VarChar(255)                  
-  bic             String       @db.VarChar(255)                
+  bic             String     @db.VarChar(255)                
   createdAt       DateTime @default(now()) @db.Timestamptz(6) 
   updatedAt       DateTime @updatedAt @db.Timestamptz(6) 
   organization    Organization? @relation
-  organizationId  String @unique
 }
 
 

@@ -7,7 +7,7 @@ const bankDetailsSchema = z
       .min(2, { message: "Bank name must be at least 2 characters." })
       .optional()
       .or(z.literal("")),
-    account_holder: z
+    accountHolder: z
       .string()
       .min(2, { message: "Account holder name must be at least 2 characters." })
       .optional()
@@ -25,7 +25,7 @@ const bankDetailsSchema = z
   })
   .refine(
     (data) => {
-      const fields = [data.bankName, data.account_holder, data.iban, data.bic];
+      const fields = [data.bankName, data.accountHolder, data.iban, data.bic];
       const atLeastOneFilled = fields.some((field) => field?.trim() !== "");
 
       if (atLeastOneFilled) {

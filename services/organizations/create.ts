@@ -12,7 +12,7 @@ type Organization = {
   taxExemptionCertificate?: string;
   taxID?: string;
   bankDetails?: {
-    account_holder?: string;
+    accountHolder?: string;
     iban?: string;
     bic?: string;
     bankName?: string;
@@ -29,39 +29,64 @@ type Organization = {
 };
 
 const createOrganization = async (formData: Organization) => {
-  // if contact or bank details data is available then create contact first and bank detail first so that we can link them with organization.
-  const contactPerson = null;
-  if (formData?.contactPerson?.email) {
-    console.log("create organization!!!!");
-    const contactPerson = await prisma.contactPerson.create({
+  try {
+    // if contact or bank details data is available then create contact first and bank detail first so that we can link them with organization.
+    let contactPerson = null;
+    let bankDetail = null;
+
+    console.log("create organization!!!!", formData);
+
+    if (formData?.contactPerson?.email) {
+      console.log("create organization!!!!");
+      contactPerson = await prisma.contactPerson.create({
+        data: {
+          name: formData?.contactPerson.name,
+          address: formData?.contactPerson.address,
+          email: formData?.contactPerson.email,
+          phone: formData?.contactPerson.phone,
+          postalCode: formData?.contactPerson.postalCode,
+          city: formData?.contactPerson.city,
+          country: formData?.contactPerson.country,
+        },
+      });
+    }
+
+    if (formData?.bankDetails && formData.bankDetails.bankName) {
+      bankDetail = await prisma.bankDetails.create({
+        data: {
+          bankName: formData.bankDetails.bankName,
+          accountHolder: formData.bankDetails.accountHolder as string,
+          iban: formData.bankDetails.iban as string,
+          bic: formData.bankDetails.bic as string,
+        },
+      });
+    }
+
+    const response = await prisma.organization.create({
       data: {
-        name: formData?.contactPerson.name,
-        address: formData?.contactPerson.address,
-        email: formData?.contactPerson.email,
-        phone: formData?.contactPerson.phone,
-        postalCode: formData?.contactPerson.postalCode,
-        city: formData?.contactPerson.city,
-        country: formData?.contactPerson.country,
+        email: formData.email,
+        name: formData.name,
+        address: formData.address,
+        postalCode: formData.postalCode,
+        city: formData.city,
+        country: formData.country,
+        phone: formData.phone,
+        website: formData.website,
+        taxID: formData.taxID,
+        bankDetails: bankDetail
+          ? { connect: { id: bankDetail.id } }
+          : undefined,
+        contactPerson: contactPerson
+          ? { connect: { id: contactPerson.id } }
+          : undefined,
       },
     });
-    console.log("contact person", contactPerson);
+
+    return { ...response };
+  } catch (error) {
+    console.error("Error creating organization:", error);
+    throw new Error("Failed to create organization");
   }
-
-  const response = await prisma.organization.create({
-    data: {
-      email: formData.email,
-      name: formData.name,
-      address: formData.address,
-      postalCode: formData.postalCode,
-      city: formData.city,
-      country: formData.country,
-      phone: formData.phone,
-      website: formData.website,
-      taxID: formData.taxID,
-    },
-  });
-
-  return { ...response };
 };
 
 export { createOrganization };
