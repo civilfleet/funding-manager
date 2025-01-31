@@ -50,33 +50,33 @@ const data = {
   navMain: [
     {
       title: "Organizations",
-      url: "/organizations",
+      url: "/admin/organizations",
       icon: SquareTerminal,
       isActive: true,
     },
     {
       title: "Donation Agreements",
-      url: "/donations-agreement",
+      url: "/admin/donations-agreement",
       icon: Bot,
     },
     {
       title: "Funding Requests",
-      url: "funding-requests",
+      url: "/admin/funding-requests",
       icon: BookOpen,
     },
     {
       title: "Reports",
-      url: "reports",
+      url: "/admin/reports",
       icon: Settings2,
     },
     {
       title: "Contacts",
-      url: "contacts",
+      url: "/admin/contacts",
       icon: Settings2,
     },
     {
       title: "Files",
-      url: "files",
+      url: "/admin/files",
       icon: Frame,
     },
   ],
