@@ -1,4 +1,3 @@
-import { auth, Session } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
 
 import { Separator } from "@/components/ui/separator";
@@ -8,14 +7,11 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session: Session = await auth();
-  const isTeamsMember = session.user.roles.length > 0;
-
   return (
     <div>
       <SidebarProvider>

@@ -1,6 +1,8 @@
 "use client";
-
 import * as React from "react";
+import { useSession } from "next-auth/react";
+import { useTeamStore } from "@/store/store";
+
 import {
   AudioWaveform,
   BookOpen,
@@ -22,6 +24,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { useEffect, useState } from "react";
 
 // This is sample data.
 const data = {
@@ -32,9 +35,9 @@ const data = {
   },
   teams: [
     {
-      name: "Acme Inc",
+      name: "Funding Manager",
       logo: GalleryVerticalEnd,
-      plan: "Enterprise",
+      plan: "Non-profit",
     },
     {
       name: "Acme Corp.",
@@ -84,16 +87,61 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [teams, setTeams] = useState<
+    {
+      name: string;
+      logo: React.ElementType;
+      plan: string;
+    }[]
+  >([]);
+
+  const { team, setTeam, updateTeam } = useTeamStore();
+
+  const isTeamsMember = teams?.length > 0;
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    const getTeamsByRoles = async () => {
+      try {
+        const roles = ["fm-admin", "fm-lnob"];
+        const query = roles.map((role) => `roles=${role}`).join("&");
+        const response = await fetch(`/api/teams?${query}`);
+        const data = await response.json();
+        setTeams(data?.teams);
+        // set zustand
+        setTeam({
+          id: data?.teams[0]?.id,
+          name: data?.teams[0]?.name,
+          roleName: data?.teams[0]?.roleName,
+          email: data?.teams[0]?.email,
+        });
+      } catch (error) {
+        console.error("Error fetching teams:", error);
+        throw new Error("Failed to fetch teams");
+      }
+    };
+    if (status === "authenticated") {
+      getTeamsByRoles();
+    }
+  }, [status]);
+  console.log("teams", teams);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        {isTeamsMember && <TeamSwitcher teams={teams} />}
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain} isTeamsMember={isTeamsMember} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser
+          user={{
+            name: session?.user?.name || data.user.name,
+            email: session?.user?.email || data.user.email,
+            image: session?.user?.image || data.user.avatar,
+          }}
+        />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

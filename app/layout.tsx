@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 import { Toaster } from "@/components/ui/toaster";
+import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
   title: "Funding Manager",
@@ -16,10 +17,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <main>
-          <div className="flex flex-1 flex-col gap-4 p-8 pt-0">{children}</div>
-        </main>
-        <Toaster />
+        <SessionProvider>
+          <main>
+            <div className="flex flex-1 flex-col gap-4 p-8 pt-0">
+              {children}
+            </div>
+          </main>
+          <Toaster />
+        </SessionProvider>
       </body>
     </html>
   );

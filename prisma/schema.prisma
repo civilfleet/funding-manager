@@ -7,6 +7,27 @@ datasource db {
   url      = "postgresql://funding-manager:Qn*7aEM>sAau9tUnA{UE@51.159.25.67:63431/funding-manager"
 }
 
+model Teams {
+  id                      String       @id @default(uuid())  @unique
+  name                    String       @unique 
+  roleName                String       @db.VarChar(255)   @unique
+  email                   String       @db.VarChar(255)   @unique
+  phone                   String?      @db.VarChar(255)                         
+  postalCode              String?      @db.VarChar(255)  
+  city                    String?      @db.VarChar(255)  
+  country                 String?      @db.VarChar(255)  
+  website                 String?      @db.VarChar(255)
+  bankDetailsId           String?    @unique
+  bankDetails             BankDetails? @relation(fields: [bankDetailsId], references: [id])
+  organizations           Organization[]
+  createdAt               DateTime    @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime    @updatedAt @db.Timestamptz(6)
+}
+
+
+
+
+
 model Manager {
   id    String  @id @default(uuid())  @unique
   email String  @unique                      
@@ -21,7 +42,7 @@ model Organization {
   address                 String?      @db.VarChar(255)          
   contactPersonId         String?     @unique
   contactPerson           ContactPerson?        @relation(fields: [contactPersonId], references: [id])                          
-  email                   String       @db.VarChar(255)                         
+  email                   String       @db.VarChar(255)   @unique                       
   phone                   String?      @db.VarChar(255)                         
   postalCode              String?      @db.VarChar(255)  
   city                    String?      @db.VarChar(255)  
@@ -29,16 +50,25 @@ model Organization {
   website                 String?      @db.VarChar(255)
   taxID                   String?      @db.VarChar(255)
 
-  bankDetailsId           String?    @unique
-  Managers                Manager[]   
+  bankDetailsId           String?      @unique
+  managers                Manager[]   
+  
+
+  teamId                  String     
+  team                    Teams              @relation(fields: [teamId], references: [id])   
 
   bankDetails             BankDetails?        @relation(fields: [bankDetailsId], references: [id])
   fundingRequests         FundingRequest[]                
-  taxExemptionCertificate File? @relation("OrganizationTaxExemptionCertificate") 
-  articlesOfAssociation   File? @relation("OrganizationArticlesOfAssociation")    
+  taxExemptionCertificate File?               @relation("OrganizationTaxExemptionCertificate") 
+  articlesOfAssociation   File?               @relation("OrganizationArticlesOfAssociation")    
+
 
   createdAt               DateTime    @default(now()) @db.Timestamptz(6) 
   updatedAt               DateTime    @updatedAt @db.Timestamptz(6) 
+
+
+
+  @@unique([name, email])
 }
 
 
@@ -51,6 +81,7 @@ model BankDetails {
   createdAt       DateTime @default(now()) @db.Timestamptz(6) 
   updatedAt       DateTime @updatedAt @db.Timestamptz(6) 
   organization    Organization? @relation
+  teams          Teams? @relation 
 }
 
 

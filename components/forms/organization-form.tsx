@@ -8,9 +8,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import FormInputControl from "../helper/FormInputControl";
 import { createOrganizationSchema } from "@/validations/organizations";
 import { useToast } from "@/hooks/use-toast";
+import { useTeamStore } from "@/store/store";
 
 export default function OrganizationForm() {
   const { toast } = useToast();
+  const { team } = useTeamStore();
+
   const form = useForm<z.infer<typeof createOrganizationSchema>>({
     resolver: zodResolver(createOrganizationSchema),
     defaultValues: {
@@ -41,11 +44,10 @@ export default function OrganizationForm() {
 
   async function onSubmit(values: z.infer<typeof createOrganizationSchema>) {
     try {
-      console.log("values,,", values);
-      // call for the api
+      console.log("values", values);
       const response = await fetch("/api/organizations", {
         method: "POST",
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, teamId: team.id }),
       });
 
       // check for error
@@ -179,7 +181,6 @@ export default function OrganizationForm() {
             placeholder="Contact person postal code"
           />
         </div>
-
         <Button type="submit">Submit</Button>
       </form>
     </Form>

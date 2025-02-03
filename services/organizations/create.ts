@@ -11,6 +11,7 @@ type Organization = {
   website?: string;
   taxExemptionCertificate?: string;
   taxID?: string;
+  teamId: string;
   bankDetails?: {
     accountHolder?: string;
     iban?: string;
@@ -37,7 +38,6 @@ const createOrganization = async (formData: Organization) => {
     console.log("create organization!!!!", formData);
 
     if (formData?.contactPerson?.email) {
-      console.log("create organization!!!!");
       contactPerson = await prisma.contactPerson.create({
         data: {
           name: formData?.contactPerson.name,
@@ -79,6 +79,9 @@ const createOrganization = async (formData: Organization) => {
         contactPerson: contactPerson
           ? { connect: { id: contactPerson.id } }
           : undefined,
+        team: {
+          connect: { id: formData.teamId },
+        },
       },
     });
 

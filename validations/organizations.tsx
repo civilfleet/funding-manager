@@ -162,6 +162,7 @@ const createOrganizationSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
+
   bankDetails: bankDetailsSchema,
   contactPerson: createContactSchema,
 });

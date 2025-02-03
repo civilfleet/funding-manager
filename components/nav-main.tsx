@@ -9,9 +9,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 export function NavMain({
   items,
+  isTeamsMember,
 }: {
   items: {
     title: string;
@@ -23,6 +25,7 @@ export function NavMain({
       url: string;
     }[];
   }[];
+  isTeamsMember: boolean;
 }) {
   return (
     <SidebarGroup>
@@ -30,13 +33,13 @@ export function NavMain({
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
-            <a href={item.url}>
+            <Link href={item.url} aria-disabled={!isTeamsMember}>
               <SidebarMenuButton tooltip={item.title}>
                 {item.icon && <item.icon />}
 
                 <span>{item.title}</span>
               </SidebarMenuButton>
-            </a>
+            </Link>
           </SidebarMenuItem>
         ))}
       </SidebarMenu>

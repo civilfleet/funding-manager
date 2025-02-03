@@ -9,24 +9,34 @@ export function LoginForm({
   ...props
 }: React.ComponentPropsWithoutRef<"form">) {
   return (
-    <form
-      className={cn("flex flex-col gap-6", className)}
-      action={async () => {
-        "use server";
-        await signIn("keycloak", { redirectTo: "/" });
-      }}
-      {...props}
-    >
-      <div className="flex flex-col items-center gap-2 text-center">
+    <div className="flex flex-col items-center gap-2 text-center">
+      <form
+        className={cn("flex flex-col gap-6", className)}
+        action={async () => {
+          "use server";
+          await signIn("google", { redirectTo: "/organizations" });
+        }}
+        {...props}
+      >
         <h1 className="text-2xl font-bold">Login to your account</h1>
 
         <Button variant="outline" className="w-full">
           Login as Organization
         </Button>
+      </form>
+      <form
+        className={cn("flex flex-col gap-6", className)}
+        action={async () => {
+          "use server";
+          await signIn("keycloak", { redirectTo: "/admin" });
+        }}
+        {...props}
+      >
         <Button variant="outline" className="w-full">
           Login as Agent
         </Button>
-      </div>
+      </form>
+
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}
         <a
@@ -36,6 +46,6 @@ export function LoginForm({
           Please contact us to create one
         </a>
       </div>
-    </form>
+    </div>
   );
 }

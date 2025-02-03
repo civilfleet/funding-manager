@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createOrganizationSchema } from "@/validations/organizations";
 import { getErrorMessage } from "../helpers";
 import { createOrganization } from "@/services/organizations/create";
+import { z } from "zod";
 
 const organizations = [
   { id: 1, name: "Org 1", description: "First organization" },
@@ -17,7 +18,10 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const organization = await req.json();
-    const validatedData = createOrganizationSchema.parse({ ...organization });
+    console.log("organization", organization);
+    const validatedData = createOrganizationSchema
+      .and(z.object({ teamId: z.string().uuid() }))
+      .parse({ ...organization });
     await createOrganization(validatedData);
     return NextResponse.json("reponse", { status: 201 });
   } catch (e) {

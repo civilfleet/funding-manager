@@ -1,27 +1,8 @@
+import Keycloak from "next-auth/providers/keycloak";
 import type { NextAuthConfig } from "next-auth";
+import Google from "next-auth/providers/google";
 
-export const authConfig = {
-  pages: {
-    signIn: "/login",
-  },
-  callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      // add logic for authorization
-      // - user
-      // - agent
-      // - ADMIN
-
-      console.log(auth);
-      const isLoggedIn = !!auth?.user;
-      const isOnDashboard = nextUrl.pathname.startsWith("/admin");
-      if (isOnDashboard) {
-        if (isLoggedIn) return true;
-        return false; // Redirect unauthenticated users to login page
-      } else if (isLoggedIn) {
-        return Response.redirect(new URL("/admin", nextUrl));
-      }
-      return true;
-    },
-  },
-  providers: [], // Add providers with an empty array for now
+// Notice this is only an object, not a full Auth.js instance
+export default {
+  providers: [Keycloak, Google],
 } satisfies NextAuthConfig;
