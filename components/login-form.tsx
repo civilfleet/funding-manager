@@ -1,8 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { signIn } from "@/auth";
-import { Form } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
 
 export function LoginForm({
   className,

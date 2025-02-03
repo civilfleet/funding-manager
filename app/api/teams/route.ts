@@ -7,7 +7,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const roles: string[] | null =
       searchParams.get("roles")?.split(",") || null;
-    const teams: any[] = [];
+    const teams = [];
 
     const response = await getTeamsByRoles(roles);
 

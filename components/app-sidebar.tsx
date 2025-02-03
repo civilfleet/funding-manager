@@ -95,7 +95,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }[]
   >([]);
 
-  const { team, setTeam, updateTeam } = useTeamStore();
+  const { setTeam } = useTeamStore();
 
   const isTeamsMember = teams?.length > 0;
   const { data: session, status } = useSession();
