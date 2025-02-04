@@ -2,6 +2,7 @@
 import * as React from "react";
 import { useSession } from "next-auth/react";
 import { useTeamStore } from "@/store/store";
+import { usePathname } from "next/navigation";
 
 import {
   AudioWaveform,
@@ -50,7 +51,7 @@ const data = {
       plan: "Free",
     },
   ],
-  navMain: [
+  teamNav: [
     {
       title: "Organizations",
       url: "/admin/organizations",
@@ -83,6 +84,39 @@ const data = {
       icon: Frame,
     },
   ],
+  organizationNav: [
+    {
+      title: "Organization",
+      url: "/organization",
+      icon: SquareTerminal,
+      isActive: true,
+    },
+    {
+      title: "Donation Agreement",
+      url: "/organization/donations-agreement",
+      icon: Bot,
+    },
+    {
+      title: "Funding Requests",
+      url: "/organization/funding-requests",
+      icon: BookOpen,
+    },
+    {
+      title: "Reports",
+      url: "/organization/reports",
+      icon: Settings2,
+    },
+    {
+      title: "Contacts",
+      url: "/organization/contacts",
+      icon: Settings2,
+    },
+    {
+      title: "Files",
+      url: "/organization/files",
+      icon: Frame,
+    },
+  ],
   projects: [],
 };
 
@@ -94,11 +128,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       plan: string;
     }[]
   >([]);
+  const pathname = usePathname();
+  const isOrganization = pathname.startsWith("/organization");
 
-  const { setTeam } = useTeamStore();
-
-  const isTeamsMember = teams?.length > 0;
   const { data: session, status } = useSession();
+  const { setTeam } = useTeamStore();
+  const isTeamsMember = teams?.length > 0;
 
   useEffect(() => {
     const getTeamsByRoles = async () => {
@@ -108,7 +143,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         const response = await fetch(`/api/teams?${query}`);
         const data = await response.json();
         setTeams(data?.teams);
-        // set zustand
+
         setTeam({
           id: data?.teams[0]?.id,
           name: data?.teams[0]?.name,
@@ -124,15 +159,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       getTeamsByRoles();
     }
   }, [status]);
-  console.log("teams", teams);
 
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        {isTeamsMember && <TeamSwitcher teams={teams} />}
+        {isOrganization ? (
+          <div className="flex items-center justify-center">
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground m-1">
+              <GalleryVerticalEnd className="size-4" />
+            </div>
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-semibold">Funding Manager</span>
+            </div>
+          </div>
+        ) : (
+          <TeamSwitcher teams={teams} />
+        )}
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} isTeamsMember={isTeamsMember} />
+        <NavMain
+          items={isOrganization ? data.organizationNav : data.teamNav}
+          isTeamsMember={isTeamsMember}
+        />
       </SidebarContent>
       <SidebarFooter>
         <NavUser

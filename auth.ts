@@ -33,35 +33,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return NextResponse.redirect(new URL("/login", request.url));
     },
     async signIn({ user, account, profile }) {
+      // check if the user is authorized to sign-in
       if (account?.provider === "keycloak") {
         if (!account?.access_token) return false;
         const decodedToken = jwt.decode(account.access_token as string);
+
         if (!decodedToken || typeof decodedToken === "string") return false;
+
         const rolesAccess: string[] =
           decodedToken["resource_access"]?.["funding-manager"]?.["roles"] || [];
-        console.log("Roles Access:", rolesAccess);
         if (rolesAccess.includes("fm-admin")) return true;
         const teams = await prisma.teams.findMany({
           where: {
             roleName: { in: rolesAccess },
           },
         });
-        console.log("Teams from Prisma:", teams);
         return teams.length > 0;
       }
+
       if (account?.provider === "google") {
-        // check if the organization exist
-        const organization = await prisma.organization.findMany({
+        const organization = await prisma.organization.findFirst({
           where: {
             email: user.email as string,
           },
         });
-        if (!organization) return false;
+        return !!organization;
       }
-      return false;
+      return true;
     },
 
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user, account }) {
       if (account && user) {
         token.accessToken = account.access_token;
         token.provider = account.provider;

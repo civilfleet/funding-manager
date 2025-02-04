@@ -21,10 +21,10 @@ export default auth(async (req) => {
   const isKeycloakUser = token.provider === "keycloak";
 
   if (isGoogleUser && nextUrl.pathname.startsWith("/admin")) {
-    return NextResponse.redirect(new URL("/organizations", nextUrl));
+    return NextResponse.redirect(new URL("/organization", nextUrl));
   }
 
-  if (isKeycloakUser && nextUrl.pathname.startsWith("/organizations")) {
+  if (isKeycloakUser && nextUrl.pathname.startsWith("/organization")) {
     return NextResponse.redirect(new URL("/admin", nextUrl));
   }
 
