@@ -12,12 +12,14 @@ export default function FormInputControl({
   name,
   label,
   placeholder,
+  disabled = false,
 }: {
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   form: UseFormReturn | any | undefined;
   name: string;
   label?: string;
   placeholder: string;
+  disabled?: boolean;
 }) {
   return (
     <FormField
@@ -27,7 +29,7 @@ export default function FormInputControl({
         <FormItem>
           {label && <FormLabel>{label}</FormLabel>}
           <FormControl>
-            <Input placeholder={placeholder} {...field} />
+            <Input disabled={disabled} placeholder={placeholder} {...field} />
           </FormControl>
           <FormMessage />
         </FormItem>

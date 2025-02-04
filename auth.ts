@@ -37,12 +37,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (account?.provider === "keycloak") {
         if (!account?.access_token) return false;
         const decodedToken = jwt.decode(account.access_token as string);
-
         if (!decodedToken || typeof decodedToken === "string") return false;
-
         const rolesAccess: string[] =
           decodedToken["resource_access"]?.["funding-manager"]?.["roles"] || [];
+
         if (rolesAccess.includes("fm-admin")) return true;
+
         const teams = await prisma.teams.findMany({
           where: {
             roleName: { in: rolesAccess },

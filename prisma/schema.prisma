@@ -76,7 +76,7 @@ model BankDetails {
   id              String     @id @default(uuid()) @unique       
   bankName        String     @db.VarChar(255)                  
   accountHolder   String     @db.VarChar(255)                  
-  iban            String     @db.VarChar(255)                  
+  iban            String     @db.VarChar(255)     @unique                
   bic             String     @db.VarChar(255)                
   createdAt       DateTime @default(now()) @db.Timestamptz(6) 
   updatedAt       DateTime @updatedAt @db.Timestamptz(6) 
@@ -129,7 +129,7 @@ model ContactPerson{
   id          String    @id @default(uuid()) @unique 
   name                    String?      @db.VarChar(255)          
   address                 String?      @db.VarChar(255)          
-  email                   String       @db.VarChar(255)          
+  email                   String       @db.VarChar(255)  @unique         
   phone                   String?      @db.VarChar(255)          
   postalCode              String?      @db.VarChar(255)  
   city                    String?      @db.VarChar(255)  

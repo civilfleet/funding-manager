@@ -121,43 +121,41 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [teams, setTeams] = useState<
-    {
-      name: string;
-      logo: React.ElementType;
-      plan: string;
-    }[]
-  >([]);
+  const [teams, setTeams] = useState([]);
   const pathname = usePathname();
   const isOrganization = pathname.startsWith("/organization");
 
   const { data: session, status } = useSession();
+
   const { setTeam } = useTeamStore();
   const isTeamsMember = teams?.length > 0;
 
   useEffect(() => {
     const getTeamsByRoles = async () => {
       try {
-        const roles = ["fm-admin", "fm-lnob"];
-        const query = roles.map((role) => `roles=${role}`).join("&");
-        const response = await fetch(`/api/teams?${query}`);
-        const data = await response.json();
-        setTeams(data?.teams);
+        const roles = session?.user?.roles;
+        const query = roles?.map((role) => `roles=${role}`).join("&");
 
-        setTeam({
-          id: data?.teams[0]?.id,
-          name: data?.teams[0]?.name,
-          roleName: data?.teams[0]?.roleName,
-          email: data?.teams[0]?.email,
-        });
+        const response = await fetch(`/api/teams?${query}`);
+        const { teams } = await response.json();
+        console.log("dagta", session);
+        if (teams?.length) {
+          setTeams(teams);
+          // useTeamStore for global state
+          setTeam({
+            id: teams[0]?.id,
+            name: teams[0]?.name,
+            roleName: teams[0]?.roleName,
+            email: teams[0]?.email,
+          });
+          console.log("teams", teams);
+        }
       } catch (error) {
         console.error("Error fetching teams:", error);
         throw new Error("Failed to fetch teams");
       }
     };
-    if (status === "authenticated") {
-      getTeamsByRoles();
-    }
+    if (status == "authenticated") getTeamsByRoles();
   }, [status]);
 
   return (

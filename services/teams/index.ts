@@ -6,6 +6,12 @@ const getTeamsByRoles = async (roles: string[] | null) => {
       where: {
         roleName: { in: roles || [] },
       },
+      select: {
+        id: true,
+        name: true,
+        roleName: true,
+        email: true,
+      },
     });
   } catch (error) {
     throw new Error("Failed to get teams");

@@ -23,14 +23,20 @@ export function TeamSwitcher({
   teams,
 }: {
   teams: {
+    id: number;
     name: string;
-    logo: React.ElementType;
-    plan: string;
+    roleName: string;
+    email: string;
+    // logo: string;
   }[];
 }) {
   const { isMobile } = useSidebar();
   const [activeTeam, setActiveTeam] = React.useState(teams[0]);
-
+  React.useEffect(() => {
+    if (teams.length > 0) {
+      setActiveTeam(teams[0]); // Set the first team as active
+    }
+  }, [teams]);
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -41,19 +47,17 @@ export function TeamSwitcher({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                {activeTeam?.logo ? (
-                  <activeTeam.logo className="size-4" />
-                ) : (
-                  <GalleryVerticalEnd className="size-4" />
-                )}
+                {/* {activeTeam?.logo ? (
+                  <activeTeam.logo />
+                ) : ( */}
+                <GalleryVerticalEnd className="size-4" />
+                {/* )} */}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {activeTeam?.name || "Not Found"}
+                  {activeTeam?.name}
                 </span>
-                <span className="truncate text-xs">
-                  {activeTeam?.plan || ""}
-                </span>
+                {/* <span className="truncate text-xs">{activeTeam || ""}</span> */}
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -75,11 +79,11 @@ export function TeamSwitcher({
                   className="gap-2 p-2"
                 >
                   <div className="flex size-6 items-center justify-center rounded-sm border">
-                    {team?.logo ? (
+                    {/* {team?.logo ? (
                       <team.logo className="size-4 shrink-0" />
-                    ) : (
-                      <GalleryVerticalEnd className="size-4 shrink-0" />
-                    )}
+                    ) : ( */}
+                    <GalleryVerticalEnd className="size-4 shrink-0" />
+                    {/* )} */}
                   </div>
                   {team.name}
                   <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
