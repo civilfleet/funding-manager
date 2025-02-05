@@ -4,25 +4,29 @@ import { getErrorMessage } from "../helpers";
 import {
   createOrUpdateOrganization,
   getOrganizationByEmail,
+  getOrganizations,
 } from "@/services/organizations";
 import { z } from "zod";
-
-const organizations = [
-  { id: 1, name: "Org 1", description: "First organization" },
-  { id: 2, name: "Org 2", description: "Second organization" },
-];
 
 // ✅ GET All Organizations
 export async function GET(req: Request) {
   try {
+    let data;
     const { searchParams } = new URL(req.url);
-    const email = searchParams.get("email") as string;
 
-    const response = await getOrganizationByEmail(email);
-    console.log("response", response);
+    const email = searchParams.get("email");
+    const searchQuery = searchParams.get("query") || "";
+
+    if (email) {
+      data = await getOrganizationByEmail(email);
+    } else {
+      data = await getOrganizations(searchQuery);
+    }
+
+    console.log("response", data);
     return NextResponse.json(
       {
-        data: response,
+        data,
       },
       { status: 201 }
     );

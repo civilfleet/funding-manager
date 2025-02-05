@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormInputControl from "../helper/FormInputControl";
 import { createOrganizationSchema } from "@/validations/organizations";
@@ -15,9 +14,7 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
 } from "../ui/card";
-import { Loader } from "../helper/Loader";
 import ButtonControl from "../helper/ButtonControl";
 
 type Organization = {
@@ -252,10 +249,6 @@ export default function OrganizationForm({ data }: { data: Organization }) {
           </form>
         </Form>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        {/* <Button variant="outline">Cancel</Button>
-  <Button>Deploy</Button> */}
-      </CardFooter>
     </Card>
   );
 }

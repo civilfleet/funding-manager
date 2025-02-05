@@ -6,19 +6,10 @@ import prisma from "./lib/prisma";
 import { NextResponse } from "next/server";
 
 declare module "next-auth" {
-  /**
-   * Returned by `auth`, `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
-   */
   interface Session {
     user: {
       accessToken?: string;
       roles?: string[];
-      /**
-       * By default, TypeScript merges new interface properties and overwrites existing ones.
-       * In this case, the default session user properties will be overwritten,
-       * with the new ones defined above. To keep the default session user properties,
-       * you need to add them back into the newly declared interface.
-       */
     } & DefaultSession["user"];
   }
 }
@@ -28,16 +19,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async authorized({ request, auth }) {
       const url = request.nextUrl;
-      console.log("Next URL:", url);
-
       return NextResponse.redirect(new URL("/login", request.url));
     },
     async signIn({ user, account, profile }) {
+      if (!account) return false;
+
       // check if the user is authorized to sign-in
-      if (account?.provider === "keycloak") {
-        if (!account?.access_token) return false;
+      if (account?.provider === "keycloak" && account?.access_token) {
         const decodedToken = jwt.decode(account.access_token as string);
         if (!decodedToken || typeof decodedToken === "string") return false;
+
         const rolesAccess: string[] =
           decodedToken["resource_access"]?.["funding-manager"]?.["roles"] || [];
 

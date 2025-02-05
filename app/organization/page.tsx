@@ -1,14 +1,5 @@
 import { auth } from "@/auth";
 import OrganizationForm from "@/components/forms/organization-form";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export default async function Page() {
   // get organization data
@@ -22,7 +13,6 @@ export default async function Page() {
     }/api/organization?email=${encodeURIComponent(email)}`
   );
   const data = await organization.json();
-  console.log("Organization Data:", data);
 
   return (
     <div>

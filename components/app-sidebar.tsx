@@ -54,7 +54,7 @@ const data = {
   teamNav: [
     {
       title: "Organizations",
-      url: "/admin/organizations",
+      url: "/admin/organization",
       icon: SquareTerminal,
       isActive: true,
     },
@@ -138,7 +138,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         const response = await fetch(`/api/teams?${query}`);
         const { teams } = await response.json();
-        console.log("dagta", session);
         if (teams?.length) {
           setTeams(teams);
           // useTeamStore for global state

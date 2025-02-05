@@ -21,9 +21,7 @@ export default function RootLayout({
         <NextTopLoader color="#2563eb" showSpinner={false} />
         <SessionProvider>
           <main>
-            <div className="flex flex-1 flex-col gap-4 p-8 pt-0">
-              {children}
-            </div>
+            <div className=" w-full">{children}</div>
           </main>
           <Toaster />
         </SessionProvider>

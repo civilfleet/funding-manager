@@ -141,11 +141,11 @@ const createOrUpdateOrganization = async (formData: Organization) => {
   }
 };
 
-const getOrganizationByEmail = async (email: string) => {
+const getOrganizationById = async (id: string) => {
   try {
     const organization = await prisma.organization.findUnique({
       where: {
-        email,
+        id,
       },
       include: {
         bankDetails: true,
@@ -159,4 +159,54 @@ const getOrganizationByEmail = async (email: string) => {
   }
 };
 
-export { createOrUpdateOrganization, getOrganizationByEmail };
+const getOrganizationByEmail = async (filter: any) => {
+  try {
+    const organization = await prisma.organization.findUnique({
+      where: {
+        ...filter,
+      },
+      include: {
+        bankDetails: true,
+        contactPerson: true,
+      },
+    });
+
+    return { ...organization };
+  } catch (error) {
+    throw Error("Failed to get organization");
+  }
+};
+
+const getOrganizations = async (searchQuery: string) => {
+  try {
+    const organization = await prisma.organization.findMany({
+      where: {
+        OR: [
+          { name: { contains: searchQuery, mode: "insensitive" } },
+          { email: { contains: searchQuery, mode: "insensitive" } },
+          { address: { contains: searchQuery, mode: "insensitive" } },
+          { city: { contains: searchQuery, mode: "insensitive" } },
+          { country: { contains: searchQuery, mode: "insensitive" } },
+          { phone: { contains: searchQuery, mode: "insensitive" } },
+          { website: { contains: searchQuery, mode: "insensitive" } },
+          { taxID: { contains: searchQuery, mode: "insensitive" } },
+        ],
+      },
+      include: {
+        bankDetails: true,
+        contactPerson: true,
+      },
+    });
+
+    return organization;
+  } catch (error) {
+    throw Error("Failed to get organizations");
+  }
+};
+
+export {
+  createOrUpdateOrganization,
+  getOrganizationByEmail,
+  getOrganizations,
+  getOrganizationById,
+};

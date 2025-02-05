@@ -1,24 +1,9 @@
-import OrganizationForm from "@/components/forms/organization-form";
+import OrganizationTable from "@/components/table/organization-table";
 
-export default function Page() {
+export default async function () {
   return (
-    <div className="flex flex-col w-2/3 ">
-      <OrganizationForm
-        data={{
-          name: undefined,
-          email: "",
-          address: undefined,
-          postalCode: undefined,
-          city: undefined,
-          country: undefined,
-          phone: undefined,
-          website: undefined,
-          taxExemptionCertificate: undefined,
-          taxID: undefined,
-          bankDetails: undefined,
-          contactPerson: undefined,
-        }}
-      />
+    <div className="m-2 w-full">
+      <OrganizationTable />
     </div>
   );
 }
