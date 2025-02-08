@@ -49,13 +49,9 @@ const createContactSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
-  email: z
-    .string()
-    .email({
-      message: "Invalid email address format.",
-    })
-    .optional()
-    .or(z.literal("")),
+  email: z.string().email({
+    message: "Invalid email address format.",
+  }),
   phone: z
     .string()
     .min(2, {
@@ -162,7 +158,6 @@ const createOrganizationSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
-
   bankDetails: bankDetailsSchema,
   contactPerson: createContactSchema,
 });

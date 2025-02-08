@@ -1,5 +1,7 @@
 import prisma from "@/lib/prisma";
+import { handlePrismaError } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
+import _ from "lodash";
 
 type Organization = {
   name?: string;
@@ -13,6 +15,7 @@ type Organization = {
   taxExemptionCertificate?: string;
   taxID?: string;
   teamId?: string;
+  isFilledByOrg: boolean;
   bankDetails?: {
     accountHolder?: string;
     iban?: string;
@@ -21,7 +24,7 @@ type Organization = {
   };
   contactPerson?: {
     name?: string;
-    email?: string;
+    email: string;
     phone?: string;
     address?: string;
     postalCode?: string;
@@ -39,105 +42,107 @@ const createOrUpdateOrganization = async (formData: Organization) => {
     let contactPerson = null;
     let bankDetail = null;
 
-    if (formData?.contactPerson?.email) {
-      contactPerson = await prisma.contactPerson.upsert({
-        where: {
-          email: formData?.contactPerson.email,
-        },
-        update: {
-          name: formData?.contactPerson.name,
-          address: formData?.contactPerson.address,
-          email: formData?.contactPerson.email,
-          phone: formData?.contactPerson.phone,
-          postalCode: formData?.contactPerson.postalCode,
-          city: formData?.contactPerson.city,
-          country: formData?.contactPerson.country,
-        },
-        create: {
-          name: formData?.contactPerson.name,
-          address: formData?.contactPerson.address,
-          email: formData?.contactPerson.email,
-          phone: formData?.contactPerson.phone,
-          postalCode: formData?.contactPerson.postalCode,
-          city: formData?.contactPerson.city,
-          country: formData?.contactPerson.country,
-        },
-      });
-    }
+    const response = await prisma.$transaction(async (prisma) => {
+      let bankDetail = undefined;
 
-    if (formData?.bankDetails && formData.bankDetails.bankName) {
-      bankDetail = await prisma.bankDetails.upsert({
-        where: {
-          iban: formData.bankDetails.iban,
-        },
-        update: {
-          bankName: formData.bankDetails.bankName,
-          accountHolder: formData.bankDetails.accountHolder as string,
-          iban: formData.bankDetails.iban as string,
-          bic: formData.bankDetails.bic as string,
-        },
-        create: {
-          bankName: formData.bankDetails.bankName,
-          accountHolder: formData.bankDetails.accountHolder as string,
-          iban: formData.bankDetails.iban as string,
-          bic: formData.bankDetails.bic as string,
-        },
-      });
-    }
+      // Upsert Bank Details if provided
+      if (formData?.bankDetails?.bankName) {
+        bankDetail = await prisma.bankDetails.upsert({
+          where: {
+            iban: formData.bankDetails.iban,
+          },
+          update: {
+            bankName: formData.bankDetails.bankName,
+            accountHolder: formData.bankDetails.accountHolder as string,
+            iban: formData.bankDetails.iban as string,
+            bic: formData.bankDetails.bic as string,
+          },
+          create: {
+            bankName: formData.bankDetails.bankName,
+            accountHolder: formData.bankDetails.accountHolder as string,
+            iban: formData.bankDetails.iban as string,
+            bic: formData.bankDetails.bic as string,
+          },
+        });
+      }
+      let organization;
+      if (!formData.teamId) {
+        // Upsert Organization
+        organization = await prisma.organization.update({
+          where: { email: formData.email },
+          data: {
+            name: formData.name,
+            address: formData.address,
+            postalCode: formData.postalCode,
+            city: formData.city,
+            country: formData.country,
+            phone: formData.phone,
+            website: formData.website,
+            taxID: formData.taxID,
+            isFilledByOrg: formData.isFilledByOrg,
+            bankDetails: bankDetail
+              ? { connect: { id: bankDetail.id } }
+              : undefined,
+          },
+        });
+      } else
+        organization = await prisma.organization.create({
+          data: {
+            email: formData.email.toLowerCase(),
+            name: formData.name,
+            address: formData.address,
+            postalCode: formData.postalCode,
+            city: formData.city,
+            country: formData.country,
+            phone: formData.phone,
+            website: formData.website,
+            taxID: formData.taxID,
+            isFilledByOrg: formData.isFilledByOrg,
+            bankDetails: bankDetail
+              ? { connect: { id: bankDetail.id } }
+              : undefined,
+            team: formData.teamId
+              ? { connect: { id: formData.teamId } }
+              : undefined,
+          },
+        });
 
-    const response = await prisma.organization.upsert({
-      where: {
-        email: formData.email,
-      },
-      update: {
-        name: formData.name,
-        address: formData.address,
-        postalCode: formData.postalCode,
-        city: formData.city,
-        country: formData.country,
-        phone: formData.phone,
-        website: formData.website,
-        taxID: formData.taxID,
-        bankDetails: bankDetail
-          ? { connect: { id: bankDetail.id } }
-          : undefined,
-        contactPerson: contactPerson
-          ? { connect: { id: contactPerson.id } }
-          : undefined,
-        team: {
-          connect: { id: formData.teamId },
-        },
-      },
-      create: {
-        email: formData.email,
-        name: formData.name,
-        address: formData.address,
-        postalCode: formData.postalCode,
-        city: formData.city,
-        country: formData.country,
-        phone: formData.phone,
-        website: formData.website,
-        taxID: formData.taxID,
-        bankDetails: bankDetail
-          ? { connect: { id: bankDetail.id } }
-          : undefined,
-        contactPerson: contactPerson
-          ? { connect: { id: contactPerson.id } }
-          : undefined,
-        team: {
-          connect: { id: formData.teamId },
-        },
-      },
+      let contactPerson = null;
+
+      // Upsert Contact Person if provided
+      if (formData?.contactPerson?.email) {
+        contactPerson = await prisma.contactPerson.upsert({
+          where: {
+            email: formData.contactPerson.email,
+          },
+          update: {
+            name: formData.contactPerson.name,
+            address: formData.contactPerson.address,
+            phone: formData.contactPerson.phone,
+            postalCode: formData.contactPerson.postalCode,
+            city: formData.contactPerson.city,
+            country: formData.contactPerson.country,
+            organization: { connect: { id: organization.id } },
+          },
+          create: {
+            name: formData.contactPerson.name,
+            address: formData.contactPerson.address,
+            email: formData.contactPerson.email,
+            phone: formData.contactPerson.phone,
+            postalCode: formData.contactPerson.postalCode,
+            city: formData.contactPerson.city,
+            country: formData.contactPerson.country,
+            organization: { connect: { id: organization.id } },
+          },
+        });
+      }
+
+      return { organization, contactPerson, bankDetail };
     });
 
     return { ...response };
   } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.code === "P2002") {
-        console.log("ERROR 🔴:  Organization already exist with this email");
-      }
-    }
-    throw Error("Organization already exist with this email");
+    throw handlePrismaError(e);
   }
 };
 
@@ -149,7 +154,6 @@ const getOrganizationById = async (id: string) => {
       },
       include: {
         bankDetails: true,
-        contactPerson: true,
       },
     });
 
@@ -159,19 +163,37 @@ const getOrganizationById = async (id: string) => {
   }
 };
 
-const getOrganizationByEmail = async (filter: any) => {
+const getOrganizationByEmail = async (email: string) => {
   try {
-    const organization = await prisma.organization.findUnique({
+    const contactPerson = await prisma.contactPerson.findFirst({
       where: {
-        ...filter,
+        email,
       },
-      include: {
-        bankDetails: true,
-        contactPerson: true,
+
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        address: true,
+        phone: true,
+        postalCode: true,
+        city: true,
+        country: true,
+        organization: {
+          include: {
+            bankDetails: true,
+          },
+        },
       },
     });
+    if (contactPerson?.organization) {
+      const organization = contactPerson?.organization;
 
-    return { ...organization };
+      return {
+        ...organization,
+        contactPerson: _.omit(contactPerson, "organization"),
+      };
+    }
   } catch (error) {
     throw Error("Failed to get organization");
   }
@@ -194,7 +216,6 @@ const getOrganizations = async (searchQuery: string) => {
       },
       include: {
         bankDetails: true,
-        contactPerson: true,
       },
     });
 

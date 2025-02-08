@@ -13,6 +13,7 @@ export default function FormInputControl({
   label,
   placeholder,
   disabled = false,
+  type,
 }: {
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   form: UseFormReturn | any | undefined;
@@ -20,6 +21,7 @@ export default function FormInputControl({
   label?: string;
   placeholder: string;
   disabled?: boolean;
+  type?: React.HTMLInputTypeAttribute | undefined;
 }) {
   return (
     <FormField
@@ -29,7 +31,12 @@ export default function FormInputControl({
         <FormItem>
           {label && <FormLabel>{label}</FormLabel>}
           <FormControl>
-            <Input disabled={disabled} placeholder={placeholder} {...field} />
+            <Input
+              disabled={disabled}
+              type={type}
+              placeholder={placeholder}
+              {...field}
+            />
           </FormControl>
           <FormMessage />
         </FormItem>

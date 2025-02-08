@@ -23,7 +23,6 @@ export async function GET(req: Request) {
       data = await getOrganizations(searchQuery);
     }
 
-    console.log("response", data);
     return NextResponse.json(
       {
         data,
@@ -42,9 +41,10 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const organization = await req.json();
-    console.log("organization", organization);
+
     const validatedData = createOrganizationSchema
       .and(z.object({ teamId: z.string().uuid() }))
+      .and(z.object({ isFilledByOrg: z.boolean() }))
       .parse({ ...organization });
     await createOrUpdateOrganization(validatedData);
     return NextResponse.json(
@@ -65,8 +65,9 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const organization = await req.json();
-    console.log("organization", organization);
-    const validatedData = createOrganizationSchema.parse({ ...organization });
+    const validatedData = createOrganizationSchema
+      .and(z.object({ isFilledByOrg: z.boolean() }))
+      .parse({ ...organization });
     await createOrUpdateOrganization(validatedData);
     return NextResponse.json(
       {

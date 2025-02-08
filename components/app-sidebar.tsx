@@ -8,6 +8,7 @@ import {
   AudioWaveform,
   BookOpen,
   Bot,
+  Building,
   Command,
   Frame,
   GalleryVerticalEnd,
@@ -55,7 +56,7 @@ const data = {
     {
       title: "Organizations",
       url: "/admin/organization",
-      icon: SquareTerminal,
+      icon: Building,
       isActive: true,
     },
     {
@@ -65,7 +66,7 @@ const data = {
     },
     {
       title: "Funding Requests",
-      url: "/admin/funding-requests",
+      url: "/admin/funding-request",
       icon: BookOpen,
     },
     {
@@ -98,7 +99,7 @@ const data = {
     },
     {
       title: "Funding Requests",
-      url: "/organization/funding-requests",
+      url: "/organization/funding-request",
       icon: BookOpen,
     },
     {
@@ -147,7 +148,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             roleName: teams[0]?.roleName,
             email: teams[0]?.email,
           });
-          console.log("teams", teams);
         }
       } catch (error) {
         console.error("Error fetching teams:", error);

@@ -22,6 +22,7 @@ type TeamStore = {
   team: Team;
   setTeam: (user: Team) => void;
   updateTeam: (updates: Partial<Team>) => void;
+  reset: () => void;
 };
 
 export const useTeamStore = create<TeamStore>()(
@@ -36,6 +37,39 @@ export const useTeamStore = create<TeamStore>()(
       setTeam: (team) => set({ team }),
       updateTeam: (updates) =>
         set((state) => ({ team: { ...state.team, ...updates } })),
+      reset: () => set({ team: { id: 0, name: "", roleName: "", email: "" } }),
+    }),
+    { name: "team-store" }
+  )
+);
+
+type Organization = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+type OrganizationStore = {
+  organization: Organization;
+  setOrganization: (user: Organization) => void;
+  updateOrganization: (updates: Partial<Organization>) => void;
+  reset: () => void;
+};
+
+export const useOrganizationStore = create<OrganizationStore>()(
+  persist(
+    (set) => ({
+      organization: {
+        id: "",
+        name: "",
+        email: "",
+      },
+      setOrganization: (organization) => set({ organization }),
+      updateOrganization: (updates) =>
+        set((state) => ({
+          organization: { ...state.organization, ...updates },
+        })),
+      reset: () => set({ organization: { id: "", name: "", email: "" } }),
     }),
     { name: "team-store" }
   )

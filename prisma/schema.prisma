@@ -40,8 +40,6 @@ model Organization {
   id                      String      @id @default(uuid()) @unique 
   name                    String?      @db.VarChar(255)          
   address                 String?      @db.VarChar(255)          
-  contactPersonId         String?     @unique
-  contactPerson           ContactPerson?        @relation(fields: [contactPersonId], references: [id])                          
   email                   String       @db.VarChar(255)   @unique                       
   phone                   String?      @db.VarChar(255)                         
   postalCode              String?      @db.VarChar(255)  
@@ -49,13 +47,13 @@ model Organization {
   country                 String?      @db.VarChar(255)  
   website                 String?      @db.VarChar(255)
   taxID                   String?      @db.VarChar(255)
-
+  isFilledByOrg           Boolean      @default(false)
   bankDetailsId           String?      @unique
   managers                Manager[]   
   
-
-  teamId                  String     
-  team                    Teams              @relation(fields: [teamId], references: [id])   
+  contacts                ContactPerson[]   // Updated: One-to-many relation
+  teamId                  String?     
+  team                    Teams?              @relation(fields: [teamId], references: [id])   
 
   bankDetails             BankDetails?        @relation(fields: [bankDetailsId], references: [id])
   fundingRequests         FundingRequest[]                
@@ -65,10 +63,6 @@ model Organization {
 
   createdAt               DateTime    @default(now()) @db.Timestamptz(6) 
   updatedAt               DateTime    @updatedAt @db.Timestamptz(6) 
-
-
-
-  @@unique([name, email])
 }
 
 
@@ -81,7 +75,7 @@ model BankDetails {
   createdAt       DateTime @default(now()) @db.Timestamptz(6) 
   updatedAt       DateTime @updatedAt @db.Timestamptz(6) 
   organization    Organization? @relation
-  teams          Teams? @relation 
+  teams           Teams? @relation 
 }
 
 
@@ -96,14 +90,18 @@ model FundingRequest {
   id                        String    @id @default(uuid()) @unique    
   organizationId            String                                
   organization              Organization @relation(fields: [organizationId], references: [id])
-  description               String                          
-  purpose                   String      @db.VarChar(255)                            
+  description               String       @db.Text                   
+  purpose                   String       @db.Text
   amountRequested           Decimal                                 
-  amountAgreed              Decimal                              
-  refinancingConcept        String       @db.VarChar(255)                           
-  sustainability            String       @db.VarChar(255)                           
+  amountAgreed              Decimal?                              
+  refinancingConcept        String       @db.Text
+  sustainability            String       @db.Text
   expectedCompletionDate    DateTime                               
-  status                    FundingStatus @default(Pending)       
+  status                    FundingStatus @default(Pending)   
+  submittedById             String           
+  submittedBy               ContactPerson? @relation(fields: [submittedById], references: [id])
+
+
   createdAt                 DateTime @default(now()) @db.Timestamptz(6) 
   updatedAt                 DateTime @updatedAt @db.Timestamptz(6) 
   files                     File[]                               
@@ -112,7 +110,7 @@ model FundingRequest {
 model File {
   id          String    @id @default(uuid()) @unique 
   content     String                             
-  createdBy   String     @db.VarChar(255)                         
+  createdBy   String      @db.VarChar(255)                         
   updatedBy   String      @db.VarChar(255)                         
   createdAt   DateTime @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime @updatedAt @db.Timestamptz(6) 
@@ -125,8 +123,8 @@ model File {
   FundingRequest FundingRequest? @relation(fields: [fundingRequestId], references: [id])
 }
 
-model ContactPerson{
-  id          String    @id @default(uuid()) @unique 
+model ContactPerson {
+  id                      String      @id @default(uuid()) @unique 
   name                    String?      @db.VarChar(255)          
   address                 String?      @db.VarChar(255)          
   email                   String       @db.VarChar(255)  @unique         
@@ -134,10 +132,10 @@ model ContactPerson{
   postalCode              String?      @db.VarChar(255)  
   city                    String?      @db.VarChar(255)  
   country                 String?      @db.VarChar(255)                           
-  organization    Organization? @relation
-  createdAt   DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime @updatedAt @db.Timestamptz(6) 
-
-
   
+  organizationId          String?     
+  organization            Organization? @relation(fields: [organizationId], references: [id])                          
+  fundingRequests         FundingRequest[]  
+  createdAt               DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime @updatedAt @db.Timestamptz(6) 
 }

@@ -26,6 +26,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { signOut } from "next-auth/react";
+import { useOrganizationStore, useTeamStore } from "@/store/store";
+
 export function NavUser({
   user,
 }: {
@@ -36,6 +38,8 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const { reset } = useTeamStore();
+  const { reset: organizationReset } = useOrganizationStore();
 
   return (
     <SidebarMenu>
@@ -102,7 +106,13 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut({ redirectTo: "/login" })}>
+            <DropdownMenuItem
+              onClick={() => {
+                reset();
+                organizationReset();
+                signOut({ redirectTo: "/login" });
+              }}
+            >
               <LogOut />
               Log out
             </DropdownMenuItem>

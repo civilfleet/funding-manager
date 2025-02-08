@@ -52,7 +52,6 @@ export default function OrganizationTable() {
       const response = await fetch(`/api/organization?query=${values.query}`);
       const { data } = await response.json();
       setData(data);
-      console.log("response", data);
     } catch (error) {
       console.error("Error fetching organizations:", error);
       toast({

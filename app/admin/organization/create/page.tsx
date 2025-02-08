@@ -8,7 +8,6 @@ export default function Page() {
           name: undefined,
           email: "",
           address: undefined,
-          x: undefined,
           city: undefined,
           country: undefined,
           phone: undefined,
@@ -18,6 +17,8 @@ export default function Page() {
           taxID: undefined,
           bankDetails: undefined,
           contactPerson: undefined,
+          id: "",
+          isFilledByOrg: false,
         }}
       />
     </div>

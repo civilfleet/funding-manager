@@ -4,7 +4,6 @@ import OrganizationForm from "@/components/forms/organization-form";
 export default async function Page() {
   // get organization data
   const session = await auth();
-  console.log(session, "session");
 
   const email = session?.user?.email as string;
   const organization = await fetch(
@@ -13,7 +12,6 @@ export default async function Page() {
     }/api/organization?email=${encodeURIComponent(email)}`
   );
   const data = await organization.json();
-
   return (
     <div>
       <OrganizationForm data={data.data} />
