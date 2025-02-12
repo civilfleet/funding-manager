@@ -10,6 +10,7 @@ declare module "next-auth" {
       roles?: string[];
       teamsId?: string[];
       organizationId?: string;
+      provider?: string;
     } & DefaultSession["user"];
   }
 }
@@ -96,6 +97,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.roles = rolesAccess;
         session.user.accessToken = accessToken;
         session.user.teamsId = token.teamsId as string[] | undefined;
+        session.user.provider = token.provider as string | undefined;
         session.user.organizationId = token.organizationId as
           | string
           | undefined;

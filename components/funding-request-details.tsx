@@ -1,13 +1,13 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 import {
   FileText,
   Calendar,
@@ -18,19 +18,60 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { FundingRequest } from "@/types";
+import FormInputControl from "./helper/FormInputControl";
+import { Form } from "./ui/form";
+import { useForm } from "react-hook-form";
+import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
+import { useSession } from "next-auth/react";
+
+const amountOfferSchema = z.object({
+  amountAgreed: z.coerce.number(),
+});
 
 export default function FundingRequestDetail({
   data,
 }: {
   data: FundingRequest;
 }) {
-  const statusVariant =
-    {
-      Pending: "bg-yellow-100 text-yellow-800",
-      Approved: "bg-green-100 text-green-800",
-      Rejected: "bg-red-100 text-red-800",
-      UnderReview: "bg-blue-100 text-blue-800",
-    }[data.status] || "bg-gray-100 text-gray-800";
+  const { toast } = useToast();
+  const { data: session } = useSession();
+
+  const form = useForm<z.infer<typeof amountOfferSchema>>({
+    resolver: zodResolver(amountOfferSchema),
+    defaultValues: {
+      amountAgreed: data.amountAgreed,
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof amountOfferSchema>) {
+    try {
+      console.log("values", values);
+
+      const response = await fetch(`/api/funding-request/${data.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...values, status: "UnderReview" }),
+      });
+      await response.json();
+      data.amountAgreed = values.amountAgreed;
+      toast({
+        title: "Success",
+        description: "Request Submitted Successfully. ",
+        variant: "default",
+      });
+    } catch (e) {
+      toast({
+        title: "Error",
+        description: JSON.stringify(e),
+      });
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -44,37 +85,7 @@ export default function FundingRequestDetail({
         </div>
 
         <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">
-              Agreed Amount:
-            </span>
-            <span className="text-lg font-semibold">
-              {data.amountAgreed ? formatCurrency(data.amountAgreed) : "N/A"}
-            </span>
-          </div>
-
-          <Select
-            value={data.status}
-            // onValueChange={(value) => handleStatusChange(value)}
-          >
-            <SelectTrigger className={`w-[180px] ${statusVariant}`}>
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Pending" className="hover:bg-yellow-50">
-                Pending
-              </SelectItem>
-              <SelectItem value="Approved" className="hover:bg-green-50">
-                Approved
-              </SelectItem>
-              <SelectItem value="Rejected" className="hover:bg-red-50">
-                Rejected
-              </SelectItem>
-              <SelectItem value="Under Review" className="hover:bg-blue-50">
-                Under Review
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <Badge>{data?.status}</Badge>
         </div>
       </div>
       {/* Main Content */}
@@ -175,6 +186,33 @@ export default function FundingRequestDetail({
               </CardContent>
             </Card>
           </div>
+
+          {session?.user?.provider === "keycloak" && (
+            <div className="flex flex-col items-end gap-2">
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-8"
+                >
+                  <div className="flex items-center gap-3">
+                    <FormInputControl
+                      name="amountAgreed"
+                      placeholder="Amount to Offer"
+                      type="number"
+                      form={form}
+                    />
+                    <Button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={form.formState.isSubmitting}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
+          )}
         </div>
 
         {/* Right Column */}

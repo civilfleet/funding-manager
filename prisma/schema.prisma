@@ -17,7 +17,7 @@ model Teams {
   city                    String?      @db.VarChar(255)  
   country                 String?      @db.VarChar(255)  
   website                 String?      @db.VarChar(255)
-  bankDetailsId           String?    @unique
+  bankDetailsId           String?      @unique
   bankDetails             BankDetails? @relation(fields: [bankDetailsId], references: [id])
   organizations           Organization[]
   createdAt               DateTime    @default(now()) @db.Timestamptz(6)
@@ -50,17 +50,12 @@ model Organization {
   isFilledByOrg           Boolean      @default(false)
   bankDetailsId           String?      @unique
   managers                Manager[]   
-  
   contacts                ContactPerson[]   // Updated: One-to-many relation
   teamId                  String?     
   team                    Teams?              @relation(fields: [teamId], references: [id])   
-
   bankDetails             BankDetails?        @relation(fields: [bankDetailsId], references: [id])
   fundingRequests         FundingRequest[]                
-  taxExemptionCertificate File?               @relation("OrganizationTaxExemptionCertificate") 
-  articlesOfAssociation   File?               @relation("OrganizationArticlesOfAssociation")    
-
-
+  Files                   File[]                        
   createdAt               DateTime    @default(now()) @db.Timestamptz(6) 
   updatedAt               DateTime    @updatedAt @db.Timestamptz(6) 
 }
@@ -100,8 +95,6 @@ model FundingRequest {
   status                    FundingStatus @default(Pending)   
   submittedById             String           
   submittedBy               ContactPerson? @relation(fields: [submittedById], references: [id])
-
-
   createdAt                 DateTime @default(now()) @db.Timestamptz(6) 
   updatedAt                 DateTime @updatedAt @db.Timestamptz(6) 
   files                     File[]                               
@@ -109,16 +102,16 @@ model FundingRequest {
 
 model File {
   id          String    @id @default(uuid()) @unique 
-  content     String                             
+  name        String?      @db.VarChar(255)  
+  url         String
+  type        String      @db.VarChar(255)                             
   createdBy   String      @db.VarChar(255)                         
   updatedBy   String      @db.VarChar(255)                         
-  createdAt   DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime @updatedAt @db.Timestamptz(6) 
+  createdAt   DateTime    @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(6) 
 
-  OrganizationTaxExemptionCertificate Organization? @relation("OrganizationTaxExemptionCertificate", fields: [organizationId], references: [id], map: "File_organizationId_fkey1")
-  OrganizationArticlesOfAssociation     Organization? @relation("OrganizationArticlesOfAssociation", fields: [organizationId], references: [id], map: "File_organizationId_fkey2")
-  
-  organizationId String? @unique
+  organizationId String?  @db.VarChar(255)  
+  organization   Organization? @relation(fields: [organizationId], references: [id])  // One-to-Many relation
   fundingRequestId String?
   FundingRequest FundingRequest? @relation(fields: [fundingRequestId], references: [id])
 }

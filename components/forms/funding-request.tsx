@@ -1,6 +1,6 @@
 "use client";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { Form, FormControl, FormItem, FormLabel } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFundingRequestSchema } from "@/validations/funding-request";
@@ -16,19 +16,23 @@ import {
 import ButtonControl from "../helper/ButtonControl";
 import FormInputControl from "../helper/FormInputControl";
 import { useSession } from "next-auth/react";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import FileUpload from "../file-uploader";
 
 type FundingRequest = {
-  description: string;
+  status: string;
   purpose: string;
+  description: string;
+  sustainability: string;
   amountRequested: string;
   refinancingConcept: string;
-  sustainability: string;
   expectedCompletionDate: string;
-  status: string;
   createdAt: string;
   updatedAt: string;
-  files: string;
+  files: [];
 };
+
 export default function FundingRequest() {
   const { toast } = useToast();
   const { data: session } = useSession();
@@ -42,10 +46,25 @@ export default function FundingRequest() {
       refinancingConcept: "",
       sustainability: "",
       expectedCompletionDate: "",
-      status: "",
-      files: "",
+      status: "Pending",
+      files: [
+        {
+          name: "",
+          url: "",
+        },
+      ],
     },
   });
+  const {
+    fields: files,
+    append,
+    remove,
+  } = useFieldArray({
+    control: form.control,
+    name: "files",
+  });
+
+  const { setValue } = form;
 
   async function onSubmit(values: z.infer<typeof createFundingRequestSchema>) {
     try {
@@ -172,6 +191,34 @@ export default function FundingRequest() {
                 form={form}
               />
             </div>
+
+            {files.map((field, index) => (
+              <div key={field.id} className="flex gap-2">
+                <Input
+                  {...form.register(`files.${index}.name` as any)}
+                  placeholder={`File Name`}
+                  className="border p-2 rounded w-full"
+                />
+                <FileUpload
+                  placeholder="Logo of your Organization"
+                  name={`file ${index + 1}`}
+                  onFileUpload={(url) => setValue(`files.${index}.url`, url)}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => remove(index)}
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+
+            <Button type="button" onClick={() => append({ url: "", name: "" })}>
+              Add New File
+            </Button>
+
             {/* <Textarea name="files" placeholder="Files" /> */}
             <div className="grid grid-cols-2 gap-4"></div>
             <ButtonControl

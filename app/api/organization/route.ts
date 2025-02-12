@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { createOrganizationSchema } from "@/validations/organizations";
+import {
+  createOrganizationSchema,
+  updateOrganizationSchema,
+} from "@/validations/organizations";
 import { getErrorMessage } from "../helpers";
 import {
   createOrUpdateOrganization,
@@ -7,6 +10,7 @@ import {
   getOrganizations,
 } from "@/services/organizations";
 import { z } from "zod";
+import { update } from "lodash";
 
 // ✅ GET All Organizations
 export async function GET(req: Request) {
@@ -65,7 +69,7 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const organization = await req.json();
-    const validatedData = createOrganizationSchema
+    const validatedData = updateOrganizationSchema
       .and(z.object({ isFilledByOrg: z.boolean() }))
       .parse({ ...organization });
     await createOrUpdateOrganization(validatedData);

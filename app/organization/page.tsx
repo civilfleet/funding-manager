@@ -11,6 +11,7 @@ export default async function Page() {
       process.env.NEXT_PUBLIC_BASE_URL
     }/api/organization?email=${encodeURIComponent(email)}`
   );
+
   const data = await organization.json();
   return (
     <div>

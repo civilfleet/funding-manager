@@ -17,6 +17,7 @@ export default async function Profile({
   const fundingRequests = await fetch(
     `${process.env.NEXT_PUBLIC_BASE_URL}/api/funding-request?orgId=${id}`
   );
+
   const { data: fundingRequestsData } = await fundingRequests.json();
   const { data: contactsData } = await contacts.json();
   const { data } = await organization.json();

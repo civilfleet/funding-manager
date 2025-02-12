@@ -3,24 +3,24 @@ import { z } from "zod";
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import ButtonControl from "../helper/ButtonControl";
 import { DataTable } from "@/components/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  OrganizationColumns,
-  columns,
-} from "@/components/table/organization-columns";
-import FormInputControl from "../helper/FormInputControl";
-import { Form } from "@/components/ui/form";
+import { columns } from "@/components/table/funding-request-columns";
 import { useToast } from "@/hooks/use-toast";
+import { Form } from "../ui/form";
+import FormInputControl from "../helper/FormInputControl";
+import ButtonControl from "../helper/ButtonControl";
+import { useSession } from "next-auth/react";
 
 const querySchema = z.object({
   query: z.string(),
 });
 
-export default function OrganizationTable() {
+export default function FundingRequestTable() {
   const { toast } = useToast();
-  const [data, setData] = useState<OrganizationColumns[]>([]);
+  const [data, setData] = useState([]);
+  const { data: session } = useSession();
+
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
     defaultValues: {
@@ -31,39 +31,49 @@ export default function OrganizationTable() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch("/api/organization?query=");
-        const { data } = await response.json();
-        if (!data) {
-          toast({
-            title: "Error",
-            description: "Error fetching organizations",
-            variant: "destructive",
-          });
+        if (session) {
+          let response;
+          if (session?.user.provider === "google") {
+            response = await fetch(
+              `/api/funding-request/?orgId=${session?.user.organizationId}&query=`
+            );
+          } else {
+            response = await fetch("/api/funding-request?query=");
+          }
+          const { data } = await response.json();
+          setData(data);
+          console.log(data);
         }
-        setData(data);
       } catch (error) {
-        console.error("Error fetching organizations:", error);
+        console.error("Error fetching FundingsRequest:", error);
         toast({
           title: "Error",
-          description: "Error fetching organizations",
+          description: "Error fetching FundingsRequest",
           variant: "destructive",
         });
       }
     }
 
     fetchData();
-  }, []);
+  }, [session?.user.provider, session?.user.organizationId]);
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
-      const response = await fetch(`/api/organization?query=${values.query}`);
+      let response;
+      if (session?.user.provider === "google") {
+        response = await fetch(
+          `/api/funding-request/?orgId=${session?.user.organizationId}&query=${values.query}`
+        );
+      } else {
+        response = await fetch(`/api/funding-request?query=${values.query}`);
+      }
       const { data } = await response.json();
       setData(data);
     } catch (error) {
-      console.error("Error fetching organizations:", error);
+      console.error("Error fetching funding requests:", error);
       toast({
         title: "Error",
-        description: "Error fetching organizations",
+        description: "Error fetching funding requests",
         variant: "destructive",
       });
     }
@@ -84,12 +94,11 @@ export default function OrganizationTable() {
           <ButtonControl type="submit" label="Submit" className="mx-2" />
         </form>
       </Form>
-
       <div
         className="rounded-md border my-2 flex 
       flex-grow h-full"
       >
-        {data && <DataTable columns={columns} data={data} />}
+        <DataTable columns={columns} data={data} />
       </div>
     </div>
   );

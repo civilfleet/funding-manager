@@ -110,7 +110,7 @@ export function NavUser({
               onClick={() => {
                 reset();
                 organizationReset();
-                signOut({ redirectTo: "/login" });
+                signOut({ redirectTo: "/" });
               }}
             >
               <LogOut />

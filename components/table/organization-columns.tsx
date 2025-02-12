@@ -60,10 +60,10 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
   },
   {
     accessorKey: "name",
-    header: () => <div className="text-center w-24">Name</div>,
+    header: () => <div className="text-left w-24">Name</div>,
     cell: ({ row }) => {
       return (
-        <div className="text-center font-medium">
+        <div className="text-left font-medium">
           {row.getValue("name") || "N/A"}
         </div>
       );
@@ -71,10 +71,10 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
   },
   {
     accessorKey: "email",
-    header: () => <div className="text-center w-24">Email</div>,
+    header: () => <div className="text-left w-24">Email</div>,
     cell: ({ row }) => {
       return (
-        <div className="text-center font-medium">
+        <div className="text-left font-medium">
           {row.getValue("email") || "N/A"}
         </div>
       );
@@ -82,10 +82,10 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
   },
   {
     accessorKey: "phone",
-    header: () => <div className="text-center max-w-24">Phone</div>,
+    header: () => <div className="text-left max-w-24">Phone</div>,
     cell: ({ row }) => {
       return (
-        <div className="text-center font-medium">
+        <div className="text-left font-medium">
           {row.getValue("phone") || "N/A"}
         </div>
       );
@@ -94,10 +94,10 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
 
   {
     accessorKey: "country",
-    header: () => <div className="text-center w-24">Country</div>,
+    header: () => <div className="text-left w-24">Country</div>,
     cell: ({ row }) => {
       return (
-        <div className="text-center font-medium">
+        <div className="text-left font-medium">
           {row.getValue("country") || "N/A"}
         </div>
       );
@@ -105,10 +105,10 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
   },
   {
     accessorKey: "website",
-    header: () => <div className="text-center w-24">Website</div>,
+    header: () => <div className="text-left w-24">Website</div>,
     cell: ({ row }) => {
       return (
-        <div className="text-center font-medium">
+        <div className="text-left font-medium">
           {row.getValue("website") || "N/A"}
         </div>
       );
@@ -116,10 +116,10 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
   },
   {
     accessorKey: "taxID",
-    header: () => <div className="text-center w-24">Tax ID</div>,
+    header: () => <div className="text-left w-24">Tax ID</div>,
     cell: ({ row }) => {
       return (
-        <div className="text-center font-medium">
+        <div className="text-left font-medium">
           {row.getValue("taxID") || "N/A"}
         </div>
       );
@@ -128,10 +128,10 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
 
   {
     accessorKey: "contactPerson.email",
-    header: () => <div className="text-center w-24">Contact Email</div>,
+    header: () => <div className="text-left w-24">Contact Email</div>,
     cell: ({ row }) => {
       return (
-        <div className="text-center font-medium">
+        <div className="text-left font-medium">
           {row.original.contactPerson?.email || "N/A"}
         </div>
       );
@@ -139,10 +139,10 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
   },
   {
     accessorKey: "bankDetails.bankName",
-    header: () => <div className="text-center w-24">Bank Name</div>,
+    header: () => <div className="text-left w-24">Bank Name</div>,
     cell: ({ row }) => {
       return (
-        <div className="text-center font-medium">
+        <div className="text-left font-medium">
           {row.original.bankDetails?.bankName || "N/A"}
         </div>
       );
@@ -150,10 +150,10 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
   },
   {
     accessorKey: "createdAt",
-    header: () => <div className="text-center w-24">Created At</div>,
+    header: () => <div className="text-left w-24">Created At</div>,
     cell: ({ row }) => {
       return (
-        <div className="text-center font-medium">
+        <div className="text-left font-medium">
           {new Date(row.getValue("createdAt")).toLocaleDateString() || "N/A"}
         </div>
       );

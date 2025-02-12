@@ -115,3 +115,10 @@ export interface Teams {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export enum FileTypes {
+  TAX_EXEMPTION_CERTIFICATE = "TAX_EXEMPTION_CERTIFICATE",
+  ARTICLES_OF_ASSOCIATION = "ARTICLES_OF_ASSOCIATION",
+  REPORT = "REPORT",
+  LOGO = "LOGO",
+}

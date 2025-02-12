@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
+import { auth } from "@/auth";
 
 type FundingRequestData = {
   id?: string;
@@ -12,23 +13,28 @@ type FundingRequestData = {
   refinancingConcept: string;
   sustainability: string;
   expectedCompletionDate: string;
-  status?: string;
+  status: "Pending" | "UnderReview" | "Approved" | "Rejected";
   submittedBy?: string;
+  files?: { name: string; url: string }[];
 };
 
 const createFundingRequest = async (data: FundingRequestData) => {
+  const session = await auth();
+
+  const contactPerson = await prisma.contactPerson.findFirst({
+    where: {
+      email: session?.user.email as string,
+    },
+    select: {
+      id: true,
+    },
+  });
+  console.log(contactPerson, "contactPerson");
   try {
-    let contactPerson;
-    if (data?.submittedBy) {
-      contactPerson = await prisma.contactPerson.findFirst({
-        where: {
-          email: data?.submittedBy,
-        },
-        select: {
-          id: true,
-        },
-      });
-    }
+    const completionDate = new Date(data.expectedCompletionDate);
+
+    console.log("Received Data:", data);
+    console.log("Contact Person:", contactPerson);
 
     const fundingRequest = await prisma.fundingRequest.create({
       data: {
@@ -37,18 +43,55 @@ const createFundingRequest = async (data: FundingRequestData) => {
         amountRequested: data.amountRequested,
         refinancingConcept: data.refinancingConcept,
         sustainability: data.sustainability,
-        expectedCompletionDate: new Date(data.expectedCompletionDate),
+        expectedCompletionDate: completionDate,
         organization: {
           connect: {
-            id: data.organizationId,
+            id: data.organizationId as string,
           },
         },
         submittedBy: {
           connect: {
-            id: contactPerson?.id,
+            id: contactPerson?.id as string,
           },
         },
       },
+    });
+
+    const files = data?.files?.map((file) => {
+      return {
+        name: file.name,
+        url: file.url,
+        fundingRequestId: fundingRequest.id as string,
+        organizationId: data.organizationId as string,
+        createdBy: contactPerson?.id as string,
+        updatedBy: contactPerson?.id as string,
+        type: "FundingRequest",
+      };
+    });
+
+    console.log("Files:", files);
+
+    if (files) {
+      console.log("Files:", files);
+      await prisma.file.createMany({
+        data: files,
+      });
+    }
+
+    return { ...fundingRequest };
+  } catch (e) {
+    console.log(e, "error");
+    handlePrismaError(e);
+  }
+};
+const updateFundingRequest = async (
+  id: string,
+  data: Partial<FundingRequestData>
+) => {
+  try {
+    const fundingRequest = await prisma.fundingRequest.update({
+      where: { id },
+      data: data as Prisma.FundingRequestUpdateInput,
     });
     return { ...fundingRequest };
   } catch (e) {
@@ -58,7 +101,33 @@ const createFundingRequest = async (data: FundingRequestData) => {
 
 const getFundingRequests = async () => {
   try {
-    const fundingRequests = await prisma.fundingRequest.findMany({});
+    const fundingRequests = await prisma.fundingRequest.findMany({
+      select: {
+        id: true,
+        description: true,
+        purpose: true,
+        amountRequested: true,
+        amountAgreed: true,
+        refinancingConcept: true,
+        sustainability: true,
+        expectedCompletionDate: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        files: true,
+        organization: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        submittedBy: {
+          select: {
+            email: true,
+          },
+        },
+      },
+    });
     return fundingRequests;
   } catch (error) {
     throw handlePrismaError(error);
@@ -73,7 +142,33 @@ const getFundingRequestsByOrgId = async (searchQuery: string) => {
           id: searchQuery,
         },
       },
+      select: {
+        id: true,
+        description: true,
+        purpose: true,
+        amountRequested: true,
+        amountAgreed: true,
+        refinancingConcept: true,
+        sustainability: true,
+        expectedCompletionDate: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        files: true,
+        organization: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        submittedBy: {
+          select: {
+            email: true,
+          },
+        },
+      },
     });
+    console.log(fundingRequests, "isorg");
     return fundingRequests;
   } catch (error) {
     throw handlePrismaError(error);
@@ -110,7 +205,6 @@ const getFundingRequestById = async (id: string) => {
             city: true,
             country: true,
             website: true,
-            taxExemptionCertificate: true,
             taxID: true,
             bankDetails: {
               select: {
@@ -143,6 +237,7 @@ const getFundingRequestById = async (id: string) => {
 };
 
 export {
+  updateFundingRequest,
   createFundingRequest,
   getFundingRequests,
   getFundingRequestsByOrgId,

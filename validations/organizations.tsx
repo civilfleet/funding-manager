@@ -158,8 +158,63 @@ const createOrganizationSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
+  articlesOfAssociation: z
+    .string()
+    .min(2, {
+      message: "Articles of association is required.",
+    })
+    .optional()
+    .or(z.literal("")),
+  logo: z.string().optional().or(z.literal("")),
   bankDetails: bankDetailsSchema,
   contactPerson: createContactSchema,
 });
 
-export { createOrganizationSchema, createContactSchema, bankDetailsSchema };
+const updateOrganizationSchema = z.object({
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  email: z.string().email({
+    message: "Invalid email address format.",
+  }),
+
+  address: z.string().min(2, {
+    message: "Address must be at least 2 characters.",
+  }),
+  postalCode: z.string().min(2, {
+    message: "Postal code must be at least 2 characters.",
+  }),
+  city: z.string().min(2, {
+    message: "City must be at least 2 characters.",
+  }),
+  country: z.string().min(2, {
+    message: "Country must be at least 2 characters.",
+  }),
+  phone: z.string().min(2, {
+    message: "Phone must be at least 2 characters.",
+  }),
+  website: z.string().min(2, {
+    message: "Website must be at least 2 characters.",
+  }),
+  taxExemptionCertificate: z.string().min(2, {
+    message: "Tax exemption certificate is required.",
+  }),
+  articlesOfAssociation: z.string().min(2, {
+    message: "Articles of association is required.",
+  }),
+  logo: z.string().min(2, {
+    message: "Logo is required.",
+  }),
+  taxID: z.string().min(2, {
+    message: "Tax ID must be at least 2 characters.",
+  }),
+  bankDetails: bankDetailsSchema,
+  contactPerson: createContactSchema,
+});
+
+export {
+  createOrganizationSchema,
+  createContactSchema,
+  bankDetailsSchema,
+  updateOrganizationSchema,
+};

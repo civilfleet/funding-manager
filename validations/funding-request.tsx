@@ -5,6 +5,7 @@ const createFundingRequestSchema = z.object({
     .string()
     .min(10, "Description must be at least 10 characters."),
   purpose: z.string().min(10, "Purpose must be at least 10 characters."),
+  amountAgreed: z.coerce.number().optional(),
   amountRequested: z.coerce
     .number()
     .positive("Amount must be a positive number."),
@@ -19,11 +20,15 @@ const createFundingRequestSchema = z.object({
     .refine((date) => !isNaN(Date.parse(date)), {
       message: "Invalid date format.",
     }),
-  status: z
-    .string()
-    .min(5, "Status must be at least 5 characters.")
-    .optional()
-    .or(z.literal("")),
-  files: z.string().optional().or(z.literal("")),
+  status: z.enum(["Pending", "UnderReview", "Approved", "Rejected"]),
+  files: z.array(
+    z.object({
+      name: z.string(),
+      url: z.string(),
+    })
+  ),
 });
-export { createFundingRequestSchema };
+
+const updateFundingRequestSchema = createFundingRequestSchema.partial();
+
+export { createFundingRequestSchema, updateFundingRequestSchema };

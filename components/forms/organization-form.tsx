@@ -5,7 +5,10 @@ import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormInputControl from "../helper/FormInputControl";
-import { createOrganizationSchema } from "@/validations/organizations";
+import {
+  createOrganizationSchema,
+  updateOrganizationSchema,
+} from "@/validations/organizations";
 import { useToast } from "@/hooks/use-toast";
 import {
   Card,
@@ -18,6 +21,7 @@ import ButtonControl from "../helper/ButtonControl";
 import Alert from "@/components/alert";
 import { useState } from "react";
 import { useTeamStore } from "@/store/store";
+import FileUpload from "../file-uploader";
 
 type Organization = {
   id: string;
@@ -30,8 +34,10 @@ type Organization = {
   website?: string;
   postalCode?: string;
   taxExemptionCertificate?: string;
+  articlesOfAssociation?: string;
   taxID?: string;
   isFilledByOrg: boolean;
+  logo?: string;
   bankDetails?: {
     accountHolder?: string;
     iban?: string;
@@ -54,9 +60,10 @@ export default function OrganizationForm({ data }: { data: Organization }) {
   const { team } = useTeamStore();
   const [isUpdate] = useState(data?.email ? true : false);
   const [isFilledByOrg, setFillByOrg] = useState(data?.isFilledByOrg);
-
-  const form = useForm<z.infer<typeof createOrganizationSchema>>({
-    resolver: zodResolver(createOrganizationSchema),
+  const schema = isUpdate ? updateOrganizationSchema : createOrganizationSchema;
+  console.log(data, "data");
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
     defaultValues: {
       email: data?.email || "",
       name: data?.name || "",
@@ -67,7 +74,9 @@ export default function OrganizationForm({ data }: { data: Organization }) {
       postalCode: data?.postalCode || "",
       website: data?.website || "",
       taxExemptionCertificate: data?.taxExemptionCertificate || "",
+      articlesOfAssociation: data?.articlesOfAssociation || "",
       taxID: data?.taxID || "",
+      logo: data?.logo || "",
       bankDetails: {
         bankName: data?.bankDetails?.bankName || "",
         accountHolder: data?.bankDetails?.accountHolder || "",
@@ -83,7 +92,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof createOrganizationSchema>) {
+  async function onSubmit(values: z.infer<typeof schema>) {
     try {
       let response;
       if (!data?.email) {
@@ -129,6 +138,11 @@ export default function OrganizationForm({ data }: { data: Organization }) {
     }
   }
 
+  const handleFileUpload = (url: string) => {};
+
+  const handleArticleOfAssociation = (url: string) => {
+    form.setValue("articlesOfAssociation", url);
+  };
   return (
     <Card className="w-full">
       <CardHeader>
@@ -185,20 +199,34 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   placeholder="Website"
                 />
               </div>
-              <h4 className="text-lg font-semibold">
-                Tax Information
+              <div>
+                <h4 className="text-lg font-semibold">Tax Details</h4>
+                <CardDescription>
+                  Please attached your tax exemption certificate
+                </CardDescription>
                 <hr />
-              </h4>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <FormInputControl
                   form={form}
                   name="taxID"
                   placeholder="Tax ID"
                 />
-                <FormInputControl
-                  form={form}
-                  name="taxExemptionCertificate"
+
+                <FileUpload
                   placeholder="Tax exemption certificate"
+                  name="taxExemptionCertificate"
+                  data={data?.taxExemptionCertificate}
+                  onFileUpload={(url) =>
+                    form.setValue("taxExemptionCertificate", url)
+                  }
+                  error={
+                    form?.formState?.errors?.taxExemptionCertificate
+                      ? (form.formState.errors?.taxExemptionCertificate
+                          ?.message as string)
+                      : ""
+                  }
                 />
               </div>
 
@@ -206,6 +234,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                 <h4 className="text-lg font-semibold">Bank Details</h4>
                 <hr />
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <FormInputControl
                   form={form}
@@ -254,6 +283,53 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   name="contactPerson.address"
                   placeholder="Contact person address"
                 />
+              </div>
+
+              <div>
+                <h4 className="text-lg font-semibold">
+                  Article of Association & Logo
+                </h4>
+                <CardDescription>
+                  Please attached articles of association and logo
+                </CardDescription>
+                <hr />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-gray-600 text-sm pl-2">
+                    Article of Association
+                  </label>
+
+                  <FileUpload
+                    placeholder="Article of Association"
+                    name="articlesOfAssociation"
+                    data={data?.taxExemptionCertificate}
+                    error={
+                      form?.formState?.errors?.articlesOfAssociation
+                        ? (form.formState.errors?.articlesOfAssociation
+                            ?.message as string)
+                        : ""
+                    }
+                    onFileUpload={(url) =>
+                      form.setValue("articlesOfAssociation", url)
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="text-gray-600 text-sm  pl-2"> Logo</label>
+                  <FileUpload
+                    placeholder="Logo of your Organization"
+                    name="logo"
+                    data={data?.logo}
+                    error={
+                      form?.formState?.errors?.logo
+                        ? (form.formState.errors?.logo?.message as string)
+                        : ""
+                    }
+                    onFileUpload={(url) => form.setValue("logo", url)}
+                  />
+                </div>
               </div>
 
               {isUpdate ? (

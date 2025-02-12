@@ -1,7 +1,7 @@
-import prisma from "@/lib/prisma";
-import { handlePrismaError } from "@/lib/utils";
-import { Prisma } from "@prisma/client";
 import _ from "lodash";
+import prisma from "@/lib/prisma";
+import { auth } from "@/auth";
+import { handlePrismaError } from "@/lib/utils";
 
 type Organization = {
   name?: string;
@@ -13,6 +13,8 @@ type Organization = {
   phone?: string;
   website?: string;
   taxExemptionCertificate?: string;
+  articlesOfAssociation?: string;
+  logo?: string;
   taxID?: string;
   teamId?: string;
   isFilledByOrg: boolean;
@@ -38,9 +40,13 @@ const createOrUpdateOrganization = async (formData: Organization) => {
     // if contact or bank details data is available then
     // create contact first and bank detail
     // first so that we can link them with organization.
-
-    let contactPerson = null;
-    let bankDetail = null;
+    console.log(formData);
+    const session = await auth();
+    const contact = await prisma.contactPerson.findFirst({
+      where: {
+        email: session?.user.email as string,
+      },
+    });
 
     const response = await prisma.$transaction(async (prisma) => {
       let bankDetail = undefined;
@@ -65,6 +71,7 @@ const createOrUpdateOrganization = async (formData: Organization) => {
           },
         });
       }
+
       let organization;
       if (!formData.teamId) {
         // Upsert Organization
@@ -85,6 +92,49 @@ const createOrUpdateOrganization = async (formData: Organization) => {
               : undefined,
           },
         });
+
+        // create certificate of association and tax exemption certificate
+        if (formData.taxExemptionCertificate && contact?.id) {
+          await prisma.file.create({
+            data: {
+              url: formData.taxExemptionCertificate,
+              createdBy: contact.id,
+              updatedBy: contact?.id,
+              organization: {
+                connect: { id: organization.id },
+              },
+              type: "TAX_EXEMPTION_CERTIFICATE",
+            },
+          });
+        }
+
+        if (formData.articlesOfAssociation && contact?.id) {
+          await prisma.file.create({
+            data: {
+              url: formData.articlesOfAssociation,
+              createdBy: contact.id,
+              updatedBy: contact?.id,
+              organization: {
+                connect: { id: organization.id },
+              },
+              type: "ARTICLES_OF_ASSOCIATION",
+            },
+          });
+        }
+        if (formData.logo && contact?.id) {
+          await prisma.file.create({
+            data: {
+              url: formData.logo,
+
+              createdBy: contact.id,
+              updatedBy: contact?.id,
+              organization: {
+                connect: { id: organization.id },
+              },
+              type: "LOGO",
+            },
+          });
+        }
       } else
         organization = await prisma.organization.create({
           data: {
@@ -108,7 +158,6 @@ const createOrUpdateOrganization = async (formData: Organization) => {
         });
 
       let contactPerson = null;
-
       // Upsert Contact Person if provided
       if (formData?.contactPerson?.email) {
         contactPerson = await prisma.contactPerson.upsert({
@@ -154,9 +203,9 @@ const getOrganizationById = async (id: string) => {
       },
       include: {
         bankDetails: true,
+        Files: true,
       },
     });
-
     return { ...organization };
   } catch (error) {
     throw Error("Failed to get organization");
@@ -182,6 +231,7 @@ const getOrganizationByEmail = async (email: string) => {
         organization: {
           include: {
             bankDetails: true,
+            Files: true,
           },
         },
       },
@@ -191,7 +241,14 @@ const getOrganizationByEmail = async (email: string) => {
 
       return {
         ...organization,
-        contactPerson: _.omit(contactPerson, "organization"),
+        contactPerson: _.omit(contactPerson, "organization", "Files"),
+        taxExemptionCertificate: organization.Files.find(
+          (file) => file.type === "TAX_EXEMPTION_CERTIFICATE"
+        )?.url,
+        articlesOfAssociation: organization.Files.find(
+          (file) => file.type === "ARTICLES_OF_ASSOCIATION"
+        )?.url,
+        logo: organization.Files.find((file) => file.type === "LOGO")?.url,
       };
     }
   } catch (error) {

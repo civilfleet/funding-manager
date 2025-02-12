@@ -7,11 +7,15 @@ import { usePathname } from "next/navigation";
 import {
   AudioWaveform,
   BookOpen,
+  BookUser,
   Bot,
   Building,
+  ClipboardPlus,
   Command,
+  FolderOpen,
   Frame,
   GalleryVerticalEnd,
+  Scroll,
   Settings2,
   SquareTerminal,
 } from "lucide-react";
@@ -62,7 +66,7 @@ const data = {
     {
       title: "Donation Agreements",
       url: "/admin/donations-agreement",
-      icon: Bot,
+      icon: Scroll,
     },
     {
       title: "Funding Requests",
@@ -71,32 +75,33 @@ const data = {
     },
     {
       title: "Reports",
-      url: "/admin/reports",
-      icon: Settings2,
+      url: "/admin/report",
+      icon: ClipboardPlus,
     },
     {
       title: "Contacts",
-      url: "/admin/contacts",
-      icon: Settings2,
+      url: "/admin/contact",
+      icon: BookUser,
     },
     {
       title: "Files",
-      url: "/admin/files",
-      icon: Frame,
+      url: "/admin/file",
+      icon: FolderOpen,
     },
   ],
   organizationNav: [
     {
       title: "Organization",
       url: "/organization",
-      icon: SquareTerminal,
+      icon: Building,
       isActive: true,
     },
     {
       title: "Donation Agreement",
       url: "/organization/donations-agreement",
-      icon: Bot,
+      icon: Scroll,
     },
+
     {
       title: "Funding Requests",
       url: "/organization/funding-request",
@@ -104,18 +109,18 @@ const data = {
     },
     {
       title: "Reports",
-      url: "/organization/reports",
-      icon: Settings2,
+      url: "/organization/report",
+      icon: ClipboardPlus,
     },
     {
       title: "Contacts",
-      url: "/organization/contacts",
-      icon: Settings2,
+      url: "/organization/contact",
+      icon: BookUser,
     },
     {
       title: "Files",
-      url: "/organization/files",
-      icon: Frame,
+      url: "/organization/file",
+      icon: FolderOpen,
     },
   ],
   projects: [],
