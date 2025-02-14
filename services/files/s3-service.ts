@@ -3,6 +3,7 @@
 import s3Client from "@/lib/s3-client";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { cleanFileName } from "@/lib/utils";
 
 export const uploadFile = async ({
   fileName,
@@ -13,6 +14,9 @@ export const uploadFile = async ({
 }) => {
   try {
     console.log("fileName", process.env.NEXT_AWS_S3_BUCKET_NAME);
+    fileName = cleanFileName(fileName);
+    fileName = `${new Date().getTime()}-${fileName}`;
+
     const command = new PutObjectCommand({
       Key: `${fileName}`,
       ContentType: fileType,
@@ -25,6 +29,6 @@ export const uploadFile = async ({
     return putUrl;
   } catch (error) {
     console.log(error);
-    return null;
+    throw new Error("Error uploading file");
   }
 };

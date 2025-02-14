@@ -29,8 +29,6 @@ const FileUpload = ({
     const file = event.target.files && event.target.files[0];
     if (!file) return;
 
-    console.log("Selected File:", file);
-
     try {
       const upload = await fetch("/api/upload", {
         method: "POST",
@@ -39,7 +37,6 @@ const FileUpload = ({
       });
 
       const { putUrl } = await upload.json();
-      console.log("Signed URL:", putUrl);
 
       const uploadFile = await fetch(putUrl, {
         method: "PUT",
@@ -47,10 +44,10 @@ const FileUpload = ({
         body: file,
       });
 
-      console.log("File Upload Response:", uploadFile);
-
+      console.log("uploadFile", uploadFile);
       if (uploadFile.ok) {
-        const fileUrl = putUrl.split("?")[0]; // Remove query params
+        let fileUrl = putUrl.split("?")[0].split("/").pop(); // Remove query params
+        console.log("File uploaded successfully:", fileUrl);
         setFileUrl(fileUrl);
         onFileUpload(fileUrl); // Send file URL to parent
         setLoading(false);
@@ -72,7 +69,7 @@ const FileUpload = ({
       />
 
       <a
-        href={fileUrl || ""}
+        href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${fileUrl}` || ""}
         target="_blank"
         rel="noopener noreferrer"
         className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500"

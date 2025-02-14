@@ -61,7 +61,6 @@ export default function OrganizationForm({ data }: { data: Organization }) {
   const [isUpdate] = useState(data?.email ? true : false);
   const [isFilledByOrg, setFillByOrg] = useState(data?.isFilledByOrg);
   const schema = isUpdate ? updateOrganizationSchema : createOrganizationSchema;
-  console.log(data, "data");
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -111,7 +110,6 @@ export default function OrganizationForm({ data }: { data: Organization }) {
         });
         setFillByOrg(true);
       }
-      console.log(response.status, "response");
       // check for error
       if (!response.ok) {
         toast({

@@ -29,12 +29,8 @@ const createFundingRequest = async (data: FundingRequestData) => {
       id: true,
     },
   });
-  console.log(contactPerson, "contactPerson");
   try {
     const completionDate = new Date(data.expectedCompletionDate);
-
-    console.log("Received Data:", data);
-    console.log("Contact Person:", contactPerson);
 
     const fundingRequest = await prisma.fundingRequest.create({
       data: {
@@ -69,10 +65,7 @@ const createFundingRequest = async (data: FundingRequestData) => {
       };
     });
 
-    console.log("Files:", files);
-
     if (files) {
-      console.log("Files:", files);
       await prisma.file.createMany({
         data: files,
       });
@@ -80,7 +73,6 @@ const createFundingRequest = async (data: FundingRequestData) => {
 
     return { ...fundingRequest };
   } catch (e) {
-    console.log(e, "error");
     handlePrismaError(e);
   }
 };
@@ -114,7 +106,14 @@ const getFundingRequests = async () => {
         status: true,
         createdAt: true,
         updatedAt: true,
-        files: true,
+        files: {
+          select: {
+            id: true,
+            name: true,
+            url: true,
+            type: true,
+          },
+        },
         organization: {
           select: {
             name: true,
@@ -159,6 +158,14 @@ const getFundingRequestsByOrgId = async (searchQuery: string) => {
           select: {
             name: true,
             email: true,
+            Files: {
+              select: {
+                id: true,
+                name: true,
+                url: true,
+                type: true,
+              },
+            },
           },
         },
         submittedBy: {
@@ -168,7 +175,6 @@ const getFundingRequestsByOrgId = async (searchQuery: string) => {
         },
       },
     });
-    console.log(fundingRequests, "isorg");
     return fundingRequests;
   } catch (error) {
     throw handlePrismaError(error);
@@ -206,6 +212,14 @@ const getFundingRequestById = async (id: string) => {
             country: true,
             website: true,
             taxID: true,
+            Files: {
+              select: {
+                id: true,
+                name: true,
+                url: true,
+                type: true,
+              },
+            },
             bankDetails: {
               select: {
                 bankName: true,

@@ -10,7 +10,6 @@ import {
   getOrganizations,
 } from "@/services/organizations";
 import { z } from "zod";
-import { update } from "lodash";
 
 // ✅ GET All Organizations
 export async function GET(req: Request) {

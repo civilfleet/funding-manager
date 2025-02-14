@@ -40,7 +40,6 @@ const createOrUpdateOrganization = async (formData: Organization) => {
     // if contact or bank details data is available then
     // create contact first and bank detail
     // first so that we can link them with organization.
-    console.log(formData);
     const session = await auth();
     const contact = await prisma.contactPerson.findFirst({
       where: {
@@ -203,7 +202,13 @@ const getOrganizationById = async (id: string) => {
       },
       include: {
         bankDetails: true,
-        Files: true,
+        Files: {
+          select: {
+            id: true,
+            url: true,
+            type: true,
+          },
+        },
       },
     });
     return { ...organization };
@@ -231,7 +236,13 @@ const getOrganizationByEmail = async (email: string) => {
         organization: {
           include: {
             bankDetails: true,
-            Files: true,
+            Files: {
+              select: {
+                id: true,
+                url: true,
+                type: true,
+              },
+            },
           },
         },
       },
@@ -244,11 +255,11 @@ const getOrganizationByEmail = async (email: string) => {
         contactPerson: _.omit(contactPerson, "organization", "Files"),
         taxExemptionCertificate: organization.Files.find(
           (file) => file.type === "TAX_EXEMPTION_CERTIFICATE"
-        )?.url,
+        )?.id,
         articlesOfAssociation: organization.Files.find(
           (file) => file.type === "ARTICLES_OF_ASSOCIATION"
-        )?.url,
-        logo: organization.Files.find((file) => file.type === "LOGO")?.url,
+        )?.id,
+        logo: organization.Files.find((file) => file.type === "LOGO")?.id,
       };
     }
   } catch (error) {

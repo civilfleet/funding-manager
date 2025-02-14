@@ -11,8 +11,6 @@ export default async function Page() {
           <Button type="button">Create New</Button>
         </Link>
       </div>
-
-      <FileUploaderForm />
     </div>
   );
 }

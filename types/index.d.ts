@@ -28,9 +28,11 @@ export interface ContactPerson {
 
 export interface File {
   id: string;
-  content: string;
-  createdBy: string;
-  updatedBy: string;
+  url: string;
+  type: FileTypes;
+  name: string;
+  createdBy: ContactPerson;
+  updatedBy: ContactPerson;
   createdAt: Date;
   updatedAt: Date;
   organizationId?: string;
@@ -97,6 +99,7 @@ export interface Organization {
   articlesOfAssociation?: File;
   createdAt: Date;
   updatedAt: Date;
+  Files?: File[]; // This is a relation
 }
 
 export interface Teams {

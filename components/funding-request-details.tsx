@@ -39,11 +39,11 @@ export default function FundingRequestDetail({
 }) {
   const { toast } = useToast();
   const { data: session } = useSession();
-
+  console.log("data", data);
   const form = useForm<z.infer<typeof amountOfferSchema>>({
     resolver: zodResolver(amountOfferSchema),
     defaultValues: {
-      amountAgreed: data.amountAgreed,
+      amountAgreed: data.amountAgreed || 0,
     },
   });
 
@@ -189,12 +189,13 @@ export default function FundingRequestDetail({
 
           {session?.user?.provider === "keycloak" && (
             <div className="flex flex-col items-end gap-2">
+              <h3 className="text-lg font-semibold">Offer Amount</h3>
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
                   className="space-y-8"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center  align-middle ">
                     <FormInputControl
                       name="amountAgreed"
                       placeholder="Amount to Offer"
@@ -203,7 +204,7 @@ export default function FundingRequestDetail({
                     />
                     <Button
                       type="submit"
-                      className="btn btn-primary"
+                      className="btn btn-primary align-bottom ml-2"
                       disabled={form.formState.isSubmitting}
                     >
                       Save
@@ -240,28 +241,32 @@ export default function FundingRequestDetail({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {/* {data.files.length > 0 ? (
-                data.files.map((file, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    className="w-full justify-start"
-                    asChild
-                  >
-                    <a
-                      href={file.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+              {data.files.length > 0 ? (
+                [...(data.files || []), ...(data.organization.Files || [])].map(
+                  (file, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      className="w-full justify-start"
+                      asChild
                     >
-                      {file?.name}
-                    </a>
-                  </Button>
-                ))
-              ) : ( */}
-              <p className="text-muted-foreground text-sm">
-                No documents attached
-              </p>
-              {/* )} */}
+                      <a
+                        href={
+                          `${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${file?.id}` as string
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {(file?.name as string) || file.type}
+                      </a>
+                    </Button>
+                  )
+                )
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  No documents attached
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>

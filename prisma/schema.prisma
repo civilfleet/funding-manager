@@ -17,9 +17,11 @@ model Teams {
   city                    String?      @db.VarChar(255)  
   country                 String?      @db.VarChar(255)  
   website                 String?      @db.VarChar(255)
+
   bankDetailsId           String?      @unique
   bankDetails             BankDetails? @relation(fields: [bankDetailsId], references: [id])
   organizations           Organization[]
+  contacts                ContactPerson[]   // Updated: One-to-many relation
   createdAt               DateTime    @default(now()) @db.Timestamptz(6)
   updatedAt               DateTime    @updatedAt @db.Timestamptz(6)
 }
@@ -116,6 +118,12 @@ model File {
   FundingRequest FundingRequest? @relation(fields: [fundingRequestId], references: [id])
 }
 
+enum ContactType {
+  Organization
+  Team
+  Admin
+}
+
 model ContactPerson {
   id                      String      @id @default(uuid()) @unique 
   name                    String?      @db.VarChar(255)          
@@ -125,7 +133,9 @@ model ContactPerson {
   postalCode              String?      @db.VarChar(255)  
   city                    String?      @db.VarChar(255)  
   country                 String?      @db.VarChar(255)                           
-  
+  type                    ContactType @default(Organization)
+  teamId                  String?
+  team                    Teams?       @relation(fields: [teamId], references: [id])
   organizationId          String?     
   organization            Organization? @relation(fields: [organizationId], references: [id])                          
   fundingRequests         FundingRequest[]  

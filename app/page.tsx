@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 export default async function LoginPage() {
   const session = await auth();
   if (session?.user.provider === "google") {
-    redirect("/admin");
+    redirect("/organizations");
   } else if (session?.user.provider === "keycloak") {
     redirect("/admin");
   }

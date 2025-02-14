@@ -28,3 +28,11 @@ export function handlePrismaError(error: unknown): Error {
   console.error("Unexpected Error:", error);
   return new Error("Operation failed! Please try again later.");
 }
+
+export function cleanFileName(fileName: string): string {
+  return fileName
+    .trim() // Remove leading/trailing spaces
+    .replace(/[^a-zA-Z0-9._ ]/g, "") // Remove special characters except dot, underscore, and space
+    .replace(/\s+/g, "-") // Replace spaces with dashes
+    .toLowerCase(); // Convert to lowercase (optional)
+}
