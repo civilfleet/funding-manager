@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import OrganizationForm from "@/components/forms/organization-form";
+import OrganizationForm from "@/components/forms/organization";
 
 export default async function Page() {
   // get organization data

@@ -13,11 +13,8 @@ import {
   ClipboardPlus,
   Command,
   FolderOpen,
-  Frame,
   GalleryVerticalEnd,
   Scroll,
-  Settings2,
-  SquareTerminal,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -59,33 +56,33 @@ const data = {
   teamNav: [
     {
       title: "Organizations",
-      url: "/admin/organization",
+      url: "/team/organization",
       icon: Building,
       isActive: true,
     },
     {
       title: "Donation Agreements",
-      url: "/admin/donations-agreement",
+      url: "/team/donations-agreement",
       icon: Scroll,
     },
     {
       title: "Funding Requests",
-      url: "/admin/funding-request",
+      url: "/team/funding-request",
       icon: BookOpen,
     },
     {
       title: "Reports",
-      url: "/admin/report",
+      url: "/team/report",
       icon: ClipboardPlus,
     },
     {
       title: "Contacts",
-      url: "/admin/contact",
+      url: "/team/contact",
       icon: BookUser,
     },
     {
       title: "Files",
-      url: "/admin/file",
+      url: "/team/file",
       icon: FolderOpen,
     },
   ],
@@ -123,6 +120,34 @@ const data = {
       icon: FolderOpen,
     },
   ],
+  adminNav: [
+    {
+      title: "Admin",
+      url: "/admin",
+      icon: Building,
+    },
+    {
+      title: "Teams",
+      url: "/admin/teams",
+      icon: Building,
+    },
+    // {
+    //   title: "Organizations",
+    //   url: "/admin/organizations",
+    //   icon: Building,
+    // },
+    {
+      title: "Contacts",
+      url: "/admin/contacts",
+      icon: BookUser,
+    },
+    // {
+    //   title: "Files",
+    //   url: "/admin/files",
+    //   icon: FolderOpen,
+    // },
+  ],
+
   projects: [],
 };
 
@@ -130,6 +155,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [teams, setTeams] = useState([]);
   const pathname = usePathname();
   const isOrganization = pathname.startsWith("/organization");
+  const isAdmin = pathname.startsWith("/admin");
 
   const { data: session, status } = useSession();
 
@@ -180,7 +206,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain
-          items={isOrganization ? data.organizationNav : data.teamNav}
+          items={
+            isAdmin
+              ? data.adminNav
+              : isOrganization
+              ? data.organizationNav
+              : data.teamNav
+          }
           isTeamsMember={isTeamsMember}
         />
       </SidebarContent>

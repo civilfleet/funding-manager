@@ -29,7 +29,7 @@ export function LoginForm({
         )}
         action={async () => {
           "use server";
-          await signIn("keycloak", { redirectTo: "/admin" });
+          await signIn("keycloak", { redirectTo: "/team" });
         }}
         {...props}
       >

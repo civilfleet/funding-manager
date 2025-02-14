@@ -23,7 +23,7 @@ export default async function Profile({
   const { data } = await organization.json();
 
   if (!data) {
-    redirect("/admin/organization");
+    redirect("/team/organization");
   }
 
   return (

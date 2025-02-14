@@ -180,7 +180,7 @@ export default function OrganizationDetails({
                 <TableRow
                   className="cursor-pointer hover:bg-gray-100"
                   onClick={() =>
-                    router.push(`/admin/funding-request/${request.id}`)
+                    router.push(`/team/funding-request/${request.id}`)
                   }
                   key={request.id}
                 >

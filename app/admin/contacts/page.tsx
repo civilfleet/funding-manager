@@ -1,9 +1,3 @@
-import ContactForm from "@/components/forms/contact";
-
-export default function Page() {
-  return (
-    <div className="flex flex-col w-1/2">
-      <ContactForm />
-    </div>
-  );
+export default async function team() {
+  return <div className="m-2 w-full">contact person table</div>;
 }

@@ -7,7 +7,7 @@ export default async function Organization() {
     <div className="p-4 w-full">
       <div className="flex justify-between">
         <h1 className="text-2xl  my-2">Organizations</h1>
-        <Link href="/admin/organization/create">
+        <Link href="/team/organization/create">
           <Button type="button">Create New</Button>
         </Link>
       </div>

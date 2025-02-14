@@ -9,7 +9,7 @@ export default async function LoginPage() {
   if (session?.user.provider === "google") {
     redirect("/organizations");
   } else if (session?.user.provider === "keycloak") {
-    redirect("/admin");
+    redirect("/team");
   }
 
   return (

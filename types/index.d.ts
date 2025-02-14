@@ -10,6 +10,12 @@ export interface BankDetails {
   teams?: Teams;
 }
 
+export enum ContactType {
+  Organization = "Organization",
+  Team = "Team",
+  Admin = "Admin",
+}
+
 export interface ContactPerson {
   id: string;
   name?: string;
@@ -22,6 +28,10 @@ export interface ContactPerson {
   organizationId?: string;
   organization?: Organization;
   fundingRequests: FundingRequest[];
+  teamId?: string;
+  team?: Teams;
+  type: ContactType;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -108,6 +118,7 @@ export interface Teams {
   roleName: string;
   email: string;
   phone?: string;
+  address?: string;
   postalCode?: string;
   city?: string;
   country?: string;
@@ -115,6 +126,7 @@ export interface Teams {
   bankDetailsId?: string;
   bankDetails?: BankDetails;
   organizations: Organization[];
+  contacts: ContactPerson[];
   createdAt: Date;
   updatedAt: Date;
 }
