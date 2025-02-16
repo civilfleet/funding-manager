@@ -1,16 +1,7 @@
 "use client";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { FundingRequest, Organization } from "@/types";
+import { ContactPerson } from "@/types";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 // Reusable DetailItem component
 function DetailItem({
@@ -47,8 +38,6 @@ export default function ContactDetails({
 }: {
   contact: ContactPerson;
 }) {
-  const router = useRouter();
-
   return (
     <div className="grid gap-6">
       {/* Organization Info */}

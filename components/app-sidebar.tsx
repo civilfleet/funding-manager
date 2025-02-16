@@ -1,7 +1,6 @@
 "use client";
 import * as React from "react";
 import { useSession } from "next-auth/react";
-import { useTeamStore } from "@/store/store";
 import { usePathname } from "next/navigation";
 
 import {

@@ -137,11 +137,6 @@ export default function OrganizationForm({ data }: { data: Organization }) {
     }
   }
 
-  const handleFileUpload = (url: string) => {};
-
-  const handleArticleOfAssociation = (url: string) => {
-    form.setValue("articlesOfAssociation", url);
-  };
   return (
     <Card className="w-full">
       <CardHeader>

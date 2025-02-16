@@ -33,6 +33,7 @@ export default function ContactPersonTable() {
         const { data } = await response.json();
         setData(data);
       } catch (error) {
+        console.log(error);
         toast({
           title: "Error",
           description: "Error fetching Contact persons",
@@ -46,11 +47,11 @@ export default function ContactPersonTable() {
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
-      let response;
-      response = await fetch(`/api/contact-person?query=${values.query}`);
+      const response = await fetch(`/api/contact-person?query=${values.query}`);
       const { data } = await response.json();
       setData(data);
-    } catch (error) {
+    } catch (e) {
+      console.log(e);
       toast({
         title: "Error",
         description: "Error fetching contact person",

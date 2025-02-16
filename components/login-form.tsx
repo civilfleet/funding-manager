@@ -19,7 +19,7 @@ export function LoginForm({
         {...props}
       >
         <Button variant="outline" className="w-44">
-          Login as Organization
+          Sign In
         </Button>
       </form>
       {/* <form

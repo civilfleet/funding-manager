@@ -3,7 +3,6 @@ import { getErrorMessage } from "../helpers";
 import {
   createFundingRequest,
   getFundingRequests,
-  getFundingRequestsByOrgId,
 } from "@/services/funding-request";
 import { createFundingRequestSchema } from "@/validations/funding-request";
 import { z } from "zod";
@@ -12,7 +11,6 @@ import { auth } from "@/auth";
 // ✅ GET (Get Funding Requests)
 export async function GET(req: Request) {
   try {
-    let data;
     const session = await auth();
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
@@ -20,7 +18,7 @@ export async function GET(req: Request) {
     const orgId = session?.user?.organizationId as string;
     const teamId = session?.user?.teamId as string;
     console.log("getting funding requests", orgId, teamId);
-    data = await getFundingRequests({ teamId, orgId }, searchQuery);
+    const data = await getFundingRequests({ teamId, orgId }, searchQuery);
 
     return NextResponse.json(
       {

@@ -5,10 +5,7 @@ import {
   getFundingRequestById,
   updateFundingRequest,
 } from "@/services/funding-request";
-import {
-  createFundingRequestSchema,
-  updateFundingRequestSchema,
-} from "@/validations/funding-request";
+import { updateFundingRequestSchema } from "@/validations/funding-request";
 
 // ✅ GET Organization by ID
 export async function GET(

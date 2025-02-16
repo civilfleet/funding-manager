@@ -3,7 +3,6 @@
 import * as React from "react";
 import { ChevronsUpDown, GalleryVerticalEnd, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 
 import {
   DropdownMenu,
@@ -52,7 +51,7 @@ export function TeamSwitcher({
       }
     }
   }, [items]);
-
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   const setItem = async (item: any) => {
     if (status === "authenticated") {
       if (isTeamsMember) {

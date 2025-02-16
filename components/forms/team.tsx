@@ -58,8 +58,6 @@ export default function TeamForm() {
     }
   }
 
-  const handleFileUpload = (url: string) => {};
-
   return (
     <Card className="w-full">
       <CardHeader>

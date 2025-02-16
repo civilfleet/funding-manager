@@ -58,8 +58,9 @@ export default function FileTable() {
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
-      let response;
-      response = await fetch(`/api/funding-request/?query=${values.query}`);
+      const response = await fetch(
+        `/api/funding-request/?query=${values.query}`
+      );
       const { data } = await response.json();
       setData(data);
     } catch (error) {

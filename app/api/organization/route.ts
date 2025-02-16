@@ -6,7 +6,6 @@ import {
 import { getErrorMessage } from "../helpers";
 import {
   createOrUpdateOrganization,
-  getOrganizationByEmail,
   getOrganizations,
 } from "@/services/organizations";
 import { z } from "zod";
@@ -18,10 +17,9 @@ export async function GET(req: Request) {
     const session = await auth();
     const teamId = session?.user?.teamId as string;
 
-    let data;
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
-    data = await getOrganizations(searchQuery, teamId);
+    const data = await getOrganizations(searchQuery, teamId);
 
     return NextResponse.json(
       {

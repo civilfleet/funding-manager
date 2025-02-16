@@ -195,7 +195,7 @@ export default function FundingRequest() {
             {files.map((field, index) => (
               <div key={field.id} className="flex gap-2">
                 <Input
-                  {...form.register(`files.${index}.name` as any)}
+                  {...form.register(`files.${index}.name`)}
                   placeholder={`File Name`}
                   className="border p-2 rounded w-full"
                 />
