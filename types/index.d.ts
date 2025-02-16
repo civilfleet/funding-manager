@@ -100,7 +100,7 @@ export interface Organization {
   isFilledByOrg: boolean;
   bankDetailsId?: string;
   managers: Manager[];
-  contacts: ContactPerson[];
+  contactPersons: ContactPerson[];
   teamId?: string;
   team?: Teams;
   bankDetails?: BankDetails;
