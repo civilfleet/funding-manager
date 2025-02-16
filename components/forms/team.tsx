@@ -15,11 +15,9 @@ import {
   CardContent,
 } from "../ui/card";
 import ButtonControl from "../helper/ButtonControl";
-import { useState } from "react";
-import { Teams } from "@/types";
 import { createTeamSchema } from "@/validations/team";
 
-export default function TeamForm({ data }: { data: Teams }) {
+export default function TeamForm() {
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof createTeamSchema>>({
@@ -34,16 +32,17 @@ export default function TeamForm({ data }: { data: Teams }) {
         body: JSON.stringify(values),
       });
 
-      if (response.status == 400) {
+      const data = await response.json();
+
+      if (!response.ok) {
         toast({
           title: "Error",
-          description: response.statusText,
+          description: data.error || response.statusText,
           variant: "destructive",
         });
         return;
       }
 
-      await response.json();
       toast({
         title: "Success",
         description: "Team information created",
@@ -82,7 +81,6 @@ export default function TeamForm({ data }: { data: Teams }) {
               />
               <FormInputControl
                 form={form}
-                disabled={data?.email ? true : false}
                 name="email"
                 placeholder="Email address"
               />
@@ -159,7 +157,6 @@ export default function TeamForm({ data }: { data: Teams }) {
               />
               <FormInputControl
                 form={form}
-                disabled={data?.email ? true : false}
                 name="contactPerson.email"
                 placeholder="Contact person email"
               />

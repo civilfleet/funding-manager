@@ -16,7 +16,6 @@ export default auth(async (req) => {
   if (!token) {
     return NextResponse.redirect(new URL("/", nextUrl));
   }
-  console.log("token", token);
 
   const isAdmin = token.contactType === "Admin";
   const isOrganization = token.contactType === "Organization";

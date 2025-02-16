@@ -29,7 +29,7 @@ model Organization {
   isFilledByOrg           Boolean      @default(false)
   bankDetailsId           String?      @unique
   managers                Manager[]   
-  contacts     ContactPerson[] @relation("OrganizationContacts") // Many-to-Many relation
+  contactPersons          ContactPerson[] @relation("OrganizationContacts") // Many-to-Many relation
   teamId                  String?     
   team                    Teams?              @relation(fields: [teamId], references: [id])   
   bankDetails             BankDetails?        @relation(fields: [bankDetailsId], references: [id])
@@ -76,7 +76,10 @@ model FundingRequest {
   submittedBy               ContactPerson? @relation(fields: [submittedById], references: [id])
   createdAt                 DateTime @default(now()) @db.Timestamptz(6) 
   updatedAt                 DateTime @updatedAt @db.Timestamptz(6) 
-  files                     File[]                               
+  files                     File[]          
+  teamId                    String?
+  team                      Teams? @relation(fields: [teamId], references: [id])
+
 }
 
 model File {
@@ -119,7 +122,7 @@ model Teams {
   organizations Organization[]
   
   contactPersons     ContactPerson[] @relation("TeamContacts") // Many-to-Many relation
-
+  fundingRequests    FundingRequest[]
   createdAt    DateTime        @default(now()) @db.Timestamptz(6)
   updatedAt    DateTime        @updatedAt @db.Timestamptz(6)
 }
@@ -136,8 +139,8 @@ model ContactPerson {
   type           ContactType      @default(Organization)
 
   fundingRequests FundingRequest[]  
-  teams          Teams[]          @relation("TeamContacts") // Many-to-Many relation
-  organizations  Organization[]   @relation("OrganizationContacts") // Many-to-Many relation
+  teams           Teams[]          @relation("TeamContacts") // Many-to-Many relation
+  organizations   Organization[]   @relation("OrganizationContacts") // Many-to-Many relation
 
   createdAt      DateTime         @default(now()) @db.Timestamptz(6)
   updatedAt      DateTime         @updatedAt @db.Timestamptz(6) 

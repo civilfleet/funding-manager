@@ -14,9 +14,11 @@ export async function GET(
 ) {
   try {
     const fileId = (await params).id;
+    if (!fileId) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
     const data = await getFileById(fileId);
     const dataUrl = data?.url;
-    console.log(dataUrl, "data url");
     const name = data?.name
       ? `${data.name}.${dataUrl?.split(".").pop() || ""}`
       : dataUrl || "unknown";

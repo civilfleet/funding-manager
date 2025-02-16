@@ -31,7 +31,14 @@ const createFundingRequest = async (data: FundingRequestData) => {
   });
   try {
     const completionDate = new Date(data.expectedCompletionDate);
-
+    const team = await prisma.organization.findUnique({
+      where: {
+        id: data.organizationId,
+      },
+      select: {
+        teamId: true,
+      },
+    });
     const fundingRequest = await prisma.fundingRequest.create({
       data: {
         description: data.description,
@@ -48,6 +55,12 @@ const createFundingRequest = async (data: FundingRequestData) => {
         submittedBy: {
           connect: {
             id: contactPerson?.id as string,
+          },
+        },
+
+        team: {
+          connect: {
+            id: team?.teamId as string,
           },
         },
       },
@@ -91,9 +104,42 @@ const updateFundingRequest = async (
   }
 };
 
-const getFundingRequests = async () => {
+const getFundingRequests = async (
+  {
+    teamId,
+    orgId,
+  }: {
+    teamId: string;
+    orgId: string;
+  },
+  searchQuery: string
+) => {
   try {
+    const where: { [key: string]: any } = {};
+    if (orgId) {
+      where["organizationId"] = orgId;
+    }
+    if (teamId) {
+      where["teamId"] = teamId;
+    }
+    if (searchQuery) {
+      where["description"] = {
+        contains: searchQuery,
+      };
+      where["purpose"] = {
+        contains: searchQuery,
+      };
+      where["refinancingConcept"] = {
+        contains: searchQuery,
+      };
+      where["sustainability"] = {
+        contains: searchQuery,
+      };
+    }
+
+    console.log("where", where);
     const fundingRequests = await prisma.fundingRequest.findMany({
+      where,
       select: {
         id: true,
         description: true,

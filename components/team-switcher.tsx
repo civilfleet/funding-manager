@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { ChevronsUpDown, GalleryVerticalEnd, Plus } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 import {
   DropdownMenu,
@@ -18,25 +20,68 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useEffect, useState } from "react";
+import { useOrganizationStore, useTeamStore } from "@/store/store";
 
 export function TeamSwitcher({
-  teams,
+  items,
+  isTeamsMember,
 }: {
-  teams: {
-    id: number;
+  items: {
+    id: string;
     name: string;
-    roleName: string;
+    roleName?: string;
     email: string;
     // logo: string;
   }[];
+  isTeamsMember: boolean;
 }) {
   const { isMobile } = useSidebar();
-  const [activeTeam, setActiveTeam] = React.useState(teams[0]);
-  React.useEffect(() => {
-    if (teams.length > 0) {
-      setActiveTeam(teams[0]); // Set the first team as active
+  const { data: session, update: updateSession, status } = useSession();
+  const { setTeam: setTeamGlobal, team } = useTeamStore();
+  const { setOrganization: setOrganizationGlobal, organization } =
+    useOrganizationStore();
+
+  const [activeItem, setActiveItem] = useState(items[0]);
+  useEffect(() => {
+    if (items.length > 0) {
+      if (isTeamsMember) {
+        setActiveItem(team); // Set the first team as active
+      } else {
+        setActiveItem(organization); // Set the first team as active
+      }
     }
-  }, [teams]);
+  }, [items]);
+
+  const setItem = async (item: any) => {
+    if (status === "authenticated") {
+      if (isTeamsMember) {
+        await updateSession({
+          user: {
+            ...session?.user,
+            teamId: item.id,
+            organizationId: undefined,
+          },
+        });
+        setTeamGlobal(item);
+        setActiveItem(team);
+      } else {
+        await updateSession({
+          user: {
+            ...session?.user,
+            organizationId: item.id,
+            teamId: undefined,
+          },
+        });
+
+        setOrganizationGlobal(item);
+        setActiveItem(organization);
+      }
+
+      window.location.reload();
+    }
+  };
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -55,7 +100,7 @@ export function TeamSwitcher({
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {activeTeam?.name}
+                  {activeItem?.name}
                 </span>
                 {/* <span className="truncate text-xs">{activeTeam || ""}</span> */}
               </div>
@@ -71,11 +116,11 @@ export function TeamSwitcher({
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               Teams
             </DropdownMenuLabel>
-            {teams &&
-              teams?.map((team, index) => (
+            {items &&
+              items?.map((item, index) => (
                 <DropdownMenuItem
-                  key={team.name}
-                  onClick={() => setActiveTeam(team)}
+                  key={item.name}
+                  onClick={() => setItem(item)}
                   className="gap-2 p-2"
                 >
                   <div className="flex size-6 items-center justify-center rounded-sm border">
@@ -85,7 +130,7 @@ export function TeamSwitcher({
                     <GalleryVerticalEnd className="size-4 shrink-0" />
                     {/* )} */}
                   </div>
-                  {team.name}
+                  {item.name}
                   <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
                 </DropdownMenuItem>
               ))}

@@ -7,17 +7,20 @@ import {
 } from "@/services/funding-request";
 import { createFundingRequestSchema } from "@/validations/funding-request";
 import { z } from "zod";
+import { auth } from "@/auth";
 
+// ✅ GET (Get Funding Requests)
 export async function GET(req: Request) {
   try {
     let data;
+    const session = await auth();
     const { searchParams } = new URL(req.url);
-    const orgId: string = searchParams.get("orgId") as string;
-    if (orgId) {
-      data = await getFundingRequestsByOrgId(orgId);
-    } else {
-      data = await getFundingRequests();
-    }
+    const searchQuery = searchParams.get("query") || "";
+
+    const orgId = session?.user?.organizationId as string;
+    const teamId = session?.user?.teamId as string;
+    console.log("getting funding requests", orgId, teamId);
+    data = await getFundingRequests({ teamId, orgId }, searchQuery);
 
     return NextResponse.json(
       {
@@ -47,7 +50,6 @@ export async function POST(req: Request) {
         ...fundingRequest,
       });
 
-    console.log("validatedData", validatedData);
     await createFundingRequest(validatedData);
     return NextResponse.json(
       {

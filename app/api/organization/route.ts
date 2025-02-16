@@ -10,21 +10,18 @@ import {
   getOrganizations,
 } from "@/services/organizations";
 import { z } from "zod";
+import { auth } from "@/auth";
 
-// ✅ GET All Organizations
+// GET organization will only access by teams
 export async function GET(req: Request) {
   try {
+    const session = await auth();
+    const teamId = session?.user?.teamId as string;
+
     let data;
     const { searchParams } = new URL(req.url);
-
-    const email = searchParams.get("email");
     const searchQuery = searchParams.get("query") || "";
-
-    if (email) {
-      data = await getOrganizationByEmail(email);
-    } else {
-      data = await getOrganizations(searchQuery);
-    }
+    data = await getOrganizations(searchQuery, teamId);
 
     return NextResponse.json(
       {

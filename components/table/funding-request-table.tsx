@@ -31,19 +31,11 @@ export default function FundingRequestTable() {
   useEffect(() => {
     async function fetchData() {
       try {
-        if (session) {
-          let response;
-          if (session?.user.provider === "google") {
-            response = await fetch(
-              `/api/funding-request/?orgId=${session?.user.organizationId}&query=`
-            );
-          } else {
-            response = await fetch("/api/funding-request?query=");
-          }
-          const { data } = await response.json();
-          setData(data);
-          console.log(data);
-        }
+        console.log("session", session);
+
+        const response = await fetch(`/api/funding-request/?query=`);
+        const { data } = await response.json();
+        setData(data);
       } catch (error) {
         console.error("Error fetching FundingsRequest:", error);
         toast({
@@ -55,18 +47,12 @@ export default function FundingRequestTable() {
     }
 
     fetchData();
-  }, [session?.user.provider, session?.user.organizationId]);
+  }, []);
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
       let response;
-      if (session?.user.provider === "google") {
-        response = await fetch(
-          `/api/funding-request/?orgId=${session?.user.organizationId}&query=${values.query}`
-        );
-      } else {
-        response = await fetch(`/api/funding-request?query=${values.query}`);
-      }
+      response = await fetch(`/api/funding-request?query=${values.query}`);
       const { data } = await response.json();
       setData(data);
     } catch (error) {

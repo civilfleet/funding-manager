@@ -61,6 +61,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
   const [isUpdate] = useState(data?.email ? true : false);
   const [isFilledByOrg, setFillByOrg] = useState(data?.isFilledByOrg);
   const schema = isUpdate ? updateOrganizationSchema : createOrganizationSchema;
+
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {

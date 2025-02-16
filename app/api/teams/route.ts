@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getErrorMessage } from "../helpers";
 import { createTeam, getTeamsByRoles } from "@/services/teams";
 import { createTeamSchema } from "@/validations/team";
+import { handlePrismaError } from "@/lib/utils";
 
 export async function GET(req: Request) {
   try {
@@ -34,15 +35,10 @@ export async function POST(req: Request) {
     const teamData = await req.json();
     const validatedData = createTeamSchema.parse(teamData);
 
-    console.log(validatedData, "validatedData");
-
     const response = await createTeam(validatedData);
-
     return NextResponse.json(response, { status: 201 });
   } catch (e) {
-    return NextResponse.json(
-      { error: getErrorMessage(e) },
-      { status: 400, statusText: getErrorMessage(e) }
-    );
+    const handledError = handlePrismaError(e);
+    return NextResponse.json({ error: handledError.message }, { status: 400 });
   }
 }

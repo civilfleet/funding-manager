@@ -22,7 +22,7 @@ export function LoginForm({
           Login as Organization
         </Button>
       </form>
-      <form
+      {/* <form
         className={cn(
           "flex flex-col gap-6  items-center gap-2 text-center ",
           className
@@ -36,7 +36,7 @@ export function LoginForm({
         <Button variant="outline" className="w-44">
           Login as Agent
         </Button>
-      </form>
+      </form> */}
 
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}

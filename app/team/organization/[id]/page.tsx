@@ -10,16 +10,12 @@ export default async function Profile({
   const organization = await fetch(
     `${process.env.NEXT_PUBLIC_BASE_URL}/api/organization/${id}`
   );
-  const contacts = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/contact-person?orgId=${id}`
-  );
 
   const fundingRequests = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/funding-request?orgId=${id}`
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/funding-request`
   );
 
   const { data: fundingRequestsData } = await fundingRequests.json();
-  const { data: contactsData } = await contacts.json();
   const { data } = await organization.json();
 
   if (!data) {
@@ -31,7 +27,6 @@ export default async function Profile({
       <div className="container">
         <OrganizationDetails
           organization={data}
-          contacts={contactsData}
           fundingRequests={fundingRequestsData}
         />
       </div>

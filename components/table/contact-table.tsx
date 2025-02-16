@@ -5,21 +5,19 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { DataTable } from "@/components/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { columns } from "@/components/table/funding-request-columns";
+import { columns } from "@/components/table/contact-columns";
 import { useToast } from "@/hooks/use-toast";
 import { Form } from "../ui/form";
 import FormInputControl from "../helper/FormInputControl";
 import ButtonControl from "../helper/ButtonControl";
-import { useSession } from "next-auth/react";
 
 const querySchema = z.object({
   query: z.string(),
 });
 
-export default function FileTable() {
+export default function ContactPersonTable() {
   const { toast } = useToast();
   const [data, setData] = useState([]);
-  const { data: session } = useSession();
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
@@ -31,42 +29,31 @@ export default function FileTable() {
   useEffect(() => {
     async function fetchData() {
       try {
-        if (session) {
-          let response;
-          if (session?.user.provider === "google") {
-            response = await fetch(
-              `/api/file/?orgId=${session?.user.organizationId}&query=`
-            );
-          } else {
-            response = await fetch("/api/funding-request?query=");
-          }
-          const { data } = await response.json();
-          setData(data);
-        }
+        const response = await fetch(`/api/contact-person/?query=`);
+        const { data } = await response.json();
+        setData(data);
       } catch (error) {
-        console.error("Error fetching FundingsRequest:", error);
         toast({
           title: "Error",
-          description: "Error fetching FundingsRequest",
+          description: "Error fetching Contact persons",
           variant: "destructive",
         });
       }
     }
 
     fetchData();
-  }, [session?.user.provider, session?.user.organizationId]);
+  }, []);
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
       let response;
-      response = await fetch(`/api/funding-request/?query=${values.query}`);
+      response = await fetch(`/api/contact-person?query=${values.query}`);
       const { data } = await response.json();
       setData(data);
     } catch (error) {
-      console.error("Error fetching funding requests:", error);
       toast({
         title: "Error",
-        description: "Error fetching funding requests",
+        description: "Error fetching contact person",
         variant: "destructive",
       });
     }

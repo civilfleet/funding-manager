@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ContactPerson, FundingRequest, Organization } from "@/types";
+import { FundingRequest, Organization } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -44,14 +44,13 @@ function DetailItem({
 }
 export default function OrganizationDetails({
   organization,
-  contacts,
   fundingRequests,
 }: {
   organization: Organization;
-  contacts: ContactPerson[];
   fundingRequests: FundingRequest[];
 }) {
   const router = useRouter();
+  const contacts = organization?.contactPersons || [];
   return (
     <div className="grid gap-6">
       {/* Organization Info */}
@@ -128,6 +127,32 @@ export default function OrganizationDetails({
                   label="BIC/SWIFT"
                   value={organization.bankDetails.bic}
                 />
+              </div>
+            </div>
+          )}
+          {organization.Files && (
+            <div className="pt-6 border-t border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-800 mb-6">
+                Files
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50 p-6 rounded-lg">
+                {organization.Files.map((file) => (
+                  <div key={file.id}>
+                    <DetailItem
+                      key={file.id}
+                      label={file.type}
+                      value={``}
+                      type="link"
+                    />
+                    <Link
+                      href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${file.id}`}
+                    >
+                      <span className="text-blue-600 hover:text-blue-800 font-medium underline hover:no-underline">
+                        Download
+                      </span>
+                    </Link>
+                  </div>
+                ))}
               </div>
             </div>
           )}

@@ -1,5 +1,4 @@
 import prisma from "@/lib/prisma";
-import { handlePrismaError } from "@/lib/utils";
 
 const getTeamsByRoles = async (roles: string[] | null) => {
   try {
@@ -21,15 +20,12 @@ const getTeamsByRoles = async (roles: string[] | null) => {
 
 const createTeam = async (teamData: any) => {
   try {
-    console.log(teamData, "teamData in service ");
-
     const contact = teamData.contactPerson;
     const bankDetails = teamData.bankDetails;
 
     delete teamData.contactPerson;
     delete teamData.bankDetails;
-
-    const team = await prisma.teams.create({
+    const query = {
       data: {
         ...teamData,
         contactPersons: {
@@ -44,13 +40,27 @@ const createTeam = async (teamData: any) => {
           },
         },
       },
+    };
+
+    const contactPerson = await prisma.contactPerson.findUnique({
+      where: {
+        email: contact.email,
+      },
     });
-    console.log(team, "team in service");
+    if (contactPerson?.id) {
+      query.data.contactPersons = {
+        connect: {
+          id: contactPerson?.id,
+        },
+      };
+    }
+
+    const team = await prisma.teams.create(query);
     return {
-      message: "Team created successfully",
+      data: team,
     };
   } catch (error) {
-    return handlePrismaError(error);
+    throw error;
   }
 };
 

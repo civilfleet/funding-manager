@@ -44,7 +44,6 @@ const FileUpload = ({
         body: file,
       });
 
-      console.log("uploadFile", uploadFile);
       if (uploadFile.ok) {
         let fileUrl = putUrl.split("?")[0].split("/").pop(); // Remove query params
         console.log("File uploaded successfully:", fileUrl);
