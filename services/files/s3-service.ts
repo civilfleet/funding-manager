@@ -13,7 +13,6 @@ export const uploadFile = async ({
   fileType: string;
 }) => {
   try {
-    console.log("fileName", process.env.NEXT_AWS_S3_BUCKET_NAME);
     fileName = cleanFileName(fileName);
     fileName = `${new Date().getTime()}-${fileName}`;
 
@@ -28,7 +27,6 @@ export const uploadFile = async ({
 
     return putUrl;
   } catch (error) {
-    console.log(error);
     throw new Error("Error uploading file");
   }
 };

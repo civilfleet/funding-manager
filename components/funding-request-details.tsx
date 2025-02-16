@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
   FileText,
@@ -39,7 +33,6 @@ export default function FundingRequestDetail({
 }) {
   const { toast } = useToast();
   const { data: session } = useSession();
-  console.log("data", data);
   const form = useForm<z.infer<typeof amountOfferSchema>>({
     resolver: zodResolver(amountOfferSchema),
     defaultValues: {
@@ -49,8 +42,6 @@ export default function FundingRequestDetail({
 
   async function onSubmit(values: z.infer<typeof amountOfferSchema>) {
     try {
-      console.log("values", values);
-
       const response = await fetch(`/api/funding-request/${data.id}`, {
         method: "PUT",
         headers: {
@@ -187,7 +178,7 @@ export default function FundingRequestDetail({
             </Card>
           </div>
 
-          {session?.user?.provider === "keycloak" && (
+          {session?.user?.teamId && (
             <div className="flex flex-col items-end gap-2">
               <h3 className="text-lg font-semibold">Offer Amount</h3>
               <Form {...form}>

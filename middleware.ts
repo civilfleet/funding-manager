@@ -14,17 +14,30 @@ export default auth(async (req) => {
   const token = await getToken({ req, secret: process.env.AUTH_SECRET });
 
   if (!token) {
-    return NextResponse.redirect(new URL("/login", nextUrl));
+    return NextResponse.redirect(new URL("/", nextUrl));
   }
 
-  const isGoogleUser = token.provider === "google";
-  const isKeycloakUser = token.provider === "keycloak";
+  const isAdmin = token.contactType === "Admin";
+  const isOrganization = token.contactType === "Organization";
+  const isTeam = token.contactType === "Team";
 
-  if (isGoogleUser && nextUrl.pathname.startsWith("/admin")) {
+  if (isOrganization && nextUrl.pathname.startsWith("/team")) {
     return NextResponse.redirect(new URL("/organization", nextUrl));
   }
 
-  if (isKeycloakUser && nextUrl.pathname.startsWith("/organization")) {
+  if (isTeam && nextUrl.pathname.startsWith("/organization")) {
+    return NextResponse.redirect(new URL("/team", nextUrl));
+  }
+
+  if (
+    isAdmin &&
+    (nextUrl.pathname.startsWith("/team") ||
+      nextUrl.pathname.startsWith("/organization"))
+  ) {
+    return NextResponse.redirect(new URL("/admin", nextUrl));
+  }
+
+  if (isAdmin && nextUrl.pathname.startsWith("/organization")) {
     return NextResponse.redirect(new URL("/admin", nextUrl));
   }
 
@@ -32,5 +45,5 @@ export default auth(async (req) => {
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/organizations/:path*"],
+  matcher: ["/admin/:path*", "/team/:path*", "/organization/:path*"],
 };

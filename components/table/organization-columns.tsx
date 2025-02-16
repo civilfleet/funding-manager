@@ -50,7 +50,7 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuItem>
-              <a href={`/admin/organization/${organization.id}`}>View</a>
+              <a href={`/team/organization/${organization.id}`}>View</a>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
           </DropdownMenuContent>

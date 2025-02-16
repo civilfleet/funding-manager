@@ -7,29 +7,6 @@ datasource db {
   url      = "postgresql://funding-manager:Qn*7aEM>sAau9tUnA{UE@51.159.25.67:63431/funding-manager"
 }
 
-model Teams {
-  id                      String       @id @default(uuid())  @unique
-  name                    String       @unique 
-  roleName                String       @db.VarChar(255)   @unique
-  email                   String       @db.VarChar(255)   @unique
-  phone                   String?      @db.VarChar(255)                         
-  postalCode              String?      @db.VarChar(255)  
-  city                    String?      @db.VarChar(255)  
-  country                 String?      @db.VarChar(255)  
-  website                 String?      @db.VarChar(255)
-
-  bankDetailsId           String?      @unique
-  bankDetails             BankDetails? @relation(fields: [bankDetailsId], references: [id])
-  organizations           Organization[]
-  contacts                ContactPerson[]   // Updated: One-to-many relation
-  createdAt               DateTime    @default(now()) @db.Timestamptz(6)
-  updatedAt               DateTime    @updatedAt @db.Timestamptz(6)
-}
-
-
-
-
-
 model Manager {
   id    String  @id @default(uuid())  @unique
   email String  @unique                      
@@ -52,7 +29,7 @@ model Organization {
   isFilledByOrg           Boolean      @default(false)
   bankDetailsId           String?      @unique
   managers                Manager[]   
-  contacts                ContactPerson[]   // Updated: One-to-many relation
+  contactPersons          ContactPerson[] @relation("OrganizationContacts") // Many-to-Many relation
   teamId                  String?     
   team                    Teams?              @relation(fields: [teamId], references: [id])   
   bankDetails             BankDetails?        @relation(fields: [bankDetailsId], references: [id])
@@ -99,7 +76,10 @@ model FundingRequest {
   submittedBy               ContactPerson? @relation(fields: [submittedById], references: [id])
   createdAt                 DateTime @default(now()) @db.Timestamptz(6) 
   updatedAt                 DateTime @updatedAt @db.Timestamptz(6) 
-  files                     File[]                               
+  files                     File[]          
+  teamId                    String?
+  team                      Teams? @relation(fields: [teamId], references: [id])
+
 }
 
 model File {
@@ -124,21 +104,44 @@ enum ContactType {
   Admin
 }
 
+
+model Teams {
+  id          String           @id @default(uuid()) @unique
+  name        String           @unique 
+  roleName    String           @db.VarChar(255) @unique
+  email       String           @db.VarChar(255) @unique
+  phone       String?          @db.VarChar(255)             
+  address     String?          @db.VarChar(255)
+  postalCode  String?          @db.VarChar(255)  
+  city        String?          @db.VarChar(255)  
+  country     String?          @db.VarChar(255)  
+  website     String?          @db.VarChar(255)
+
+  bankDetailsId String?        @unique
+  bankDetails   BankDetails?   @relation(fields: [bankDetailsId], references: [id])
+  organizations Organization[]
+  
+  contactPersons     ContactPerson[] @relation("TeamContacts") // Many-to-Many relation
+  fundingRequests    FundingRequest[]
+  createdAt    DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime        @updatedAt @db.Timestamptz(6)
+}
+
 model ContactPerson {
-  id                      String      @id @default(uuid()) @unique 
-  name                    String?      @db.VarChar(255)          
-  address                 String?      @db.VarChar(255)          
-  email                   String       @db.VarChar(255)  @unique         
-  phone                   String?      @db.VarChar(255)          
-  postalCode              String?      @db.VarChar(255)  
-  city                    String?      @db.VarChar(255)  
-  country                 String?      @db.VarChar(255)                           
-  type                    ContactType @default(Organization)
-  teamId                  String?
-  team                    Teams?       @relation(fields: [teamId], references: [id])
-  organizationId          String?     
-  organization            Organization? @relation(fields: [organizationId], references: [id])                          
-  fundingRequests         FundingRequest[]  
-  createdAt               DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt               DateTime @updatedAt @db.Timestamptz(6) 
+  id             String           @id @default(uuid()) @unique 
+  name           String?          @db.VarChar(255)          
+  address        String?          @db.VarChar(255)          
+  email          String           @db.VarChar(255) @unique         
+  phone          String?          @db.VarChar(255)          
+  postalCode     String?          @db.VarChar(255)  
+  city           String?          @db.VarChar(255)  
+  country        String?          @db.VarChar(255)                           
+  type           ContactType      @default(Organization)
+
+  fundingRequests FundingRequest[]  
+  teams           Teams[]          @relation("TeamContacts") // Many-to-Many relation
+  organizations   Organization[]   @relation("OrganizationContacts") // Many-to-Many relation
+
+  createdAt      DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime         @updatedAt @db.Timestamptz(6) 
 }

@@ -12,9 +12,9 @@ export const useUserStore = create<StoreState>((set) => ({
 }));
 
 type Team = {
-  id: number;
+  id: string;
   name: string;
-  roleName: string;
+  roleName?: string | undefined;
   email: string;
 };
 
@@ -29,7 +29,7 @@ export const useTeamStore = create<TeamStore>()(
   persist(
     (set) => ({
       team: {
-        id: 0,
+        id: "",
         name: "",
         roleName: "",
         email: "",
@@ -37,7 +37,7 @@ export const useTeamStore = create<TeamStore>()(
       setTeam: (team) => set({ team }),
       updateTeam: (updates) =>
         set((state) => ({ team: { ...state.team, ...updates } })),
-      reset: () => set({ team: { id: 0, name: "", roleName: "", email: "" } }),
+      reset: () => set({ team: { id: "", name: "", roleName: "", email: "" } }),
     }),
     { name: "team-store" }
   )
@@ -71,6 +71,6 @@ export const useOrganizationStore = create<OrganizationStore>()(
         })),
       reset: () => set({ organization: { id: "", name: "", email: "" } }),
     }),
-    { name: "team-store" }
+    { name: "org-store" }
   )
 );

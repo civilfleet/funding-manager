@@ -1,9 +1,9 @@
-import OrganizationTable from "@/components/table/organization-table";
+import TeamForm from "@/components/forms/team";
 
-export default async function Admin() {
+export default async function team() {
   return (
     <div className="m-2 w-full">
-      <OrganizationTable />
+      <TeamForm />
     </div>
   );
 }

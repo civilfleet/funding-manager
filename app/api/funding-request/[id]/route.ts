@@ -5,10 +5,7 @@ import {
   getFundingRequestById,
   updateFundingRequest,
 } from "@/services/funding-request";
-import {
-  createFundingRequestSchema,
-  updateFundingRequestSchema,
-} from "@/validations/funding-request";
+import { updateFundingRequestSchema } from "@/validations/funding-request";
 
 // ✅ GET Organization by ID
 export async function GET(
@@ -50,7 +47,7 @@ export async function PUT(
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
     const session = await auth();
-    if (session?.user.provider === "keycloak") {
+    if (session?.user.teamId) {
       const fundingRequest = await req.json();
 
       const validatedData = updateFundingRequestSchema.parse({

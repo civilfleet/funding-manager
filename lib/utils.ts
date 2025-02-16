@@ -26,7 +26,7 @@ export function handlePrismaError(error: unknown): Error {
   }
 
   console.error("Unexpected Error:", error);
-  return new Error("Operation failed! Please try again later.");
+  return Error("Operation failed! Please try again later.");
 }
 
 export function cleanFileName(fileName: string): string {

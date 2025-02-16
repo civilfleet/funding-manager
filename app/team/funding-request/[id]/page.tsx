@@ -12,7 +12,7 @@ export default async function FundingRequest({
   );
   const { data: fundingRequestsData } = await fundingRequests.json();
   if (!fundingRequestsData) {
-    redirect("/admin/organization");
+    redirect("/team/organization");
   }
 
   return (

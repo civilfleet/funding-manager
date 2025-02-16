@@ -42,7 +42,6 @@ export default function FileTable() {
           }
           const { data } = await response.json();
           setData(data);
-          console.log(data);
         }
       } catch (error) {
         console.error("Error fetching FundingsRequest:", error);
@@ -59,14 +58,9 @@ export default function FileTable() {
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
-      let response;
-      if (session?.user.provider === "google") {
-        response = await fetch(
-          `/api/funding-request/?orgId=${session?.user.organizationId}&query=${values.query}`
-        );
-      } else {
-        response = await fetch(`/api/funding-request?query=${values.query}`);
-      }
+      const response = await fetch(
+        `/api/funding-request/?query=${values.query}`
+      );
       const { data } = await response.json();
       setData(data);
     } catch (error) {

@@ -12,7 +12,7 @@ export default async function RootLayout({
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <div className="">{children}</div>
+          <div>{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </div>

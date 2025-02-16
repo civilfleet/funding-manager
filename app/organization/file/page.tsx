@@ -1,5 +1,3 @@
-import FileUploader from "@/components/file-uploader";
-import FileUploaderForm from "@/components/file-uploader-form";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 export default async function Page() {
