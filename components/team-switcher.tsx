@@ -41,43 +41,66 @@ export function TeamSwitcher({
   const { setOrganization: setOrganizationGlobal, organization } =
     useOrganizationStore();
 
-  const [activeItem, setActiveItem] = useState(items[0]);
+  const [activeItem, setActiveItem] = useState<(typeof items)[0] | null>(null);
+
   useEffect(() => {
-    if (items.length > 0) {
-      if (isTeamsMember) {
-        setActiveItem(team); // Set the first team as active
-      } else {
-        setActiveItem(organization); // Set the first team as active
+    if (status === "authenticated" && session) {
+      // Fix 2: Add null check for items
+      if (!items || items.length === 0) {
+        return;
+      }
+
+      const storedItem = isTeamsMember ? team : organization;
+      const firstItem = items[0];
+
+      const newActiveItem = storedItem?.id
+        ? items.find((item) => item.id === storedItem.id)
+        : firstItem;
+
+      if (newActiveItem) {
+        setActiveItem(newActiveItem);
+
+        if (isTeamsMember && !team) {
+          setTeamGlobal(newActiveItem);
+        } else if (!isTeamsMember && !organization) {
+          setOrganizationGlobal(newActiveItem);
+        }
       }
     }
-  }, [items]);
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  const setItem = async (item: any) => {
+  }, [items, team, organization, isTeamsMember, status, session]); // Added status/session
+
+  // Fix 7: Proper item switching logic
+  const setItem = async (item: (typeof items)[0]) => {
     if (status === "authenticated") {
-      if (isTeamsMember) {
+      try {
+        setActiveItem(item);
+
         await updateSession({
           user: {
-            ...session?.user,
-            teamId: item.id,
-            organizationId: undefined,
-          },
-        });
-        setTeamGlobal(item);
-        setActiveItem(team);
-      } else {
-        await updateSession({
-          user: {
-            ...session?.user,
-            organizationId: item.id,
-            teamId: undefined,
+            ...session.user,
+            ...(isTeamsMember
+              ? {
+                  teamId: item.id,
+                  organizationId: undefined,
+                }
+              : {
+                  organizationId: item.id,
+                  teamId: undefined,
+                }),
           },
         });
 
-        setOrganizationGlobal(item);
-        setActiveItem(organization);
+        if (isTeamsMember) {
+          setTeamGlobal(item);
+        } else {
+          setOrganizationGlobal(item);
+        }
+        window.location.reload();
+      } catch (error) {
+        console.error("Failed to update session:", error);
+        // Rollback state if needed
+        setActiveItem(() => (isTeamsMember ? team : organization));
       }
-
-      window.location.reload();
     }
   };
 
@@ -99,7 +122,7 @@ export function TeamSwitcher({
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {activeItem?.name}
+                  {activeItem?.name || ""}
                 </span>
                 {/* <span className="truncate text-xs">{activeTeam || ""}</span> */}
               </div>
