@@ -11,7 +11,7 @@ export const DEFAULT_REDIRECT = "/protected";
 
 export default auth(async (req) => {
   const { nextUrl } = req;
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
   console.log("token", token);
   if (!token) {
     return NextResponse.redirect(new URL("/", nextUrl));
@@ -45,10 +45,5 @@ export default auth(async (req) => {
 });
 
 export const config = {
-  matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
-    "/admin/:path*",
-    "/team/:path*",
-    "/organization/:path*",
-  ],
+  matcher: ["/admin/:path*", "/team/:path*", "/organization/:path*"],
 };
