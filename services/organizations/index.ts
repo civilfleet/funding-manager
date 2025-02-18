@@ -125,8 +125,10 @@ const createOrUpdateOrganization = async (formData: Organization) => {
                 data: {
                   type,
                   url,
-                  createdBy: contact.id,
-                  updatedBy: contact.id,
+                  createdBy: {
+                    connect: { id: contact.id },
+                  },
+                  updatedBy: { connect: { id: contact.id } },
                   organization: { connect: { id: organization.id } },
                 },
               })

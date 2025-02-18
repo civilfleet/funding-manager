@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getErrorMessage } from "../../helpers";
-import { getFileById } from "@/services/files";
+import { getFileById } from "@/services/file";
 import s3Client from "@/lib/s3-client";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 

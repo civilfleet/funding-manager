@@ -37,7 +37,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (account && user) {
         token.accessToken = account.access_token;
         token.provider = account.provider;
-
         const contact = await prisma.contactPerson.findFirst({
           where: { email: user.email as string },
           select: {
@@ -45,6 +44,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             id: true,
           },
         });
+
+        // token.organizationId = contact?.organizations[0]?.id;
+        // token.teamId = contact?.teams[0]?.id;
 
         token.contactType = contact?.type;
         token.contactId = contact?.id;
