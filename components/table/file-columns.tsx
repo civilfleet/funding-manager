@@ -34,10 +34,12 @@ export const columns: ColumnDef<File>[] = [
     },
   },
   {
-    accessorKey: "organization.name",
+    accessorKey: "organization",
     header: () => <div className="text-left w-36">Organization</div>,
     cell: ({ row }) => (
-      <div className="text-left">{row.original?.name || "N/A"}</div>
+      <div className="text-left">
+        {row.original?.organization?.name || "N/A"}
+      </div>
     ),
   },
   {

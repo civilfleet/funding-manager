@@ -46,6 +46,7 @@ export interface File {
   createdAt: Date;
   updatedAt: Date;
   organizationId?: string;
+  organization?: Organization;
   fundingRequestId?: string;
   OrganizationTaxExemptionCertificate?: Organization;
   OrganizationArticlesOfAssociation?: Organization;
