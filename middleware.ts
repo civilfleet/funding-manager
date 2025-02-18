@@ -1,5 +1,9 @@
+import NextAuth from "next-auth";
+import authConfig from "@/config/auth";
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
-import { auth } from "./auth";
+
+const { auth } = NextAuth(authConfig);
 
 export const ROOT = "/";
 export const PUBLIC_ROUTES = ["/"];
@@ -7,16 +11,22 @@ export const DEFAULT_REDIRECT = "/protected";
 
 export default auth(async (req) => {
   const { nextUrl } = req;
-  const session = await auth();
-  console.log("session", session);
-
-  if (!session) {
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET,
+    cookieName:
+      process.env.NODE_ENV === "production"
+        ? "__Secure-authjs.session-token"
+        : "authjs.session-token",
+  });
+  console.log("token", token);
+  if (!token) {
     return NextResponse.redirect(new URL("/", nextUrl));
   }
 
-  const isAdmin = session?.user?.contactType === "Admin";
-  const isOrganization = session?.user?.contactType === "Organization";
-  const isTeam = session.user?.contactType === "Team";
+  const isAdmin = token.contactType === "Admin";
+  const isOrganization = token.contactType === "Organization";
+  const isTeam = token.contactType === "Team";
 
   if (isOrganization && nextUrl.pathname.startsWith("/team")) {
     return NextResponse.redirect(new URL("/organization", nextUrl));
