@@ -31,7 +31,6 @@ export function TeamSwitcher({
     name: string;
     roleName?: string;
     email: string;
-    // logo: string;
   }[];
   isTeamsMember: boolean;
 }) {
@@ -45,7 +44,6 @@ export function TeamSwitcher({
 
   useEffect(() => {
     if (status === "authenticated" && session) {
-      // Fix 2: Add null check for items
       if (!items || items.length === 0) {
         return;
       }
@@ -65,11 +63,13 @@ export function TeamSwitcher({
         } else if (!isTeamsMember && !organization) {
           setOrganizationGlobal(newActiveItem);
         }
+        if (!(session.user.organizationId || session.user.teamId)) {
+          setItem(newActiveItem);
+        }
       }
     }
   }, [items, team, organization, isTeamsMember, status, session]); // Added status/session
 
-  // Fix 7: Proper item switching logic
   const setItem = async (item: (typeof items)[0]) => {
     if (status === "authenticated") {
       try {

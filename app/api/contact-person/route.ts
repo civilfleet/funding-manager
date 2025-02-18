@@ -11,8 +11,10 @@ import { handlePrismaError } from "@/lib/utils";
 export async function GET(req: Request) {
   try {
     const session = await auth();
+    console.log(session, "contacts");
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
+
     const data = await getContactPersons(
       {
         organizationId: session?.user?.organizationId,
@@ -61,10 +63,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
-        data: {
-          name: "John Doe",
-          email: " ",
-        },
+        data: "success",
       },
 
       { status: 201 }

@@ -87,8 +87,10 @@ model File {
   name        String?      @db.VarChar(255)  
   url         String
   type        String      @db.VarChar(255)                             
-  createdBy   String      @db.VarChar(255)                         
-  updatedBy   String      @db.VarChar(255)                         
+  createdBy   ContactPerson @relation("CreatedByRelation", fields: [createdById], references: [id])
+  createdById String                       
+  updatedBy   ContactPerson @relation("UpdatedByRelation", fields: [updatedById], references: [id])
+  updatedById String               
   createdAt   DateTime    @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime    @updatedAt @db.Timestamptz(6) 
 
@@ -142,6 +144,9 @@ model ContactPerson {
   teams           Teams[]          @relation("TeamContacts") // Many-to-Many relation
   organizations   Organization[]   @relation("OrganizationContacts") // Many-to-Many relation
 
+  createdBy       File[]           @relation("CreatedByRelation") // One-to-Many relation
+  updatedBy       File[]           @relation("UpdatedByRelation") // One-to-Many relation
+  
   createdAt      DateTime         @default(now()) @db.Timestamptz(6)
   updatedAt      DateTime         @updatedAt @db.Timestamptz(6) 
 }

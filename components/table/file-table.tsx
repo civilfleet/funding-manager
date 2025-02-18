@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { DataTable } from "@/components/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { columns } from "@/components/table/funding-request-columns";
+import { columns } from "@/components/table/file-columns";
 import { useToast } from "@/hooks/use-toast";
 import { Form } from "../ui/form";
 import FormInputControl from "../helper/FormInputControl";
@@ -32,42 +32,33 @@ export default function FileTable() {
     async function fetchData() {
       try {
         if (session) {
-          let response;
-          if (session?.user.provider === "google") {
-            response = await fetch(
-              `/api/file/?orgId=${session?.user.organizationId}&query=`
-            );
-          } else {
-            response = await fetch("/api/funding-request?query=");
-          }
+          const response = await fetch(`/api/file/?query=`);
           const { data } = await response.json();
+
           setData(data);
         }
       } catch (error) {
-        console.error("Error fetching FundingsRequest:", error);
+        console.error("Error fetching filesRequest:", error);
         toast({
           title: "Error",
-          description: "Error fetching FundingsRequest",
+          description: "Error fetching filesRequest",
           variant: "destructive",
         });
       }
     }
-
     fetchData();
-  }, [session?.user.provider, session?.user.organizationId]);
+  }, [session]);
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
-      const response = await fetch(
-        `/api/funding-request/?query=${values.query}`
-      );
+      const response = await fetch(`/api/file?query=${values.query}`);
       const { data } = await response.json();
       setData(data);
     } catch (error) {
-      console.error("Error fetching funding requests:", error);
+      console.error("Error fetching file:", error);
       toast({
         title: "Error",
-        description: "Error fetching funding requests",
+        description: "Error fetching file",
         variant: "destructive",
       });
     }

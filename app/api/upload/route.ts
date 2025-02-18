@@ -1,4 +1,4 @@
-import { uploadFile } from "@/services/files/s3-service";
+import { uploadFile } from "@/services/file/s3-service";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {

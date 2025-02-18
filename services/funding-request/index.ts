@@ -72,8 +72,8 @@ const createFundingRequest = async (data: FundingRequestData) => {
         url: file.url,
         fundingRequestId: fundingRequest.id as string,
         organizationId: data.organizationId as string,
-        createdBy: contactPerson?.id as string,
-        updatedBy: contactPerson?.id as string,
+        createdById: contactPerson?.id as string,
+        updatedById: contactPerson?.id as string,
         type: "FundingRequest",
       };
     });
