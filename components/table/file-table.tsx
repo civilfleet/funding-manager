@@ -32,10 +32,9 @@ export default function FileTable() {
     async function fetchData() {
       try {
         if (session) {
-          let response;
-          response = await fetch(`/api/file/?query=`);
+          const response = await fetch(`/api/file/?query=`);
           const { data } = await response.json();
-          console.log;
+
           setData(data);
         }
       } catch (error) {
