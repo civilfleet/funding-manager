@@ -16,8 +16,8 @@ export default auth(async (req) => {
     secret: process.env.AUTH_SECRET,
     cookieName:
       process.env.NODE_ENV === "production"
-        ? "__Secure-next-auth.session-token"
-        : "next-auth.session-token",
+        ? "__Secure-authjs.callback-url"
+        : "authjs.session-token",
   });
   console.log("token", token);
   if (!token) {
