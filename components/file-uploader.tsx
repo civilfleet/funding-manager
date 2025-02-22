@@ -21,7 +21,7 @@ const FileUpload = ({
 }: FileUploadProps) => {
   const [fileUrl, setFileUrl] = useState<string | null>(data || null);
   const [loading, setLoading] = useState(false);
-
+  console.log("data ==== = = = = ", data);
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {

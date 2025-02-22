@@ -38,6 +38,11 @@ type Organization = {
   taxID?: string;
   isFilledByOrg: boolean;
   logo?: string;
+  Files: {
+    type: string;
+    url: string;
+    id: string;
+  }[];
   bankDetails?: {
     accountHolder?: string;
     iban?: string;
@@ -211,7 +216,11 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                 <FileUpload
                   placeholder="Tax exemption certificate"
                   name="taxExemptionCertificate"
-                  data={data?.taxExemptionCertificate}
+                  data={
+                    data?.Files?.find(
+                      (file: any) => file.type === "TAX_EXEMPTION_CERTIFICATE"
+                    )?.id as string
+                  }
                   onFileUpload={(url) =>
                     form.setValue("taxExemptionCertificate", url)
                   }
@@ -298,7 +307,11 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   <FileUpload
                     placeholder="Article of Association"
                     name="articlesOfAssociation"
-                    data={data?.taxExemptionCertificate}
+                    data={
+                      data?.Files.find(
+                        (file) => file.type == "ARTICLES_OF_ASSOCIATION"
+                      )?.id
+                    }
                     error={
                       form?.formState?.errors?.articlesOfAssociation
                         ? (form.formState.errors?.articlesOfAssociation
@@ -315,7 +328,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   <FileUpload
                     placeholder="Logo of your Organization"
                     name="logo"
-                    data={data?.logo}
+                    data={data?.Files.find((file) => file.type == "LOGO")?.id}
                     error={
                       form?.formState?.errors?.logo
                         ? (form.formState.errors?.logo?.message as string)

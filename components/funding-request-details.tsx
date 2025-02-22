@@ -22,6 +22,11 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { useSession } from "next-auth/react";
 
+import DetailItem from "./detail-item";
+import LongText from "./long-text";
+import SectionBlock from "./section-block";
+import formatCurrency from "./format-currency";
+
 const amountOfferSchema = z.object({
   amountAgreed: z.coerce.number(),
 });
@@ -33,6 +38,7 @@ export default function FundingRequestDetail({
 }) {
   const { toast } = useToast();
   const { data: session } = useSession();
+  console.log("data", data);
   const form = useForm<z.infer<typeof amountOfferSchema>>({
     resolver: zodResolver(amountOfferSchema),
     defaultValues: {
@@ -204,6 +210,8 @@ export default function FundingRequestDetail({
                 </form>
               </Form>
             </div>
+
+            // add button for uploading the donation agreement.
           )}
         </div>
 
@@ -262,51 +270,6 @@ export default function FundingRequestDetail({
           </Card>
         </div>
       </div>
-    </div>
-  );
-}
-
-function DetailItem({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | null;
-}) {
-  return (
-    <div>
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="font-medium">{value || "N/A"}</p>
-    </div>
-  );
-}
-
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(Number(amount));
-}
-
-function SectionBlock({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border-t border-gray-100 pt-4 first:border-t-0 first:pt-0">
-      <h3 className="text-base font-semibold mb-2">{title}</h3>
-      <div className="text-muted-foreground leading-relaxed">{children}</div>
-    </div>
-  );
-}
-
-function LongText({ content }: { content: string }) {
-  return (
-    <div className="space-y-2">
-      <p className="whitespace-pre-wrap">{content}</p>
     </div>
   );
 }
