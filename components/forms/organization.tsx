@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import FormInputControl from "../helper/FormInputControl";
+import FormInputControl from "../helper/form-input-control";
 import {
   createOrganizationSchema,
   updateOrganizationSchema,
@@ -17,8 +17,8 @@ import {
   CardDescription,
   CardContent,
 } from "../ui/card";
-import ButtonControl from "../helper/ButtonControl";
-import Alert from "@/components/alert";
+import ButtonControl from "../helper/button-control";
+import Alert from "@/components/helper/alert";
 import { useState } from "react";
 import { useTeamStore } from "@/store/store";
 import FileUpload from "../file-uploader";
@@ -38,7 +38,7 @@ type Organization = {
   taxID?: string;
   isFilledByOrg: boolean;
   logo?: string;
-  Files: {
+  Files?: {
     type: string;
     url: string;
     id: string;
@@ -218,7 +218,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   name="taxExemptionCertificate"
                   data={
                     data?.Files?.find(
-                      (file: any) => file.type === "TAX_EXEMPTION_CERTIFICATE"
+                      (file) => file.type === "TAX_EXEMPTION_CERTIFICATE"
                     )?.id as string
                   }
                   onFileUpload={(url) =>
@@ -308,7 +308,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                     placeholder="Article of Association"
                     name="articlesOfAssociation"
                     data={
-                      data?.Files.find(
+                      data?.Files?.find(
                         (file) => file.type == "ARTICLES_OF_ASSOCIATION"
                       )?.id
                     }
@@ -328,7 +328,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   <FileUpload
                     placeholder="Logo of your Organization"
                     name="logo"
-                    data={data?.Files.find((file) => file.type == "LOGO")?.id}
+                    data={data?.Files?.find((file) => file.type == "LOGO")?.id}
                     error={
                       form?.formState?.errors?.logo
                         ? (form.formState.errors?.logo?.message as string)

@@ -170,9 +170,27 @@ const getContactPersonById = async (id: string) => {
   }
 };
 
+const getTeamsContactPersons = async (teamId: string) => {
+  try {
+    const contactPersons = await prisma.contactPerson.findMany({
+      where: {
+        teams: {
+          some: {
+            id: teamId,
+          },
+        },
+      },
+    });
+
+    return contactPersons;
+  } catch (error) {
+    throw error;
+  }
+};
 export {
   getContactPersons,
   getContactPersonCurrent,
   createContactPerson,
   getContactPersonById,
+  getTeamsContactPersons,
 };

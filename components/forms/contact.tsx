@@ -5,9 +5,9 @@ import { toast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 
-import ButtonControl from "../helper/ButtonControl";
+import ButtonControl from "../helper/button-control";
 import { zodResolver } from "@hookform/resolvers/zod";
-import FormInputControl from "../helper/FormInputControl";
+import FormInputControl from "../helper/form-input-control";
 import { createContactSchema } from "@/validations/organizations";
 import {
   Card,

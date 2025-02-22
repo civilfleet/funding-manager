@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import FormInputControl from "../helper/FormInputControl";
+import FormInputControl from "../helper/form-input-control";
 
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -14,7 +14,7 @@ import {
   CardDescription,
   CardContent,
 } from "../ui/card";
-import ButtonControl from "../helper/ButtonControl";
+import ButtonControl from "../helper/button-control";
 import { createTeamSchema } from "@/validations/team";
 
 export default function TeamForm() {

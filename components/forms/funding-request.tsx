@@ -13,8 +13,8 @@ import {
   CardDescription,
   CardContent,
 } from "../ui/card";
-import ButtonControl from "../helper/ButtonControl";
-import FormInputControl from "../helper/FormInputControl";
+import ButtonControl from "../helper/button-control";
+import FormInputControl from "../helper/form-input-control";
 import { useSession } from "next-auth/react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";

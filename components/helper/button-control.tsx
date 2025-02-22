@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Loader } from "./Loader";
+import { Loader } from "./loader";
 export default function FormInputControl({
   type = "submit",
   label = "Submit",

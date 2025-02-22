@@ -3,14 +3,14 @@ import { z } from "zod";
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import ButtonControl from "../helper/ButtonControl";
+import ButtonControl from "../helper/button-control";
 import { DataTable } from "@/components/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   OrganizationColumns,
   columns,
 } from "@/components/table/organization-columns";
-import FormInputControl from "../helper/FormInputControl";
+import FormInputControl from "../helper/form-input-control";
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 

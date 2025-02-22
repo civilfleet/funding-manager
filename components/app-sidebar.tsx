@@ -60,7 +60,7 @@ const data = {
     },
     {
       title: "Donation Agreements",
-      url: "/team/donations-agreement",
+      url: "/team/donation-agreement",
       icon: Scroll,
     },
     {
@@ -93,7 +93,7 @@ const data = {
     },
     {
       title: "Donation Agreement",
-      url: "/organization/donations-agreement",
+      url: "/organization/donation-agreement",
       icon: Scroll,
     },
 

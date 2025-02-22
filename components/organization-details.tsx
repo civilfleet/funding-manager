@@ -11,7 +11,7 @@ import {
 import { FundingRequest, Organization } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import DetailItem from "./detail-item";
+import DetailItem from "./helper/detail-item";
 
 export default function OrganizationDetails({
   organization,

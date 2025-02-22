@@ -8,8 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { columns } from "@/components/table/contact-columns";
 import { useToast } from "@/hooks/use-toast";
 import { Form } from "../ui/form";
-import FormInputControl from "../helper/FormInputControl";
-import ButtonControl from "../helper/ButtonControl";
+import FormInputControl from "../helper/form-input-control";
+import ButtonControl from "../helper/button-control";
 
 const querySchema = z.object({
   query: z.string(),

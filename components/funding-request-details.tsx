@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { FundingRequest } from "@/types";
-import FormInputControl from "./helper/FormInputControl";
+import FormInputControl from "./helper/form-input-control";
 import { Form } from "./ui/form";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -22,10 +22,10 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { useSession } from "next-auth/react";
 
-import DetailItem from "./detail-item";
-import LongText from "./long-text";
-import SectionBlock from "./section-block";
-import formatCurrency from "./format-currency";
+import DetailItem from "./helper/detail-item";
+import LongText from "./helper/long-text";
+import SectionBlock from "./helper/section-block";
+import formatCurrency from "./helper/format-currency";
 
 const amountOfferSchema = z.object({
   amountAgreed: z.coerce.number(),
@@ -33,12 +33,13 @@ const amountOfferSchema = z.object({
 
 export default function FundingRequestDetail({
   data,
+  showAgreeAmountForm = true,
 }: {
   data: FundingRequest;
+  showAgreeAmountForm?: boolean;
 }) {
   const { toast } = useToast();
   const { data: session } = useSession();
-  console.log("data", data);
   const form = useForm<z.infer<typeof amountOfferSchema>>({
     resolver: zodResolver(amountOfferSchema),
     defaultValues: {
@@ -184,7 +185,7 @@ export default function FundingRequestDetail({
             </Card>
           </div>
 
-          {session?.user?.teamId && (
+          {session?.user?.teamId && showAgreeAmountForm && (
             <div className="flex flex-col items-end gap-2">
               <h3 className="text-lg font-semibold">Offer Amount</h3>
               <Form {...form}>
