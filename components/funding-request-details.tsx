@@ -185,35 +185,37 @@ export default function FundingRequestDetail({
             </Card>
           </div>
 
-          {session?.user?.teamId && showAgreeAmountForm && (
-            <div className="flex flex-col items-end gap-2">
-              <h3 className="text-lg font-semibold">Offer Amount</h3>
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-8"
-                >
-                  <div className="flex items-center  align-middle ">
-                    <FormInputControl
-                      name="amountAgreed"
-                      placeholder="Amount to Offer"
-                      type="number"
-                      form={form}
-                    />
-                    <Button
-                      type="submit"
-                      className="btn btn-primary align-bottom ml-2"
-                      disabled={form.formState.isSubmitting}
-                    >
-                      Save
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </div>
+          {session?.user?.teamId &&
+            showAgreeAmountForm &&
+            data.status != "FundsTransferred" && (
+              <div className="flex flex-col items-end gap-2">
+                <h3 className="text-lg font-semibold">Offer Amount</h3>
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-8"
+                  >
+                    <div className="flex items-center  align-middle ">
+                      <FormInputControl
+                        name="amountAgreed"
+                        placeholder="Amount to Offer"
+                        type="number"
+                        form={form}
+                      />
+                      <Button
+                        type="submit"
+                        className="btn btn-primary align-bottom ml-2"
+                        disabled={form.formState.isSubmitting}
+                      >
+                        Save
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </div>
 
-            // add button for uploading the donation agreement.
-          )}
+              // add button for uploading the donation agreement.
+            )}
         </div>
 
         {/* Right Column */}

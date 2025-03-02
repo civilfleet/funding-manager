@@ -2,7 +2,8 @@
 
 import s3Client from "@/lib/s3-client";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+
 import { cleanFileName } from "@/lib/utils";
 
 export const uploadFile = async ({
@@ -28,5 +29,22 @@ export const uploadFile = async ({
     return putUrl;
   } catch (error) {
     throw new Error("Error uploading file");
+  }
+};
+
+// Filename: s3Service.ts
+
+export const deleteFile = async (fileKey: string) => {
+  try {
+    const command = new DeleteObjectCommand({
+      Key: fileKey,
+      Bucket: process.env.NEXT_AWS_S3_BUCKET_NAME,
+    });
+
+    await s3Client.send(command);
+    return { success: true, message: "File deleted successfully" };
+  } catch (error) {
+    console.error("Error deleting file from S3:", error);
+    throw new Error("Error deleting file");
   }
 };

@@ -35,7 +35,6 @@ export async function GET(req: Request) {
   }
 }
 
-// ✅ POST (Create Organization)
 export async function POST(req: Request) {
   try {
     const organization = await req.json();

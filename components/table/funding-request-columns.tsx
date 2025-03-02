@@ -34,6 +34,13 @@ export const columns: ColumnDef<FundingRequest>[] = [
     },
   },
   {
+    accessorKey: "name",
+    header: () => <div className="text-left w-36">Funding Request</div>,
+    cell: ({ row }) => (
+      <div className="text-left">{row.original?.name || "N/A"}</div>
+    ),
+  },
+  {
     accessorKey: "organization.name",
     header: () => <div className="text-left w-36">Organization</div>,
     cell: ({ row }) => (

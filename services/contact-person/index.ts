@@ -79,8 +79,6 @@ const getContactPersons = async (
         })
         .then((orgs) => orgs.map((org) => org.id));
 
-      console.log(organizationIds, "organizationIds");
-
       const teamOrOrganizationConditions = [];
 
       if (organizationIds.length > 0) {
@@ -101,8 +99,6 @@ const getContactPersons = async (
         organizations: { some: { id: organizationId } },
       });
     }
-
-    console.log(whereConditions, "whereConditions");
 
     const contactPersons = await prisma.contactPerson.findMany({
       where: {

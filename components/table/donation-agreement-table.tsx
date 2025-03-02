@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { DataTable } from "@/components/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { columns } from "@/components/table/contact-columns";
+import { columns } from "@/components/table/donation-agreement-columns";
 import { useToast } from "@/hooks/use-toast";
 import { Form } from "../ui/form";
 import FormInputControl from "../helper/form-input-control";
@@ -15,7 +15,7 @@ const querySchema = z.object({
   query: z.string(),
 });
 
-export default function ContactPersonTable() {
+export default function DonationAgreementTable() {
   const { toast } = useToast();
   const [data, setData] = useState([]);
 
@@ -29,14 +29,14 @@ export default function ContactPersonTable() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch(`/api/contact-person/?query=`);
+        const response = await fetch(`/api/donation-agreement/?query=`);
         const { data } = await response.json();
         setData(data);
       } catch (error) {
-        console.error("Error fetching Contact persons:", error);
+        console.error("Error fetching Donation Agreement:", error);
         toast({
           title: "Error",
-          description: "Error fetching Contact persons",
+          description: "Error fetching Donation Agreement",
           variant: "destructive",
         });
       }
@@ -47,14 +47,16 @@ export default function ContactPersonTable() {
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
-      const response = await fetch(`/api/contact-person?query=${values.query}`);
+      const response = await fetch(
+        `/api/donation-agreement?query=${values.query}`
+      );
       const { data } = await response.json();
       setData(data);
     } catch (error) {
-      console.log("Error fetching contact person", error);
+      console.error("Error fetching donation agreement:", error);
       toast({
         title: "Error",
-        description: "Error fetching contact person",
+        description: "Error fetching donation-agreement",
         variant: "destructive",
       });
     }

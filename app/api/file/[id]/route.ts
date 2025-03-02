@@ -19,11 +19,13 @@ export async function GET(
     }
     const data = await getFileById(fileId);
     const dataUrl = data?.url;
+
     const name = data?.name
       ? `${data.name}.${dataUrl?.split(".").pop() || ""}`
       : dataUrl || "unknown";
+
     const command = new GetObjectCommand({
-      Bucket: "funding-manager-civilfleet",
+      Bucket: process.env.NEXT_AWS_S3_BUCKET_NAME,
       Key: dataUrl,
     });
 

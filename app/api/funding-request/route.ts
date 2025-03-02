@@ -17,7 +17,6 @@ export async function GET(req: Request) {
 
     const orgId = session?.user?.organizationId as string;
     const teamId = session?.user?.teamId as string;
-    console.log("getting funding requests", orgId, teamId);
     const data = await getFundingRequests({ teamId, orgId }, searchQuery);
 
     return NextResponse.json(

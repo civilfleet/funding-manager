@@ -1,4 +1,3 @@
-import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
 
@@ -27,10 +26,8 @@ const getFiles = async (
   searchQuery: string
 ) => {
   try {
-    const session = await auth();
-    console.log("file query", searchQuery);
+    console.log("search query ", searchQuery);
     const whereConditions = [];
-    console.log(organizationId, teamId, "organizationId, teamId");
 
     if (teamId) {
       const organizationIds = await prisma.organization
@@ -44,7 +41,7 @@ const getFiles = async (
 
       if (organizationIds.length > 0) {
         whereConditions.push({
-          organizationId: { in: organizationIds },
+          OR: [{ organizationId: { in: organizationIds } }],
         });
       }
     } else if (organizationId) {

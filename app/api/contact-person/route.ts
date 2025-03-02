@@ -11,7 +11,6 @@ import { handlePrismaError } from "@/lib/utils";
 export async function GET(req: Request) {
   try {
     const session = await auth();
-    console.log(session, "contacts");
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
 

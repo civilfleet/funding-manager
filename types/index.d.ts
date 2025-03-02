@@ -56,12 +56,15 @@ export interface File {
 export enum FundingStatus {
   Pending = "Pending",
   UnderReview = "UnderReview",
+  Processing = "Processing",
+  FundsTransferred = "FundsTransferred",
   Approved = "Approved",
   Rejected = "Rejected",
 }
 
 export interface FundingRequest {
   id: string;
+  name: string;
   organizationId: string;
   organization: Organization;
   description: string;
@@ -137,4 +140,19 @@ export enum FileTypes {
   ARTICLES_OF_ASSOCIATION = "ARTICLES_OF_ASSOCIATION",
   REPORT = "REPORT",
   LOGO = "LOGO",
+  DONATION_AGREEMENT = "DONATION_AGREEMENT",
 }
+export type DonationAgreement = {
+  id: string;
+  fundingRequestId: string;
+  description: string;
+  fileId: string;
+  agreement: string;
+  createdAt: Date;
+  updatedAt: Date;
+  contactSignatures: DonationAgreementSignature[];
+  fundingRequest?: FundingRequest; // Optional relation
+  file?: File; // Optional relation
+  createdBy: ContactPerson;
+  createdById: string;
+};

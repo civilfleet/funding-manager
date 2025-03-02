@@ -19,7 +19,6 @@ export default auth(async (req) => {
         ? "__Secure-authjs.session-token"
         : "authjs.session-token",
   });
-  console.log("token", token);
   if (!token) {
     return NextResponse.redirect(new URL("/", nextUrl));
   }

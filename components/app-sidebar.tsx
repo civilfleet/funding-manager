@@ -59,15 +59,16 @@ const data = {
       isActive: true,
     },
     {
-      title: "Donation Agreements",
-      url: "/team/donation-agreement",
-      icon: Scroll,
-    },
-    {
       title: "Funding Requests",
       url: "/team/funding-request",
       icon: BookOpen,
     },
+    {
+      title: "Donation Agreements",
+      url: "/team/donation-agreement",
+      icon: Scroll,
+    },
+
     {
       title: "Reports",
       url: "/team/report",
@@ -91,16 +92,16 @@ const data = {
       icon: Building,
       isActive: true,
     },
-    {
-      title: "Donation Agreement",
-      url: "/organization/donation-agreement",
-      icon: Scroll,
-    },
 
     {
       title: "Funding Requests",
       url: "/organization/funding-request",
       icon: BookOpen,
+    },
+    {
+      title: "Donation Agreement",
+      url: "/organization/donation-agreement",
+      icon: Scroll,
     },
     {
       title: "Reports",

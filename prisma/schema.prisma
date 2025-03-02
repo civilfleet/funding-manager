@@ -34,7 +34,9 @@ model Organization {
   team                    Teams?              @relation(fields: [teamId], references: [id])   
   bankDetails             BankDetails?        @relation(fields: [bankDetailsId], references: [id])
   fundingRequests         FundingRequest[]                
-  Files                   File[]                        
+  Files                   File[]                    
+  donationAgreements      DonationAgreement[]
+
   createdAt               DateTime    @default(now()) @db.Timestamptz(6) 
   updatedAt               DateTime    @updatedAt @db.Timestamptz(6) 
 }
@@ -57,11 +59,14 @@ model BankDetails {
 enum FundingStatus {
   Pending
   UnderReview
+  Processing
   Approved
+  FundsTransferred
   Rejected
 }
 model FundingRequest {
-  id                        String    @id @default(uuid()) @unique    
+  id                        String    @id @default(uuid()) @unique   
+  name                      String      @db.VarChar(255) 
   organizationId            String                                
   organization              Organization @relation(fields: [organizationId], references: [id])
   description               String       @db.Text                   
@@ -79,6 +84,7 @@ model FundingRequest {
   files                     File[]          
   teamId                    String?
   team                      Teams? @relation(fields: [teamId], references: [id])
+  donationAgreement         DonationAgreement[]
 
 }
 
@@ -98,6 +104,8 @@ model File {
   organization   Organization? @relation(fields: [organizationId], references: [id])  // One-to-Many relation
   fundingRequestId String?
   FundingRequest FundingRequest? @relation(fields: [fundingRequestId], references: [id])
+  donationAgreement DonationAgreement[]
+
 }
 
 enum ContactType {
@@ -125,6 +133,7 @@ model Teams {
   
   contactPersons     ContactPerson[] @relation("TeamContacts") // Many-to-Many relation
   fundingRequests    FundingRequest[]
+  donationAgreements DonationAgreement[]
   createdAt    DateTime        @default(now()) @db.Timestamptz(6)
   updatedAt    DateTime        @updatedAt @db.Timestamptz(6)
 }
@@ -144,9 +153,47 @@ model ContactPerson {
   teams           Teams[]          @relation("TeamContacts") // Many-to-Many relation
   organizations   Organization[]   @relation("OrganizationContacts") // Many-to-Many relation
 
+  signedAgreements DonationAgreementSignature[]
+  donationAgreement DonationAgreement[] @relation("CreatedByRelation")
+
   createdBy       File[]           @relation("CreatedByRelation") // One-to-Many relation
   updatedBy       File[]           @relation("UpdatedByRelation") // One-to-Many relation
   
   createdAt      DateTime         @default(now()) @db.Timestamptz(6)
   updatedAt      DateTime         @updatedAt @db.Timestamptz(6) 
+
+
+
+}
+
+model DonationAgreement {
+  id               String    @id @default(uuid()) @unique
+  fundingRequestId String
+  fundingRequest   FundingRequest @relation(fields: [fundingRequestId], references: [id])
+
+  fileId           String
+  file             File      @relation(fields: [fileId], references: [id])
+  agreement        String    @db.Text
+
+  createdBy        ContactPerson @relation("CreatedByRelation", fields: [createdById], references: [id])
+  createdById      String
+  contactSignatures DonationAgreementSignature[]
+  teamId           String?
+  team             Teams? @relation(fields: [teamId], references: [id])
+  organizationId           String?
+  organization             Organization? @relation(fields: [organizationId], references: [id])
+
+  createdAt        DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @db.Timestamptz(6)
+}
+
+model DonationAgreementSignature {
+  donationAgreementId String
+  contactPersonId     String
+  signedAt            DateTime?  // If NULL, person hasn't signed
+
+  donationAgreement DonationAgreement @relation(fields: [donationAgreementId], references: [id], onDelete: Cascade)
+  contactPerson     ContactPerson @relation(fields: [contactPersonId], references: [id], onDelete: Cascade)
+
+  @@id([donationAgreementId, contactPersonId]) // Composite key to avoid duplicate signatures
 }

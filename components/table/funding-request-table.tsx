@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Form } from "../ui/form";
 import FormInputControl from "../helper/form-input-control";
 import ButtonControl from "../helper/button-control";
-import { useSession } from "next-auth/react";
 
 const querySchema = z.object({
   query: z.string(),
@@ -19,7 +18,6 @@ const querySchema = z.object({
 export default function FundingRequestTable() {
   const { toast } = useToast();
   const [data, setData] = useState([]);
-  const { data: session } = useSession();
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
@@ -31,8 +29,6 @@ export default function FundingRequestTable() {
   useEffect(() => {
     async function fetchData() {
       try {
-        console.log("session", session);
-
         const response = await fetch(`/api/funding-request/?query=`);
         const { data } = await response.json();
         setData(data);

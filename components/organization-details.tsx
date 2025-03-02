@@ -1,5 +1,18 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import type { FundingRequest, Organization } from "@/types";
+import {
+  ChevronDown,
+  ChevronUp,
+  Download,
+  ExternalLink,
+  Phone,
+  Mail,
+} from "lucide-react";
+
 import {
   Table,
   TableBody,
@@ -8,10 +21,64 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FundingRequest, Organization } from "@/types";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import DetailItem from "./helper/detail-item";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
+function DetailItem({
+  label,
+  value,
+  type = "text",
+}: {
+  label: string;
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  value?: any;
+  type?: string;
+}) {
+  if (!value) return null;
+
+  let content = value;
+  if (type === "email") {
+    content = (
+      <a
+        href={`mailto:${value}`}
+        className="text-primary hover:underline flex items-center"
+      >
+        <Mail className="w-4 h-4 mr-2" />
+        {value}
+      </a>
+    );
+  } else if (type === "phone") {
+    content = (
+      <a
+        href={`tel:${value}`}
+        className="text-primary hover:underline flex items-center"
+      >
+        <Phone className="w-4 h-4 mr-2" />
+        {value}
+      </a>
+    );
+  } else if (type === "link") {
+    content = (
+      <a
+        href={value}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary hover:underline flex items-center"
+      >
+        <ExternalLink className="w-4 h-4 mr-2" />
+        {value}
+      </a>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
+      <dd className="text-sm font-semibold">{content}</dd>
+    </div>
+  );
+}
 
 export default function OrganizationDetails({
   organization,
@@ -22,19 +89,21 @@ export default function OrganizationDetails({
 }) {
   const router = useRouter();
   const contacts = organization?.contactPersons || [];
-  return (
-    <div className="grid gap-6">
-      {/* Organization Info */}
-      <div className="p-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Organization Profile
-          </h2>
-          <p className="text-gray-500">Basic information and banking details</p>
-        </div>
+  const [expandedSection, setExpandedSection] = useState<string | null>(
+    "profile"
+  );
 
-        <div className="space-y-6">
-          {/* Main Details */}
+  const toggleSection = (section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  };
+
+  return (
+    <div className="space-y-6 max-w-4xl px-5 py-1">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
+          <CardTitle className="text-3xl">Organization Profile</CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <DetailItem label="Organization Name" value={organization.name} />
@@ -53,7 +122,6 @@ export default function OrganizationDetails({
                 value={organization.taxID}
               />
             </div>
-
             <div className="space-y-4">
               <DetailItem
                 label="Physical Address"
@@ -65,8 +133,8 @@ export default function OrganizationDetails({
                   value={organization.postalCode}
                 />
                 <DetailItem label="City" value={organization.city} />
-                <DetailItem label="Country" value={organization.country} />
               </div>
+              <DetailItem label="Country" value={organization.country} />
               <DetailItem
                 label="Website"
                 value={organization.website}
@@ -74,120 +142,191 @@ export default function OrganizationDetails({
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Bank Details */}
-          {organization.bankDetails && (
-            <div className="pt-6 border-t border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-800 mb-6">
-                Banking Information
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50 p-6 rounded-lg">
-                <DetailItem
-                  label="Bank Name"
-                  value={organization.bankDetails.bankName}
-                />
-                <DetailItem
-                  label="Account Holder"
-                  value={organization.bankDetails.accountHolder}
-                />
-                <DetailItem
-                  label="IBAN Number"
-                  value={organization.bankDetails.iban}
-                />
-                <DetailItem
-                  label="BIC/SWIFT"
-                  value={organization.bankDetails.bic}
-                />
-              </div>
+      {organization.bankDetails && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
+            <CardTitle className="text-xl">Banking Information</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => toggleSection("banking")}
+            >
+              {expandedSection === "banking" ? <ChevronUp /> : <ChevronDown />}
+            </Button>
+          </CardHeader>
+          <CardContent
+            className={expandedSection === "banking" ? "" : "hidden"}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <DetailItem
+                label="Bank Name"
+                value={organization.bankDetails.bankName}
+              />
+              <DetailItem
+                label="Account Holder"
+                value={organization.bankDetails.accountHolder}
+              />
+              <DetailItem
+                label="IBAN Number"
+                value={organization.bankDetails.iban}
+              />
+              <DetailItem
+                label="BIC/SWIFT"
+                value={organization.bankDetails.bic}
+              />
             </div>
-          )}
-          {organization.Files && (
-            <div className="pt-6 border-t border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-800 mb-6">
-                Files
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50 p-6 rounded-lg">
-                {organization.Files.map((file) => (
-                  <div key={file.id}>
-                    <DetailItem
-                      key={file.id}
-                      label={file.type}
-                      value={``}
-                      type="link"
-                    />
+          </CardContent>
+        </Card>
+      )}
+
+      {organization.Files && organization.Files.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
+            <CardTitle className="text-xl">Files</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => toggleSection("files")}
+            >
+              {expandedSection === "files" ? <ChevronUp /> : <ChevronDown />}
+            </Button>
+          </CardHeader>
+          <CardContent className={expandedSection === "files" ? "" : "hidden"}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {organization.Files.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center justify-between p-3 bg-muted rounded-md"
+                >
+                  <span className="font-medium">{file?.name || file.type}</span>
+                  <Button asChild variant="ghost" size="sm">
                     <Link
                       href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${file.id}`}
                     >
-                      <span className="text-blue-600 hover:text-blue-800 font-medium underline hover:no-underline">
-                        Download
-                      </span>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
                     </Link>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {contacts && (
-        <div className="p-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
-            Contact Persons
-          </h2>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {contacts.map((contact) => (
-                <TableRow key={contact.id}>
-                  <TableCell>{contact.name}</TableCell>
-                  <TableCell>{contact.address}</TableCell>
-                  <TableCell>{contact.email}</TableCell>
-                  <TableCell>{contact.phone}</TableCell>
-                </TableRow>
+                  </Button>
+                </div>
               ))}
-            </TableBody>
-          </Table>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {fundingRequests && (
-        <div className="p-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
-            Funding Requests
-          </h2>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Description</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {fundingRequests.map((request) => (
-                <TableRow
-                  className="cursor-pointer hover:bg-gray-100"
-                  onClick={() =>
-                    router.push(`/team/funding-request/${request.id}`)
-                  }
-                  key={request.id}
-                >
-                  <TableCell>{request.amountRequested}</TableCell>
-                  <TableCell>{request.status}</TableCell>
-                  <TableCell>{request.description}</TableCell>
+      {contacts && contacts.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
+            <CardTitle className="text-xl">Contact Persons</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => toggleSection("contacts")}
+            >
+              {expandedSection === "contacts" ? <ChevronUp /> : <ChevronDown />}
+            </Button>
+          </CardHeader>
+          <CardContent
+            className={expandedSection === "contacts" ? "" : "hidden"}
+          >
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Address</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {contacts.map((contact) => (
+                  <TableRow key={contact.id}>
+                    <TableCell className="font-medium">
+                      {contact.name}
+                    </TableCell>
+                    <TableCell>{contact.address}</TableCell>
+                    <TableCell>
+                      <a
+                        href={`mailto:${contact.email}`}
+                        className="text-primary hover:underline"
+                      >
+                        {contact.email}
+                      </a>
+                    </TableCell>
+                    <TableCell>
+                      <a
+                        href={`tel:${contact.phone}`}
+                        className="text-primary hover:underline"
+                      >
+                        {contact.phone}
+                      </a>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {fundingRequests && fundingRequests.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 ">
+            <CardTitle className="text-xl ">Funding Requests</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => toggleSection("funding")}
+            >
+              {expandedSection === "funding" ? <ChevronUp /> : <ChevronDown />}
+            </Button>
+          </CardHeader>
+          <CardContent
+            className={expandedSection === "funding" ? "" : "hidden"}
+          >
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Description</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {fundingRequests.map((request) => (
+                  <TableRow
+                    key={request.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() =>
+                      router.push(`/team/funding-request/${request.id}`)
+                    }
+                  >
+                    <TableCell className="font-medium">
+                      {request.amountRequested}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          request.status === "Approved"
+                            ? "destructive"
+                            : "secondary"
+                        }
+                      >
+                        {request.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {request.description}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

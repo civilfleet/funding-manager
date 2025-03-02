@@ -2,9 +2,11 @@ import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
+import { FundingStatus } from "@/types";
 
 type FundingRequestData = {
   id?: string;
+  name: string;
   organizationId?: string;
   description: string;
   purpose: string;
@@ -20,6 +22,8 @@ type FundingRequestData = {
 
 const createFundingRequest = async (data: FundingRequestData) => {
   const session = await auth();
+
+  console.log("funding request -- - -- - - ", data);
 
   const contactPerson = await prisma.contactPerson.findFirst({
     where: {
@@ -41,6 +45,7 @@ const createFundingRequest = async (data: FundingRequestData) => {
     });
     const fundingRequest = await prisma.fundingRequest.create({
       data: {
+        name: data.name,
         description: data.description,
         purpose: data.purpose,
         amountRequested: data.amountRequested,
@@ -89,6 +94,7 @@ const createFundingRequest = async (data: FundingRequestData) => {
     handlePrismaError(e);
   }
 };
+
 const updateFundingRequest = async (
   id: string,
   data: Partial<FundingRequestData>
@@ -101,6 +107,33 @@ const updateFundingRequest = async (
     return { ...fundingRequest };
   } catch (e) {
     handlePrismaError(e);
+  }
+};
+
+const updateFundingRequestStatus = async (
+  id: string,
+  status: FundingStatus,
+  donationId: string
+) => {
+  try {
+    console.log("donationId", donationId);
+    const signedAgreements = await prisma.donationAgreementSignature.findMany({
+      where: {
+        donationAgreementId: donationId,
+        signedAt: null,
+      },
+    });
+    console.log("signedAgreements", signedAgreements);
+    if (signedAgreements.length == 0) {
+      await prisma.fundingRequest.update({
+        where: { id },
+        data: {
+          status,
+        },
+      });
+    }
+  } catch (e) {
+    throw handlePrismaError(e);
   }
 };
 
@@ -137,11 +170,11 @@ const getFundingRequests = async (
       };
     }
 
-    console.log("where", where);
     const fundingRequests = await prisma.fundingRequest.findMany({
       where,
       select: {
         id: true,
+        name: true,
         description: true,
         purpose: true,
         amountRequested: true,
@@ -189,6 +222,7 @@ const getFundingRequestsByOrgId = async (searchQuery: string) => {
       },
       select: {
         id: true,
+        name: true,
         description: true,
         purpose: true,
         amountRequested: true,
@@ -235,6 +269,7 @@ const getFundingRequestById = async (id: string) => {
       },
       select: {
         id: true,
+        name: true,
         description: true,
         purpose: true,
         amountRequested: true,
@@ -302,4 +337,5 @@ export {
   getFundingRequests,
   getFundingRequestsByOrgId,
   getFundingRequestById,
+  updateFundingRequestStatus,
 };

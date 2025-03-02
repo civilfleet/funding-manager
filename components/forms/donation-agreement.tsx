@@ -3,7 +3,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createDonationAgreement as schema } from "@/validations/donation-agreement";
+import { createDonationAgreementSchema as schema } from "@/validations/donation-agreement";
 import { useToast } from "@/hooks/use-toast";
 import {
   Card,
@@ -20,18 +20,14 @@ import { FundingRequest } from "@/types";
 import FundingRequestDetail from "../funding-request-details";
 import { Badge } from "../ui/badge";
 import { Label } from "@radix-ui/react-label";
+import { Textarea } from "../ui/textarea";
 
 type DonationAgreement = {
   email: string;
   name: string;
 };
 
-export default function DonationAgreement({
-  data,
-}: {
-  data: DonationAgreement;
-}) {
-  console.log("Donation agreement data:", data);
+export default function DonationAgreement() {
   const { toast } = useToast();
   const [fundingRequestDetail, setFundingRequestDetail] =
     useState<FundingRequest>();
@@ -81,7 +77,6 @@ export default function DonationAgreement({
     fetchFundingRequestDetail();
   }, [fundingRequestId]);
 
-  console.log("Form submitted with values:", form.formState.errors);
   async function onSubmit(values: z.infer<typeof schema>) {
     try {
       const response = await fetch("/api/donation-agreement", {
@@ -143,7 +138,7 @@ export default function DonationAgreement({
                   <DataSelectBox
                     targetKey="id"
                     url="/api/funding-request"
-                    attribute="organization.email"
+                    attribute="name"
                     label="Select Funding Request"
                     value={field.value}
                     onChange={field.onChange}
@@ -156,7 +151,7 @@ export default function DonationAgreement({
                 render={({ field }) => (
                   <DataSelectBox
                     targetKey="email"
-                    url="/api/teams/contact-person"
+                    url="/api/contact-person"
                     attribute="email"
                     label="Select Contact person"
                     value={field.value || ""}
@@ -164,6 +159,16 @@ export default function DonationAgreement({
                   />
                 )}
               />
+
+              <Label className="text-sm text-gray-500">
+                Donation Agreement Details *
+              </Label>
+              <Textarea
+                {...form.register("agreement")}
+                name="agreement"
+                placeholder="Agreement details..."
+              />
+
               <Label className="text-sm text-gray-500">
                 Upload Donation Agreement
               </Label>

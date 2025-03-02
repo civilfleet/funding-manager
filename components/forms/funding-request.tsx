@@ -113,6 +113,17 @@ export default function FundingRequest() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <FormInputControl
+                  name="name"
+                  type="text"
+                  form={form}
+                  placeholder="Name"
+                />
+              </FormControl>
+            </FormItem>
+            <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
                 <Textarea
