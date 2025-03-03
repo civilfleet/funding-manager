@@ -8,7 +8,6 @@ import {
   BookOpen,
   BookUser,
   Building,
-  ClipboardPlus,
   Command,
   FolderOpen,
   GalleryVerticalEnd,
