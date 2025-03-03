@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { SquareArrowOutUpRight } from "lucide-react";
-import { Loader } from "./helper/loader";
+import { Loader } from "@components/helper/loader";
 
 interface FileUploadProps {
   onFileUpload: (fileUrl: string) => void;
