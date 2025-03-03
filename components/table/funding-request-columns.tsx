@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FundingRequest } from "@/types";
+import { StatusBadge } from "../helper/status-badge";
 export const columns: ColumnDef<FundingRequest>[] = [
   {
     id: "actions",
@@ -84,16 +85,12 @@ export const columns: ColumnDef<FundingRequest>[] = [
     accessorKey: "status",
     header: () => <div className="text-left w-24">Status</div>,
     cell: ({ row }) => (
-      <div className="text-left font-medium">{row.getValue("status")}</div>
+      <div className="text-left font-medium">
+        <StatusBadge status={row.getValue("status")} />
+      </div>
     ),
   },
-  {
-    accessorKey: "submittedBy.name",
-    header: () => <div className="text-left w-36">Submitted By</div>,
-    cell: ({ row }) => (
-      <div className="text-left">{row.original.submittedBy?.name || "N/A"}</div>
-    ),
-  },
+
   {
     accessorKey: "createdAt",
     header: () => <div className="text-left w-32">Created At</div>,

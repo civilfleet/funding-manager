@@ -12,6 +12,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.744.0",
     "@aws-sdk/s3-request-presigner": "^3.744.0",
+    "@getbrevo/brevo": "^2.2.0",
     "@hookform/resolvers": "^3.10.0",
     "@prisma/client": "6.2.1",
     "@prisma/extension-accelerate": "^1.2.1",

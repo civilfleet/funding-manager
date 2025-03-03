@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { File } from "@/types";
+import Link from "next/link";
 export const columns: ColumnDef<File>[] = [
   {
     id: "actions",
@@ -75,7 +76,13 @@ export const columns: ColumnDef<File>[] = [
     accessorKey: "url",
     header: () => <div className="text-left w-36">URL</div>,
     cell: ({ row }) => (
-      <div className="text-left">{row.original?.url || "N/A"}</div>
+      <div className="text-left  text-blue-500">
+        <Link
+          href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${row.original?.id}`}
+        >
+          {row.original?.url || "N/A"}
+        </Link>
+      </div>
     ),
   },
   {

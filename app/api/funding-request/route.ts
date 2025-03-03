@@ -14,10 +14,19 @@ export async function GET(req: Request) {
     const session = await auth();
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
+    console.log("searchQuery", searchQuery);
+
+    const status = searchParams.getAll("status") || [];
+    console.log("status", status);
 
     const orgId = session?.user?.organizationId as string;
     const teamId = session?.user?.teamId as string;
-    const data = await getFundingRequests({ teamId, orgId }, searchQuery);
+
+    const data = await getFundingRequests(
+      { teamId, orgId },
+      searchQuery,
+      status
+    );
 
     return NextResponse.json(
       {

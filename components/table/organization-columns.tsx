@@ -10,6 +10,7 @@ import {
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { Button } from "../ui/button";
+import Link from "next/link";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -108,8 +109,10 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
     header: () => <div className="text-left w-24">Website</div>,
     cell: ({ row }) => {
       return (
-        <div className="text-left font-medium">
-          {row.getValue("website") || "N/A"}
+        <div className="text-left  text-blue-500">
+          <Link href={row.getValue("website") || "#"}>
+            {row.getValue("website") || "N/A"}
+          </Link>
         </div>
       );
     },
@@ -126,17 +129,6 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
     },
   },
 
-  {
-    accessorKey: "contactPerson.email",
-    header: () => <div className="text-left w-24">Contact Email</div>,
-    cell: ({ row }) => {
-      return (
-        <div className="text-left font-medium">
-          {row.original.contactPerson?.email || "N/A"}
-        </div>
-      );
-    },
-  },
   {
     accessorKey: "bankDetails.bankName",
     header: () => <div className="text-left w-24">Bank Name</div>,

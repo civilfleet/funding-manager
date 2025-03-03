@@ -141,6 +141,9 @@ export enum FileTypes {
   REPORT = "REPORT",
   LOGO = "LOGO",
   DONATION_AGREEMENT = "DONATION_AGREEMENT",
+  DONATION_RECEIPT = "DONATION_RECEIPT",
+  REPORT = "REPORT",
+  STATEMENT = "STATEMENT",
 }
 export type DonationAgreement = {
   id: string;

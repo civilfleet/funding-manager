@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Loader } from "./loader";
-export default function FormInputControl({
+
+export default function ButtonControl({
   type = "submit",
   label = "Submit",
   variant = "default",
   disabled = false,
   loading = false,
   className = "",
+  onClick,
 }: {
   className?: string;
   disabled?: boolean;
@@ -22,6 +24,7 @@ export default function FormInputControl({
     | "link"
     | null
     | undefined;
+  onClick?: () => void;
 }) {
   return (
     <Button
@@ -29,6 +32,7 @@ export default function FormInputControl({
       variant={variant}
       className={className}
       disabled={disabled || loading}
+      onClick={onClick}
     >
       {loading ? <Loader className="text-white" /> : <span>{label}</span>}
     </Button>

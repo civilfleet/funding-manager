@@ -137,7 +137,7 @@ export default function DonationAgreement() {
                 render={({ field }) => (
                   <DataSelectBox
                     targetKey="id"
-                    url="/api/funding-request"
+                    url="/api/funding-request/?status=UnderReview"
                     attribute="name"
                     label="Select Funding Request"
                     value={field.value}

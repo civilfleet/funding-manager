@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
-import { updateFundingRequestStatus } from "@/services/funding-request";
+import { uploadFundingRequestFile } from "@/services/funding-request";
+import { FileTypes } from "@/types";
 import { NextResponse } from "next/server";
 
 // ✅ GET Organization by ID
@@ -18,21 +19,21 @@ export async function PUT(
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
     const session = await auth();
-    if (session?.user.teamId) {
-      const fundingRequest = await req.json();
+    const data = await req.json();
 
-      await updateFundingRequestStatus(
-        fundingRequestId,
-        fundingRequest.status,
-        fundingRequest?.donationId
-      );
-      return NextResponse.json(
-        {
-          message: "success",
-        },
-        { status: 201 }
-      );
-    }
+    await uploadFundingRequestFile(
+      fundingRequestId,
+      data.file,
+      data?.type as FileTypes,
+      session?.user?.contactId as string
+    );
+
+    return NextResponse.json(
+      {
+        message: "success",
+      },
+      { status: 201 }
+    );
   } catch (e) {
     console.log("error", e);
     return NextResponse.json({ error: e }, { status: 400 });

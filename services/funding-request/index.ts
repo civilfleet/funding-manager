@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
-import { FundingStatus } from "@/types";
+import { FileTypes, FundingStatus } from "@/types";
 
 type FundingRequestData = {
   id?: string;
@@ -22,8 +22,6 @@ type FundingRequestData = {
 
 const createFundingRequest = async (data: FundingRequestData) => {
   const session = await auth();
-
-  console.log("funding request -- - -- - - ", data);
 
   const contactPerson = await prisma.contactPerson.findFirst({
     where: {
@@ -113,18 +111,30 @@ const updateFundingRequest = async (
 const updateFundingRequestStatus = async (
   id: string,
   status: FundingStatus,
-  donationId: string
+  donationId?: string | null
 ) => {
   try {
     console.log("donationId", donationId);
-    const signedAgreements = await prisma.donationAgreementSignature.findMany({
-      where: {
-        donationAgreementId: donationId,
-        signedAt: null,
-      },
-    });
-    console.log("signedAgreements", signedAgreements);
-    if (signedAgreements.length == 0) {
+    if (donationId) {
+      const signedAgreements = await prisma.donationAgreementSignature.findMany(
+        {
+          where: {
+            donationAgreementId: donationId as string,
+            signedAt: null,
+          },
+        }
+      );
+
+      console.log("signedAgreements", signedAgreements);
+      if (!signedAgreements?.length) {
+        await prisma.fundingRequest.update({
+          where: { id },
+          data: {
+            status,
+          },
+        });
+      }
+    } else {
       await prisma.fundingRequest.update({
         where: { id },
         data: {
@@ -132,6 +142,27 @@ const updateFundingRequestStatus = async (
         },
       });
     }
+  } catch (e) {
+    throw handlePrismaError(e);
+  }
+};
+
+const uploadFundingRequestFile = async (
+  fundingRequestId: string,
+  file: string,
+  type: FileTypes,
+  contactId: string
+) => {
+  try {
+    await prisma.file.create({
+      data: {
+        url: file,
+        fundingRequestId,
+        type: type,
+        createdById: contactId,
+        updatedById: contactId,
+      },
+    });
   } catch (e) {
     throw handlePrismaError(e);
   }
@@ -145,7 +176,8 @@ const getFundingRequests = async (
     teamId: string;
     orgId: string;
   },
-  searchQuery: string
+  searchQuery: string,
+  status?: string[] | null
 ) => {
   try {
     const where: { [key: string]: any } = {};
@@ -167,6 +199,12 @@ const getFundingRequests = async (
       };
       where["sustainability"] = {
         contains: searchQuery,
+      };
+    }
+    console.log("status in fnc", status);
+    if (status?.length) {
+      where["status"] = {
+        in: status,
       };
     }
 
@@ -338,4 +376,5 @@ export {
   getFundingRequestsByOrgId,
   getFundingRequestById,
   updateFundingRequestStatus,
+  uploadFundingRequestFile,
 };

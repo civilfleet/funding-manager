@@ -242,6 +242,7 @@ const getOrganizations = async (searchQuery: string, teamId: string) => {
       },
       include: {
         bankDetails: true,
+        contactPersons: true,
       },
     });
 

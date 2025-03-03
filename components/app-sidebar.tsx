@@ -70,11 +70,6 @@ const data = {
     },
 
     {
-      title: "Reports",
-      url: "/team/report",
-      icon: ClipboardPlus,
-    },
-    {
       title: "Contacts",
       url: "/team/contact",
       icon: BookUser,
@@ -103,11 +98,7 @@ const data = {
       url: "/organization/donation-agreement",
       icon: Scroll,
     },
-    {
-      title: "Reports",
-      url: "/organization/report",
-      icon: ClipboardPlus,
-    },
+
     {
       title: "Contacts",
       url: "/organization/contact",

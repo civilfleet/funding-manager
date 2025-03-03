@@ -11,7 +11,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { format } from "date-fns";
-import { FundingRequest } from "@/types";
+
 import FormInputControl from "./helper/form-input-control";
 import { Form } from "./ui/form";
 import { useForm } from "react-hook-form";
@@ -19,13 +19,17 @@ import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
 import { useSession } from "next-auth/react";
 
 import DetailItem from "./helper/detail-item";
 import LongText from "./helper/long-text";
 import SectionBlock from "./helper/section-block";
 import formatCurrency from "./helper/format-currency";
+import ButtonControl from "./helper/button-control";
+import { FileTypes, FundingRequest, FundingStatus } from "./../types";
+import { StatusBadge } from "./helper/status-badge";
+
+import FundingRequestPostData from "./forms/funding-request-post-data";
 
 const amountOfferSchema = z.object({
   amountAgreed: z.coerce.number(),
@@ -40,12 +44,50 @@ export default function FundingRequestDetail({
 }) {
   const { toast } = useToast();
   const { data: session } = useSession();
+
+  const showStatementForm =
+    session?.user?.organizationId &&
+    data.status === "FundsTransferred" &&
+    data.files.filter((file) => file.type === "STATEMENT").length === 0;
+  const showReportForm =
+    session?.user?.organizationId &&
+    data.status === "FundsTransferred" &&
+    data.files.filter((file) => file.type === "REPORT").length === 0;
+  const showReceiptForm =
+    session?.user?.organizationId &&
+    data.status === "FundsTransferred" &&
+    data.files.filter((file) => file.type === "DONATION_RECEIPT").length === 0;
+
   const form = useForm<z.infer<typeof amountOfferSchema>>({
     resolver: zodResolver(amountOfferSchema),
     defaultValues: {
       amountAgreed: data.amountAgreed || 0,
     },
   });
+  async function rejectRequest() {
+    try {
+      const response = await fetch(`/api/funding-request/${data.id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "Rejected" as FundingStatus }),
+      });
+      await response.json();
+      data.status = "Rejected" as FundingStatus;
+
+      toast({
+        title: "Success",
+        description: "Request Rejected Successfully. ",
+        variant: "default",
+      });
+    } catch (e) {
+      toast({
+        title: "Error",
+        description: JSON.stringify(e),
+      });
+    }
+  }
 
   async function onSubmit(values: z.infer<typeof amountOfferSchema>) {
     try {
@@ -58,6 +100,7 @@ export default function FundingRequestDetail({
       });
       await response.json();
       data.amountAgreed = values.amountAgreed;
+      data.status = "UnderReview" as FundingStatus;
       toast({
         title: "Success",
         description: "Request Submitted Successfully. ",
@@ -83,7 +126,18 @@ export default function FundingRequestDetail({
         </div>
 
         <div className="flex flex-col items-end gap-2">
-          <Badge>{data?.status}</Badge>
+          <StatusBadge status={data.status} />
+          {!["FundsTransferred", "Rejected"].includes(data.status) && (
+            <ButtonControl
+              disabled={false}
+              className=""
+              type="button"
+              variant={"destructive"}
+              loading={false}
+              onClick={rejectRequest}
+              label="Reject Request"
+            />
+          )}
         </div>
       </div>
       {/* Main Content */}
@@ -187,7 +241,7 @@ export default function FundingRequestDetail({
 
           {session?.user?.teamId &&
             showAgreeAmountForm &&
-            data.status != "FundsTransferred" && (
+            !["FundsTransferred", "Rejected"].includes(data.status) && (
               <div className="flex flex-col items-end gap-2">
                 <h3 className="text-lg font-semibold">Offer Amount</h3>
                 <Form {...form}>
@@ -216,6 +270,33 @@ export default function FundingRequestDetail({
 
               // add button for uploading the donation agreement.
             )}
+
+          {showReceiptForm && (
+            <FundingRequestPostData
+              title="Upload Receipt"
+              description="Upload the receipt after the funds have been transferred in 7 days."
+              type={"DONATION_RECEIPT" as FileTypes}
+              fundingRequestId={data.id}
+            />
+          )}
+
+          {showReportForm && (
+            <FundingRequestPostData
+              title="Upload Report"
+              description="Upload the funding request report after the 8 weeks period."
+              type={"REPORT" as FileTypes}
+              fundingRequestId={data.id}
+            />
+          )}
+
+          {showStatementForm && (
+            <FundingRequestPostData
+              title="Upload Budget statement"
+              description="Upload the budget statement after the 8 weeks period."
+              type={"STATEMENT" as FileTypes}
+              fundingRequestId={data.id}
+            />
+          )}
         </div>
 
         {/* Right Column */}
