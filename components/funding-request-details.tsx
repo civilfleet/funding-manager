@@ -44,17 +44,16 @@ export default function FundingRequestDetail({
 }) {
   const { toast } = useToast();
   const { data: session } = useSession();
-
   const showStatementForm =
-    session?.user?.organizationId &&
+    session?.user?.contactType == "Organization" &&
     data.status === "FundsTransferred" &&
     data.files.filter((file) => file.type === "STATEMENT").length === 0;
   const showReportForm =
-    session?.user?.organizationId &&
+    session?.user?.contactType == "Organization" &&
     data.status === "FundsTransferred" &&
     data.files.filter((file) => file.type === "REPORT").length === 0;
   const showReceiptForm =
-    session?.user?.organizationId &&
+    session?.user?.contactType == "Organization" &&
     data.status === "FundsTransferred" &&
     data.files.filter((file) => file.type === "DONATION_RECEIPT").length === 0;
 
