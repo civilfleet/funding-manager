@@ -243,6 +243,9 @@ const getFundingRequests = async (
           },
         },
       },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
     return fundingRequests;
   } catch (error) {

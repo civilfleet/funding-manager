@@ -71,6 +71,9 @@ const getFiles = async (
           },
         },
       },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
     return contactPersons;

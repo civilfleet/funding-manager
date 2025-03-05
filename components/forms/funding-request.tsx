@@ -21,6 +21,7 @@ import { Button } from "../ui/button";
 import FileUpload from "../file-uploader";
 
 type FundingRequest = {
+  name: string;
   status: string;
   purpose: string;
   description: string;
@@ -40,6 +41,7 @@ export default function FundingRequest() {
   const form = useForm<z.infer<typeof createFundingRequestSchema>>({
     resolver: zodResolver(createFundingRequestSchema),
     defaultValues: {
+      name: "",
       description: "",
       purpose: "",
       amountRequested: 0,

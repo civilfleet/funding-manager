@@ -115,6 +115,9 @@ const getContactPersons = async (
           ...whereConditions,
         ],
       },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
     return contactPersons;
@@ -175,6 +178,9 @@ const getTeamsContactPersons = async (teamId: string) => {
             id: teamId,
           },
         },
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
 

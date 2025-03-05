@@ -244,6 +244,9 @@ const getOrganizations = async (searchQuery: string, teamId: string) => {
         bankDetails: true,
         contactPersons: true,
       },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
     return organization;
