@@ -3,13 +3,14 @@ import {
   createOrganizationSchema,
   updateOrganizationSchema,
 } from "@/validations/organizations";
-import { getErrorMessage } from "../helpers";
 import {
   createOrUpdateOrganization,
   getOrganizations,
 } from "@/services/organizations";
 import { z } from "zod";
 import { auth } from "@/auth";
+import { sendEmail } from "@/lib/nodemailer";
+import { handlePrismaError } from "@/lib/utils";
 
 // GET organization will only access by teams
 export async function GET(req: Request) {
@@ -28,22 +29,54 @@ export async function GET(req: Request) {
       { status: 201 }
     );
   } catch (e) {
+    const { message } = handlePrismaError(e);
     return NextResponse.json(
-      { error: getErrorMessage(e) },
-      { status: 400, statusText: getErrorMessage(e) }
+      { error: message },
+      { status: 400, statusText: message }
     );
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const organization = await req.json();
+    const organizationData = await req.json();
 
     const validatedData = createOrganizationSchema
       .and(z.object({ teamId: z.string().uuid() }))
       .and(z.object({ isFilledByOrg: z.boolean() }))
-      .parse({ ...organization });
-    await createOrUpdateOrganization(validatedData);
+      .parse({ ...organizationData });
+    const { organization, contactPerson } = await createOrUpdateOrganization(
+      validatedData
+    );
+
+    // if teamId is provided, it means the organization is created by a team
+    if (organizationData.teamId) {
+      await Promise.all([
+        sendEmail(
+          {
+            to: organization.email,
+            subject: "You’re In! Welcome to Partner App.",
+            template: "welcome",
+          },
+          {
+            name: organization.name,
+            email: validatedData.email,
+          }
+        ),
+        sendEmail(
+          {
+            to: contactPerson?.email as string,
+            subject: "You’re In! Welcome to Partner App.",
+            template: "welcome",
+          },
+          {
+            name: contactPerson?.name,
+            email: contactPerson?.email,
+          }
+        ),
+      ]);
+    }
+
     return NextResponse.json(
       {
         message: "success",
@@ -51,9 +84,10 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (e) {
+    const { message } = handlePrismaError(e);
     return NextResponse.json(
-      { error: getErrorMessage(e) },
-      { status: 400, statusText: getErrorMessage(e) }
+      { error: message },
+      { status: 400, statusText: message }
     );
   }
 }
@@ -73,9 +107,10 @@ export async function PUT(req: Request) {
       { status: 201 }
     );
   } catch (e) {
+    const { message } = handlePrismaError(e);
     return NextResponse.json(
-      { error: getErrorMessage(e) },
-      { status: 400, statusText: getErrorMessage(e) }
+      { error: message },
+      { status: 400, statusText: message }
     );
   }
 }

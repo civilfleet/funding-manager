@@ -22,75 +22,93 @@ type FundingRequestData = {
 
 const createFundingRequest = async (data: FundingRequestData) => {
   const session = await auth();
+  const completionDate = new Date(data.expectedCompletionDate);
 
+  // Fetch the contact person's ID
   const contactPerson = await prisma.contactPerson.findFirst({
     where: {
       email: session?.user.email as string,
     },
     select: {
       id: true,
+      name: true,
+      email: true,
     },
   });
-  try {
-    const completionDate = new Date(data.expectedCompletionDate);
-    const team = await prisma.organization.findUnique({
-      where: {
-        id: data.organizationId,
-      },
-      select: {
-        teamId: true,
-      },
-    });
-    const fundingRequest = await prisma.fundingRequest.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        purpose: data.purpose,
-        amountRequested: data.amountRequested,
-        refinancingConcept: data.refinancingConcept,
-        sustainability: data.sustainability,
-        expectedCompletionDate: completionDate,
-        organization: {
-          connect: {
-            id: data.organizationId as string,
-          },
-        },
-        submittedBy: {
-          connect: {
-            id: contactPerson?.id as string,
-          },
-        },
 
-        team: {
-          connect: {
-            id: team?.teamId as string,
-          },
-        },
-      },
-    });
-
-    const files = data?.files?.map((file) => {
-      return {
-        name: file.name,
-        url: file.url,
-        fundingRequestId: fundingRequest.id as string,
-        organizationId: data.organizationId as string,
-        createdById: contactPerson?.id as string,
-        updatedById: contactPerson?.id as string,
-        type: "FundingRequest",
-      };
-    });
-
-    if (files) {
-      await prisma.file.createMany({
-        data: files,
-      });
-    }
-
-    return { ...fundingRequest };
-  } catch (e) {
-    handlePrismaError(e);
+  if (!contactPerson) {
+    throw new Error("Contact person not found.");
   }
+
+  // Fetch organization details, including team email
+  const organization = await prisma.organization.findUnique({
+    where: {
+      id: data.organizationId,
+    },
+    include: {
+      team: {
+        select: {
+          id: true,
+          email: true, // Include team email
+        },
+      },
+    },
+  });
+
+  if (!organization) {
+    throw new Error("Organization not found.");
+  }
+
+  if (!organization.isFilledByOrg) {
+    throw new Error("Please fill in the organization details first.");
+  }
+
+  // Create the funding request
+  const fundingRequest = await prisma.fundingRequest.create({
+    data: {
+      name: data.name,
+      description: data.description,
+      purpose: data.purpose,
+      amountRequested: data.amountRequested,
+      refinancingConcept: data.refinancingConcept,
+      sustainability: data.sustainability,
+      expectedCompletionDate: completionDate,
+      organization: {
+        connect: {
+          id: data.organizationId,
+        },
+      },
+      submittedBy: {
+        connect: {
+          id: contactPerson.id,
+        },
+      },
+      team: {
+        connect: {
+          id: organization.teamId as string,
+        },
+      },
+    },
+  });
+
+  // Save files associated with the funding request
+  const files = data?.files?.map((file) => ({
+    name: file.name,
+    url: file.url,
+    fundingRequestId: fundingRequest.id,
+    organizationId: data.organizationId,
+    createdById: contactPerson.id,
+    updatedById: contactPerson.id,
+    type: "FundingRequest",
+  }));
+
+  if (files && files.length > 0) {
+    await prisma.file.createMany({
+      data: files,
+    });
+  }
+
+  return { fundingRequest, contactPerson, organization };
 };
 
 const updateFundingRequest = async (
@@ -101,115 +119,6 @@ const updateFundingRequest = async (
     const fundingRequest = await prisma.fundingRequest.update({
       where: { id },
       data: data as Prisma.FundingRequestUpdateInput,
-    });
-    return { ...fundingRequest };
-  } catch (e) {
-    handlePrismaError(e);
-  }
-};
-
-const updateFundingRequestStatus = async (
-  id: string,
-  status: FundingStatus,
-  donationId?: string | null
-) => {
-  try {
-    console.log("donationId", donationId);
-    if (donationId) {
-      const signedAgreements = await prisma.donationAgreementSignature.findMany(
-        {
-          where: {
-            donationAgreementId: donationId as string,
-            signedAt: null,
-          },
-        }
-      );
-
-      console.log("signedAgreements", signedAgreements);
-      if (!signedAgreements?.length) {
-        await prisma.fundingRequest.update({
-          where: { id },
-          data: {
-            status,
-          },
-        });
-      }
-    } else {
-      await prisma.fundingRequest.update({
-        where: { id },
-        data: {
-          status,
-        },
-      });
-    }
-  } catch (e) {
-    throw handlePrismaError(e);
-  }
-};
-
-const uploadFundingRequestFile = async (
-  fundingRequestId: string,
-  file: string,
-  type: FileTypes,
-  contactId: string
-) => {
-  try {
-    await prisma.file.create({
-      data: {
-        url: file,
-        fundingRequestId,
-        type: type,
-        createdById: contactId,
-        updatedById: contactId,
-      },
-    });
-  } catch (e) {
-    throw handlePrismaError(e);
-  }
-};
-
-const getFundingRequests = async (
-  {
-    teamId,
-    orgId,
-  }: {
-    teamId: string;
-    orgId: string;
-  },
-  searchQuery: string,
-  status?: string[] | null
-) => {
-  try {
-    const where: { [key: string]: any } = {};
-    if (orgId) {
-      where["organizationId"] = orgId;
-    }
-    if (teamId) {
-      where["teamId"] = teamId;
-    }
-    if (searchQuery) {
-      where["description"] = {
-        contains: searchQuery,
-      };
-      where["purpose"] = {
-        contains: searchQuery,
-      };
-      where["refinancingConcept"] = {
-        contains: searchQuery,
-      };
-      where["sustainability"] = {
-        contains: searchQuery,
-      };
-    }
-    console.log("status in fnc", status);
-    if (status?.length) {
-      where["status"] = {
-        in: status,
-      };
-    }
-
-    const fundingRequests = await prisma.fundingRequest.findMany({
-      where,
       select: {
         id: true,
         name: true,
@@ -235,56 +144,10 @@ const getFundingRequests = async (
           select: {
             name: true,
             email: true,
-          },
-        },
-        submittedBy: {
-          select: {
-            email: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-    return fundingRequests;
-  } catch (error) {
-    throw handlePrismaError(error);
-  }
-};
-
-const getFundingRequestsByOrgId = async (searchQuery: string) => {
-  try {
-    const fundingRequests = await prisma.fundingRequest.findMany({
-      where: {
-        organization: {
-          id: searchQuery,
-        },
-      },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        purpose: true,
-        amountRequested: true,
-        amountAgreed: true,
-        refinancingConcept: true,
-        sustainability: true,
-        expectedCompletionDate: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-        files: true,
-        organization: {
-          select: {
-            name: true,
-            email: true,
-            Files: {
+            team: {
               select: {
-                id: true,
+                email: true,
                 name: true,
-                url: true,
-                type: true,
               },
             },
           },
@@ -292,84 +155,320 @@ const getFundingRequestsByOrgId = async (searchQuery: string) => {
         submittedBy: {
           select: {
             email: true,
-          },
-        },
-      },
-    });
-    return fundingRequests;
-  } catch (error) {
-    throw handlePrismaError(error);
-  }
-};
-
-const getFundingRequestById = async (id: string) => {
-  try {
-    const fundingRequest = await prisma.fundingRequest.findUnique({
-      where: {
-        id,
-      },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        purpose: true,
-        amountRequested: true,
-        amountAgreed: true,
-        refinancingConcept: true,
-        sustainability: true,
-        expectedCompletionDate: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-        files: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            address: true,
-            postalCode: true,
-            city: true,
-            country: true,
-            website: true,
-            taxID: true,
-            Files: {
-              select: {
-                id: true,
-                name: true,
-                url: true,
-                type: true,
-              },
-            },
-            bankDetails: {
-              select: {
-                bankName: true,
-                accountHolder: true,
-                iban: true,
-                bic: true,
-              },
-            },
-          },
-        },
-        submittedBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            address: true,
-            postalCode: true,
-            city: true,
-            country: true,
           },
         },
       },
     });
     return fundingRequest;
-  } catch (error) {
-    throw handlePrismaError(error);
+  } catch (e) {
+    throw e;
   }
+};
+
+const updateFundingRequestStatus = async (
+  id: string,
+  status: FundingStatus,
+  donationId?: string | null
+) => {
+  const selectedFields = {
+    id: true,
+    name: true,
+    description: true,
+    purpose: true,
+    amountRequested: true,
+    amountAgreed: true,
+    refinancingConcept: true,
+    sustainability: true,
+    expectedCompletionDate: true,
+    status: true,
+    createdAt: true,
+    updatedAt: true,
+    files: {
+      select: {
+        id: true,
+        name: true,
+        url: true,
+        type: true,
+      },
+    },
+    organization: {
+      select: {
+        name: true,
+        email: true,
+        team: {
+          select: {
+            email: true,
+            name: true,
+          },
+        },
+      },
+    },
+    submittedBy: {
+      select: {
+        email: true,
+      },
+    },
+  };
+  try {
+    if (donationId) {
+      const signedAgreements = await prisma.donationAgreementSignature.findMany(
+        {
+          where: {
+            donationAgreementId: donationId as string,
+            signedAt: null,
+          },
+        }
+      );
+
+      if (!signedAgreements?.length) {
+        return await prisma.fundingRequest.update({
+          where: { id },
+          data: {
+            status,
+          },
+          select: selectedFields,
+        });
+      }
+    } else {
+      return await prisma.fundingRequest.update({
+        where: { id },
+        data: {
+          status,
+        },
+        select: selectedFields,
+      });
+    }
+  } catch (e) {
+    throw handlePrismaError(e);
+  }
+};
+
+const uploadFundingRequestFile = async (
+  fundingRequestId: string,
+  file: string,
+  type: FileTypes,
+  contactId: string
+) => {
+  return await prisma.file.create({
+    data: {
+      url: file,
+      fundingRequestId,
+      type: type,
+      createdById: contactId,
+      updatedById: contactId,
+    },
+    select: {
+      FundingRequest: {
+        select: {
+          name: true,
+          organization: {
+            select: {
+              name: true,
+              email: true,
+              team: {
+                select: {
+                  email: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+const getFundingRequests = async (
+  {
+    teamId,
+    orgId,
+  }: {
+    teamId: string;
+    orgId: string;
+  },
+  searchQuery: string,
+  status?: string[] | null
+) => {
+  const where: { [key: string]: any } = {};
+  if (orgId) {
+    where["organizationId"] = orgId;
+  }
+  if (teamId) {
+    where["teamId"] = teamId;
+  }
+  if (searchQuery) {
+    where["description"] = {
+      contains: searchQuery,
+    };
+    where["purpose"] = {
+      contains: searchQuery,
+    };
+    where["refinancingConcept"] = {
+      contains: searchQuery,
+    };
+    where["sustainability"] = {
+      contains: searchQuery,
+    };
+  }
+  console.log("status in fnc", status);
+  if (status?.length) {
+    where["status"] = {
+      in: status,
+    };
+  }
+
+  const fundingRequests = await prisma.fundingRequest.findMany({
+    where,
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      purpose: true,
+      amountRequested: true,
+      amountAgreed: true,
+      refinancingConcept: true,
+      sustainability: true,
+      expectedCompletionDate: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      files: {
+        select: {
+          id: true,
+          name: true,
+          url: true,
+          type: true,
+        },
+      },
+      organization: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+      submittedBy: {
+        select: {
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return fundingRequests;
+};
+
+const getFundingRequestsByOrgId = async (searchQuery: string) => {
+  const fundingRequests = await prisma.fundingRequest.findMany({
+    where: {
+      organization: {
+        id: searchQuery,
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      purpose: true,
+      amountRequested: true,
+      amountAgreed: true,
+      refinancingConcept: true,
+      sustainability: true,
+      expectedCompletionDate: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      files: true,
+      organization: {
+        select: {
+          name: true,
+          email: true,
+          Files: {
+            select: {
+              id: true,
+              name: true,
+              url: true,
+              type: true,
+            },
+          },
+        },
+      },
+      submittedBy: {
+        select: {
+          email: true,
+        },
+      },
+    },
+  });
+  return fundingRequests;
+};
+
+const getFundingRequestById = async (id: string) => {
+  const fundingRequest = await prisma.fundingRequest.findUnique({
+    where: {
+      id,
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      purpose: true,
+      amountRequested: true,
+      amountAgreed: true,
+      refinancingConcept: true,
+      sustainability: true,
+      expectedCompletionDate: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      files: true,
+      organization: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          address: true,
+          postalCode: true,
+          city: true,
+          country: true,
+          website: true,
+          taxID: true,
+          Files: {
+            select: {
+              id: true,
+              name: true,
+              url: true,
+              type: true,
+            },
+          },
+          bankDetails: {
+            select: {
+              bankName: true,
+              accountHolder: true,
+              iban: true,
+              bic: true,
+            },
+          },
+        },
+      },
+      submittedBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          address: true,
+          postalCode: true,
+          city: true,
+          country: true,
+        },
+      },
+    },
+  });
+  return fundingRequest;
 };
 
 export {

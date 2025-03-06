@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "../helpers";
 import { handlePrismaError } from "@/lib/utils";
 import { auth } from "@/auth";
 import { getFiles } from "@/services/file";
@@ -24,17 +23,7 @@ export async function GET(req: Request) {
       { status: 201 }
     );
   } catch (e) {
-    const handledError = handlePrismaError(e);
-    return NextResponse.json(
-      { error: handledError?.message },
-      { status: 400, statusText: handledError?.message }
-    );
-  }
-}
-
-export async function PUT() {
-  try {
-  } catch (e) {
-    return NextResponse.json({ error: getErrorMessage(e) }, { status: 400 });
+    const message = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

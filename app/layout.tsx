@@ -6,7 +6,7 @@ import { SessionProvider } from "next-auth/react";
 import NextTopLoader from "nextjs-toploader";
 
 export const metadata: Metadata = {
-  title: "Funding Manager",
+  title: "Partner App",
   description: "A funding manager application.",
 };
 

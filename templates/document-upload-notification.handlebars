@@ -1,0 +1,42 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document Upload Notification</title>
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px
+      solid #ddd; border-radius: 5px; background-color: #f9f9f9; } .header {
+      font-size: 24px; font-weight: bold; margin-bottom: 20px; } .content {
+      font-size: 16px; } .document-type { padding: 10px; border-radius: 5px;
+      font-weight: bold; text-align: center; margin: 20px 0; background-color:
+      #e2f0fb; color: #004085; } .footer { margin-top: 20px; font-size: 14px;
+      color: #777; } .button { display: inline-block; padding: 10px 20px;
+      background-color: #007BFF; color: #fff; text-decoration: none;
+      border-radius: 5px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">Document Upload Notification</div>
+      <div class="content">
+        <p>Hello Team,</p>
+        <p><strong>{{organizationName}}</strong>
+          has uploaded a
+          <strong>{{documentType}}</strong>
+          for their funding request
+          <strong>{{requestName}}</strong>.</p>
+        <div class="document-type">{{documentType}} Uploaded</div>
+        <p>You can review the uploaded document by clicking the button below:</p>
+        <p>
+          <a href="{{fundingRequestLink}}" class="button">View
+            {{documentType}}</a>
+        </p>
+      </div>
+      <div class="footer">
+        <p>Best regards,</p>
+        <p>The PartnerApp Funding Team</p>
+      </div>
+    </div>
+  </body>
+</html>

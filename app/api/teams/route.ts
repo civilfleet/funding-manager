@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "../helpers";
 import { createTeam, getTeamsByRoles } from "@/services/teams";
 import { createTeamSchema } from "@/validations/team";
 import { handlePrismaError } from "@/lib/utils";
+import { sendEmail } from "@/lib/nodemailer";
 
 export async function GET(req: Request) {
   try {
@@ -23,9 +23,10 @@ export async function GET(req: Request) {
       { status: 201 }
     );
   } catch (e) {
+    const { message } = handlePrismaError(e);
     return NextResponse.json(
-      { error: getErrorMessage(e) },
-      { status: 400, statusText: getErrorMessage(e) }
+      { error: message },
+      { status: 400, statusText: message }
     );
   }
 }
@@ -35,10 +36,37 @@ export async function POST(req: Request) {
     const teamData = await req.json();
     const validatedData = createTeamSchema.parse(teamData);
 
-    const response = await createTeam(validatedData);
-    return NextResponse.json(response, { status: 201 });
+    const { team } = await createTeam(validatedData);
+
+    // if teamId is provided, it means the organization is created by a team
+    await Promise.all([
+      sendEmail(
+        {
+          to: team.email,
+          subject: "You’re In! Welcome to Partner App.",
+          template: "welcome",
+        },
+        {
+          name: team.name,
+          email: team.email,
+        }
+      ),
+      sendEmail(
+        {
+          to: validatedData.contactPerson.email,
+          subject: "You’re In! Welcome to Partner App.",
+          template: "welcome",
+        },
+        {
+          name: validatedData.contactPerson.name,
+          email: validatedData.contactPerson.email,
+        }
+      ),
+    ]);
+
+    return NextResponse.json(team, { status: 201 });
   } catch (e) {
-    const handledError = handlePrismaError(e);
-    return NextResponse.json({ error: handledError.message }, { status: 400 });
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

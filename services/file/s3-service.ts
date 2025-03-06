@@ -28,7 +28,8 @@ export const uploadFile = async ({
 
     return putUrl;
   } catch (error) {
-    throw new Error("Error uploading file");
+    console.error("Error uploading file to S3:", error);
+    throw error;
   }
 };
 

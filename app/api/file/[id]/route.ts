@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "../../helpers";
+
 import { getFileById } from "@/services/file";
 import s3Client from "@/lib/s3-client";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { handlePrismaError } from "@/lib/utils";
 
 export async function GET(
   _req: Request,
@@ -40,6 +41,7 @@ export async function GET(
       },
     });
   } catch (e) {
-    return NextResponse.json({ error: getErrorMessage(e) }, { status: 400 });
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

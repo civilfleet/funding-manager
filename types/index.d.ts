@@ -77,6 +77,7 @@ export interface FundingRequest {
   status: FundingStatus;
   submittedById: string;
   submittedBy?: ContactPerson;
+
   createdAt: Date;
   updatedAt: Date;
   files: File[];
@@ -158,4 +159,11 @@ export type DonationAgreement = {
   file?: File; // Optional relation
   createdBy: ContactPerson;
   createdById: string;
+};
+
+export type EMAIL_CONTENT = {
+  from?: string;
+  to: string;
+  subject: string;
+  template: string;
 };

@@ -18,44 +18,40 @@ export interface ContactPerson {
   type: "Organization" | "Team" | "Admin";
 }
 const getContactPersonCurrent = async () => {
-  try {
-    const session = await auth();
-    const contact = await prisma.contactPerson.findUnique({
-      where: {
-        id: session?.user.contactId,
-      },
-      select: {
-        id: true,
-        name: true,
-        address: true,
-        email: true,
-        phone: true,
-        postalCode: true,
-        city: true,
-        country: true,
-        type: true,
-        organizations: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        teams: {
-          select: {
-            id: true,
-            name: true,
-            roleName: true,
-            email: true,
-          },
+  const session = await auth();
+  const contact = await prisma.contactPerson.findUnique({
+    where: {
+      id: session?.user.contactId,
+    },
+    select: {
+      id: true,
+      name: true,
+      address: true,
+      email: true,
+      phone: true,
+      postalCode: true,
+      city: true,
+      country: true,
+      type: true,
+      organizations: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
         },
       },
-    });
+      teams: {
+        select: {
+          id: true,
+          name: true,
+          roleName: true,
+          email: true,
+        },
+      },
+    },
+  });
 
-    return contact;
-  } catch (error) {
-    throw error;
-  }
+  return contact;
 };
 
 const getContactPersons = async (
@@ -68,91 +64,83 @@ const getContactPersons = async (
   },
   searchQuery: string
 ) => {
-  try {
-    const whereConditions = [];
+  const whereConditions = [];
 
-    if (teamId) {
-      const organizationIds = await prisma.organization
-        .findMany({
-          where: { teamId },
-          select: { id: true },
-        })
-        .then((orgs) => orgs.map((org) => org.id));
+  if (teamId) {
+    const organizationIds = await prisma.organization
+      .findMany({
+        where: { teamId },
+        select: { id: true },
+      })
+      .then((orgs) => orgs.map((org) => org.id));
 
-      const teamOrOrganizationConditions = [];
+    const teamOrOrganizationConditions = [];
 
-      if (organizationIds.length > 0) {
-        teamOrOrganizationConditions.push({
-          organizations: { some: { id: { in: organizationIds } } },
-        });
-      }
-
+    if (organizationIds.length > 0) {
       teamOrOrganizationConditions.push({
-        teams: { some: { id: teamId } },
-      });
-
-      whereConditions.push({
-        OR: teamOrOrganizationConditions,
-      });
-    } else if (organizationId) {
-      whereConditions.push({
-        organizations: { some: { id: organizationId } },
+        organizations: { some: { id: { in: organizationIds } } },
       });
     }
 
-    const contactPersons = await prisma.contactPerson.findMany({
-      where: {
-        AND: [
-          {
-            OR: [
-              { name: { contains: searchQuery, mode: "insensitive" } },
-              { email: { contains: searchQuery, mode: "insensitive" } },
-              { address: { contains: searchQuery, mode: "insensitive" } },
-              { city: { contains: searchQuery, mode: "insensitive" } },
-              { country: { contains: searchQuery, mode: "insensitive" } },
-            ],
-          },
-          ...whereConditions,
-        ],
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+    teamOrOrganizationConditions.push({
+      teams: { some: { id: teamId } },
     });
 
-    return contactPersons;
-  } catch (error) {
-    throw error;
+    whereConditions.push({
+      OR: teamOrOrganizationConditions,
+    });
+  } else if (organizationId) {
+    whereConditions.push({
+      organizations: { some: { id: organizationId } },
+    });
   }
+
+  const contactPersons = await prisma.contactPerson.findMany({
+    where: {
+      AND: [
+        {
+          OR: [
+            { name: { contains: searchQuery, mode: "insensitive" } },
+            { email: { contains: searchQuery, mode: "insensitive" } },
+            { address: { contains: searchQuery, mode: "insensitive" } },
+            { city: { contains: searchQuery, mode: "insensitive" } },
+            { country: { contains: searchQuery, mode: "insensitive" } },
+          ],
+        },
+        ...whereConditions,
+      ],
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return contactPersons;
 };
 
 const createContactPerson = async (contact: ContactPerson) => {
-  try {
-    const session = await auth();
+  const session = await auth();
 
-    const contactPerson = await prisma.contactPerson.create({
-      data: {
-        ...omit(contact, ["organizationId", "teamId"]),
-        // Conditionally connect organization only if ID exists
-        ...(session?.user.organizationId && {
-          organizations: {
-            connect: [{ id: session.user.organizationId }],
-          },
-        }),
-        // Conditionally connect team only if ID exists
-        ...(session?.user.teamId && {
-          teams: {
-            connect: { id: session.user.teamId },
-          },
-        }),
-        fundingRequests: undefined,
-      },
-    });
+  const contactPerson = await prisma.contactPerson.create({
+    data: {
+      ...omit(contact, ["organizationId", "teamId"]),
+      // Conditionally connect organization only if ID exists
+      ...(session?.user.organizationId && {
+        organizations: {
+          connect: [{ id: session.user.organizationId }],
+        },
+      }),
+      // Conditionally connect team only if ID exists
+      ...(session?.user.teamId && {
+        teams: {
+          connect: { id: session.user.teamId },
+        },
+      }),
+      fundingRequests: undefined,
+    },
+  });
 
-    return contactPerson;
-  } catch (error) {
-    throw handlePrismaError(error);
-  }
+  return contactPerson;
 };
 
 const getContactPersonById = async (id: string) => {
@@ -170,24 +158,20 @@ const getContactPersonById = async (id: string) => {
 };
 
 const getTeamsContactPersons = async (teamId: string) => {
-  try {
-    const contactPersons = await prisma.contactPerson.findMany({
-      where: {
-        teams: {
-          some: {
-            id: teamId,
-          },
+  const contactPersons = await prisma.contactPerson.findMany({
+    where: {
+      teams: {
+        some: {
+          id: teamId,
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
-    return contactPersons;
-  } catch (error) {
-    throw error;
-  }
+  return contactPersons;
 };
 export {
   getContactPersons,

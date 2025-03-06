@@ -1,3 +1,4 @@
+import { handlePrismaError } from "@/lib/utils";
 import { uploadFile } from "@/services/file/s3-service";
 import { NextResponse } from "next/server";
 
@@ -21,8 +22,7 @@ export async function POST(req: Request) {
       }
     );
   } catch (error) {
-    console.error("Error uploading file:", error);
-
-    return new Response(JSON.stringify(error), { status: 500 });
+    const { message } = handlePrismaError(error);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

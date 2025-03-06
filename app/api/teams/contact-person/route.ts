@@ -17,10 +17,10 @@ export async function GET() {
       { status: 201 }
     );
   } catch (e) {
-    const handledError = handlePrismaError(e);
+    const { message } = handlePrismaError(e);
     return NextResponse.json(
-      { error: handledError?.message },
-      { status: 400, statusText: handledError?.message }
+      { error: message },
+      { status: 400, statusText: message }
     );
   }
 }

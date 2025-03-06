@@ -10,6 +10,7 @@ interface FileUploadProps {
   name?: string;
   error?: string;
   data?: string;
+  disabled?: boolean;
 }
 
 const FileUpload = ({
@@ -18,6 +19,7 @@ const FileUpload = ({
   name,
   data,
   error,
+  disabled = false,
 }: FileUploadProps) => {
   const [fileUrl, setFileUrl] = useState<string | null>(data || null);
   const [loading, setLoading] = useState(false);
@@ -63,6 +65,7 @@ const FileUpload = ({
         onChange={handleFileChange}
         placeholder={placeholder}
         name={name}
+        disabled={disabled}
       />
 
       <a

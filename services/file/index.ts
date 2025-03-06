@@ -25,61 +25,57 @@ const getFiles = async (
   },
   searchQuery: string
 ) => {
-  try {
-    console.log("search query ", searchQuery);
-    const whereConditions = [];
+  console.log("search query ", searchQuery);
+  const whereConditions = [];
 
-    if (teamId) {
-      const organizationIds = await prisma.organization
-        .findMany({
-          where: { teamId },
-          select: { id: true },
-        })
-        .then((orgs) => orgs.map((org) => org.id));
+  if (teamId) {
+    const organizationIds = await prisma.organization
+      .findMany({
+        where: { teamId },
+        select: { id: true },
+      })
+      .then((orgs) => orgs.map((org) => org.id));
 
-      console.log(organizationIds, "organizationIds");
+    console.log(organizationIds, "organizationIds");
 
-      if (organizationIds.length > 0) {
-        whereConditions.push({
-          OR: [{ organizationId: { in: organizationIds } }],
-        });
-      }
-    } else if (organizationId) {
+    if (organizationIds.length > 0) {
       whereConditions.push({
-        organizationId,
+        OR: [{ organizationId: { in: organizationIds } }],
       });
     }
-
-    const contactPersons = await prisma.file.findMany({
-      where: {
-        ...whereConditions[0],
-      },
-      include: {
-        organization: {
-          select: {
-            name: true,
-          },
-        },
-        updatedBy: {
-          select: {
-            email: true,
-          },
-        },
-        createdBy: {
-          select: {
-            email: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+  } else if (organizationId) {
+    whereConditions.push({
+      organizationId,
     });
-
-    return contactPersons;
-  } catch (error) {
-    throw error;
   }
+
+  const contactPersons = await prisma.file.findMany({
+    where: {
+      ...whereConditions[0],
+    },
+    include: {
+      organization: {
+        select: {
+          name: true,
+        },
+      },
+      updatedBy: {
+        select: {
+          email: true,
+        },
+      },
+      createdBy: {
+        select: {
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return contactPersons;
 };
 
 export { getFileById, getFiles };

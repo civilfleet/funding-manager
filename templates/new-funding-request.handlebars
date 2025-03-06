@@ -1,0 +1,46 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Funding Request Submission</title>
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px
+      solid #ddd; border-radius: 5px; background-color: #f9f9f9; } .header {
+      font-size: 24px; font-weight: bold; margin-bottom: 20px; } .content {
+      font-size: 16px; } .footer { margin-top: 20px; font-size: 14px; color:
+      #777; } .button { display: inline-block; padding: 10px 20px;
+      background-color: #007BFF; color: #fff; text-decoration: none;
+      border-radius: 5px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">New Funding Request Submitted</div>
+      <div class="content">
+        <p>Hello Team,</p>
+        <p>A new funding request has been submitted by
+          <strong>{{organizationName}}</strong>. Below are the details:</p>
+        <ul>
+          <li><strong>Organization Name:</strong> {{organizationName}}</li>
+          <li><strong>Contact Person:</strong> {{contactPerson}}</li>
+          <li><strong>Email:</strong> {{contactEmail}}</li>
+          <li><strong>Phone:</strong> {{contactPhone}}</li>
+          <li><strong>Funding Amount Requested:</strong> {{fundingAmount}}</li>
+          <li><strong>Purpose of Funding:</strong> {{fundingPurpose}}</li>
+        </ul>
+        <p>You can review the full details of the request by clicking the button
+          below:</p>
+        <p>
+          <a href="{{fundingRequestLink}}" class="button">Review Funding Request</a>
+        </p>
+        <p>Please ensure that the request is reviewed and processed in a timely
+          manner.</p>
+      </div>
+      <div class="footer">
+        <p>Best regards,</p>
+        <p>The {{teamName}} Team</p>
+      </div>
+    </div>
+  </body>
+</html>

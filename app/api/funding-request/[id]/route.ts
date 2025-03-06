@@ -1,11 +1,12 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "../../helpers";
 import {
   getFundingRequestById,
   updateFundingRequest,
 } from "@/services/funding-request";
 import { updateFundingRequestSchema } from "@/validations/funding-request";
+import { handlePrismaError } from "@/lib/utils";
+import { sendEmail } from "@/lib/nodemailer";
 
 // ✅ GET Organization by ID
 export async function GET(
@@ -27,7 +28,8 @@ export async function GET(
 
     return NextResponse.json({ data }, { status: 200 });
   } catch (e) {
-    return NextResponse.json({ error: getErrorMessage(e) }, { status: 400 });
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
 
@@ -54,7 +56,29 @@ export async function PUT(
         ...fundingRequest,
       });
 
-      await updateFundingRequest(fundingRequestId, validatedData);
+      const response = await updateFundingRequest(
+        fundingRequestId,
+        validatedData
+      );
+      sendEmail(
+        {
+          to: response?.organization?.email as string,
+          subject: `Funding Request Status Updated`,
+          template: "funding-status-update",
+        },
+        {
+          organizationName: response?.organization?.name,
+
+          requestName: response?.name,
+          submittedDate: response?.createdAt,
+          status: response.status,
+
+          requestLink: `${process.env.NEXT_PUBLIC_BASE_URL}/organization/funding-request/${response?.id}`,
+          supportEmail: "support@partnerapp.com",
+          teamName: response?.organization?.team?.name,
+        }
+      );
+
       return NextResponse.json(
         {
           message: "success",
@@ -63,6 +87,7 @@ export async function PUT(
       );
     }
   } catch (e) {
-    return NextResponse.json({ error: getErrorMessage(e) }, { status: 400 });
+    const handledError = handlePrismaError(e);
+    return NextResponse.json({ error: handledError.message }, { status: 400 });
   }
 }

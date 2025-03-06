@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "../../helpers";
 import {
   getDonationAgreementById,
   updateDonationAgreement,
@@ -19,7 +18,8 @@ export async function GET(
     const data = await getDonationAgreementById(donationAgreementId);
     return NextResponse.json({ data }, { status: 200 });
   } catch (e) {
-    return NextResponse.json({ error: getErrorMessage(e) }, { status: 400 });
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
 

@@ -35,7 +35,7 @@ const data = {
   },
   teams: [
     {
-      name: "Funding Manager",
+      name: "Partner App",
       logo: GalleryVerticalEnd,
       plan: "Non-profit",
     },
@@ -164,6 +164,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         }
       } catch (error) {
         console.error("Error fetching teams:", error);
+
         throw new Error("Failed to fetch teams");
       }
     };

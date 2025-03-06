@@ -1,67 +1,59 @@
 import prisma from "@/lib/prisma";
 
 const getTeamsByRoles = async (roles: string[] | null) => {
-  try {
-    return await prisma.teams.findMany({
-      where: {
-        roleName: { in: roles || [] },
-      },
-      select: {
-        id: true,
-        name: true,
-        roleName: true,
-        email: true,
-      },
-    });
-  } catch (error) {
-    throw new Error("Failed to get teams");
-  }
+  return await prisma.teams.findMany({
+    where: {
+      roleName: { in: roles || [] },
+    },
+    select: {
+      id: true,
+      name: true,
+      roleName: true,
+      email: true,
+    },
+  });
 };
 
 const createTeam = async (teamData: any) => {
-  try {
-    const contact = teamData.contactPerson;
-    const bankDetails = teamData.bankDetails;
+  const contact = teamData.contactPerson;
+  const bankDetails = teamData.bankDetails;
 
-    delete teamData.contactPerson;
-    delete teamData.bankDetails;
-    const query = {
-      data: {
-        ...teamData,
-        contactPersons: {
-          create: {
-            ...contact,
-            type: "Team",
-          },
-        },
-        bankDetails: {
-          create: {
-            ...bankDetails,
-          },
+  delete teamData.contactPerson;
+  delete teamData.bankDetails;
+  const query = {
+    data: {
+      ...teamData,
+      contactPersons: {
+        create: {
+          ...contact,
+          type: "Team",
         },
       },
-    };
-
-    const contactPerson = await prisma.contactPerson.findUnique({
-      where: {
-        email: contact.email,
-      },
-    });
-    if (contactPerson?.id) {
-      query.data.contactPersons = {
-        connect: {
-          id: contactPerson?.id,
+      bankDetails: {
+        create: {
+          ...bankDetails,
         },
-      };
-    }
+      },
+    },
+  };
 
-    const team = await prisma.teams.create(query);
-    return {
-      data: team,
+  const contactPerson = await prisma.contactPerson.findUnique({
+    where: {
+      email: contact.email,
+    },
+  });
+  if (contactPerson?.id) {
+    query.data.contactPersons = {
+      connect: {
+        id: contactPerson?.id,
+      },
     };
-  } catch (error) {
-    throw error;
   }
+
+  const team = await prisma.teams.create(query);
+  return {
+    team,
+  };
 };
 
 export { getTeamsByRoles, createTeam };

@@ -7,10 +7,12 @@ import { Label } from "@radix-ui/react-label";
 import ButtonControl from "../helper/button-control";
 import { Form } from "../ui/form";
 import { toast } from "@/hooks/use-toast";
+import { useState } from "react"; // Import useState to manage the disabled state
 
 interface ReceiptFormData {
   url: string;
 }
+
 export default function FundingRequestPostData({
   fundingRequestId,
   title,
@@ -23,9 +25,9 @@ export default function FundingRequestPostData({
   type: FileTypes;
 }) {
   const form = useForm<ReceiptFormData>();
+  const [isUploaded, setIsUploaded] = useState(false); // State to track if the file is uploaded
 
   const onSubmit = async (data: ReceiptFormData) => {
-    console.log("Form Data:", data);
     try {
       const response = await fetch(
         `/api/funding-request/${fundingRequestId}/file`,
@@ -54,6 +56,7 @@ export default function FundingRequestPostData({
         description: "File uploaded successfully",
         variant: "default",
       });
+      setIsUploaded(true); // Set the state to true after successful upload
     } catch (e) {
       toast({
         title: "Error",
@@ -92,14 +95,15 @@ export default function FundingRequestPostData({
                   : ""
               }
               onFileUpload={(url) => handleFileUpload(url)}
+              disabled={isUploaded} // Disable the file upload component after successful upload
             />
 
             {/* Submit Button */}
             <ButtonControl
               type="submit"
               label="Submit"
-              className=" my-2 "
-              disabled={form.watch("url") === undefined}
+              className="my-2"
+              disabled={form.watch("url") === undefined || isUploaded} // Disable the button if the file is not uploaded or if the upload is already successful
               loading={false}
             />
           </form>

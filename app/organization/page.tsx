@@ -20,7 +20,7 @@ export default async function Page() {
   const { data } = await organization.json();
   return (
     <div className="container px-5 py-1">
-      {data.isFilledByOrg ? (
+      {data?.isFilledByOrg ? (
         <OrganizationDetails
           organization={data}
           fundingRequests={fundingRequestsData}

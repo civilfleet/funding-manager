@@ -30,10 +30,13 @@ import { FileTypes, FundingRequest, FundingStatus } from "./../types";
 import { StatusBadge } from "./helper/status-badge";
 
 import FundingRequestPostData from "./forms/funding-request-post-data";
+import { FileList } from "./helper/file-list";
 
 const amountOfferSchema = z.object({
   amountAgreed: z.coerce.number(),
 });
+
+// Function to check if a specific file type is missing
 
 export default function FundingRequestDetail({
   data,
@@ -44,18 +47,20 @@ export default function FundingRequestDetail({
 }) {
   const { toast } = useToast();
   const { data: session } = useSession();
-  const showStatementForm =
-    session?.user?.contactType == "Organization" &&
-    data.status === "FundsTransferred" &&
-    data.files.filter((file) => file.type === "STATEMENT").length === 0;
-  const showReportForm =
-    session?.user?.contactType == "Organization" &&
-    data.status === "FundsTransferred" &&
-    data.files.filter((file) => file.type === "REPORT").length === 0;
-  const showReceiptForm =
-    session?.user?.contactType == "Organization" &&
-    data.status === "FundsTransferred" &&
-    data.files.filter((file) => file.type === "DONATION_RECEIPT").length === 0;
+
+  const isOrganization = session?.user?.contactType === "Organization";
+  const isFundsTransferred = data.status === "FundsTransferred";
+  const showRejectButton =
+    !isOrganization && !["FundsTransferred", "Rejected"].includes(data.status);
+
+  const isFileTypeMissing = (fileType: string) =>
+    isOrganization &&
+    isFundsTransferred &&
+    data.files.filter((file) => file.type === fileType).length === 0;
+
+  const showStatementForm = isFileTypeMissing("STATEMENT");
+  const showReportForm = isFileTypeMissing("REPORT");
+  const showReceiptForm = isFileTypeMissing("DONATION_RECEIPT");
 
   const form = useForm<z.infer<typeof amountOfferSchema>>({
     resolver: zodResolver(amountOfferSchema),
@@ -115,7 +120,6 @@ export default function FundingRequestDetail({
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Funding Request</h1>
@@ -126,7 +130,7 @@ export default function FundingRequestDetail({
 
         <div className="flex flex-col items-end gap-2">
           <StatusBadge status={data.status} />
-          {!["FundsTransferred", "Rejected"].includes(data.status) && (
+          {showRejectButton && (
             <ButtonControl
               disabled={false}
               className=""
@@ -314,43 +318,12 @@ export default function FundingRequestDetail({
               />
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Documents
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {data.files.length > 0 ? (
-                [...(data.files || []), ...(data.organization.Files || [])].map(
-                  (file, index) => (
-                    <Button
-                      key={index}
-                      variant="outline"
-                      className="w-full justify-start"
-                      asChild
-                    >
-                      <a
-                        href={
-                          `${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${file?.id}` as string
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {(file?.name as string) || file.type}
-                      </a>
-                    </Button>
-                  )
-                )
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  No documents attached
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <FileList
+            files={data.files}
+            organizationFiles={
+              data.organization.Files ? data.organization.Files : []
+            }
+          />
         </div>
       </div>
     </div>

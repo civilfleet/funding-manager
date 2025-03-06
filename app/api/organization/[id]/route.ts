@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOrganizationById } from "@/services/organizations";
-import { getErrorMessage } from "../../helpers";
+import { handlePrismaError } from "@/lib/utils";
 
 // ✅ GET Organization by ID
 export async function GET(
@@ -20,6 +20,7 @@ export async function GET(
     const data = await getOrganizationById(organizationId);
     return NextResponse.json({ data }, { status: 200 });
   } catch (e) {
-    return NextResponse.json({ error: getErrorMessage(e) }, { status: 400 });
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

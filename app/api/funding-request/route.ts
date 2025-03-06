@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "../helpers";
 import {
   createFundingRequest,
   getFundingRequests,
@@ -7,18 +6,15 @@ import {
 import { createFundingRequestSchema } from "@/validations/funding-request";
 import { z } from "zod";
 import { auth } from "@/auth";
+import { handlePrismaError } from "@/lib/utils";
+import { sendEmail } from "@/lib/nodemailer";
 
-// ✅ GET (Get Funding Requests)
 export async function GET(req: Request) {
   try {
     const session = await auth();
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
-    console.log("searchQuery", searchQuery);
-
     const status = searchParams.getAll("status") || [];
-    console.log("status", status);
-
     const orgId = session?.user?.organizationId as string;
     const teamId = session?.user?.teamId as string;
 
@@ -35,16 +31,17 @@ export async function GET(req: Request) {
       { status: 201 }
     );
   } catch (e) {
+    const { message } = handlePrismaError(e);
     return NextResponse.json(
-      { error: getErrorMessage(e) },
-      { status: 400, statusText: getErrorMessage(e) }
+      { error: message },
+      { status: 400, statusText: message }
     );
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const fundingRequest = await req.json();
+    const fundingRequestData = await req.json();
     const validatedData = createFundingRequestSchema
       .and(
         z.object({
@@ -52,11 +49,28 @@ export async function POST(req: Request) {
           submittedBy: z.string().email().optional().or(z.literal("")),
         })
       )
-      .parse({
-        ...fundingRequest,
-      });
+      .parse(fundingRequestData);
 
-    await createFundingRequest(validatedData);
+    const { fundingRequest, contactPerson, organization } =
+      await createFundingRequest(validatedData);
+
+    sendEmail(
+      {
+        to: organization.team?.email as string,
+        subject: `New Funding Request from ${organization.name}`,
+        template: "new-funding-request",
+      },
+      {
+        teamEmail: organization.team?.email as string,
+        organizationName: organization.name,
+        contactPerson: contactPerson?.name || "Unknown",
+        contactEmail: contactPerson.email || "Unknown",
+        fundingAmount: fundingRequest.amountRequested,
+        fundingPurpose: fundingRequest.purpose,
+        fundingRequestLink: `${process.env.NEXT_PUBLIC_BASE_URL}/team/funding-request/${fundingRequest.id}`,
+      }
+    );
+
     return NextResponse.json(
       {
         message: "success",
@@ -64,9 +78,11 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (e) {
+    const { message } = handlePrismaError(e);
+
     return NextResponse.json(
-      { error: getErrorMessage(e) },
-      { status: 400, statusText: getErrorMessage(e) }
+      { error: message },
+      { status: 400, statusText: message }
     );
   }
 }

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "../helpers";
 import { createContactSchema } from "@/validations/organizations";
 import { auth } from "@/auth";
 import {
@@ -7,6 +6,7 @@ import {
   getContactPersons,
 } from "@/services/contact-person";
 import { handlePrismaError } from "@/lib/utils";
+import { sendEmail } from "@/lib/nodemailer";
 
 export async function GET(req: Request) {
   try {
@@ -60,6 +60,18 @@ export async function POST(req: Request) {
       });
     }
 
+    await sendEmail(
+      {
+        to: validatedData.email,
+        subject: "You’re In! Welcome to Partner App.",
+        template: "welcome",
+      },
+      {
+        name: validatedData.name,
+        email: validatedData.email,
+      }
+    );
+
     return NextResponse.json(
       {
         data: "success",
@@ -68,9 +80,10 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (e) {
+    const { message } = handlePrismaError(e);
     return NextResponse.json(
-      { error: getErrorMessage(e) },
-      { status: 400, statusText: getErrorMessage(e) }
+      { error: message },
+      { status: 400, statusText: message }
     );
   }
 }

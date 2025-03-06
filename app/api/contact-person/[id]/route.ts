@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getErrorMessage } from "../../helpers";
 import { getContactPersonById } from "@/services/contact-person";
+import { handlePrismaError } from "@/lib/utils";
 
 export async function GET(
   _req: Request,
@@ -15,6 +15,7 @@ export async function GET(
     const data = await getContactPersonById(id);
     return NextResponse.json({ data }, { status: 200 });
   } catch (e) {
-    return NextResponse.json({ error: getErrorMessage(e) }, { status: 400 });
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

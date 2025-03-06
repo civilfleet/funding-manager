@@ -1,4 +1,6 @@
 import { auth } from "@/auth";
+import { sendEmail } from "@/lib/nodemailer";
+import { handlePrismaError } from "@/lib/utils";
 import { uploadFundingRequestFile } from "@/services/funding-request";
 import { FileTypes } from "@/types";
 import { NextResponse } from "next/server";
@@ -21,11 +23,25 @@ export async function PUT(
     const session = await auth();
     const data = await req.json();
 
-    await uploadFundingRequestFile(
+    const response = await uploadFundingRequestFile(
       fundingRequestId,
       data.file,
       data?.type as FileTypes,
       session?.user?.contactId as string
+    );
+
+    sendEmail(
+      {
+        to: response?.FundingRequest?.organization?.team?.email as string,
+        subject: `${response.FundingRequest?.organization.name} Uploaded ${data?.type}`,
+        template: "document-upload-notification",
+      },
+      {
+        organizationName: response?.FundingRequest?.organization?.name,
+        documentType: data?.type,
+        requestName: response?.FundingRequest?.name,
+        fundingRequestLink: `${process.env.NEXT_PUBLIC_BASE_URL}/team/funding-request/${fundingRequestId}`,
+      }
     );
 
     return NextResponse.json(
@@ -36,6 +52,7 @@ export async function PUT(
     );
   } catch (e) {
     console.log("error", e);
-    return NextResponse.json({ error: e }, { status: 400 });
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
