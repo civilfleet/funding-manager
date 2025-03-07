@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getOrganizationById } from "@/services/organizations";
 import { handlePrismaError } from "@/lib/utils";
 
-// ✅ GET Organization by ID
 export async function GET(
   req: Request,
   {

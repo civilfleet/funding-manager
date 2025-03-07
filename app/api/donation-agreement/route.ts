@@ -8,8 +8,8 @@ import {
 } from "@/services/donation-agreement";
 import { omit } from "lodash";
 import { auth } from "@/auth";
+import { sendEmail } from "@/lib/nodemailer";
 
-// ✅ GET (Get Funding Requests)
 export async function GET(req: Request) {
   try {
     const session = await auth();
@@ -40,10 +40,29 @@ export async function POST(req: Request) {
     const validatedData =
       createDonationAgreementSchema.parse(donationAgreement);
 
-    await createDonationAgreement({
+    const { agreement, contacts } = await createDonationAgreement({
       ...omit(validatedData, "contactPerson"),
       contactPersons: validatedData.contactPersons ?? [],
     });
+
+    contacts?.forEach(async (contact) => {
+      await sendEmail(
+        {
+          to: contact.email,
+          subject: "Donation Agreement",
+          template: "donation-agreement",
+        },
+        {
+          contactPerson: contact.name,
+          requestName: agreement.fundingRequest.name,
+          organizationName: agreement?.organization?.name,
+          agreementLink: `${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${agreement.file.id}`,
+          supportEmail: agreement?.team?.email,
+          teamName: agreement?.team?.name,
+        }
+      );
+    });
+
     return NextResponse.json(
       {
         message: "Donation agreement created successfully",

@@ -18,6 +18,11 @@ const createDonationAgreement = async (donation: DonationAgreement) => {
           in: donation?.contactPersons as string[],
         },
       },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+      },
     });
 
     const file = await prisma.file.create({
@@ -57,6 +62,30 @@ const createDonationAgreement = async (donation: DonationAgreement) => {
           },
         },
       },
+      select: {
+        id: true,
+        team: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        organization: {
+          select: {
+            name: true,
+          },
+        },
+        fundingRequest: {
+          select: {
+            name: true,
+          },
+        },
+        file: {
+          select: {
+            id: true,
+          },
+        },
+      },
     });
 
     const agreementsToSignByContact = contacts.map((contact) => ({
@@ -77,12 +106,12 @@ const createDonationAgreement = async (donation: DonationAgreement) => {
       },
     });
 
-    return { agreement, file, contacts };
+    return { agreement, contacts };
   });
 
   return {
-    data: agreementData,
-    message: "Donation agreement created successfully",
+    agreement: agreementData.agreement,
+    contacts: agreementData.contacts,
   };
 };
 

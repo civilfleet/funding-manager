@@ -1,0 +1,42 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Donation Agreement Notification</title>
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px
+      solid #ddd; border-radius: 5px; background-color: #f9f9f9; } .header {
+      font-size: 24px; font-weight: bold; margin-bottom: 20px; } .content {
+      font-size: 16px; } .cta { padding: 10px; border-radius: 5px; font-weight:
+      bold; text-align: center; margin: 20px 0; background-color: #e2f0fb;
+      color: #004085; } .footer { margin-top: 20px; font-size: 14px; color:
+      #777; } .button { display: inline-block; padding: 10px 20px;
+      background-color: #007BFF; color: #fff; text-decoration: none;
+      border-radius: 5px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">Donation Agreement Generated</div>
+      <div class="content">
+        <p>Hello {{contactPerson}},</p>
+        <p>A donation agreement has been generated for the funding request
+          <strong>{{requestName}}</strong>. Your signature is required to
+          proceed.</p>
+        <div class="cta">Action Required: Sign the Donation Agreement</div>
+        <p>Please review and sign the agreement by clicking the button below:</p>
+        <p>
+          <a href="{{agreementLink}}" class="button">Sign Donation Agreement</a>
+        </p>
+        <p>If you have any questions or need further assistance, please feel
+          free to contact us at
+          <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.</p>
+      </div>
+      <div class="footer">
+        <p>Best regards,</p>
+        <p>{{teamName}}</p>
+      </div>
+    </div>
+  </body>
+</html>
