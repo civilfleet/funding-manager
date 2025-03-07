@@ -268,9 +268,75 @@ const updateDonationAgreement = async (
   return { message: "Donation agreement updated successfully" };
 };
 
+const getDonationAgreementPastSevenDays = async () => {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const donationAgreements = await prisma.donationAgreement.findMany({
+    where: {
+      createdAt: { lte: sevenDaysAgo },
+    },
+    select: {
+      id: true,
+      organization: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+      fundingRequest: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      team: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+  return donationAgreements;
+};
+
+const getDonationAgreementPastEightWeeks = async () => {
+  const eightWeeksAgo = new Date();
+  eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 56);
+  const donationAgreements = await prisma.donationAgreement.findMany({
+    where: {
+      createdAt: { lte: eightWeeksAgo },
+    },
+    select: {
+      id: true,
+      organization: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+      fundingRequest: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      team: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+  return donationAgreements;
+};
+
 export {
   createDonationAgreement,
   updateDonationAgreement,
   getDonationAgreements,
   getDonationAgreementById,
+  getDonationAgreementPastEightWeeks,
+  getDonationAgreementPastSevenDays,
 };
