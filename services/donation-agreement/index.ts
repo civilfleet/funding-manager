@@ -271,9 +271,17 @@ const updateDonationAgreement = async (
 const getDonationAgreementPastSevenDays = async () => {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  sevenDaysAgo.setHours(0, 0, 0, 0); // Start of the day
+
+  const nextDay = new Date(sevenDaysAgo);
+  nextDay.setDate(nextDay.getDate() + 1); // Next day (exclusive upper bound)
+
   const donationAgreements = await prisma.donationAgreement.findMany({
     where: {
-      createdAt: { lte: sevenDaysAgo },
+      createdAt: {
+        gte: sevenDaysAgo, // 7 days ago, 00:00:00
+        lt: nextDay, // 6 days ago, 00:00:00 (exclusive)
+      },
     },
     select: {
       id: true,
@@ -297,15 +305,24 @@ const getDonationAgreementPastSevenDays = async () => {
       },
     },
   });
+
   return donationAgreements;
 };
 
 const getDonationAgreementPastEightWeeks = async () => {
   const eightWeeksAgo = new Date();
   eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 56);
+  eightWeeksAgo.setHours(0, 0, 0, 0); // Start of the day
+
+  const nextDay = new Date(eightWeeksAgo);
+  nextDay.setDate(nextDay.getDate() + 1); // Next day (exclusive upper bound)
+
   const donationAgreements = await prisma.donationAgreement.findMany({
     where: {
-      createdAt: { lte: eightWeeksAgo },
+      createdAt: {
+        gte: eightWeeksAgo, // 56 days ago, 00:00:00
+        lt: nextDay, // 55 days ago, 00:00:00 (exclusive)
+      },
     },
     select: {
       id: true,
@@ -329,9 +346,9 @@ const getDonationAgreementPastEightWeeks = async () => {
       },
     },
   });
+
   return donationAgreements;
 };
-
 export {
   createDonationAgreement,
   updateDonationAgreement,
