@@ -115,21 +115,21 @@ const data = {
       url: "/admin",
       icon: Building,
     },
-    {
-      title: "Teams",
-      url: "/admin/teams",
-      icon: Building,
-    },
+    // {
+    //   title: "Teams",
+    //   url: "/admin/teams",
+    //   icon: Building,
+    // },
     // {
     //   title: "Organizations",
     //   url: "/admin/organizations",
     //   icon: Building,
     // },
-    {
-      title: "Contacts",
-      url: "/admin/contacts",
-      icon: BookUser,
-    },
+    // {
+    //   title: "Contacts",
+    //   url: "/admin/contacts",
+    //   icon: BookUser,
+    // },
     // {
     //   title: "Files",
     //   url: "/admin/files",
