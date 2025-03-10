@@ -22,7 +22,29 @@ export default function TeamForm() {
 
   const form = useForm<z.infer<typeof createTeamSchema>>({
     resolver: zodResolver(createTeamSchema),
-    defaultValues: {},
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+      city: "",
+      country: "",
+      postalCode: "",
+      website: "",
+      roleName: "",
+      bankDetails: {
+        bankName: "",
+        accountHolder: "",
+        iban: "",
+        bic: "",
+      },
+      contactPerson: {
+        name: "",
+        email: "",
+        phone: "",
+        address: "",
+      },
+    },
   });
 
   async function onSubmit(values: z.infer<typeof createTeamSchema>) {

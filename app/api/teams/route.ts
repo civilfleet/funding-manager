@@ -53,13 +53,13 @@ export async function POST(req: Request) {
       ),
       sendEmail(
         {
-          to: validatedData.contactPerson.email,
+          to: team.contactPersons[0].email,
           subject: "You’re In! Welcome to Partner App.",
           template: "welcome",
         },
         {
-          name: validatedData.contactPerson.name,
-          email: validatedData.contactPerson.email,
+          name: team.contactPersons[0].name,
+          email: validatedData.email,
         }
       ),
     ]);

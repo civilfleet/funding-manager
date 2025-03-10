@@ -35,6 +35,21 @@ const createTeam = async (teamData: any) => {
         },
       },
     },
+    select: {
+      id: true,
+      name: true,
+      roleName: true,
+      email: true,
+      contactPersons: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          address: true,
+        },
+      },
+    },
   };
 
   const contactPerson = await prisma.contactPerson.findUnique({
