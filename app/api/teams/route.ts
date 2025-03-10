@@ -59,7 +59,7 @@ export async function POST(req: Request) {
         },
         {
           name: team.contactPersons[0].name,
-          email: validatedData.email,
+          email: team.contactPersons[0].email,
         }
       ),
     ]);
