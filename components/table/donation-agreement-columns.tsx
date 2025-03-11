@@ -41,7 +41,7 @@ export const columns: ColumnDef<DonationAgreement>[] = [
     header: () => <div className="text-left w-36">Funding Request</div>,
     cell: ({ row }) => (
       <div className="text-left">
-        {truncate(row.original?.fundingRequest?.purpose, {
+        {truncate(row.original?.fundingRequest?.name, {
           length: 20,
           omission: "...",
         }) || "N/A"}

@@ -1,6 +1,6 @@
 export default {
   host: process.env.BREVO_HOST as string, // SMTP host
-  port: parseInt(process.env.BREVO_PORT as string), // SMTP port
+  port: 465, // SMTP port
   secure: true, // true for 465, false for other ports
 
   auth: {
