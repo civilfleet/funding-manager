@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://funding-manager:Qn*7aEM>sAau9tUnA{UE@51.159.25.67:63431/funding-manager"
+  url      = env("DATABASE_URL")
 }
 
 model Manager {
