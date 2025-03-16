@@ -16,7 +16,7 @@ export default function Page() {
           taxExemptionCertificate: undefined,
           taxID: undefined,
           bankDetails: undefined,
-          contactPerson: undefined,
+          user: undefined,
           id: "",
           isFilledByOrg: false,
         }}

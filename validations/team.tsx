@@ -16,7 +16,7 @@ const createTeamSchema = z.object({
     iban: z.string().min(1, "IBAN is required"),
     bic: z.string().min(1, "BIC is required"),
   }),
-  contactPerson: z.object({
+  user: z.object({
     name: z.string().min(1, "Name is required"),
     email: z.string().email("Invalid email address"),
     phone: z.string().min(1, "Phone is required"),

@@ -40,20 +40,20 @@ export async function POST(req: Request) {
     const validatedData =
       createDonationAgreementSchema.parse(donationAgreement);
 
-    const { agreement, contacts } = await createDonationAgreement({
-      ...omit(validatedData, "contactPerson"),
-      contactPersons: validatedData.contactPersons ?? [],
+    const { agreement, users } = await createDonationAgreement({
+      ...omit(validatedData, "user"),
+      users: validatedData.users ?? [],
     });
 
-    contacts?.forEach(async (contact) => {
+    users?.forEach(async (user) => {
       await sendEmail(
         {
-          to: contact.email,
+          to: user.email,
           subject: "Donation Agreement",
           template: "donation-agreement",
         },
         {
-          contactPerson: contact.name,
+          user: user.name,
           requestName: agreement.fundingRequest.name,
           organizationName: agreement?.organization?.name,
           agreementLink: `${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${agreement.file.id}`,

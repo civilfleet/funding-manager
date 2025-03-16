@@ -7,13 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Manager {
-  id    String  @id @default(uuid())  @unique
-  email String  @unique                      
-  name  String?                              
-  roles String                               
-  organizations Organization[] 
-}
 
 model Organization {
   id                      String      @id @default(uuid()) @unique 
@@ -28,8 +21,7 @@ model Organization {
   taxID                   String?      @db.VarChar(255)
   isFilledByOrg           Boolean      @default(false)
   bankDetailsId           String?      @unique
-  managers                Manager[]   
-  contactPersons          ContactPerson[] @relation("OrganizationContacts") // Many-to-Many relation
+  users                   User[] @relation("OrganizationUsers") // Many-to-Many relation
   teamId                  String?     
   team                    Teams?              @relation(fields: [teamId], references: [id])   
   bankDetails             BankDetails?        @relation(fields: [bankDetailsId], references: [id])
@@ -78,7 +70,7 @@ model FundingRequest {
   expectedCompletionDate    DateTime                               
   status                    FundingStatus @default(Pending)   
   submittedById             String           
-  submittedBy               ContactPerson? @relation(fields: [submittedById], references: [id])
+  submittedBy               User? @relation(fields: [submittedById], references: [id])
   createdAt                 DateTime @default(now()) @db.Timestamptz(6) 
   updatedAt                 DateTime @updatedAt @db.Timestamptz(6) 
   files                     File[]          
@@ -93,9 +85,9 @@ model File {
   name        String?      @db.VarChar(255)  
   url         String
   type        String      @db.VarChar(255)                             
-  createdBy   ContactPerson @relation("CreatedByRelation", fields: [createdById], references: [id])
+  createdBy   User @relation("CreatedByRelation", fields: [createdById], references: [id])
   createdById String                       
-  updatedBy   ContactPerson @relation("UpdatedByRelation", fields: [updatedById], references: [id])
+  updatedBy   User @relation("UpdatedByRelation", fields: [updatedById], references: [id])
   updatedById String               
   createdAt   DateTime    @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime    @updatedAt @db.Timestamptz(6) 
@@ -108,7 +100,7 @@ model File {
 
 }
 
-enum ContactType {
+enum Roles {
   Organization
   Team
   Admin
@@ -131,14 +123,14 @@ model Teams {
   bankDetails   BankDetails?   @relation(fields: [bankDetailsId], references: [id])
   organizations Organization[]
   
-  contactPersons     ContactPerson[] @relation("TeamContacts") // Many-to-Many relation
+  users     User[] @relation("TeamUsers") // Many-to-Many relation
   fundingRequests    FundingRequest[]
   donationAgreements DonationAgreement[]
   createdAt    DateTime        @default(now()) @db.Timestamptz(6)
   updatedAt    DateTime        @updatedAt @db.Timestamptz(6)
 }
 
-model ContactPerson {
+model User {
   id             String           @id @default(uuid()) @unique 
   name           String?          @db.VarChar(255)          
   address        String?          @db.VarChar(255)          
@@ -147,11 +139,11 @@ model ContactPerson {
   postalCode     String?          @db.VarChar(255)  
   city           String?          @db.VarChar(255)  
   country        String?          @db.VarChar(255)                           
-  type           ContactType      @default(Organization)
+  roles          Roles[]
 
   fundingRequests FundingRequest[]  
-  teams           Teams[]          @relation("TeamContacts") // Many-to-Many relation
-  organizations   Organization[]   @relation("OrganizationContacts") // Many-to-Many relation
+  teams           Teams[]          @relation("TeamUsers") // Many-to-Many relation
+  organizations   Organization[]   @relation("OrganizationUsers") // Many-to-Many relation
 
   signedAgreements DonationAgreementSignature[]
   donationAgreement DonationAgreement[] @relation("CreatedByRelation")
@@ -175,9 +167,9 @@ model DonationAgreement {
   file             File      @relation(fields: [fileId], references: [id])
   agreement        String    @db.Text
 
-  createdBy        ContactPerson @relation("CreatedByRelation", fields: [createdById], references: [id])
+  createdBy        User @relation("CreatedByRelation", fields: [createdById], references: [id])
   createdById      String
-  contactSignatures DonationAgreementSignature[]
+  userSignatures DonationAgreementSignature[]
   teamId           String?
   team             Teams? @relation(fields: [teamId], references: [id])
   organizationId           String?
@@ -189,11 +181,11 @@ model DonationAgreement {
 
 model DonationAgreementSignature {
   donationAgreementId String
-  contactPersonId     String
+  userId              String
   signedAt            DateTime?  // If NULL, person hasn't signed
 
   donationAgreement DonationAgreement @relation(fields: [donationAgreementId], references: [id], onDelete: Cascade)
-  contactPerson     ContactPerson @relation(fields: [contactPersonId], references: [id], onDelete: Cascade)
+  user     User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@id([donationAgreementId, contactPersonId]) // Composite key to avoid duplicate signatures
+  @@id([donationAgreementId, userId]) // Composite key to avoid duplicate signatures
 }

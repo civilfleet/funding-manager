@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
-import { getTeamsContactPersons } from "@/services/contact-person";
+import { getTeamsUsers } from "@/services/users";
 import { auth } from "@/auth";
 import { handlePrismaError } from "@/lib/utils";
 
 export async function GET() {
   try {
     const session = await auth();
-    const response = await getTeamsContactPersons(
-      session?.user.teamId as string
-    );
+    const response = await getTeamsUsers(session?.user.teamId as string);
 
     return NextResponse.json(
       {

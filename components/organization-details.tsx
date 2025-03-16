@@ -88,7 +88,7 @@ export default function OrganizationDetails({
   fundingRequests: FundingRequest[];
 }) {
   const router = useRouter();
-  const contacts = organization?.contactPersons || [];
+  const users = organization?.users || [];
   const [expandedSection, setExpandedSection] = useState<string | null>(
     "profile"
   );
@@ -217,21 +217,19 @@ export default function OrganizationDetails({
         </Card>
       )}
 
-      {contacts && contacts.length > 0 && (
+      {users && users.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
-            <CardTitle className="text-xl">Contact Persons</CardTitle>
+            <CardTitle className="text-xl">User Persons</CardTitle>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => toggleSection("contacts")}
+              onClick={() => toggleSection("users")}
             >
-              {expandedSection === "contacts" ? <ChevronUp /> : <ChevronDown />}
+              {expandedSection === "users" ? <ChevronUp /> : <ChevronDown />}
             </Button>
           </CardHeader>
-          <CardContent
-            className={expandedSection === "contacts" ? "" : "hidden"}
-          >
+          <CardContent className={expandedSection === "users" ? "" : "hidden"}>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -242,26 +240,24 @@ export default function OrganizationDetails({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contacts.map((contact) => (
-                  <TableRow key={contact.id}>
-                    <TableCell className="font-medium">
-                      {contact.name}
-                    </TableCell>
-                    <TableCell>{contact.address}</TableCell>
+                {users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell>{user.address}</TableCell>
                     <TableCell>
                       <a
-                        href={`mailto:${contact.email}`}
+                        href={`mailto:${user.email}`}
                         className="text-primary hover:underline"
                       >
-                        {contact.email}
+                        {user.email}
                       </a>
                     </TableCell>
                     <TableCell>
                       <a
-                        href={`tel:${contact.phone}`}
+                        href={`tel:${user.phone}`}
                         className="text-primary hover:underline"
                       >
-                        {contact.phone}
+                        {user.phone}
                       </a>
                     </TableCell>
                   </TableRow>

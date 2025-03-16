@@ -26,7 +26,7 @@ import LongText from "./helper/long-text";
 import SectionBlock from "./helper/section-block";
 import formatCurrency from "./helper/format-currency";
 import ButtonControl from "./helper/button-control";
-import { FileTypes, FundingRequest, FundingStatus } from "./../types";
+import { FileTypes, FundingRequest, FundingStatus, Roles } from "./../types";
 import { StatusBadge } from "./helper/status-badge";
 
 import FundingRequestPostData from "./forms/funding-request-post-data";
@@ -48,7 +48,7 @@ export default function FundingRequestDetail({
   const { toast } = useToast();
   const { data: session } = useSession();
 
-  const isOrganization = session?.user?.contactType === "Organization";
+  const isOrganization = session?.user?.roles?.includes(Roles.Organization);
   const isFundsTransferred = data.status === "FundsTransferred";
   const showRejectButton =
     !isOrganization && !["FundsTransferred", "Rejected"].includes(data.status);

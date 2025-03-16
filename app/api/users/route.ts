@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
-import { createContactSchema } from "@/validations/organizations";
+import { createUserSchema } from "@/validations/organizations";
 import { auth } from "@/auth";
-import {
-  createContactPerson,
-  getContactPersons,
-} from "@/services/contact-person";
+import { createUser, getUsers } from "@/services/users";
 import { handlePrismaError } from "@/lib/utils";
 import { sendEmail } from "@/lib/nodemailer";
+import { Roles } from "@/types";
 
 export async function GET(req: Request) {
   try {
@@ -14,7 +12,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
 
-    const data = await getContactPersons(
+    const data = await getUsers(
       {
         organizationId: session?.user?.organizationId,
         teamId: session?.user?.teamId,
@@ -39,24 +37,22 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    const contactPerson = await req.json();
-    const validatedData = createContactSchema.parse({
-      ...contactPerson,
+    const user = await req.json();
+    const validatedData = createUserSchema.parse({
+      ...user,
     });
 
-    // If the user is an organization user, create a contact person for the organization
-    // If the user is a team user, create a contact person for the team
     if (session?.user?.organizationId) {
-      await createContactPerson({
+      await createUser({
         ...validatedData,
         organizationId: session?.user?.organizationId,
-        type: "Organization",
+        roles: [Roles.Organization],
       });
     } else {
-      await createContactPerson({
+      await createUser({
         ...validatedData,
         teamId: session?.user?.teamId,
-        type: "Team",
+        roles: [Roles.Team],
       });
     }
 

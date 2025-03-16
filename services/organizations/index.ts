@@ -1,7 +1,6 @@
 import _ from "lodash";
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
-import { handlePrismaError } from "@/lib/utils";
 
 type Organization = {
   name?: string;
@@ -24,7 +23,7 @@ type Organization = {
     bic?: string;
     bankName?: string;
   };
-  contactPerson?: {
+  user?: {
     name?: string;
     email: string;
     phone?: string;
@@ -38,7 +37,7 @@ type Organization = {
 const createOrUpdateOrganization = async (formData: Organization) => {
   return await prisma.$transaction(async (prisma) => {
     const session = await auth();
-    const contact = await prisma.contactPerson.findFirst({
+    const user = await prisma.user.findFirst({
       where: { email: session?.user.email as string },
     });
 
@@ -62,12 +61,12 @@ const createOrUpdateOrganization = async (formData: Organization) => {
         })
       : undefined;
 
-    // Upsert contact person if provided
-    const contactPerson = formData.contactPerson?.email
-      ? await prisma.contactPerson.upsert({
-          where: { email: formData.contactPerson.email },
-          update: { ...formData.contactPerson },
-          create: { ...formData.contactPerson },
+    // Upsert user person if provided
+    const newUser = formData.user?.email
+      ? await prisma.user.upsert({
+          where: { email: formData.user.email },
+          update: { ...formData.user },
+          create: { ...formData.user },
         })
       : undefined;
 
@@ -83,8 +82,8 @@ const createOrUpdateOrganization = async (formData: Organization) => {
       taxID: formData.taxID,
       isFilledByOrg: formData.isFilledByOrg,
       ...(bankDetail && { bankDetails: { connect: { id: bankDetail.id } } }),
-      ...(contactPerson && {
-        contactPersons: { connect: { id: contactPerson.id } },
+      ...(newUser && {
+        users: { connect: { id: newUser.id } },
       }),
     };
 
@@ -103,7 +102,7 @@ const createOrUpdateOrganization = async (formData: Organization) => {
         });
 
     // Batch file creation
-    if (contact?.id) {
+    if (user?.id) {
       const files = [
         {
           type: "TAX_EXEMPTION_CERTIFICATE",
@@ -125,9 +124,9 @@ const createOrUpdateOrganization = async (formData: Organization) => {
                 type,
                 url,
                 createdBy: {
-                  connect: { id: contact.id },
+                  connect: { id: user.id },
                 },
-                updatedBy: { connect: { id: contact.id } },
+                updatedBy: { connect: { id: user.id } },
                 organization: { connect: { id: organization.id } },
               },
             })
@@ -135,7 +134,7 @@ const createOrUpdateOrganization = async (formData: Organization) => {
       );
     }
 
-    return { organization, contactPerson, bankDetail };
+    return { organization, user: newUser, bankDetail };
   });
 };
 const getOrganizationById = async (id: string) => {
@@ -152,7 +151,7 @@ const getOrganizationById = async (id: string) => {
           type: true,
         },
       },
-      contactPersons: {
+      users: {
         select: {
           id: true,
           name: true,
@@ -166,7 +165,7 @@ const getOrganizationById = async (id: string) => {
       },
     },
   });
-  return { ...organization, contactPerson: organization?.contactPersons[0] };
+  return { ...organization, user: organization?.users[0] };
 };
 
 const getOrganizationByEmail = async (email: string) => {
@@ -183,7 +182,7 @@ const getOrganizationByEmail = async (email: string) => {
           type: true,
         },
       },
-      contactPersons: {
+      users: {
         select: {
           id: true,
           name: true,
@@ -197,10 +196,10 @@ const getOrganizationByEmail = async (email: string) => {
       },
     },
   });
-  if (organization?.contactPersons.length) {
+  if (organization?.users.length) {
     return {
       ...organization,
-      contactPerson: organization.contactPersons[0] || {},
+      user: organization.users[0] || {},
       taxExemptionCertificate: organization.Files.find(
         (file) => file.type === "TAX_EXEMPTION_CERTIFICATE"
       )?.id,
@@ -229,7 +228,7 @@ const getOrganizations = async (searchQuery: string, teamId: string) => {
     },
     include: {
       bankDetails: true,
-      contactPersons: true,
+      users: true,
     },
     orderBy: {
       createdAt: "desc",

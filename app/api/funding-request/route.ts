@@ -51,8 +51,9 @@ export async function POST(req: Request) {
       )
       .parse(fundingRequestData);
 
-    const { fundingRequest, contactPerson, organization } =
-      await createFundingRequest(validatedData);
+    const { fundingRequest, user, organization } = await createFundingRequest(
+      validatedData
+    );
 
     sendEmail(
       {
@@ -63,8 +64,8 @@ export async function POST(req: Request) {
       {
         teamEmail: organization.team?.email as string,
         organizationName: organization.name,
-        contactPerson: contactPerson?.name || "Unknown",
-        contactEmail: contactPerson.email || "Unknown",
+        user: user?.name || "Unknown",
+        userEmail: user.email || "Unknown",
         fundingAmount: fundingRequest.amountRequested,
         fundingPurpose: fundingRequest.purpose,
         fundingRequestLink: `${process.env.NEXT_PUBLIC_BASE_URL}/team/funding-request/${fundingRequest.id}`,

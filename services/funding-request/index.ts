@@ -24,8 +24,8 @@ const createFundingRequest = async (data: FundingRequestData) => {
   const session = await auth();
   const completionDate = new Date(data.expectedCompletionDate);
 
-  // Fetch the contact person's ID
-  const contactPerson = await prisma.contactPerson.findFirst({
+  // Fetch the user person's ID
+  const user = await prisma.user.findFirst({
     where: {
       email: session?.user.email as string,
     },
@@ -36,8 +36,8 @@ const createFundingRequest = async (data: FundingRequestData) => {
     },
   });
 
-  if (!contactPerson) {
-    throw new Error("Contact person not found.");
+  if (!user) {
+    throw new Error("User person not found.");
   }
 
   // Fetch organization details, including team email
@@ -80,7 +80,7 @@ const createFundingRequest = async (data: FundingRequestData) => {
       },
       submittedBy: {
         connect: {
-          id: contactPerson.id,
+          id: user.id,
         },
       },
       team: {
@@ -97,8 +97,8 @@ const createFundingRequest = async (data: FundingRequestData) => {
     url: file.url,
     fundingRequestId: fundingRequest.id,
     organizationId: data.organizationId,
-    createdById: contactPerson.id,
-    updatedById: contactPerson.id,
+    createdById: user.id,
+    updatedById: user.id,
     type: "FundingRequest",
   }));
 
@@ -108,7 +108,7 @@ const createFundingRequest = async (data: FundingRequestData) => {
     });
   }
 
-  return { fundingRequest, contactPerson, organization };
+  return { fundingRequest, user, organization };
 };
 
 const updateFundingRequest = async (
@@ -247,15 +247,15 @@ const uploadFundingRequestFile = async (
   fundingRequestId: string,
   file: string,
   type: FileTypes,
-  contactId: string
+  userId: string
 ) => {
   return await prisma.file.create({
     data: {
       url: file,
       fundingRequestId,
       type: type,
-      createdById: contactId,
-      updatedById: contactId,
+      createdById: userId,
+      updatedById: userId,
     },
     select: {
       FundingRequest: {

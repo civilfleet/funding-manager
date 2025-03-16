@@ -10,13 +10,13 @@ export interface BankDetails {
   teams?: Teams;
 }
 
-export enum ContactType {
+export enum Roles {
   Organization = "Organization",
   Team = "Team",
   Admin = "Admin",
 }
 
-export interface ContactPerson {
+export interface User {
   id: string;
   name?: string;
   address?: string;
@@ -30,7 +30,7 @@ export interface ContactPerson {
   fundingRequests: FundingRequest[];
   teamId?: string;
   team?: Teams;
-  type: ContactType;
+  roles: Roles[];
 
   createdAt: Date;
   updatedAt: Date;
@@ -41,8 +41,8 @@ export interface File {
   url: string;
   type: FileTypes;
   name: string;
-  createdBy: ContactPerson;
-  updatedBy: ContactPerson;
+  createdBy: User;
+  updatedBy: User;
   createdAt: Date;
   updatedAt: Date;
   organizationId?: string;
@@ -76,7 +76,7 @@ export interface FundingRequest {
   expectedCompletionDate: Date;
   status: FundingStatus;
   submittedById: string;
-  submittedBy?: ContactPerson;
+  submittedBy?: User;
 
   createdAt: Date;
   updatedAt: Date;
@@ -105,7 +105,7 @@ export interface Organization {
   isFilledByOrg: boolean;
   bankDetailsId?: string;
   managers: Manager[];
-  contactPersons: ContactPerson[];
+  users: User[];
   teamId?: string;
   team?: Teams;
   bankDetails?: BankDetails;
@@ -131,7 +131,7 @@ export interface Teams {
   bankDetailsId?: string;
   bankDetails?: BankDetails;
   organizations: Organization[];
-  contacts: ContactPerson[];
+  users: User[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -154,10 +154,10 @@ export type DonationAgreement = {
   agreement: string;
   createdAt: Date;
   updatedAt: Date;
-  contactSignatures: DonationAgreementSignature[];
+  userSignatures: DonationAgreementSignature[];
   fundingRequest?: FundingRequest; // Optional relation
   file?: File; // Optional relation
-  createdBy: ContactPerson;
+  createdBy: User;
   createdById: string;
 };
 

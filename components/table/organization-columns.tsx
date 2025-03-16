@@ -25,7 +25,7 @@ export type OrganizationColumns = {
   country?: string;
   website?: string;
   taxID?: string;
-  contactPerson?: {
+  user?: {
     email: string;
   };
   bankDetails?: {

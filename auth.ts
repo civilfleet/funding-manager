@@ -2,18 +2,18 @@ import NextAuth, { DefaultSession } from "next-auth";
 import authConfig from "./config/auth";
 
 import prisma from "./lib/prisma";
-import { ContactType } from "./types";
+import { Roles } from "./types";
 
 declare module "next-auth" {
   interface Session {
     user: {
       accessToken?: string;
       provider?: string;
-      contactType?: ContactType;
+      roles?: Roles[];
       organizationId?: string;
       teamId?: string;
 
-      contactId?: string;
+      userId?: string;
     } & DefaultSession["user"];
   }
 }
@@ -24,11 +24,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user, account }) {
       if (!account) return false;
 
-      const contact = await prisma.contactPerson.findFirst({
+      const userExist = await prisma.user.findFirst({
         where: { email: user.email as string },
       });
-
-      if (!contact) return false;
+      console.log(userExist);
+      if (!userExist) return false;
 
       return true;
     },
@@ -37,19 +37,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (account && user) {
         token.accessToken = account.access_token;
         token.provider = account.provider;
-        const contact = await prisma.contactPerson.findFirst({
+        const userExist = await prisma.user.findFirst({
           where: { email: user.email as string },
           select: {
-            type: true,
+            roles: true,
             id: true,
           },
         });
 
-        // token.organizationId = contact?.organizations[0]?.id;
-        // token.teamId = contact?.teams[0]?.id;
+        // token.organizationId = user?.organizations[0]?.id;
+        // token.teamId = user?.teams[0]?.id;
 
-        token.contactType = contact?.type;
-        token.contactId = contact?.id;
+        token.userRoles = userExist?.roles;
+        token.userId = userExist?.id;
       }
 
       if (trigger === "update") {
@@ -63,8 +63,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const accessToken = token.accessToken as string | undefined;
       if (session.user) {
         session.user.accessToken = accessToken;
-        session.user.contactId = token.contactId as string | undefined;
-        session.user.contactType = token.contactType as ContactType | undefined;
+        session.user.userId = token.userId as string | undefined;
+        session.user.roles = token.roles as Roles[] | undefined;
         session.user.organizationId = token.organizationId as
           | string
           | undefined;

@@ -69,8 +69,8 @@ const data = {
     },
 
     {
-      title: "Contacts",
-      url: "/team/contact",
+      title: "Users",
+      url: "/team/users",
       icon: BookUser,
     },
     {
@@ -99,8 +99,8 @@ const data = {
     },
 
     {
-      title: "Contacts",
-      url: "/organization/contact",
+      title: "Users",
+      url: "/organization/users",
       icon: BookUser,
     },
     {
@@ -126,8 +126,8 @@ const data = {
     //   icon: Building,
     // },
     // {
-    //   title: "Contacts",
-    //   url: "/admin/contacts",
+    //   title: "Users",
+    //   url: "/admin/users",
     //   icon: BookUser,
     // },
     // {
@@ -151,7 +151,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   useEffect(() => {
     const getItems = async () => {
       try {
-        const response = await fetch(`/api/contact-person/current`);
+        const response = await fetch(`/api/user/current`);
         const {
           data: { teams, organizations },
         } = await response.json();
@@ -185,7 +185,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               ? data.organizationNav
               : data.teamNav
           }
-          isTeamsMember={isTeamsMember}
         />
       </SidebarContent>
       <SidebarFooter>

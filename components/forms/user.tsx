@@ -8,7 +8,7 @@ import { Form } from "@/components/ui/form";
 import ButtonControl from "../helper/button-control";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormInputControl from "../helper/form-input-control";
-import { createContactSchema } from "@/validations/organizations";
+import { createUserSchema } from "@/validations/organizations";
 import {
   Card,
   CardHeader,
@@ -17,9 +17,9 @@ import {
   CardContent,
 } from "../ui/card";
 
-export default function ContactForm() {
-  const form = useForm<z.infer<typeof createContactSchema>>({
-    resolver: zodResolver(createContactSchema),
+export default function UserForm() {
+  const form = useForm<z.infer<typeof createUserSchema>>({
+    resolver: zodResolver(createUserSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -31,9 +31,9 @@ export default function ContactForm() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof createContactSchema>) {
+  async function onSubmit(values: z.infer<typeof createUserSchema>) {
     try {
-      const response = await fetch("/api/contact-person", {
+      const response = await fetch("/api/user-person", {
         method: "POST",
         body: JSON.stringify(values),
         headers: {
@@ -52,7 +52,7 @@ export default function ContactForm() {
 
       toast({
         title: "Success",
-        description: "Contact created successfully",
+        description: "User created successfully",
         variant: "default",
       });
     } catch (e) {
@@ -66,9 +66,9 @@ export default function ContactForm() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Create Contact</CardTitle>
+        <CardTitle>Create User</CardTitle>
         <CardDescription>
-          Fill in the form below to create a new contact person
+          Fill in the form below to create a new user person
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -78,43 +78,43 @@ export default function ContactForm() {
               <FormInputControl
                 form={form}
                 name="name"
-                placeholder="Contact person name"
+                placeholder="User person name"
                 type="text"
               />
               <FormInputControl
                 form={form}
                 name="email"
-                placeholder="Contact person email"
+                placeholder="User person email"
                 type="text"
               />
               <FormInputControl
                 form={form}
                 name="phone"
-                placeholder="Contact person phone"
+                placeholder="User person phone"
                 type="text"
               />
               <FormInputControl
                 form={form}
                 name="address"
-                placeholder="Contact person address"
+                placeholder="User person address"
                 type="text"
               />
               <FormInputControl
                 form={form}
                 name="postalCode"
-                placeholder="Contact person postal code"
+                placeholder="User person postal code"
                 type="text"
               />
               <FormInputControl
                 form={form}
                 name="city"
-                placeholder="Contact person city"
+                placeholder="User person city"
                 type="text"
               />
               <FormInputControl
                 form={form}
                 name="country"
-                placeholder="Contact person country"
+                placeholder="User person country"
                 type="text"
               />
             </div>

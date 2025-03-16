@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       .and(z.object({ teamId: z.string().uuid() }))
       .and(z.object({ isFilledByOrg: z.boolean() }))
       .parse({ ...organizationData });
-    const { organization, contactPerson } = await createOrUpdateOrganization(
+    const { organization, user } = await createOrUpdateOrganization(
       validatedData
     );
 
@@ -65,13 +65,13 @@ export async function POST(req: Request) {
         ),
         sendEmail(
           {
-            to: contactPerson?.email as string,
+            to: user?.email as string,
             subject: "You’re In! Welcome to Partner App.",
             template: "welcome",
           },
           {
-            name: contactPerson?.name,
-            email: contactPerson?.email,
+            name: user?.name,
+            email: user?.email,
           }
         ),
       ]);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getContactPersonById } from "@/services/contact-person";
+import { getUserById } from "@/services/users";
 import { handlePrismaError } from "@/lib/utils";
 
 export async function GET(
@@ -12,7 +12,7 @@ export async function GET(
 ) {
   try {
     const id = (await params).id;
-    const data = await getContactPersonById(id);
+    const data = await getUserById(id);
     return NextResponse.json({ data }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);

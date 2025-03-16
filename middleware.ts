@@ -23,9 +23,9 @@ export default auth(async (req) => {
     return NextResponse.redirect(new URL("/", nextUrl));
   }
 
-  const isAdmin = token.contactType === "Admin";
-  const isOrganization = token.contactType === "Organization";
-  const isTeam = token.contactType === "Team";
+  const isAdmin = token.userRoles === "Admin";
+  const isOrganization = token.userRoles === "Organization";
+  const isTeam = token.userRoles === "Team";
 
   if (isOrganization && nextUrl.pathname.startsWith("/team")) {
     return NextResponse.redirect(new URL("/organization", nextUrl));

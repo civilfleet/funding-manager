@@ -15,17 +15,17 @@ const getTeamsByRoles = async (roles: string[] | null) => {
 };
 
 const createTeam = async (teamData: any) => {
-  const contact = teamData.contactPerson;
+  const TeamUser = teamData.user;
   const bankDetails = teamData.bankDetails;
 
-  delete teamData.contactPerson;
+  delete teamData.user;
   delete teamData.bankDetails;
   const query = {
     data: {
       ...teamData,
-      contactPersons: {
+      users: {
         create: {
-          ...contact,
+          ...TeamUser,
           type: "Team",
         },
       },
@@ -40,7 +40,7 @@ const createTeam = async (teamData: any) => {
       name: true,
       roleName: true,
       email: true,
-      contactPersons: {
+      users: {
         select: {
           id: true,
           name: true,
@@ -52,15 +52,15 @@ const createTeam = async (teamData: any) => {
     },
   };
 
-  const contactPerson = await prisma.contactPerson.findUnique({
+  const user = await prisma.user.findUnique({
     where: {
-      email: contact.email,
+      email: TeamUser.email,
     },
   });
-  if (contactPerson?.id) {
-    query.data.contactPersons = {
+  if (user?.id) {
+    query.data.users = {
       connect: {
-        id: contactPerson?.id,
+        id: user?.id,
       },
     };
   }

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { handlePrismaError } from "@/lib/utils";
-import { getContactPersonCurrent } from "@/services/contact-person";
+import { getUserCurrent } from "@/services/users";
 
 export async function GET() {
   try {
-    const data = await getContactPersonCurrent();
+    const data = await getUserCurrent();
 
     return NextResponse.json(
       {

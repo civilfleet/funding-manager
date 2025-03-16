@@ -60,7 +60,7 @@ export default function SignDonationAgreement({
   const { toast } = useToast();
   const { data: session } = useSession();
   const fundsTransferred = data.fundingRequest?.status === "FundsTransferred";
-  const signaturesCompleted = data.contactSignatures.every(
+  const signaturesCompleted = data.userSignatures.every(
     (signature) => signature.signedAt
   );
   const form = useForm<z.infer<typeof schema>>({
@@ -219,16 +219,16 @@ export default function SignDonationAgreement({
               <Separator />
 
               <div>
-                <SectionTitle>Contact Signatures</SectionTitle>
-                {data.contactSignatures.length > 0 ? (
+                <SectionTitle>User Signatures</SectionTitle>
+                {data.userSignatures.length > 0 ? (
                   <div className="space-y-2">
-                    {data.contactSignatures.map((signature, index) => (
+                    {data.userSignatures.map((signature, index) => (
                       <div
                         key={index}
                         className="flex items-center justify-between bg-muted p-2 rounded-md"
                       >
                         <span className="text-sm font-medium">
-                          {signature.contactPerson?.email}
+                          {signature.user?.email}
                         </span>
                         {signature.signedAt && (
                           <div className="flex items-center text-green-600">

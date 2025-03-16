@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { DataTable } from "@/components/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { columns } from "@/components/table/contact-columns";
+import { columns } from "@/components/table/user-columns";
 import { useToast } from "@/hooks/use-toast";
 import { Form } from "../ui/form";
 import FormInputControl from "../helper/form-input-control";
@@ -15,7 +15,7 @@ const querySchema = z.object({
   query: z.string(),
 });
 
-export default function ContactPersonTable() {
+export default function UserTable() {
   const { toast } = useToast();
   const [data, setData] = useState([]);
 
@@ -29,14 +29,14 @@ export default function ContactPersonTable() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch(`/api/contact-person/?query=`);
+        const response = await fetch(`/api/user-person/?query=`);
         const { data } = await response.json();
         setData(data);
       } catch (error) {
-        console.error("Error fetching Contact persons:", error);
+        console.error("Error fetching User persons:", error);
         toast({
           title: "Error",
-          description: "Error fetching Contact persons",
+          description: "Error fetching User persons",
           variant: "destructive",
         });
       }
@@ -47,14 +47,14 @@ export default function ContactPersonTable() {
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
-      const response = await fetch(`/api/contact-person?query=${values.query}`);
+      const response = await fetch(`/api/user-person?query=${values.query}`);
       const { data } = await response.json();
       setData(data);
     } catch (error) {
-      console.log("Error fetching contact person", error);
+      console.log("Error fetching user person", error);
       toast({
         title: "Error",
-        description: "Error fetching contact person",
+        description: "Error fetching user person",
         variant: "destructive",
       });
     }

@@ -38,7 +38,7 @@ export default function TeamForm() {
         iban: "",
         bic: "",
       },
-      contactPerson: {
+      user: {
         name: "",
         email: "",
         phone: "",
@@ -166,29 +166,29 @@ export default function TeamForm() {
               />
             </div>
             <h4 className="text-lg font-semibold">
-              Contact Person
+              User Person
               <hr />
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <FormInputControl
                 form={form}
-                name="contactPerson.name"
-                placeholder="Contact person name"
+                name="user.name"
+                placeholder="User person name"
               />
               <FormInputControl
                 form={form}
-                name="contactPerson.email"
-                placeholder="Contact person email"
+                name="user.email"
+                placeholder="User person email"
               />
               <FormInputControl
                 form={form}
-                name="contactPerson.phone"
-                placeholder="Contact person phone"
+                name="user.phone"
+                placeholder="User person phone"
               />
               <FormInputControl
                 form={form}
-                name="contactPerson.address"
-                placeholder="Contact person address"
+                name="user.address"
+                placeholder="User person address"
               />
             </div>
 

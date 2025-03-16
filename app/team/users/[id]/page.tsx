@@ -1,4 +1,4 @@
-import ContactDetails from "@/components/contact-details";
+import UserDetails from "@/components/user-details";
 
 export default async function Page({
   params,
@@ -7,12 +7,12 @@ export default async function Page({
 }) {
   const id = (await params).id;
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/contact-person/${id}`
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/users/${id}`
   );
   const { data } = await response.json();
   return (
     <div className="p-4 w-full">
-      <ContactDetails contact={data} />
+      <UserDetails user={data} />
     </div>
   );
 }

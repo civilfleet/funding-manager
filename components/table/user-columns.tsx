@@ -9,9 +9,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { ContactPerson } from "@/types";
+import { User } from "@/types";
 
-export const columns: ColumnDef<ContactPerson>[] = [
+export const columns: ColumnDef<User>[] = [
   {
     id: "actions",
     cell: ({ row }) => {
@@ -26,7 +26,7 @@ export const columns: ColumnDef<ContactPerson>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            <a href={`contact/${request.id}`}>
+            <a href={`user/${request.id}`}>
               <DropdownMenuItem>View</DropdownMenuItem>
             </a>
             <DropdownMenuSeparator />
@@ -71,10 +71,10 @@ export const columns: ColumnDef<ContactPerson>[] = [
     ),
   },
   {
-    accessorKey: "type",
-    header: () => <div className="text-left w-36">Type</div>,
+    accessorKey: "roles",
+    header: () => <div className="text-left w-36">Roles</div>,
     cell: ({ row }) => (
-      <div className="text-left">{row.original?.type || "N/A"}</div>
+      <div className="text-left">{row.original?.roles || "N/A"}</div>
     ),
   },
   {

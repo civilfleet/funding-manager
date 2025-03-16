@@ -27,7 +27,7 @@ export async function PUT(
       fundingRequestId,
       data.file,
       data?.type as FileTypes,
-      session?.user?.contactId as string
+      session?.user?.userId as string
     );
 
     sendEmail(

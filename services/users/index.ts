@@ -2,9 +2,10 @@ import team from "@/app/admin/page";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
+import { Roles } from "@/types";
 import { omit } from "lodash";
 
-export interface ContactPerson {
+export interface User {
   name?: string;
   address?: string;
   email: string;
@@ -15,13 +16,13 @@ export interface ContactPerson {
   organizationId?: string;
 
   teamId?: string;
-  type: "Organization" | "Team" | "Admin";
+  roles: Roles[];
 }
-const getContactPersonCurrent = async () => {
+const getUserCurrent = async () => {
   const session = await auth();
-  const contact = await prisma.contactPerson.findUnique({
+  const user = await prisma.user.findUnique({
     where: {
-      id: session?.user.contactId,
+      id: session?.user.userId,
     },
     select: {
       id: true,
@@ -32,7 +33,7 @@ const getContactPersonCurrent = async () => {
       postalCode: true,
       city: true,
       country: true,
-      type: true,
+      roles: true,
       organizations: {
         select: {
           id: true,
@@ -51,10 +52,10 @@ const getContactPersonCurrent = async () => {
     },
   });
 
-  return contact;
+  return user;
 };
 
-const getContactPersons = async (
+const getUsers = async (
   {
     teamId,
     organizationId,
@@ -95,7 +96,7 @@ const getContactPersons = async (
     });
   }
 
-  const contactPersons = await prisma.contactPerson.findMany({
+  const users = await prisma.user.findMany({
     where: {
       AND: [
         {
@@ -115,15 +116,15 @@ const getContactPersons = async (
     },
   });
 
-  return contactPersons;
+  return users;
 };
 
-const createContactPerson = async (contact: ContactPerson) => {
+const createUser = async (user: User) => {
   const session = await auth();
 
-  const contactPerson = await prisma.contactPerson.create({
+  const newUser = await prisma.user.create({
     data: {
-      ...omit(contact, ["organizationId", "teamId"]),
+      ...omit(user, ["organizationId", "teamId"]),
       // Conditionally connect organization only if ID exists
       ...(session?.user.organizationId && {
         organizations: {
@@ -140,25 +141,25 @@ const createContactPerson = async (contact: ContactPerson) => {
     },
   });
 
-  return contactPerson;
+  return newUser;
 };
 
-const getContactPersonById = async (id: string) => {
+const getUserById = async (id: string) => {
   try {
-    const contactPerson = await prisma.contactPerson.findUnique({
+    const user = await prisma.user.findUnique({
       where: {
         id,
       },
     });
 
-    return contactPerson;
+    return user;
   } catch (error) {
     throw error;
   }
 };
 
-const getTeamsContactPersons = async (teamId: string) => {
-  const contactPersons = await prisma.contactPerson.findMany({
+const getTeamsUsers = async (teamId: string) => {
+  const users = await prisma.user.findMany({
     where: {
       teams: {
         some: {
@@ -171,12 +172,6 @@ const getTeamsContactPersons = async (teamId: string) => {
     },
   });
 
-  return contactPersons;
+  return users;
 };
-export {
-  getContactPersons,
-  getContactPersonCurrent,
-  createContactPerson,
-  getContactPersonById,
-  getTeamsContactPersons,
-};
+export { getUsers, getUserCurrent, createUser, getUserById, getTeamsUsers };

@@ -49,7 +49,7 @@ const getFiles = async (
     });
   }
 
-  const contactPersons = await prisma.file.findMany({
+  const users = await prisma.file.findMany({
     where: {
       ...whereConditions[0],
     },
@@ -75,7 +75,7 @@ const getFiles = async (
     },
   });
 
-  return contactPersons;
+  return users;
 };
 
 export { getFileById, getFiles };
