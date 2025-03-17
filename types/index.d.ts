@@ -143,7 +143,6 @@ export enum FileTypes {
   LOGO = "LOGO",
   DONATION_AGREEMENT = "DONATION_AGREEMENT",
   DONATION_RECEIPT = "DONATION_RECEIPT",
-  REPORT = "REPORT",
   STATEMENT = "STATEMENT",
 }
 export type DonationAgreement = {
