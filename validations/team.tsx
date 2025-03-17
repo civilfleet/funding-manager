@@ -25,5 +25,6 @@ const createTeamSchema = z.object({
 });
 
 const updateTeamSchema = createTeamSchema.partial();
-
+// Generate TypeScript type
+export type CreateTeamInput = z.infer<typeof createTeamSchema>;
 export { createTeamSchema, updateTeamSchema };

@@ -1,7 +1,6 @@
 "use client";
 import * as React from "react";
 import { useSession } from "next-auth/react";
-import { usePathname } from "next/navigation";
 
 import {
   AudioWaveform,
@@ -11,6 +10,7 @@ import {
   Command,
   FolderOpen,
   GalleryVerticalEnd,
+  LucideIcon,
   Scroll,
 } from "lucide-react";
 
@@ -25,174 +25,59 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useEffect, useState } from "react";
+import { Roles } from "@/types/index";
 
 // This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
-    {
-      name: "Partner App",
-      logo: GalleryVerticalEnd,
-      plan: "Non-profit",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
-  teamNav: [
-    {
-      title: "Organizations",
-      url: "/team/organization",
-      icon: Building,
-      isActive: true,
-    },
-    {
-      title: "Funding Requests",
-      url: "/team/funding-request",
-      icon: BookOpen,
-    },
-    {
-      title: "Donation Agreements",
-      url: "/team/donation-agreement",
-      icon: Scroll,
-    },
 
-    {
-      title: "Users",
-      url: "/team/users",
-      icon: BookUser,
-    },
-    {
-      title: "Files",
-      url: "/team/file",
-      icon: FolderOpen,
-    },
-  ],
-  organizationNav: [
-    {
-      title: "Organization",
-      url: "/organization",
-      icon: Building,
-      isActive: true,
-    },
+type NavigationItem = {
+  title: string;
+  url: string;
+  icon?: LucideIcon;
+  isActive?: boolean;
+  items?: { title: string; url: string }[];
+}[];
 
-    {
-      title: "Funding Requests",
-      url: "/organization/funding-request",
-      icon: BookOpen,
-    },
-    {
-      title: "Donation Agreement",
-      url: "/organization/donation-agreement",
-      icon: Scroll,
-    },
-
-    {
-      title: "Users",
-      url: "/organization/users",
-      icon: BookUser,
-    },
-    {
-      title: "Files",
-      url: "/organization/file",
-      icon: FolderOpen,
-    },
-  ],
-  adminNav: [
-    {
-      title: "Admin",
-      url: "/admin",
-      icon: Building,
-    },
-    // {
-    //   title: "Teams",
-    //   url: "/admin/teams",
-    //   icon: Building,
-    // },
-    // {
-    //   title: "Organizations",
-    //   url: "/admin/organizations",
-    //   icon: Building,
-    // },
-    // {
-    //   title: "Users",
-    //   url: "/admin/users",
-    //   icon: BookUser,
-    // },
-    // {
-    //   title: "Files",
-    //   url: "/admin/files",
-    //   icon: FolderOpen,
-    // },
-  ],
-
-  projects: [],
+type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
+  navItems: NavigationItem;
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [items, setItems] = useState([]);
-  const pathname = usePathname();
-  const isOrganization = pathname.startsWith("/organization");
-  const isAdmin = pathname.startsWith("/admin");
+export function AppSidebar({ ...props }: AppSidebarProps) {
   const { data: session } = useSession();
-  const [isTeamsMember, setIsTeamsMember] = useState(false);
+  const [organizations, setOrganizations] = useState([]);
+  const [teams, setItems] = useState([]);
 
   useEffect(() => {
     const getItems = async () => {
       try {
-        const response = await fetch(`/api/user/current`);
+        const response = await fetch(`/api/users/current`);
         const {
           data: { teams, organizations },
         } = await response.json();
-        if (teams?.length) {
-          setItems(teams);
-          setIsTeamsMember(true);
-        } else if (organizations?.length) {
-          setItems(organizations);
-          setIsTeamsMember(false);
-        }
+        console.log(teams, organizations, "orgnaizaiton list ");
+        setItems(teams);
+        setOrganizations(organizations);
       } catch (error) {
         console.error("Error fetching teams:", error);
-
         throw new Error("Failed to fetch teams");
       }
     };
 
     getItems();
-  }, []);
+  }, [session?.user?.roles]);
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher items={items} isTeamsMember={isTeamsMember} />
+        <TeamSwitcher organizations={organizations} teams={teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain
-          items={
-            isAdmin
-              ? data.adminNav
-              : isOrganization
-              ? data.organizationNav
-              : data.teamNav
-          }
-        />
+        <NavMain items={props.navItems} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser
           user={{
-            name: session?.user?.name || data.user.name,
-            email: session?.user?.email || data.user.email,
-            image: session?.user?.image || data.user.avatar,
+            name: session?.user?.name || props.navItems?.user.name,
+            email: session?.user?.email || props.navItems?.user.email,
+            image: session?.user?.image || props.navItems?.user.avatar,
           }}
         />
       </SidebarFooter>

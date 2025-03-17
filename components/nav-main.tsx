@@ -13,7 +13,7 @@ import Link from "next/link";
 export function NavMain({
   items,
 }: {
-  items: {
+  items?: {
     title: string;
     url: string;
     icon?: LucideIcon;
@@ -24,11 +24,12 @@ export function NavMain({
     }[];
   }[];
 }) {
+  console.log(items, "item ");
   return (
     <SidebarGroup>
       {/* <SidebarGroupLabel>Platform</SidebarGroupLabel> */}
       <SidebarMenu>
-        {items.map((item) => (
+        {items?.map((item) => (
           <SidebarMenuItem key={item.title}>
             <Link href={item.url}>
               <SidebarMenuButton tooltip={item.title}>
@@ -39,7 +40,7 @@ export function NavMain({
             </Link>
           </SidebarMenuItem>
         ))}
-        {items.map((item) => (
+        {items?.map((item) => (
           <SidebarMenuItem key={item.title}>
             <Link href={item.url}>
               <SidebarMenuButton tooltip={item.title}>
