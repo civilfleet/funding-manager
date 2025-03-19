@@ -108,7 +108,7 @@ export function TeamSwitcher({
 
                 {teams.map((item, index) => (
                   <DropdownMenuItem
-                    key={item.name}
+                    key={item.id}
                     onClick={() => setItem(item, "teams", item.id)}
                     className="gap-2 p-2"
                   >
@@ -134,7 +134,7 @@ export function TeamSwitcher({
                 </DropdownMenuLabel>
                 {organizations.map((item, index) => (
                   <DropdownMenuItem
-                    key={item.name}
+                    key={item.id}
                     onClick={() => setItem(item, "organizations", item.id)}
                     className="gap-2 p-2"
                   >

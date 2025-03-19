@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
 import { handlePrismaError } from "@/lib/utils";
-import { getUserCurrent } from "@/services/users";
+import { getAdminUser, getUserCurrent } from "@/services/users";
+import { auth } from "@/auth";
+import { Roles } from "@/types";
 
 export async function GET() {
   try {
-    const data = await getUserCurrent();
+    let data;
+    const session = await auth();
+    if (session?.user?.roles?.includes(Roles.Admin)) {
+      data = await getAdminUser(session?.user?.userId as string);
+    } else {
+      data = await getUserCurrent(session?.user?.userId as string);
+    }
 
     return NextResponse.json(
       {

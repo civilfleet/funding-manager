@@ -22,23 +22,27 @@ export default auth(async (req) => {
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const roles = (token?.roles as string[]) || [];
+  const roles = (token?.roles as string[]) || [``];
 
   const isOrganization = roles.includes("Organization");
   const isTeam = roles.includes("Team");
   const isAdmin = roles.includes("Admin");
 
-  if (!isTeam && nextUrl.pathname.startsWith("/teams")) {
-    return NextResponse.redirect(new URL("/", nextUrl));
+  if (isAdmin) {
+    return NextResponse.next(); // Allow admins to access everything
   }
 
-  if (!isOrganization && nextUrl.pathname.startsWith("/organizations")) {
-    return NextResponse.redirect(new URL("/", nextUrl));
+  if (isTeam && !isOrganization && !nextUrl.pathname.startsWith("/teams")) {
+    return NextResponse.redirect(new URL("/teams", nextUrl));
   }
-  if (!isAdmin && nextUrl.pathname.startsWith("/admin")) {
-    return NextResponse.redirect(new URL("/", nextUrl));
+
+  if (
+    isOrganization &&
+    !isTeam &&
+    !nextUrl.pathname.startsWith("/organizations")
+  ) {
+    return NextResponse.redirect(new URL("/organizations", nextUrl));
   }
-  return NextResponse.next();
 });
 
 export const config = {

@@ -18,11 +18,50 @@ export interface User {
   teamId?: string;
   roles: Roles[];
 }
-const getUserCurrent = async () => {
-  const session = await auth();
+
+const getAdminUser = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: {
-      id: session?.user.userId,
+      id: userId,
+    },
+    select: {
+      id: true,
+      name: true,
+      address: true,
+      email: true,
+      phone: true,
+      postalCode: true,
+      city: true,
+      country: true,
+      roles: true,
+    },
+  });
+  const teams = await prisma.teams.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  });
+  const organizations = await prisma.organization.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  });
+
+  return {
+    ...user,
+    teams,
+    organizations,
+  };
+};
+
+const getUserCurrent = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
     },
     select: {
       id: true,
@@ -69,7 +108,6 @@ const getUsers = async (
 ) => {
   const whereConditions = [];
 
-  // Fetch organizationId from fundingRequest if provided
   if (fundingRequestId) {
     const fundingRequest = await prisma.fundingRequest.findUnique({
       where: { id: fundingRequestId },
@@ -83,7 +121,6 @@ const getUsers = async (
     }
   }
 
-  // Handle team-based filtering
   if (teamId) {
     const organizationIds = await prisma.organization
       .findMany({
@@ -205,4 +242,5 @@ export {
   getUserById,
   getTeamsUsers,
   getUsersForDonation,
+  getAdminUser,
 };

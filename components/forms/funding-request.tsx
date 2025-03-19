@@ -162,7 +162,7 @@ export default function FundingRequest({
               </p>
             )}
             <FormItem>
-              <FormLabel>Purpose</FormLabel>
+              <FormLabel>Refinancing Concept</FormLabel>
               <FormControl>
                 <Textarea
                   id="refinancingConcept"

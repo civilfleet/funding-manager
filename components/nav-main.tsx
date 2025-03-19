@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type LucideIcon } from "lucide-react";
+import { Computer, type LucideIcon } from "lucide-react";
 
 import {
   SidebarGroup,
@@ -10,6 +10,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useSession } from "next-auth/react";
+import { Roles } from "@/types";
 
 export function NavMain({
   items,
@@ -26,6 +28,7 @@ export function NavMain({
   }[];
 }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const parts = pathname.split("/"); // ["", "teams", "de5c05a3-460f-480d-a899-e1b5e850f3b4", ...]
 
   const id = parts[2] ?? null;
@@ -34,10 +37,10 @@ export function NavMain({
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {items?.map((item) => {
+        {items?.map((item, index) => {
           const fullPath = item.url;
           return (
-            <SidebarMenuItem key={item.title}>
+            <SidebarMenuItem key={index}>
               <Link href={`/${subUrl}/${id}/${fullPath}/`}>
                 <SidebarMenuButton tooltip={item.title}>
                   {item.icon && <item.icon />}
@@ -47,6 +50,17 @@ export function NavMain({
             </SidebarMenuItem>
           );
         })}
+
+        {session?.user?.roles?.includes(Roles.Admin) && (
+          <SidebarMenuItem>
+            <Link href="/admin">
+              <SidebarMenuButton tooltip="Admin">
+                <Computer />
+                <span>Admin</span>
+              </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
+        )}
       </SidebarMenu>
     </SidebarGroup>
   );

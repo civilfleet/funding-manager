@@ -33,7 +33,7 @@ export default {
   ],
   organization: [
     {
-      title: "Organization",
+      title: "Organizations",
       url: "profile",
       icon: Building,
       isActive: true,
@@ -45,7 +45,7 @@ export default {
       icon: BookOpen,
     },
     {
-      title: "Donation Agreement",
+      title: "Donation Agreements",
       url: "donation-agreements",
       icon: Scroll,
     },
