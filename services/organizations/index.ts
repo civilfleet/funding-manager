@@ -63,22 +63,33 @@ const createOrUpdateOrganization = async (formData: Organization) => {
         })
       : undefined;
 
-    const email = formData.user?.email?.toLowerCase();
+    const email = formData.user?.email?.toLowerCase() as string;
 
-    const newUser = email
-      ? await prisma.user.upsert({
-          where: {
-            email,
+    let orgUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (orgUser) {
+      orgUser = await prisma.user.update({
+        where: { email },
+        data: {
+          ...formData.user,
+          roles: {
+            set: Array.from(
+              new Set([...(orgUser.roles ?? []), Roles.Organization])
+            ),
           },
-          update: {
-            ...formData.user,
-            roles: {
-              push: Roles.Organization,
-            },
-          },
-          create: { ...formData.user, email, roles: [Roles.Organization] },
-        })
-      : undefined;
+        },
+      });
+    } else {
+      orgUser = await prisma.user.create({
+        data: {
+          ...formData.user,
+          email,
+          roles: [Roles.Organization],
+        },
+      });
+    }
 
     // Common organization data
     const organizationData = {
@@ -92,8 +103,8 @@ const createOrUpdateOrganization = async (formData: Organization) => {
       taxID: formData.taxID,
       isFilledByOrg: formData.isFilledByOrg,
       ...(bankDetail && { bankDetails: { connect: { id: bankDetail.id } } }),
-      ...(newUser && {
-        users: { connect: { id: newUser.id } },
+      ...(orgUser && {
+        users: { connect: { id: orgUser.id } },
       }),
     };
 
@@ -144,7 +155,7 @@ const createOrUpdateOrganization = async (formData: Organization) => {
       );
     }
 
-    return { organization, user: newUser, bankDetail };
+    return { organization, user: orgUser, bankDetail };
   });
 };
 const getOrganizationById = async (id: string) => {

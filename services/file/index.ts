@@ -25,7 +25,6 @@ const getFiles = async (
   },
   searchQuery: string
 ) => {
-  console.log("search query ", searchQuery);
   const whereConditions = [];
 
   if (teamId) {
@@ -35,8 +34,6 @@ const getFiles = async (
         select: { id: true },
       })
       .then((orgs) => orgs.map((org) => org.id));
-
-    console.log(organizationIds, "organizationIds");
 
     if (organizationIds.length > 0) {
       whereConditions.push({

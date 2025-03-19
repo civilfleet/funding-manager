@@ -1,5 +1,4 @@
-import FundingRequestDetails from "@/components/funding-request-details";
-import { redirect } from "next/navigation";
+import FundingRequestData from "@/components/data-components/funding-request";
 
 export default async function FundingRequest({
   params,
@@ -7,19 +6,11 @@ export default async function FundingRequest({
   params: Promise<{ id: string }>;
 }) {
   const id = (await params).id;
-  const fundingRequests = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/funding-requests/${id}`
-  );
-  const { data: fundingRequestsData } = await fundingRequests.json();
-
-  if (!fundingRequestsData) {
-    redirect("/team/organization");
-  }
 
   return (
     <div>
       <div className="container p-8">
-        <FundingRequestDetails data={fundingRequestsData} />
+        <FundingRequestData fundingRequestId={id} />
       </div>
     </div>
   );

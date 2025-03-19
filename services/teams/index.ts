@@ -71,7 +71,6 @@ const createTeam = async (teamData: CreateTeamInput) => {
       },
     };
   }
-  console.log("query", query);
 
   const team = await prisma.teams.create(query);
   return {

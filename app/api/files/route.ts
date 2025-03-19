@@ -1,24 +1,31 @@
 import { NextResponse } from "next/server";
 import { handlePrismaError } from "@/lib/utils";
-import { auth } from "@/auth";
 import { getFiles } from "@/services/file";
 
 export async function GET(req: Request) {
   try {
-    const session = await auth();
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
+    const teamId = searchParams.get("teamId") || "";
+    const organizationId = searchParams.get("organizationId") || "";
 
-    const data = await getFiles(
-      {
-        organizationId: session?.user?.organizationId as string,
-        teamId: session?.user?.teamId as string,
-      },
-      searchQuery
-    );
+    if (organizationId || teamId) {
+      const data = await getFiles(
+        {
+          organizationId,
+          teamId,
+        },
+        searchQuery
+      );
+      return NextResponse.json(
+        { data },
+
+        { status: 201 }
+      );
+    }
 
     return NextResponse.json(
-      { data },
+      { data: [] },
 
       { status: 201 }
     );

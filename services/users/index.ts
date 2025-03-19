@@ -59,14 +59,31 @@ const getUsers = async (
   {
     teamId,
     organizationId,
+    fundingRequestId,
   }: {
     teamId?: string;
     organizationId?: string;
+    fundingRequestId?: string;
   },
   searchQuery: string
 ) => {
   const whereConditions = [];
 
+  // Fetch organizationId from fundingRequest if provided
+  if (fundingRequestId) {
+    const fundingRequest = await prisma.fundingRequest.findUnique({
+      where: { id: fundingRequestId },
+      select: { organizationId: true },
+    });
+
+    if (fundingRequest?.organizationId) {
+      whereConditions.push({
+        organizations: { some: { id: fundingRequest.organizationId } },
+      });
+    }
+  }
+
+  // Handle team-based filtering
   if (teamId) {
     const organizationIds = await prisma.organization
       .findMany({
@@ -75,48 +92,55 @@ const getUsers = async (
       })
       .then((orgs) => orgs.map((org) => org.id));
 
-    const teamOrOrganizationConditions = [];
-
-    if (organizationIds.length > 0) {
-      teamOrOrganizationConditions.push({
-        organizations: { some: { id: { in: organizationIds } } },
-      });
-    }
-
-    teamOrOrganizationConditions.push({
-      teams: { some: { id: teamId } },
-    });
-
     whereConditions.push({
-      OR: teamOrOrganizationConditions,
+      OR: [
+        ...(organizationIds.length > 0
+          ? [{ organizations: { some: { id: { in: organizationIds } } } }]
+          : []),
+        { teams: { some: { id: teamId } } },
+      ],
     });
   } else if (organizationId) {
-    whereConditions.push({
-      organizations: { some: { id: organizationId } },
-    });
+    whereConditions.push({ organizations: { some: { id: organizationId } } });
   }
 
-  const users = await prisma.user.findMany({
+  // Fetch users based on conditions
+  return await prisma.user.findMany({
     where: {
       AND: [
         {
-          OR: [
-            { name: { contains: searchQuery, mode: "insensitive" } },
-            { email: { contains: searchQuery, mode: "insensitive" } },
-            { address: { contains: searchQuery, mode: "insensitive" } },
-            { city: { contains: searchQuery, mode: "insensitive" } },
-            { country: { contains: searchQuery, mode: "insensitive" } },
-          ],
+          OR: ["name", "email", "address", "city", "country"].map((field) => ({
+            [field]: { contains: searchQuery, mode: "insensitive" },
+          })),
         },
         ...whereConditions,
       ],
     },
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+const getUsersForDonation = async ({
+  teamId,
+  fundingRequestId,
+}: {
+  teamId: string;
+  fundingRequestId: string;
+}) => {
+  const fundingRequest = await prisma.fundingRequest.findUnique({
+    where: { id: fundingRequestId },
+    select: { organizationId: true },
   });
 
-  return users;
+  return await prisma.user.findMany({
+    where: {
+      OR: [
+        { organizations: { some: { id: fundingRequest?.organizationId } } },
+        { teams: { some: { id: teamId } } },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+  });
 };
 
 const createUser = async (user: User) => {
@@ -174,4 +198,11 @@ const getTeamsUsers = async (teamId: string) => {
 
   return users;
 };
-export { getUsers, getUserCurrent, createUser, getUserById, getTeamsUsers };
+export {
+  getUsers,
+  getUserCurrent,
+  createUser,
+  getUserById,
+  getTeamsUsers,
+  getUsersForDonation,
+};

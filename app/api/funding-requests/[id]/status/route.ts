@@ -1,10 +1,8 @@
-import { auth } from "@/auth";
 import { sendEmail } from "@/lib/nodemailer";
 import { handlePrismaError } from "@/lib/utils";
 import { updateFundingRequestStatus } from "@/services/funding-request";
 import { NextResponse } from "next/server";
 
-// ✅ GET Organization by ID
 export async function PUT(
   req: Request,
   {
@@ -19,10 +17,10 @@ export async function PUT(
     if (!fundingRequestId) {
       throw new Error("ID is required");
     }
-    const session = await auth();
-    if (session?.user.teamId) {
-      const fundingRequestData = await req.json();
 
+    const fundingRequestData = await req.json();
+    const teamId = fundingRequestData?.teamId;
+    if (teamId) {
       const fundingRequest = await updateFundingRequestStatus(
         fundingRequestId,
         fundingRequestData.status,
@@ -42,7 +40,7 @@ export async function PUT(
           submittedDate: fundingRequest?.createdAt,
           status: fundingRequestData.status,
 
-          requestLink: `${process.env.NEXT_PUBLIC_BASE_URL}/organization/funding-request/${fundingRequest?.id}`,
+          requestLink: `${process.env.NEXT_PUBLIC_BASE_URL}/organization/funding-requests/${fundingRequest?.id}`,
           supportEmail: "support@partnerapp.com",
           teamName: fundingRequest?.organization?.team?.name,
         }

@@ -38,28 +38,39 @@ export function TeamSwitcher({
 }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
-  const [activeItem, setActiveItem] = useState<SwitcherItem>(
-    teams[0] || organizations[0]
-  );
 
-  const { setTeamId } = useTeamStore();
-  const { setOrganizationId } = useOrganizationStore();
+  const { teamId, setTeamId } = useTeamStore();
+  const { organizationId, setOrganizationId } = useOrganizationStore();
+
+  const [activeItem, setActiveItem] = useState<SwitcherItem | null>(null);
 
   useEffect(() => {
-    setActiveItem(teams[0] || organizations[0]);
-  }, [organizations, teams]);
+    if (teamId) {
+      const selectedTeam = teams.find((item) => item.id === teamId) || teams[0];
+      setActiveItem(selectedTeam);
+    } else if (organizationId) {
+      const selectedOrg =
+        organizations.find((item) => item.id === organizationId) ||
+        organizations[0];
+      setActiveItem(selectedOrg);
+    } else {
+      setActiveItem(teams[0] || organizations[0] || null);
+    }
+  }, [teamId, organizationId, teams, organizations]);
 
-  const setItem = async (item: SwitcherItem, subUrl: string, id: string) => {
-    setActiveItem(item);
+  const setItem = (item: SwitcherItem, subUrl: string, id: string) => {
+    setActiveItem(item); // Only setting once here
+
     if (subUrl === "teams") {
       setTeamId(id);
+      setOrganizationId("");
       router.push(`/${subUrl}/${id}/organizations`);
     } else {
       setOrganizationId(id);
+      setTeamId("");
       router.push(`/${subUrl}/${id}/profile`);
     }
   };
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -74,9 +85,11 @@ export function TeamSwitcher({
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {activeItem?.name || ""}
+                  {activeItem?.name}
                 </span>
-                {/* <span className="truncate text-xs">{activeTeam || ""}</span> */}
+                <span className="truncate text-xs">
+                  {teamId ? "Team" : "Organization"}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>

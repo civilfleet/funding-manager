@@ -10,11 +10,8 @@ import {
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { Button } from "../ui/button";
-import { usePathname } from "next/navigation";
 import Link from "next/link";
 
-// This type is used to define the shape of our data.
-// You can use a Zod schema here if you want.
 export type OrganizationColumns = {
   id: string;
   name?: string;
@@ -52,7 +49,7 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuItem>
-              <a href={`${usePathname()}/${organization.id}`}>View</a>
+              <a href={`organizations/${organization.id}`}>View</a>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
           </DropdownMenuContent>

@@ -6,7 +6,7 @@ export default async function Page() {
     <div className="p-4 w-full ">
       <div className="flex justify-between">
         <h1 className="text-2xl  my-2">Funding Request</h1>
-        <Link href="/organization/funding-request/create">
+        <Link href="funding-requests/create">
           <Button type="button">Create New</Button>
         </Link>
       </div>

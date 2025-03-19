@@ -16,8 +16,10 @@ import {
   CardDescription,
   CardContent,
 } from "../ui/card";
+import { useTeamStore } from "@/store/store";
 
 export default function UserForm() {
+  const { teamId } = useTeamStore();
   const form = useForm<z.infer<typeof createUserSchema>>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
@@ -33,9 +35,9 @@ export default function UserForm() {
 
   async function onSubmit(values: z.infer<typeof createUserSchema>) {
     try {
-      const response = await fetch("/api/users", {
+      const response = await fetch(`/api/users`, {
         method: "POST",
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, teamId }),
         headers: {
           "Content-Type": "application/json",
         },

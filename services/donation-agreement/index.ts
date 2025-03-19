@@ -9,8 +9,11 @@ type DonationAgreement = {
   users: string[];
 };
 
-const createDonationAgreement = async (donation: DonationAgreement) => {
-  const session = await auth();
+const createDonationAgreement = async (
+  donation: DonationAgreement,
+  createdByUserId: string,
+  teamId: string
+) => {
   const agreementData = await prisma.$transaction(async (prisma) => {
     const users = await prisma.user.findMany({
       where: {
@@ -24,15 +27,14 @@ const createDonationAgreement = async (donation: DonationAgreement) => {
         name: true,
       },
     });
-
     const file = await prisma.file.create({
       data: {
         url: donation.file as string,
         type: "DONATION_AGREEMENT",
         createdBy: {
-          connect: { id: session?.user?.userId as string },
+          connect: { id: createdByUserId as string },
         },
-        updatedBy: { connect: { id: session?.user?.userId as string } },
+        updatedBy: { connect: { id: createdByUserId as string } },
       },
     });
 
@@ -44,16 +46,15 @@ const createDonationAgreement = async (donation: DonationAgreement) => {
         organizationId: true,
       },
     });
-
     const agreement = await prisma.donationAgreement.create({
       data: {
         agreement: donation.agreement as string,
         file: { connect: { id: file.id } },
         fundingRequest: { connect: { id: donation?.fundingRequestId } },
-        createdBy: { connect: { id: session?.user?.userId as string } },
+        createdBy: { connect: { id: createdByUserId as string } },
         team: {
           connect: {
-            id: session?.user?.teamId as string,
+            id: teamId as string,
           },
         },
         organization: {
@@ -259,8 +260,6 @@ const updateDonationAgreement = async (
         signedAt: new Date(),
       },
     });
-
-    console.log("donation == == = = = =", donation);
   });
 
   await deleteFile(donation?.file.url as string);

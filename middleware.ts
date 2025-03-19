@@ -20,30 +20,30 @@ export default auth(async (req) => {
         : "authjs.session-token",
   });
   if (!token) {
-    return NextResponse.redirect(new URL("/", nextUrl));
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const isAdmin = token.userRoles === "Admin";
   const isOrganization = token.userRoles === "Organization";
   const isTeam = token.userRoles === "Team";
 
-  if (isOrganization && nextUrl.pathname.startsWith("/team")) {
-    return NextResponse.redirect(new URL("/organization", nextUrl));
+  if (isOrganization && nextUrl.pathname.startsWith("/teams")) {
+    return NextResponse.redirect(new URL("/organizations", nextUrl));
   }
 
-  if (isTeam && nextUrl.pathname.startsWith("/organization")) {
-    return NextResponse.redirect(new URL("/team", nextUrl));
+  if (isTeam && nextUrl.pathname.startsWith("/organizations")) {
+    return NextResponse.redirect(new URL("/teams", nextUrl));
   }
 
   if (
     isAdmin &&
-    (nextUrl.pathname.startsWith("/team") ||
-      nextUrl.pathname.startsWith("/organization"))
+    (nextUrl.pathname.startsWith("/teams") ||
+      nextUrl.pathname.startsWith("/organizations"))
   ) {
     return NextResponse.redirect(new URL("/admin", nextUrl));
   }
 
-  if (isAdmin && nextUrl.pathname.startsWith("/organization")) {
+  if (isAdmin && nextUrl.pathname.startsWith("/organizations")) {
     return NextResponse.redirect(new URL("/admin", nextUrl));
   }
 
@@ -51,10 +51,5 @@ export default auth(async (req) => {
 });
 
 export const config = {
-  matcher: [
-    "/admin/:path*",
-    "/team/:path*",
-    "/organization/:path*",
-    "/api/:path*",
-  ],
+  matcher: ["/admin/:path*", "/teams/:path*", "/organizations/:path*"],
 };

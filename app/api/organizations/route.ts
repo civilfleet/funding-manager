@@ -8,18 +8,15 @@ import {
   getOrganizations,
 } from "@/services/organizations";
 import { z } from "zod";
-import { auth } from "@/auth";
 import { sendEmail } from "@/lib/nodemailer";
 import { handlePrismaError } from "@/lib/utils";
 
-// GET organization will only access by teams
 export async function GET(req: Request) {
   try {
-    const session = await auth();
-    const teamId = session?.user?.teamId as string;
-
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
+    const teamId = searchParams.get("teamId") || "";
+
     const data = await getOrganizations(searchQuery, teamId);
 
     return NextResponse.json(

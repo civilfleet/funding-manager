@@ -1,24 +1,34 @@
 import { NextResponse } from "next/server";
 import { createUserSchema } from "@/validations/organizations";
 import { auth } from "@/auth";
-import { createUser, getUsers } from "@/services/users";
+import { createUser, getUsers, getUsersForDonation } from "@/services/users";
 import { handlePrismaError } from "@/lib/utils";
 import { sendEmail } from "@/lib/nodemailer";
 import { Roles } from "@/types";
 
 export async function GET(req: Request) {
   try {
-    const session = await auth();
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
+    const teamId = searchParams.get("teamId") || "";
+    const fundingRequestId = searchParams.get("fundingRequestId") || "";
+    const organizationId = searchParams.get("organizationId") || "";
+    let data;
 
-    const data = await getUsers(
-      {
-        organizationId: session?.user?.organizationId,
-        teamId: session?.user?.teamId,
-      },
-      searchQuery
-    );
+    if (fundingRequestId && teamId) {
+      data = await getUsersForDonation({
+        teamId: teamId,
+        fundingRequestId: fundingRequestId,
+      });
+    } else {
+      data = await getUsers(
+        {
+          teamId: teamId || undefined,
+          organizationId: organizationId || undefined,
+        },
+        searchQuery
+      );
+    }
 
     return NextResponse.json(
       { data },
@@ -42,7 +52,7 @@ export async function POST(req: Request) {
       ...user,
     });
 
-    if (session?.user?.organizationId) {
+    if (!user.teamId) {
       await createUser({
         ...validatedData,
         organizationId: session?.user?.organizationId,

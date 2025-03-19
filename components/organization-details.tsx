@@ -4,14 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { FundingRequest, Organization } from "@/types";
-import {
-  ChevronDown,
-  ChevronUp,
-  Download,
-  ExternalLink,
-  Phone,
-  Mail,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, Download } from "lucide-react";
 
 import {
   Table,
@@ -24,61 +17,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-function DetailItem({
-  label,
-  value,
-  type = "text",
-}: {
-  label: string;
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  value?: any;
-  type?: string;
-}) {
-  if (!value) return null;
-
-  let content = value;
-  if (type === "email") {
-    content = (
-      <a
-        href={`mailto:${value}`}
-        className="text-primary hover:underline flex items-center"
-      >
-        <Mail className="w-4 h-4 mr-2" />
-        {value}
-      </a>
-    );
-  } else if (type === "phone") {
-    content = (
-      <a
-        href={`tel:${value}`}
-        className="text-primary hover:underline flex items-center"
-      >
-        <Phone className="w-4 h-4 mr-2" />
-        {value}
-      </a>
-    );
-  } else if (type === "link") {
-    content = (
-      <a
-        href={value}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-primary hover:underline flex items-center"
-      >
-        <ExternalLink className="w-4 h-4 mr-2" />
-        {value}
-      </a>
-    );
-  }
-
-  return (
-    <div className="space-y-1">
-      <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
-      <dd className="text-sm font-semibold">{content}</dd>
-    </div>
-  );
-}
+import DetailItem from "./helper/detail-item";
 
 export default function OrganizationDetails({
   organization,
@@ -99,8 +38,8 @@ export default function OrganizationDetails({
 
   return (
     <div className="space-y-6 max-w-4xl px-5 py-1">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
+      <div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 ">
           <CardTitle className="text-3xl">Organization Profile</CardTitle>
         </CardHeader>
         <CardContent>
@@ -143,7 +82,7 @@ export default function OrganizationDetails({
             </div>
           </div>
         </CardContent>
-      </Card>
+      </div>
 
       {organization.bankDetails && (
         <Card>

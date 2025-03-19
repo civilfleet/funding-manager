@@ -1,13 +1,13 @@
 import { useForm } from "react-hook-form";
-import { Building } from "lucide-react"; // Assuming you're using Lucide icons
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"; // Adjust the import path based on your project structure
+import { Building } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import FileUpload from "../file-uploader";
 import { FileTypes } from "@/types";
 import { Label } from "@radix-ui/react-label";
 import ButtonControl from "../helper/button-control";
 import { Form } from "../ui/form";
 import { toast } from "@/hooks/use-toast";
-import { useState } from "react"; // Import useState to manage the disabled state
+import { useState } from "react";
 
 interface ReceiptFormData {
   url: string;
@@ -25,12 +25,12 @@ export default function FundingRequestPostData({
   type: FileTypes;
 }) {
   const form = useForm<ReceiptFormData>();
-  const [isUploaded, setIsUploaded] = useState(false); // State to track if the file is uploaded
+  const [isUploaded, setIsUploaded] = useState(false);
 
   const onSubmit = async (data: ReceiptFormData) => {
     try {
       const response = await fetch(
-        `/api/funding-request/${fundingRequestId}/files`,
+        `/api/funding-requests/${fundingRequestId}/files`,
         {
           method: "PUT",
           headers: {
@@ -67,7 +67,6 @@ export default function FundingRequestPostData({
   };
 
   const handleFileUpload = (url: string) => {
-    console.log("File Uploaded:", url);
     form.setValue("url", url);
     // Set the file URL in the form state if needed
   };

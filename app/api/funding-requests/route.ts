@@ -17,8 +17,11 @@ export async function GET(req: Request) {
     const searchQuery = searchParams.get("query") || "";
     const status = searchParams.getAll("status") || [];
     const orgId = searchParams.get("organizationId") as string;
+    const teamId = searchParams.get("teamId") as string;
 
-    const teamId = session?.user?.teamId as string;
+    if (!teamId && !orgId) {
+      return NextResponse.json({ data: [] });
+    }
 
     const data = await getFundingRequests(
       { teamId, orgId },

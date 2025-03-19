@@ -35,12 +35,6 @@ export async function PUT(
     const donationAgreementId = (await params).id;
     const updatedDonationAgreement = await req.json();
 
-    console.log(
-      "updatedDonationAgreement",
-      updatedDonationAgreement,
-      donationAgreementId
-    );
-
     await updateDonationAgreement(
       donationAgreementId,
       updatedDonationAgreement

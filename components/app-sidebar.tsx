@@ -47,6 +47,7 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
       <SidebarHeader>
         <TeamSwitcher organizations={organizations} teams={teams} />
       </SidebarHeader>
+
       <SidebarContent>
         <NavMain items={navigationItems[navItems]} />
       </SidebarContent>

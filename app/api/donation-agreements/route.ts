@@ -12,12 +12,11 @@ import { sendEmail } from "@/lib/nodemailer";
 
 export async function GET(req: Request) {
   try {
-    const session = await auth();
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
 
-    const orgId = session?.user?.organizationId as string;
-    const teamId = session?.user?.teamId as string;
+    const teamId = searchParams.get("teamId") as string;
+    const orgId = searchParams.get("organizationId") as string;
 
     const data = await getDonationAgreements({ teamId, orgId }, searchQuery);
 
@@ -35,15 +34,20 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await auth();
     const donationAgreement = await req.json();
 
     const validatedData =
       createDonationAgreementSchema.parse(donationAgreement);
 
-    const { agreement, users } = await createDonationAgreement({
-      ...omit(validatedData, "user"),
-      users: validatedData.users ?? [],
-    });
+    const { agreement, users } = await createDonationAgreement(
+      {
+        ...omit(validatedData, "user", "teamId"),
+        users: validatedData.users ?? [],
+      },
+      session?.user.userId as string,
+      donationAgreement?.teamId
+    );
 
     users?.forEach(async (user) => {
       await sendEmail(

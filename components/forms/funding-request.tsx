@@ -34,7 +34,11 @@ type FundingRequest = {
   files: [];
 };
 
-export default function FundingRequest() {
+export default function FundingRequest({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
   const { toast } = useToast();
   const { data: session } = useSession();
 
@@ -74,7 +78,7 @@ export default function FundingRequest() {
         method: "POST",
         body: JSON.stringify({
           ...values,
-          organizationId: session?.user.organizationId,
+          organizationId,
           submittedBy: session?.user.email,
         }),
       });

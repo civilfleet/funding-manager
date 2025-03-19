@@ -1,7 +1,6 @@
 "use client";
 import { z } from "zod";
 
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { DataTable } from "@/components/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,56 +9,43 @@ import { useToast } from "@/hooks/use-toast";
 import { Form } from "../ui/form";
 import FormInputControl from "../helper/form-input-control";
 import ButtonControl from "../helper/button-control";
+import useSWR from "swr";
+import { Loader } from "../helper/loader";
+import { useTeamStore, useOrganizationStore } from "@/store/store";
 
 const querySchema = z.object({
   query: z.string(),
 });
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function FundingRequestTable() {
   const { toast } = useToast();
-  const [data, setData] = useState([]);
+  const { teamId } = useTeamStore();
+  const { organizationId } = useOrganizationStore();
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
-    defaultValues: {
-      query: "",
-    },
+    defaultValues: { query: "" },
   });
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const response = await fetch(`/api/funding-requests/?query=`);
-        const { data } = await response.json();
-        setData(data);
-      } catch (error) {
-        console.error("Error fetching FundingsRequest:", error);
-        toast({
-          title: "Error",
-          description: "Error fetching FundingsRequest",
-          variant: "destructive",
-        });
-      }
-    }
+  const query = form.watch("query");
 
-    fetchData();
-  }, []);
+  const { data, error, isLoading } = useSWR(
+    `/api/funding-requests?teamId=${teamId}&organizationId=${organizationId}&query=${query}`,
+    fetcher
+  );
+  const loading = isLoading || !data;
+
+  if (error) {
+    toast({
+      title: "Error",
+      description: "Error fetching funding requests",
+      variant: "destructive",
+    });
+  }
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
-    try {
-      const response = await fetch(
-        `/api/funding-requests?query=${values.query}`
-      );
-      const { data } = await response.json();
-      setData(data);
-    } catch (error) {
-      console.error("Error fetching funding requests:", error);
-      toast({
-        title: "Error",
-        description: "Error fetching funding requests",
-        variant: "destructive",
-      });
-    }
+    form.setValue("query", values.query);
   }
 
   return (
@@ -78,10 +64,16 @@ export default function FundingRequestTable() {
         </form>
       </Form>
       <div
-        className="rounded-md border my-2 flex 
+        className="rounded-md border my-2 flex justify-center items-center
       flex-grow h-full"
       >
-        <DataTable columns={columns} data={data} />
+        {loading ? (
+          <div className="flex justify-center items-center h-32">
+            <Loader className="" />
+          </div>
+        ) : (
+          <DataTable columns={columns} data={data?.data} />
+        )}
       </div>
     </div>
   );

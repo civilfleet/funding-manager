@@ -28,15 +28,14 @@ export function NavMain({
   const pathname = usePathname();
   const parts = pathname.split("/"); // ["", "teams", "de5c05a3-460f-480d-a899-e1b5e850f3b4", ...]
 
-  const id = parts[2] ?? null; // Extracts the team ID
-  const subUrl = parts[1] ?? null; // Extracts the sub URL
+  const id = parts[2] ?? null;
+  const subUrl = parts[1] ?? null;
 
   return (
     <SidebarGroup>
       <SidebarMenu>
         {items?.map((item) => {
-          let fullPath = item.url; // Default to item URL
-
+          const fullPath = item.url;
           return (
             <SidebarMenuItem key={item.title}>
               <Link href={`/${subUrl}/${id}/${fullPath}/`}>

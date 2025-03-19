@@ -21,6 +21,7 @@ import FundingRequestDetail from "../funding-request-details";
 import { Badge } from "../ui/badge";
 import { Label } from "@radix-ui/react-label";
 import { Textarea } from "../ui/textarea";
+import { useTeamStore } from "@/store/store";
 
 type DonationAgreement = {
   email: string;
@@ -29,6 +30,7 @@ type DonationAgreement = {
 
 export default function DonationAgreement() {
   const { toast } = useToast();
+  const { teamId } = useTeamStore();
   const [fundingRequestDetail, setFundingRequestDetail] =
     useState<FundingRequest>();
   const [users, setUsers] = useState<string[]>([]);
@@ -87,6 +89,7 @@ export default function DonationAgreement() {
         body: JSON.stringify({
           ...values,
           users: [...users],
+          teamId,
         }),
       });
       if (!response.ok) {
@@ -137,7 +140,7 @@ export default function DonationAgreement() {
                 render={({ field }) => (
                   <DataSelectBox
                     targetKey="id"
-                    url="/api/funding-request/?status=UnderReview"
+                    url={`/api/funding-requests/?teamId=${teamId}&status=UnderReview`}
                     attribute="name"
                     label="Select Funding Request"
                     value={field.value}
@@ -151,7 +154,7 @@ export default function DonationAgreement() {
                 render={({ field }) => (
                   <DataSelectBox
                     targetKey="email"
-                    url="/api/users"
+                    url={`/api/users/?teamId=${teamId}&fundingRequestId=${fundingRequestId}`}
                     attribute="email"
                     label="Select User person"
                     value={field.value || ""}
@@ -199,10 +202,7 @@ export default function DonationAgreement() {
         {/* Show funding request details if available */}
         <div className="mt-8">
           {fundingRequestDetail && (
-            <FundingRequestDetail
-              data={fundingRequestDetail}
-              showAgreeAmountForm={false}
-            />
+            <FundingRequestDetail data={fundingRequestDetail} />
           )}
         </div>
       </CardContent>

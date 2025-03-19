@@ -5,7 +5,6 @@ import nodemailer from "nodemailer";
 import config from "../config/mail";
 import { EMAIL_CONTENT } from "@/types";
 
-console.log("config", config);
 const transporter = nodemailer.createTransport({
   ...config,
 });
@@ -17,7 +16,6 @@ const compileTemplate = (templateName: string, data: any) => {
     "templates",
     `${templateName}.handlebars`
   );
-  console.log("filePath", filePath);
   const source = fs.readFileSync(filePath, "utf-8");
   return handlebars.compile(source)(data);
 };
@@ -36,7 +34,6 @@ async function sendEmail(emailContent: EMAIL_CONTENT, data: any) {
       html,
     });
 
-    console.log("Message sent: %s", info.messageId);
     return info;
   } catch (error) {
     console.error("Error sending email:", error);

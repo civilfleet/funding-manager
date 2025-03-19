@@ -136,8 +136,6 @@ export interface Teams {
   updatedAt: Date;
 }
 
-
-
 export enum FileTypes {
   TAX_EXEMPTION_CERTIFICATE = "TAX_EXEMPTION_CERTIFICATE",
   ARTICLES_OF_ASSOCIATION = "ARTICLES_OF_ASSOCIATION",
@@ -155,6 +153,7 @@ export type DonationAgreementSignature = {
   agreementId: string;
   agreement: DonationAgreement;
   signature: string;
+  signedAt: Date;
   createdAt: Date;
   updatedAt: Date;
 };

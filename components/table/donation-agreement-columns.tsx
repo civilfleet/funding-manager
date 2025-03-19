@@ -27,7 +27,7 @@ export const columns: ColumnDef<DonationAgreement>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            <a href={`donation-agreement/${request.id}`}>
+            <a href={`donation-agreements/${request.id}`}>
               <DropdownMenuItem>View</DropdownMenuItem>
             </a>
             <DropdownMenuSeparator />

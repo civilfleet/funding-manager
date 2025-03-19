@@ -13,13 +13,6 @@ export async function GET() {
     const donationsForBudgetReportReminder =
       await getDonationAgreementPastEightWeeks();
 
-    console.log("donationsForReceiptReminder", donationsForReceiptReminder);
-
-    console.log(
-      "donationsForBudgetReportReminder",
-      donationsForBudgetReportReminder
-    );
-
     // Send receipt reminders
     for (const donation of donationsForReceiptReminder) {
       sendEmail(

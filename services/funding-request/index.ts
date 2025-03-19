@@ -113,9 +113,19 @@ const createFundingRequest = async (data: FundingRequestData) => {
 
 const updateFundingRequest = async (
   id: string,
-  data: Partial<FundingRequestData>
+  data: Partial<FundingRequestData>,
+  teamId: string
 ) => {
   try {
+    const team = await prisma.teams.findFirst({
+      where: {
+        id: teamId,
+      },
+    });
+    if (!team) {
+      throw new Error("Team not found.");
+    }
+
     const fundingRequest = await prisma.fundingRequest.update({
       where: { id },
       data: data as Prisma.FundingRequestUpdateInput,
@@ -311,7 +321,6 @@ const getFundingRequests = async (
       contains: searchQuery,
     };
   }
-  console.log("status in fnc", status);
   if (status?.length) {
     where["status"] = {
       in: status,

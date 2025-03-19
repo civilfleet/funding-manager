@@ -5,7 +5,6 @@ import { uploadFundingRequestFile } from "@/services/funding-request";
 import { FileTypes } from "@/types";
 import { NextResponse } from "next/server";
 
-// ✅ GET Organization by ID
 export async function PUT(
   req: Request,
   {
@@ -40,7 +39,7 @@ export async function PUT(
         organizationName: response?.FundingRequest?.organization?.name,
         documentType: data?.type,
         requestName: response?.FundingRequest?.name,
-        fundingRequestLink: `${process.env.NEXT_PUBLIC_BASE_URL}/team/funding-request/${fundingRequestId}`,
+        fundingRequestLink: `${process.env.NEXT_PUBLIC_BASE_URL}/team/funding-requests/${fundingRequestId}`,
       }
     );
 
@@ -51,7 +50,6 @@ export async function PUT(
       { status: 201 }
     );
   } catch (e) {
-    console.log("error", e);
     const { message } = handlePrismaError(e);
     return NextResponse.json({ error: message }, { status: 400 });
   }

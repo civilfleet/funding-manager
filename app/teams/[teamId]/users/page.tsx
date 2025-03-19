@@ -4,10 +4,10 @@ import Link from "next/link";
 
 export default async function Page() {
   return (
-    <div className="p-4 w-full">
+    <div className="p-4">
       <div className="flex justify-between">
         <h1 className="text-2xl  my-2">Users</h1>
-        <Link href="user/create">
+        <Link href="users/create">
           <Button type="button">Create New</Button>
         </Link>
       </div>

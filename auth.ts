@@ -27,7 +27,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const userExist = await prisma.user.findFirst({
         where: { email: user.email as string },
       });
-      console.log(userExist);
       if (!userExist) return false;
 
       return true;
