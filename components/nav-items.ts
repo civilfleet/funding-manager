@@ -1,13 +1,7 @@
 import { Building, BookOpen, Scroll, BookUser, FolderOpen } from "lucide-react";
 
 export default {
-  admin: [
-    {
-      title: "Admin",
-      url: "admin",
-      icon: Building,
-    },
-  ],
+  admin: [],
   team: [
     {
       title: "Organizations",

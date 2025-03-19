@@ -22,31 +22,22 @@ export default auth(async (req) => {
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const roles = (token?.roles as string[]) || [];
 
-  const isAdmin = token.userRoles === "Admin";
-  const isOrganization = token.userRoles === "Organization";
-  const isTeam = token.userRoles === "Team";
+  const isOrganization = roles.includes("Organization");
+  const isTeam = roles.includes("Team");
+  const isAdmin = roles.includes("Admin");
 
-  if (isOrganization && nextUrl.pathname.startsWith("/teams")) {
-    return NextResponse.redirect(new URL("/organizations", nextUrl));
+  if (!isTeam && nextUrl.pathname.startsWith("/teams")) {
+    return NextResponse.redirect(new URL("/", nextUrl));
   }
 
-  if (isTeam && nextUrl.pathname.startsWith("/organizations")) {
-    return NextResponse.redirect(new URL("/teams", nextUrl));
+  if (!isOrganization && nextUrl.pathname.startsWith("/organizations")) {
+    return NextResponse.redirect(new URL("/", nextUrl));
   }
-
-  if (
-    isAdmin &&
-    (nextUrl.pathname.startsWith("/teams") ||
-      nextUrl.pathname.startsWith("/organizations"))
-  ) {
-    return NextResponse.redirect(new URL("/admin", nextUrl));
+  if (!isAdmin && nextUrl.pathname.startsWith("/admin")) {
+    return NextResponse.redirect(new URL("/", nextUrl));
   }
-
-  if (isAdmin && nextUrl.pathname.startsWith("/organizations")) {
-    return NextResponse.redirect(new URL("/admin", nextUrl));
-  }
-
   return NextResponse.next();
 });
 
