@@ -33,7 +33,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return true;
     },
 
-    async jwt({ token, user, account, session, trigger }) {
+    async jwt({ token, user, account }) {
       if (account && user) {
         token.accessToken = account.access_token;
         token.provider = account.provider;
@@ -45,17 +45,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           },
         });
 
-        // token.organizationId = user?.organizations[0]?.id;
-        // token.teamId = user?.teams[0]?.id;
-
-        token.userRoles = userExist?.roles;
+        token.roles = userExist?.roles;
         token.userId = userExist?.id;
       }
 
-      if (trigger === "update") {
-        token.organizationId = session?.user.organizationId;
-        token.teamId = session?.user.teamId;
-      }
       return token;
     },
 

@@ -33,7 +33,7 @@ export default function UserForm() {
 
   async function onSubmit(values: z.infer<typeof createUserSchema>) {
     try {
-      const response = await fetch("/api/user-person", {
+      const response = await fetch("/api/users", {
         method: "POST",
         body: JSON.stringify(values),
         headers: {

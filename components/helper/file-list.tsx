@@ -54,7 +54,7 @@ export const FileList = ({ files, organizationFiles }: FileListProps) => {
                   asChild
                 >
                   <a
-                    href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${file.id}`}
+                    href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

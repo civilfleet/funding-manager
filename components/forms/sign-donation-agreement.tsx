@@ -61,7 +61,7 @@ export default function SignDonationAgreement({
   const { data: session } = useSession();
   const fundsTransferred = data.fundingRequest?.status === "FundsTransferred";
   const signaturesCompleted = data.userSignatures.every(
-    (signature) => signature.signedAt
+    (signature) => signature?.signedAt
   );
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -72,7 +72,7 @@ export default function SignDonationAgreement({
 
   async function onSubmit(values: z.infer<typeof schema>) {
     try {
-      const response = await fetch(`/api/donation-agreement/${data.id}`, {
+      const response = await fetch(`/api/donation-agreements/${data.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -102,7 +102,7 @@ export default function SignDonationAgreement({
   async function changeFundingRequestStatus() {
     try {
       const response = await fetch(
-        `/api/funding-request/${data.fundingRequestId}/status`,
+        `/api/funding-requests/${data.fundingRequestId}/status`,
         {
           method: "PUT",
           headers: {

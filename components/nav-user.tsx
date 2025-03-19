@@ -38,8 +38,8 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
-  const { reset } = useTeamStore();
-  const { reset: organizationReset } = useOrganizationStore();
+  const { setTeamId } = useTeamStore();
+  const { setOrganizationId } = useOrganizationStore();
 
   return (
     <SidebarMenu>
@@ -108,8 +108,8 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => {
-                reset();
-                organizationReset();
+                setTeamId("");
+                setOrganizationId("");
                 signOut({ redirectTo: "/" });
               }}
             >

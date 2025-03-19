@@ -78,7 +78,7 @@ export const columns: ColumnDef<File>[] = [
     cell: ({ row }) => (
       <div className="text-left  text-blue-500">
         <Link
-          href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${row.original?.id}`}
+          href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${row.original?.id}`}
         >
           {row.original?.url || "N/A"}
         </Link>

@@ -62,7 +62,7 @@ type Organization = {
 
 export default function OrganizationForm({ data }: { data: Organization }) {
   const { toast } = useToast();
-  const { team } = useTeamStore();
+  const { teamId } = useTeamStore();
   const [isUpdate] = useState(data?.email ? true : false);
   const [isFilledByOrg, setFillByOrg] = useState(data?.isFilledByOrg);
   const schema = isUpdate ? updateOrganizationSchema : createOrganizationSchema;
@@ -101,16 +101,16 @@ export default function OrganizationForm({ data }: { data: Organization }) {
     try {
       let response;
       if (!data?.email) {
-        response = await fetch("/api/organization", {
+        response = await fetch("/api/organizations", {
           method: "POST",
           body: JSON.stringify({
             ...values,
-            teamId: team.id,
+            teamId: teamId,
             isFilledByOrg: false,
           }),
         });
       } else {
-        response = await fetch("/api/organization", {
+        response = await fetch("/api/organizations", {
           method: "PUT",
           body: JSON.stringify({ ...values, isFilledByOrg: true }),
         });

@@ -32,7 +32,7 @@ export default function FileTable() {
     async function fetchData() {
       try {
         if (session) {
-          const response = await fetch(`/api/file/?query=`);
+          const response = await fetch(`/api/files/?query=`);
           const { data } = await response.json();
 
           setData(data);
@@ -51,7 +51,7 @@ export default function FileTable() {
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
-      const response = await fetch(`/api/file?query=${values.query}`);
+      const response = await fetch(`/api/files?query=${values.query}`);
       const { data } = await response.json();
       setData(data);
     } catch (error) {

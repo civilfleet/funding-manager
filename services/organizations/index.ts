@@ -1,6 +1,7 @@
 import _ from "lodash";
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
+import { Roles } from "@prisma/client";
 
 type Organization = {
   name?: string;
@@ -37,6 +38,7 @@ type Organization = {
 const createOrUpdateOrganization = async (formData: Organization) => {
   return await prisma.$transaction(async (prisma) => {
     const session = await auth();
+
     const user = await prisma.user.findFirst({
       where: { email: session?.user.email as string },
     });
@@ -61,12 +63,20 @@ const createOrUpdateOrganization = async (formData: Organization) => {
         })
       : undefined;
 
-    // Upsert user person if provided
-    const newUser = formData.user?.email
+    const email = formData.user?.email?.toLowerCase();
+
+    const newUser = email
       ? await prisma.user.upsert({
-          where: { email: formData.user.email },
-          update: { ...formData.user },
-          create: { ...formData.user },
+          where: {
+            email,
+          },
+          update: {
+            ...formData.user,
+            roles: {
+              push: Roles.Organization,
+            },
+          },
+          create: { ...formData.user, email, roles: [Roles.Organization] },
         })
       : undefined;
 

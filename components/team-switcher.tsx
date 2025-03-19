@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useOrganizationStore, useTeamStore } from "@/store/store";
 
 type SwitcherItem = {
   id: string;
@@ -41,13 +42,22 @@ export function TeamSwitcher({
     teams[0] || organizations[0]
   );
 
+  const { setTeamId } = useTeamStore();
+  const { setOrganizationId } = useOrganizationStore();
+
   useEffect(() => {
     setActiveItem(teams[0] || organizations[0]);
   }, [organizations, teams]);
 
-  const setItem = async (item: SwitcherItem, url: string) => {
+  const setItem = async (item: SwitcherItem, subUrl: string, id: string) => {
     setActiveItem(item);
-    router.push(url);
+    if (subUrl === "teams") {
+      setTeamId(id);
+      router.push(`/${subUrl}/${id}/organizations`);
+    } else {
+      setOrganizationId(id);
+      router.push(`/${subUrl}/${id}/profile`);
+    }
   };
 
   return (
@@ -86,7 +96,7 @@ export function TeamSwitcher({
                 {teams.map((item, index) => (
                   <DropdownMenuItem
                     key={item.name}
-                    onClick={() => setItem(item, `/team/${item.id}`)}
+                    onClick={() => setItem(item, "teams", item.id)}
                     className="gap-2 p-2"
                   >
                     <div className="flex size-6 items-center justify-center rounded-sm border">
@@ -112,7 +122,7 @@ export function TeamSwitcher({
                 {organizations.map((item, index) => (
                   <DropdownMenuItem
                     key={item.name}
-                    onClick={() => setItem(item, `/organization/${item.id}`)}
+                    onClick={() => setItem(item, "organizations", item.id)}
                     className="gap-2 p-2"
                   >
                     <div className="flex size-6 items-center justify-center rounded-sm border">

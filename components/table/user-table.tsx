@@ -29,7 +29,7 @@ export default function UserTable() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch(`/api/user-person/?query=`);
+        const response = await fetch(`/api/users/?query=`);
         const { data } = await response.json();
         setData(data);
       } catch (error) {
@@ -47,7 +47,7 @@ export default function UserTable() {
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
-      const response = await fetch(`/api/user-person?query=${values.query}`);
+      const response = await fetch(`/api/users?query=${values.query}`);
       const { data } = await response.json();
       setData(data);
     } catch (error) {

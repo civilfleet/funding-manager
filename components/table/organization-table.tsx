@@ -31,7 +31,7 @@ export default function OrganizationTable() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch("/api/organization?query=");
+        const response = await fetch("/api/organizations?query=");
         const { data } = await response.json();
         if (!data) {
           toast({
@@ -56,7 +56,7 @@ export default function OrganizationTable() {
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
-      const response = await fetch(`/api/organization?query=${values.query}`);
+      const response = await fetch(`/api/organizations?query=${values.query}`);
       const { data } = await response.json();
       setData(data);
     } catch (error) {

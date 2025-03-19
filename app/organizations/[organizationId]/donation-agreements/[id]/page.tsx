@@ -8,7 +8,7 @@ export default async function Page({
 }) {
   const id = (await params).id;
   const donationAgreement = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/donation-agreement/${id}`
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/donation-agreements/${id}`
   );
   const { data: donationData } = await donationAgreement.json();
   if (!donationData) {

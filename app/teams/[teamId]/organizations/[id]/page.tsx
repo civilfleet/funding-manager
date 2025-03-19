@@ -8,11 +8,11 @@ export default async function Profile({
 }) {
   const id = (await params).id;
   const organization = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/organization/${id}`
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/organizations/${id}`
   );
 
   const fundingRequests = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/funding-request`
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/funding-requests`
   );
 
   const { data: fundingRequestsData } = await fundingRequests.json();

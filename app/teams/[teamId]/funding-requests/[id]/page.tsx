@@ -8,10 +8,9 @@ export default async function FundingRequest({
 }) {
   const id = (await params).id;
   const fundingRequests = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/funding-request/${id}`
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/funding-requests/${id}`
   );
   const { data: fundingRequestsData } = await fundingRequests.json();
-
   if (!fundingRequestsData) {
     redirect("/team/organization");
   }

@@ -204,7 +204,7 @@ export default function OrganizationDetails({
                   <span className="font-medium">{file?.name || file.type}</span>
                   <Button asChild variant="ghost" size="sm">
                     <Link
-                      href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${file.id}`}
+                      href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.id}`}
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download

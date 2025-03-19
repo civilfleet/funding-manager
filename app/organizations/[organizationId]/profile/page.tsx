@@ -2,17 +2,21 @@ import { auth } from "@/auth";
 import OrganizationForm from "@/components/forms/organization";
 import OrganizationDetails from "@/components/organization-details";
 
-export default async function Page() {
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ organizationId: string }>;
+}) {
   // get organization data
   const session = await auth();
+  const id = (await params).organizationId as string;
 
-  const orgId = session?.user?.organizationId;
   const organization = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/organization/${orgId}`
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/organizations/${id}`
   );
 
   const fundingRequests = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/funding-request`
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/funding-requests?organizationId=${id}`
   );
 
   const { data: fundingRequestsData } = await fundingRequests.json();

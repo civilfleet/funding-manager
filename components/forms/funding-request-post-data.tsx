@@ -30,7 +30,7 @@ export default function FundingRequestPostData({
   const onSubmit = async (data: ReceiptFormData) => {
     try {
       const response = await fetch(
-        `/api/funding-request/${fundingRequestId}/file`,
+        `/api/funding-request/${fundingRequestId}/files`,
         {
           method: "PUT",
           headers: {

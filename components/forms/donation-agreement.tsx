@@ -65,7 +65,7 @@ export default function DonationAgreement() {
     const fetchFundingRequestDetail = async () => {
       try {
         const response = await fetch(
-          `/api/funding-request/${fundingRequestId}`
+          `/api/funding-requests/${fundingRequestId}`
         );
         const { data } = await response.json();
         setFundingRequestDetail(data);
@@ -79,7 +79,7 @@ export default function DonationAgreement() {
 
   async function onSubmit(values: z.infer<typeof schema>) {
     try {
-      const response = await fetch("/api/donation-agreement", {
+      const response = await fetch("/api/donation-agreements", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

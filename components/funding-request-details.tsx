@@ -70,7 +70,7 @@ export default function FundingRequestDetail({
   });
   async function rejectRequest() {
     try {
-      const response = await fetch(`/api/funding-request/${data.id}/status`, {
+      const response = await fetch(`/api/funding-requests/${data.id}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -95,7 +95,7 @@ export default function FundingRequestDetail({
 
   async function onSubmit(values: z.infer<typeof amountOfferSchema>) {
     try {
-      const response = await fetch(`/api/funding-request/${data.id}`, {
+      const response = await fetch(`/api/funding-requests/${data.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

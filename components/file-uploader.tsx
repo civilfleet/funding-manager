@@ -69,7 +69,7 @@ const FileUpload = ({
       />
 
       <a
-        href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${fileUrl}` || ""}
+        href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${fileUrl}` || ""}
         target="_blank"
         rel="noopener noreferrer"
         className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500"

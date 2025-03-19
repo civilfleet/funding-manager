@@ -12,10 +12,12 @@ import { sendEmail } from "@/lib/nodemailer";
 export async function GET(req: Request) {
   try {
     const session = await auth();
+
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
     const status = searchParams.getAll("status") || [];
-    const orgId = session?.user?.organizationId as string;
+    const orgId = searchParams.get("organizationId") as string;
+
     const teamId = session?.user?.teamId as string;
 
     const data = await getFundingRequests(

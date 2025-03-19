@@ -29,7 +29,7 @@ export default function DonationAgreementTable() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch(`/api/donation-agreement/?query=`);
+        const response = await fetch(`/api/donation-agreements/?query=`);
         const { data } = await response.json();
         setData(data);
       } catch (error) {
@@ -48,7 +48,7 @@ export default function DonationAgreementTable() {
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
       const response = await fetch(
-        `/api/donation-agreement?query=${values.query}`
+        `/api/donation-agreements?query=${values.query}`
       );
       const { data } = await response.json();
       setData(data);

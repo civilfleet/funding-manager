@@ -56,7 +56,7 @@ export async function POST(req: Request) {
           user: user.name,
           requestName: agreement.fundingRequest.name,
           organizationName: agreement?.organization?.name,
-          agreementLink: `${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${agreement.file.id}`,
+          agreementLink: `${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${agreement.file.id}`,
           supportEmail: agreement?.team?.email,
           teamName: agreement?.team?.name,
         }

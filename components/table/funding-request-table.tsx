@@ -29,7 +29,7 @@ export default function FundingRequestTable() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch(`/api/funding-request/?query=`);
+        const response = await fetch(`/api/funding-requests/?query=`);
         const { data } = await response.json();
         setData(data);
       } catch (error) {
@@ -48,7 +48,7 @@ export default function FundingRequestTable() {
   async function onSubmit(values: z.infer<typeof querySchema>) {
     try {
       const response = await fetch(
-        `/api/funding-request?query=${values.query}`
+        `/api/funding-requests?query=${values.query}`
       );
       const { data } = await response.json();
       setData(data);

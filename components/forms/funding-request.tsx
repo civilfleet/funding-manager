@@ -70,7 +70,7 @@ export default function FundingRequest() {
 
   async function onSubmit(values: z.infer<typeof createFundingRequestSchema>) {
     try {
-      const response = await fetch("/api/funding-request", {
+      const response = await fetch("/api/funding-requests", {
         method: "POST",
         body: JSON.stringify({
           ...values,
