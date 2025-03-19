@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronsUpDown, GalleryVerticalEnd, Plus } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { ChevronsUpDown, GalleryVerticalEnd } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -20,90 +19,58 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useOrganizationStore, useTeamStore } from "@/store/store";
 
+type SwitcherItem = {
+  id: string;
+  name: string;
+  roleName?: string;
+  email: string;
+};
+
 export function TeamSwitcher({
-  items,
-  isTeamsMember,
+  organizations,
+  teams,
 }: {
-  items: {
-    id: string;
-    name: string;
-    roleName?: string;
-    email: string;
-  }[];
-  isTeamsMember: boolean;
+  organizations: SwitcherItem[];
+  teams: SwitcherItem[];
 }) {
   const { isMobile } = useSidebar();
-  const { data: session, update: updateSession, status } = useSession();
-  const { setTeam: setTeamGlobal, team } = useTeamStore();
-  const { setOrganization: setOrganizationGlobal, organization } =
-    useOrganizationStore();
+  const router = useRouter();
 
-  const [activeItem, setActiveItem] = useState<(typeof items)[0] | null>(null);
+  const { teamId, setTeamId } = useTeamStore();
+  const { organizationId, setOrganizationId } = useOrganizationStore();
+
+  const [activeItem, setActiveItem] = useState<SwitcherItem | null>(null);
 
   useEffect(() => {
-    if (status === "authenticated" && session) {
-      if (!items || items.length === 0) {
-        return;
-      }
-
-      const storedItem = isTeamsMember ? team : organization;
-      const firstItem = items[0];
-
-      const newActiveItem = storedItem?.id
-        ? items.find((item) => item.id === storedItem.id)
-        : firstItem;
-
-      if (newActiveItem) {
-        setActiveItem(newActiveItem);
-
-        if (isTeamsMember && !team) {
-          setTeamGlobal(newActiveItem);
-        } else if (!isTeamsMember && !organization) {
-          setOrganizationGlobal(newActiveItem);
-        }
-        if (!(session.user.organizationId || session.user.teamId)) {
-          setItem(newActiveItem);
-        }
-      }
+    if (teamId) {
+      const selectedTeam = teams.find((item) => item.id === teamId) || teams[0];
+      setActiveItem(selectedTeam);
+    } else if (organizationId) {
+      const selectedOrg =
+        organizations.find((item) => item.id === organizationId) ||
+        organizations[0];
+      setActiveItem(selectedOrg);
+    } else {
+      setActiveItem(teams[0] || organizations[0] || null);
     }
-  }, [items, team, organization, isTeamsMember, status, session]); // Added status/session
+  }, [teamId, organizationId, teams, organizations]);
 
-  const setItem = async (item: (typeof items)[0]) => {
-    if (status === "authenticated") {
-      try {
-        setActiveItem(item);
+  const setItem = (item: SwitcherItem, subUrl: string, id: string) => {
+    setActiveItem(item); // Only setting once here
 
-        await updateSession({
-          user: {
-            ...session.user,
-            ...(isTeamsMember
-              ? {
-                  teamId: item.id,
-                  organizationId: undefined,
-                }
-              : {
-                  organizationId: item.id,
-                  teamId: undefined,
-                }),
-          },
-        });
-
-        if (isTeamsMember) {
-          setTeamGlobal(item);
-        } else {
-          setOrganizationGlobal(item);
-        }
-        window.location.reload();
-      } catch (error) {
-        console.error("Failed to update session:", error);
-        // Rollback state if needed
-        setActiveItem(() => (isTeamsMember ? team : organization));
-      }
+    if (subUrl === "teams") {
+      setTeamId(id);
+      setOrganizationId("");
+      router.push(`/${subUrl}/${id}/organizations`);
+    } else {
+      setOrganizationId(id);
+      setTeamId("");
+      router.push(`/${subUrl}/${id}/profile`);
     }
   };
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -114,17 +81,15 @@ export function TeamSwitcher({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                {/* {activeTeam?.logo ? (
-                  <activeTeam.logo />
-                ) : ( */}
                 <GalleryVerticalEnd className="size-4" />
-                {/* )} */}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {activeItem?.name || ""}
+                  {activeItem?.name}
                 </span>
-                {/* <span className="truncate text-xs">{activeTeam || ""}</span> */}
+                <span className="truncate text-xs">
+                  {teamId ? "Team" : "Organization"}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -135,34 +100,57 @@ export function TeamSwitcher({
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Teams
-            </DropdownMenuLabel>
-            {items &&
-              items?.map((item, index) => (
-                <DropdownMenuItem
-                  key={item.name}
-                  onClick={() => setItem(item)}
-                  className="gap-2 p-2"
-                >
-                  <div className="flex size-6 items-center justify-center rounded-sm border">
-                    {/* {team?.logo ? (
-                      <team.logo className="size-4 shrink-0" />
-                    ) : ( */}
-                    <GalleryVerticalEnd className="size-4 shrink-0" />
-                    {/* )} */}
-                  </div>
-                  {item.name}
-                  <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-                </DropdownMenuItem>
-              ))}
+            {teams.length > 0 && (
+              <>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                  Teams
+                </DropdownMenuLabel>
+
+                {teams.map((item, index) => (
+                  <DropdownMenuItem
+                    key={item.name}
+                    onClick={() => setItem(item, "teams", item.id)}
+                    className="gap-2 p-2"
+                  >
+                    <div className="flex size-6 items-center justify-center rounded-sm border">
+                      {/* {item.logo ? (
+            <item.logo className="size-4 shrink-0" />
+          ) : ( */}
+                      <GalleryVerticalEnd className="size-4 shrink-0" />
+                      {/* )} */}
+                    </div>
+                    {item.name}
+                    <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                ))}
+              </>
+            )}
+
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
-              <div className="flex size-6 items-center justify-center rounded-md border bg-background">
-                <Plus className="size-4" />
-              </div>
-              <div className="font-medium text-muted-foreground">Add team</div>
-            </DropdownMenuItem>
+            {organizations.length > 0 && (
+              <>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                  Organizations
+                </DropdownMenuLabel>
+                {organizations.map((item, index) => (
+                  <DropdownMenuItem
+                    key={item.name}
+                    onClick={() => setItem(item, "organizations", item.id)}
+                    className="gap-2 p-2"
+                  >
+                    <div className="flex size-6 items-center justify-center rounded-sm border">
+                      {/* {item.logo ? (
+            <item.logo className="size-4 shrink-0" />
+          ) : ( */}
+                      <GalleryVerticalEnd className="size-4 shrink-0" />
+                      {/* )} */}
+                    </div>
+                    {item.name}
+                    <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                ))}
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

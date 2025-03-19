@@ -1,7 +1,6 @@
 "use client";
 import { z } from "zod";
 
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { DataTable } from "@/components/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,58 +9,41 @@ import { useToast } from "@/hooks/use-toast";
 import { Form } from "../ui/form";
 import FormInputControl from "../helper/form-input-control";
 import ButtonControl from "../helper/button-control";
-import { useSession } from "next-auth/react";
+import { useOrganizationStore, useTeamStore } from "@/store/store";
+import useSWR from "swr";
+import { Loader } from "../helper/loader";
 
 const querySchema = z.object({
   query: z.string(),
 });
-
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 export default function FileTable() {
   const { toast } = useToast();
-  const [data, setData] = useState([]);
-  const { data: session } = useSession();
-
+  const { teamId } = useTeamStore();
+  const { organizationId } = useOrganizationStore();
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
-    defaultValues: {
-      query: "",
-    },
+    defaultValues: { query: "" },
   });
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        if (session) {
-          const response = await fetch(`/api/file/?query=`);
-          const { data } = await response.json();
+  const query = form.watch("query");
 
-          setData(data);
-        }
-      } catch (error) {
-        console.error("Error fetching filesRequest:", error);
-        toast({
-          title: "Error",
-          description: "Error fetching filesRequest",
-          variant: "destructive",
-        });
-      }
-    }
-    fetchData();
-  }, [session]);
+  const { data, error, isLoading } = useSWR(
+    `/api/files?teamId=${teamId}&query=${query}&organizationId=${organizationId}`,
+    fetcher
+  );
+  const loading = isLoading || !data;
+
+  if (error) {
+    toast({
+      title: "Error",
+      description: "Error fetching funding requests",
+      variant: "destructive",
+    });
+  }
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
-    try {
-      const response = await fetch(`/api/file?query=${values.query}`);
-      const { data } = await response.json();
-      setData(data);
-    } catch (error) {
-      console.error("Error fetching file:", error);
-      toast({
-        title: "Error",
-        description: "Error fetching file",
-        variant: "destructive",
-      });
-    }
+    form.setValue("query", values.query);
   }
 
   return (
@@ -80,10 +62,16 @@ export default function FileTable() {
         </form>
       </Form>
       <div
-        className="rounded-md border my-2 flex 
-      flex-grow h-full"
+        className="rounded-md border my-2 flex  justify-center items-center
+            flex-grow h-full"
       >
-        <DataTable columns={columns} data={data} />
+        {loading ? (
+          <div className="flex justify-center items-center h-32">
+            <Loader className="" />
+          </div>
+        ) : (
+          <DataTable columns={columns} data={data?.data} />
+        )}
       </div>
     </div>
   );

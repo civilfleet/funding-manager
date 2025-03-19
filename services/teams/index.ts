@@ -1,4 +1,7 @@
 import prisma from "@/lib/prisma";
+import { Roles } from "@/types";
+import { CreateTeamInput } from "@/validations/team";
+import _ from "lodash";
 
 const getTeamsByRoles = async (roles: string[] | null) => {
   return await prisma.teams.findMany({
@@ -14,21 +17,16 @@ const getTeamsByRoles = async (roles: string[] | null) => {
   });
 };
 
-const createTeam = async (teamData: any) => {
-  const contact = teamData.contactPerson;
+const createTeam = async (teamData: CreateTeamInput) => {
+  const TeamUser = teamData.user;
   const bankDetails = teamData.bankDetails;
 
-  delete teamData.contactPerson;
-  delete teamData.bankDetails;
+  const sanitizedTeamData = _.omit(teamData, ["user", "bankDetails"]);
+
   const query = {
     data: {
-      ...teamData,
-      contactPersons: {
-        create: {
-          ...contact,
-          type: "Team",
-        },
-      },
+      ...sanitizedTeamData,
+      users: {},
       bankDetails: {
         create: {
           ...bankDetails,
@@ -40,7 +38,7 @@ const createTeam = async (teamData: any) => {
       name: true,
       roleName: true,
       email: true,
-      contactPersons: {
+      users: {
         select: {
           id: true,
           name: true,
@@ -51,16 +49,25 @@ const createTeam = async (teamData: any) => {
       },
     },
   };
+  // TODO: Check if user already exists
 
-  const contactPerson = await prisma.contactPerson.findUnique({
+  const user = await prisma.user.findUnique({
     where: {
-      email: contact.email,
+      email: TeamUser.email,
     },
   });
-  if (contactPerson?.id) {
-    query.data.contactPersons = {
+
+  if (user?.id) {
+    query.data.users = {
       connect: {
-        id: contactPerson?.id,
+        id: user.id,
+      },
+    };
+  } else {
+    query.data.users = {
+      create: {
+        ...TeamUser,
+        roles: [Roles.Admin] as Roles[],
       },
     };
   }

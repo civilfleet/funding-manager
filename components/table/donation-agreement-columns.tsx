@@ -27,7 +27,7 @@ export const columns: ColumnDef<DonationAgreement>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            <a href={`donation-agreement/${request.id}`}>
+            <a href={`donation-agreements/${request.id}`}>
               <DropdownMenuItem>View</DropdownMenuItem>
             </a>
             <DropdownMenuSeparator />
@@ -55,7 +55,7 @@ export const columns: ColumnDef<DonationAgreement>[] = [
       <div className="text-left text-blue-500">
         {
           <Link
-            href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${row.original.file?.id}`}
+            href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${row.original.file?.id}`}
           >
             {row.original?.file?.type || "N/A"}
           </Link>

@@ -1,7 +1,6 @@
 "use client";
 import { z } from "zod";
 
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { DataTable } from "@/components/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Form } from "../ui/form";
 import FormInputControl from "../helper/form-input-control";
 import ButtonControl from "../helper/button-control";
+import useSWR from "swr";
+import { useOrganizationStore, useTeamStore } from "@/store/store";
+import { Loader } from "../helper/loader";
 
 const querySchema = z.object({
   query: z.string(),
@@ -17,8 +19,9 @@ const querySchema = z.object({
 
 export default function DonationAgreementTable() {
   const { toast } = useToast();
-  const [data, setData] = useState([]);
 
+  const { teamId } = useTeamStore();
+  const { organizationId } = useOrganizationStore();
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
     defaultValues: {
@@ -26,42 +29,24 @@ export default function DonationAgreementTable() {
     },
   });
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const response = await fetch(`/api/donation-agreement/?query=`);
-        const { data } = await response.json();
-        setData(data);
-      } catch (error) {
-        console.error("Error fetching Donation Agreement:", error);
-        toast({
-          title: "Error",
-          description: "Error fetching Donation Agreement",
-          variant: "destructive",
-        });
-      }
-    }
+  const fetcher = (url: string) => fetch(url).then((res) => res.json());
+  const query = form.watch("query");
 
-    fetchData();
-  }, []);
-
+  const { data, error, isLoading } = useSWR(
+    `/api/donation-agreements/?query=${query}&teamId=${teamId}&organizationId=${organizationId}`,
+    fetcher
+  );
+  const loading = isLoading || !data;
   async function onSubmit(values: z.infer<typeof querySchema>) {
-    try {
-      const response = await fetch(
-        `/api/donation-agreement?query=${values.query}`
-      );
-      const { data } = await response.json();
-      setData(data);
-    } catch (error) {
-      console.error("Error fetching donation agreement:", error);
-      toast({
-        title: "Error",
-        description: "Error fetching donation-agreement",
-        variant: "destructive",
-      });
-    }
+    form.setValue("query", values.query); // Triggers SWR to re-fetch
   }
-
+  if (error) {
+    toast({
+      title: "Error",
+      description: "Error fetching funding requests",
+      variant: "destructive",
+    });
+  }
   return (
     <div className="flex flex-col my-2">
       <Form {...form}>
@@ -77,11 +62,18 @@ export default function DonationAgreementTable() {
           <ButtonControl type="submit" label="Submit" className="mx-2" />
         </form>
       </Form>
+
       <div
-        className="rounded-md border my-2 flex 
+        className="rounded-md border my-2 flex justify-center items-center
       flex-grow h-full"
       >
-        <DataTable columns={columns} data={data} />
+        {loading ? (
+          <div className="flex justify-center items-center h-32">
+            <Loader className="" />
+          </div>
+        ) : (
+          <DataTable columns={columns} data={data?.data} />
+        )}
       </div>
     </div>
   );

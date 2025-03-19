@@ -14,7 +14,7 @@ export function LoginForm({
         className={cn("flex flex-col gap-6", className)}
         action={async () => {
           "use server";
-          await signIn("google", { redirectTo: "/organization" });
+          await signIn("google", { redirectTo: "/organizations" });
         }}
         {...props}
       >

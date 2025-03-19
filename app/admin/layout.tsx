@@ -10,7 +10,7 @@ export default async function RootLayout({
   return (
     <div>
       <SidebarProvider>
-        <AppSidebar />
+        <AppSidebar navItems={"admin"} />
         <SidebarInset>
           <div>{children}</div>
         </SidebarInset>

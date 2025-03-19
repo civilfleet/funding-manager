@@ -4,14 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { FundingRequest, Organization } from "@/types";
-import {
-  ChevronDown,
-  ChevronUp,
-  Download,
-  ExternalLink,
-  Phone,
-  Mail,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, Download } from "lucide-react";
 
 import {
   Table,
@@ -24,61 +17,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-function DetailItem({
-  label,
-  value,
-  type = "text",
-}: {
-  label: string;
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  value?: any;
-  type?: string;
-}) {
-  if (!value) return null;
-
-  let content = value;
-  if (type === "email") {
-    content = (
-      <a
-        href={`mailto:${value}`}
-        className="text-primary hover:underline flex items-center"
-      >
-        <Mail className="w-4 h-4 mr-2" />
-        {value}
-      </a>
-    );
-  } else if (type === "phone") {
-    content = (
-      <a
-        href={`tel:${value}`}
-        className="text-primary hover:underline flex items-center"
-      >
-        <Phone className="w-4 h-4 mr-2" />
-        {value}
-      </a>
-    );
-  } else if (type === "link") {
-    content = (
-      <a
-        href={value}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-primary hover:underline flex items-center"
-      >
-        <ExternalLink className="w-4 h-4 mr-2" />
-        {value}
-      </a>
-    );
-  }
-
-  return (
-    <div className="space-y-1">
-      <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
-      <dd className="text-sm font-semibold">{content}</dd>
-    </div>
-  );
-}
+import DetailItem from "./helper/detail-item";
 
 export default function OrganizationDetails({
   organization,
@@ -88,7 +27,7 @@ export default function OrganizationDetails({
   fundingRequests: FundingRequest[];
 }) {
   const router = useRouter();
-  const contacts = organization?.contactPersons || [];
+  const users = organization?.users || [];
   const [expandedSection, setExpandedSection] = useState<string | null>(
     "profile"
   );
@@ -99,8 +38,8 @@ export default function OrganizationDetails({
 
   return (
     <div className="space-y-6 max-w-4xl px-5 py-1">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
+      <div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 ">
           <CardTitle className="text-3xl">Organization Profile</CardTitle>
         </CardHeader>
         <CardContent>
@@ -143,7 +82,7 @@ export default function OrganizationDetails({
             </div>
           </div>
         </CardContent>
-      </Card>
+      </div>
 
       {organization.bankDetails && (
         <Card>
@@ -204,7 +143,7 @@ export default function OrganizationDetails({
                   <span className="font-medium">{file?.name || file.type}</span>
                   <Button asChild variant="ghost" size="sm">
                     <Link
-                      href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${file.id}`}
+                      href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.id}`}
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download
@@ -217,21 +156,19 @@ export default function OrganizationDetails({
         </Card>
       )}
 
-      {contacts && contacts.length > 0 && (
+      {users && users.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2">
-            <CardTitle className="text-xl">Contact Persons</CardTitle>
+            <CardTitle className="text-xl">User Persons</CardTitle>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => toggleSection("contacts")}
+              onClick={() => toggleSection("users")}
             >
-              {expandedSection === "contacts" ? <ChevronUp /> : <ChevronDown />}
+              {expandedSection === "users" ? <ChevronUp /> : <ChevronDown />}
             </Button>
           </CardHeader>
-          <CardContent
-            className={expandedSection === "contacts" ? "" : "hidden"}
-          >
+          <CardContent className={expandedSection === "users" ? "" : "hidden"}>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -242,26 +179,24 @@ export default function OrganizationDetails({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contacts.map((contact) => (
-                  <TableRow key={contact.id}>
-                    <TableCell className="font-medium">
-                      {contact.name}
-                    </TableCell>
-                    <TableCell>{contact.address}</TableCell>
+                {users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell>{user.address}</TableCell>
                     <TableCell>
                       <a
-                        href={`mailto:${contact.email}`}
+                        href={`mailto:${user.email}`}
                         className="text-primary hover:underline"
                       >
-                        {contact.email}
+                        {user.email}
                       </a>
                     </TableCell>
                     <TableCell>
                       <a
-                        href={`tel:${contact.phone}`}
+                        href={`tel:${user.phone}`}
                         className="text-primary hover:underline"
                       >
-                        {contact.phone}
+                        {user.phone}
                       </a>
                     </TableCell>
                   </TableRow>

@@ -23,7 +23,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import FileUpload from "@/components/file-uploader";
-import { useSession } from "next-auth/react";
+
+import { useTeamStore } from "@/store/store";
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="text-lg font-semibold mb-2">{children}</h2>;
@@ -58,10 +59,12 @@ export default function SignDonationAgreement({
   data: DonationAgreement;
 }) {
   const { toast } = useToast();
-  const { data: session } = useSession();
+  const { teamId } = useTeamStore();
+
   const fundsTransferred = data.fundingRequest?.status === "FundsTransferred";
-  const signaturesCompleted = data.contactSignatures.every(
-    (signature) => signature.signedAt
+
+  const signaturesCompleted = data.userSignatures.every(
+    (signature) => signature?.signedAt
   );
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -72,7 +75,7 @@ export default function SignDonationAgreement({
 
   async function onSubmit(values: z.infer<typeof schema>) {
     try {
-      const response = await fetch(`/api/donation-agreement/${data.id}`, {
+      const response = await fetch(`/api/donation-agreements/${data.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -102,7 +105,7 @@ export default function SignDonationAgreement({
   async function changeFundingRequestStatus() {
     try {
       const response = await fetch(
-        `/api/funding-request/${data.fundingRequestId}/status`,
+        `/api/funding-requests/${data.fundingRequestId}/status`,
         {
           method: "PUT",
           headers: {
@@ -111,6 +114,7 @@ export default function SignDonationAgreement({
           body: JSON.stringify({
             status: "FundsTransferred",
             donationId: data.id,
+            teamId,
           }),
         }
       );
@@ -207,7 +211,7 @@ export default function SignDonationAgreement({
                 {data.file?.url && (
                   <Button asChild variant="outline" size="sm">
                     <Link
-                      href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/file/${data.file?.id}`}
+                      href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${data.file?.id}`}
                     >
                       <Download className="mr-2 h-4 w-4" />
                       Download Agreement
@@ -219,16 +223,16 @@ export default function SignDonationAgreement({
               <Separator />
 
               <div>
-                <SectionTitle>Contact Signatures</SectionTitle>
-                {data.contactSignatures.length > 0 ? (
+                <SectionTitle>User Signatures</SectionTitle>
+                {data.userSignatures.length > 0 ? (
                   <div className="space-y-2">
-                    {data.contactSignatures.map((signature, index) => (
+                    {data.userSignatures.map((signature, index) => (
                       <div
                         key={index}
                         className="flex items-center justify-between bg-muted p-2 rounded-md"
                       >
                         <span className="text-sm font-medium">
-                          {signature.contactPerson?.email}
+                          {signature.user?.email}
                         </span>
                         {signature.signedAt && (
                           <div className="flex items-center text-green-600">
@@ -275,7 +279,8 @@ export default function SignDonationAgreement({
             Submit Signed Agreement
           </Button>
         )}
-        {signaturesCompleted && !session?.user?.organizationId && (
+
+        {signaturesCompleted && teamId && (
           <Button
             type="button"
             className="m-2"

@@ -12,13 +12,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
-import FormInputControl from "./helper/form-input-control";
-import { Form } from "./ui/form";
-import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "./ui/button";
+
 import { useSession } from "next-auth/react";
 
 import DetailItem from "./helper/detail-item";
@@ -26,56 +21,39 @@ import LongText from "./helper/long-text";
 import SectionBlock from "./helper/section-block";
 import formatCurrency from "./helper/format-currency";
 import ButtonControl from "./helper/button-control";
-import { FileTypes, FundingRequest, FundingStatus } from "./../types";
+import { FundingRequest, FundingStatus, Roles } from "./../types";
 import { StatusBadge } from "./helper/status-badge";
 
-import FundingRequestPostData from "./forms/funding-request-post-data";
 import { FileList } from "./helper/file-list";
+import FundingRequestDetailsForm from "./forms/funding-request-detail-form";
 
-const amountOfferSchema = z.object({
-  amountAgreed: z.coerce.number(),
-});
-
-// Function to check if a specific file type is missing
+import { useTeamStore } from "@/store/store";
 
 export default function FundingRequestDetail({
   data,
-  showAgreeAmountForm = true,
 }: {
   data: FundingRequest;
-  showAgreeAmountForm?: boolean;
 }) {
   const { toast } = useToast();
   const { data: session } = useSession();
-
-  const isOrganization = session?.user?.contactType === "Organization";
-  const isFundsTransferred = data.status === "FundsTransferred";
+  const { teamId } = useTeamStore();
+  const isTeam =
+    session?.user?.roles?.includes(Roles.Team) ||
+    session?.user?.roles?.includes(Roles.Admin);
   const showRejectButton =
-    !isOrganization && !["FundsTransferred", "Rejected"].includes(data.status);
+    isTeam && !["FundsTransferred", "Rejected"].includes(data.status);
 
-  const isFileTypeMissing = (fileType: string) =>
-    isOrganization &&
-    isFundsTransferred &&
-    data.files.filter((file) => file.type === fileType).length === 0;
-
-  const showStatementForm = isFileTypeMissing("STATEMENT");
-  const showReportForm = isFileTypeMissing("REPORT");
-  const showReceiptForm = isFileTypeMissing("DONATION_RECEIPT");
-
-  const form = useForm<z.infer<typeof amountOfferSchema>>({
-    resolver: zodResolver(amountOfferSchema),
-    defaultValues: {
-      amountAgreed: data.amountAgreed || 0,
-    },
-  });
   async function rejectRequest() {
     try {
-      const response = await fetch(`/api/funding-request/${data.id}/status`, {
+      const response = await fetch(`/api/funding-requests/${data.id}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "Rejected" as FundingStatus }),
+        body: JSON.stringify({
+          status: "Rejected" as FundingStatus,
+          teamId,
+        }),
       });
       await response.json();
       data.status = "Rejected" as FundingStatus;
@@ -92,32 +70,7 @@ export default function FundingRequestDetail({
       });
     }
   }
-
-  async function onSubmit(values: z.infer<typeof amountOfferSchema>) {
-    try {
-      const response = await fetch(`/api/funding-request/${data.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...values, status: "UnderReview" }),
-      });
-      await response.json();
-      data.amountAgreed = values.amountAgreed;
-      data.status = "UnderReview" as FundingStatus;
-      toast({
-        title: "Success",
-        description: "Request Submitted Successfully. ",
-        variant: "default",
-      });
-    } catch (e) {
-      toast({
-        title: "Error",
-        description: JSON.stringify(e),
-      });
-    }
-  }
-
+  if (!data) return null;
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -241,65 +194,7 @@ export default function FundingRequestDetail({
               </CardContent>
             </Card>
           </div>
-
-          {session?.user?.teamId &&
-            showAgreeAmountForm &&
-            !["FundsTransferred", "Rejected"].includes(data.status) && (
-              <div className="flex flex-col items-end gap-2">
-                <h3 className="text-lg font-semibold">Offer Amount</h3>
-                <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="space-y-8"
-                  >
-                    <div className="flex items-center  align-middle ">
-                      <FormInputControl
-                        name="amountAgreed"
-                        placeholder="Amount to Offer"
-                        type="number"
-                        form={form}
-                      />
-                      <Button
-                        type="submit"
-                        className="btn btn-primary align-bottom ml-2"
-                        disabled={form.formState.isSubmitting}
-                      >
-                        Save
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </div>
-
-              // add button for uploading the donation agreement.
-            )}
-
-          {showReceiptForm && (
-            <FundingRequestPostData
-              title="Upload Receipt"
-              description="Upload the receipt after the funds have been transferred in 7 days."
-              type={"DONATION_RECEIPT" as FileTypes}
-              fundingRequestId={data.id}
-            />
-          )}
-
-          {showReportForm && (
-            <FundingRequestPostData
-              title="Upload Report"
-              description="Upload the funding request report after the 8 weeks period."
-              type={"REPORT" as FileTypes}
-              fundingRequestId={data.id}
-            />
-          )}
-
-          {showStatementForm && (
-            <FundingRequestPostData
-              title="Upload Budget statement"
-              description="Upload the budget statement after the 8 weeks period."
-              type={"STATEMENT" as FileTypes}
-              fundingRequestId={data.id}
-            />
-          )}
+          <FundingRequestDetailsForm data={data} isTeam={isTeam} />
         </div>
 
         {/* Right Column */}

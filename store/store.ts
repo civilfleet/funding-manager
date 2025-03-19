@@ -1,76 +1,35 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type StoreState = {
-  isTeamMember: boolean;
-  setIsTeamMember: (value: boolean) => void;
+type TeamState = {
+  teamId: string;
+  setTeamId: (value: string) => void;
 };
 
-export const useUserStore = create<StoreState>((set) => ({
-  isTeamMember: false, // Default value
-  setIsTeamMember: (value) => set({ isTeamMember: value }),
-}));
-
-type Team = {
-  id: string;
-  name: string;
-  roleName?: string | undefined;
-  email: string;
-};
-
-type TeamStore = {
-  team: Team;
-  setTeam: (user: Team) => void;
-  updateTeam: (updates: Partial<Team>) => void;
-  reset: () => void;
-};
-
-export const useTeamStore = create<TeamStore>()(
+export const useTeamStore = create<TeamState>()(
   persist(
     (set) => ({
-      team: {
-        id: "",
-        name: "",
-        roleName: "",
-        email: "",
-      },
-      setTeam: (team) => set({ team }),
-      updateTeam: (updates) =>
-        set((state) => ({ team: { ...state.team, ...updates } })),
-      reset: () => set({ team: { id: "", name: "", roleName: "", email: "" } }),
+      teamId: "",
+      setTeamId: (teamId) => set({ teamId }),
     }),
-    { name: "team-store" }
+    {
+      name: "team-store", // Local storage key
+    }
   )
 );
-
-type Organization = {
-  id: string;
-  name: string;
-  email: string;
+type OrganizationState = {
+  organizationId: string;
+  setOrganizationId: (value: string) => void;
 };
 
-type OrganizationStore = {
-  organization: Organization;
-  setOrganization: (user: Organization) => void;
-  updateOrganization: (updates: Partial<Organization>) => void;
-  reset: () => void;
-};
-
-export const useOrganizationStore = create<OrganizationStore>()(
+export const useOrganizationStore = create<OrganizationState>()(
   persist(
     (set) => ({
-      organization: {
-        id: "",
-        name: "",
-        email: "",
-      },
-      setOrganization: (organization) => set({ organization }),
-      updateOrganization: (updates) =>
-        set((state) => ({
-          organization: { ...state.organization, ...updates },
-        })),
-      reset: () => set({ organization: { id: "", name: "", email: "" } }),
+      organizationId: "",
+      setOrganizationId: (organizationId) => set({ organizationId }),
     }),
-    { name: "org-store" }
+    {
+      name: "organization-store", // Local storage key
+    }
   )
 );

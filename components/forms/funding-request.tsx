@@ -34,7 +34,11 @@ type FundingRequest = {
   files: [];
 };
 
-export default function FundingRequest() {
+export default function FundingRequest({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
   const { toast } = useToast();
   const { data: session } = useSession();
 
@@ -70,11 +74,11 @@ export default function FundingRequest() {
 
   async function onSubmit(values: z.infer<typeof createFundingRequestSchema>) {
     try {
-      const response = await fetch("/api/funding-request", {
+      const response = await fetch("/api/funding-requests", {
         method: "POST",
         body: JSON.stringify({
           ...values,
-          organizationId: session?.user.organizationId,
+          organizationId,
           submittedBy: session?.user.email,
         }),
       });

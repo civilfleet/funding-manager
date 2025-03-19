@@ -25,7 +25,6 @@ const getFiles = async (
   },
   searchQuery: string
 ) => {
-  console.log("search query ", searchQuery);
   const whereConditions = [];
 
   if (teamId) {
@@ -35,8 +34,6 @@ const getFiles = async (
         select: { id: true },
       })
       .then((orgs) => orgs.map((org) => org.id));
-
-    console.log(organizationIds, "organizationIds");
 
     if (organizationIds.length > 0) {
       whereConditions.push({
@@ -49,7 +46,7 @@ const getFiles = async (
     });
   }
 
-  const contactPersons = await prisma.file.findMany({
+  const users = await prisma.file.findMany({
     where: {
       ...whereConditions[0],
     },
@@ -75,7 +72,7 @@ const getFiles = async (
     },
   });
 
-  return contactPersons;
+  return users;
 };
 
 export { getFileById, getFiles };

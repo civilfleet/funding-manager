@@ -20,36 +20,27 @@ export default auth(async (req) => {
         : "authjs.session-token",
   });
   if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const roles = (token?.roles as string[]) || [];
+
+  const isOrganization = roles.includes("Organization");
+  const isTeam = roles.includes("Team");
+  const isAdmin = roles.includes("Admin");
+
+  if (!isTeam && nextUrl.pathname.startsWith("/teams")) {
     return NextResponse.redirect(new URL("/", nextUrl));
   }
 
-  const isAdmin = token.contactType === "Admin";
-  const isOrganization = token.contactType === "Organization";
-  const isTeam = token.contactType === "Team";
-
-  if (isOrganization && nextUrl.pathname.startsWith("/team")) {
-    return NextResponse.redirect(new URL("/organization", nextUrl));
+  if (!isOrganization && nextUrl.pathname.startsWith("/organizations")) {
+    return NextResponse.redirect(new URL("/", nextUrl));
   }
-
-  if (isTeam && nextUrl.pathname.startsWith("/organization")) {
-    return NextResponse.redirect(new URL("/team", nextUrl));
+  if (!isAdmin && nextUrl.pathname.startsWith("/admin")) {
+    return NextResponse.redirect(new URL("/", nextUrl));
   }
-
-  if (
-    isAdmin &&
-    (nextUrl.pathname.startsWith("/team") ||
-      nextUrl.pathname.startsWith("/organization"))
-  ) {
-    return NextResponse.redirect(new URL("/admin", nextUrl));
-  }
-
-  if (isAdmin && nextUrl.pathname.startsWith("/organization")) {
-    return NextResponse.redirect(new URL("/admin", nextUrl));
-  }
-
   return NextResponse.next();
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/team/:path*", "/organization/:path*"],
+  matcher: ["/admin/:path*", "/teams/:path*", "/organizations/:path*"],
 };

@@ -1,7 +1,19 @@
 import { GalleryVerticalEnd } from "lucide-react";
 import { LoginForm } from "@/components/login-form";
+import { auth } from "@/auth";
+import { Roles } from "@/types";
+import { redirect } from "next/navigation";
 
 export default async function LoginPage() {
+  const session = await auth();
+  if (session?.user.roles?.includes(Roles.Admin)) {
+    return redirect("/admin");
+  } else if (session?.user.roles?.includes(Roles.Organization)) {
+    return redirect("/organizations");
+  } else if (session?.user.roles?.includes(Roles.Team)) {
+    return redirect("/teams");
+  }
+
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">

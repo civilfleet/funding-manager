@@ -21,6 +21,7 @@ import FundingRequestDetail from "../funding-request-details";
 import { Badge } from "../ui/badge";
 import { Label } from "@radix-ui/react-label";
 import { Textarea } from "../ui/textarea";
+import { useTeamStore } from "@/store/store";
 
 type DonationAgreement = {
   email: string;
@@ -29,9 +30,10 @@ type DonationAgreement = {
 
 export default function DonationAgreement() {
   const { toast } = useToast();
+  const { teamId } = useTeamStore();
   const [fundingRequestDetail, setFundingRequestDetail] =
     useState<FundingRequest>();
-  const [contactPersons, setContactPersons] = useState<string[]>([]);
+  const [users, setUsers] = useState<string[]>([]);
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -45,18 +47,18 @@ export default function DonationAgreement() {
     name: "fundingRequestId",
   });
 
-  const contactPerson = useWatch({
+  const user = useWatch({
     control: form.control,
-    name: "contactPerson",
+    name: "user",
   });
 
   useEffect(() => {
-    if (contactPerson) {
-      if (!contactPersons.includes(contactPerson)) {
-        setContactPersons([...contactPersons, contactPerson]);
+    if (user) {
+      if (!users.includes(user)) {
+        setUsers([...users, user]);
       }
     }
-  }, [contactPerson, contactPersons]);
+  }, [user, users]);
 
   // Fetch funding request details when fundingRequestId changes
   useEffect(() => {
@@ -65,7 +67,7 @@ export default function DonationAgreement() {
     const fetchFundingRequestDetail = async () => {
       try {
         const response = await fetch(
-          `/api/funding-request/${fundingRequestId}`
+          `/api/funding-requests/${fundingRequestId}`
         );
         const { data } = await response.json();
         setFundingRequestDetail(data);
@@ -79,14 +81,15 @@ export default function DonationAgreement() {
 
   async function onSubmit(values: z.infer<typeof schema>) {
     try {
-      const response = await fetch("/api/donation-agreement", {
+      const response = await fetch("/api/donation-agreements", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...values,
-          contactPersons: [...contactPersons],
+          users: [...users],
+          teamId,
         }),
       });
       if (!response.ok) {
@@ -137,7 +140,7 @@ export default function DonationAgreement() {
                 render={({ field }) => (
                   <DataSelectBox
                     targetKey="id"
-                    url="/api/funding-request/?status=UnderReview"
+                    url={`/api/funding-requests/?teamId=${teamId}&status=UnderReview`}
                     attribute="name"
                     label="Select Funding Request"
                     value={field.value}
@@ -147,13 +150,13 @@ export default function DonationAgreement() {
               />
               <Controller
                 control={form.control}
-                name="contactPerson"
+                name="user"
                 render={({ field }) => (
                   <DataSelectBox
                     targetKey="email"
-                    url="/api/contact-person"
+                    url={`/api/users/?teamId=${teamId}&fundingRequestId=${fundingRequestId}`}
                     attribute="email"
-                    label="Select Contact person"
+                    label="Select User person"
                     value={field.value || ""}
                     onChange={field.onChange}
                   />
@@ -179,10 +182,10 @@ export default function DonationAgreement() {
                 onFileUpload={(url) => form.setValue("file", url)}
               />
             </div>
-            {contactPersons.length > 0 && (
+            {users.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold">Contact Persons</h3>
-                {contactPersons.map((person, index) => (
+                <h3 className="text-lg font-semibold">User Persons</h3>
+                {users.map((person, index) => (
                   <Badge key={index} className="m-1 p-1">
                     {person}
                   </Badge>
@@ -199,10 +202,7 @@ export default function DonationAgreement() {
         {/* Show funding request details if available */}
         <div className="mt-8">
           {fundingRequestDetail && (
-            <FundingRequestDetail
-              data={fundingRequestDetail}
-              showAgreeAmountForm={false}
-            />
+            <FundingRequestDetail data={fundingRequestDetail} />
           )}
         </div>
       </CardContent>

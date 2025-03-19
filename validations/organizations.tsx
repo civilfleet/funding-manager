@@ -41,7 +41,7 @@ const bankDetailsSchema = z
 
 export default bankDetailsSchema;
 
-const createContactSchema = z.object({
+const createUserSchema = z.object({
   name: z
     .string()
     .min(2, {
@@ -167,7 +167,7 @@ const createOrganizationSchema = z.object({
     .or(z.literal("")),
   logo: z.string().optional().or(z.literal("")),
   bankDetails: bankDetailsSchema,
-  contactPerson: createContactSchema,
+  user: createUserSchema,
 });
 
 const updateOrganizationSchema = z.object({
@@ -209,12 +209,12 @@ const updateOrganizationSchema = z.object({
     message: "Tax ID must be at least 2 characters.",
   }),
   bankDetails: bankDetailsSchema,
-  contactPerson: createContactSchema,
+  user: createUserSchema,
 });
 
 export {
   createOrganizationSchema,
-  createContactSchema,
+  createUserSchema,
   bankDetailsSchema,
   updateOrganizationSchema,
 };
