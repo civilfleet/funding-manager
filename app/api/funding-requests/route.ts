@@ -5,14 +5,11 @@ import {
 } from "@/services/funding-request";
 import { createFundingRequestSchema } from "@/validations/funding-request";
 import { z } from "zod";
-import { auth } from "@/auth";
 import { handlePrismaError } from "@/lib/utils";
 import { sendEmail } from "@/lib/nodemailer";
 
 export async function GET(req: Request) {
   try {
-    const session = await auth();
-
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
     const status = searchParams.getAll("status") || [];
