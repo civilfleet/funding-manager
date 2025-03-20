@@ -95,7 +95,7 @@ export default function OrganizationData({
 
       {showEditButton && (
         <div className="flex flex-row items-center justify-between mt-4">
-          <h2 className="text-lg font-semibold">Allow edit organization</h2>
+          <h2 className="text-lg font-semibold">Lock Edit</h2>
           <Switch
             checked={isFilledByOrg}
             onCheckedChange={allowEditOrganization}
