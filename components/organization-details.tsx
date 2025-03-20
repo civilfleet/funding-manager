@@ -488,7 +488,7 @@ export default function OrganizationDetails({
                               size="sm"
                               onClick={() =>
                                 router.push(
-                                  `/team/funding-request/${request.id}`
+                                  `/team/funding-requests/${request.id}`
                                 )
                               }
                             >
