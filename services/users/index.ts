@@ -1,7 +1,4 @@
-import team from "@/app/admin/page";
-import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { handlePrismaError } from "@/lib/utils";
 import { Roles } from "@/types";
 import { omit } from "lodash";
 
@@ -84,7 +81,7 @@ const getUserCurrent = async (userId: string) => {
         select: {
           id: true,
           name: true,
-          roleName: true,
+
           email: true,
         },
       },
@@ -122,21 +119,25 @@ const getUsers = async (
   }
 
   if (teamId) {
-    const organizationIds = await prisma.organization
-      .findMany({
-        where: { teamId },
-        select: { id: true },
-      })
-      .then((orgs) => orgs.map((org) => org.id));
+    // GET teams and organizations user.
+    // const organizationIds = await prisma.organization
+    //   .findMany({
+    //     where: { teamId },
+    //     select: { id: true },
+    //   })
+    //   .then((orgs) => orgs.map((org) => org.id));
 
-    whereConditions.push({
-      OR: [
-        ...(organizationIds.length > 0
-          ? [{ organizations: { some: { id: { in: organizationIds } } } }]
-          : []),
-        { teams: { some: { id: teamId } } },
-      ],
-    });
+    // whereConditions.push({
+    //   OR: [
+    //     ...(organizationIds.length > 0
+    //       ? [{ organizations: { some: { id: { in: organizationIds } } } }]
+    //       : []),
+    //     { teams: { some: { id: teamId } } },
+    //   ],
+    // });
+
+    // GET only teams user.
+    whereConditions.push({ teams: { some: { id: teamId } } });
   } else if (organizationId) {
     whereConditions.push({ organizations: { some: { id: organizationId } } });
   }
@@ -181,21 +182,19 @@ const getUsersForDonation = async ({
 };
 
 const createUser = async (user: User) => {
-  const session = await auth();
-
+  const teamId = user.teamId;
+  const organizationId = user.organizationId;
   const newUser = await prisma.user.create({
     data: {
       ...omit(user, ["organizationId", "teamId"]),
-      // Conditionally connect organization only if ID exists
-      ...(session?.user.organizationId && {
+      ...(organizationId && {
         organizations: {
-          connect: [{ id: session.user.organizationId }],
+          connect: [{ id: organizationId }],
         },
       }),
-      // Conditionally connect team only if ID exists
-      ...(session?.user.teamId && {
+      ...(teamId && {
         teams: {
-          connect: { id: session.user.teamId },
+          connect: { id: teamId },
         },
       }),
       fundingRequests: undefined,

@@ -41,26 +41,24 @@ export function TeamSwitcher({
 
   const { teamId, setTeamId } = useTeamStore();
   const { organizationId, setOrganizationId } = useOrganizationStore();
-
   const [activeItem, setActiveItem] = useState<SwitcherItem | null>(null);
 
   useEffect(() => {
     if (teamId) {
-      const selectedTeam = teams.find((item) => item.id === teamId) || teams[0];
-      setActiveItem(selectedTeam);
+      const selectedTeam = teams.find((item) => item.id === teamId);
+      setActiveItem(selectedTeam || null);
     } else if (organizationId) {
-      const selectedOrg =
-        organizations.find((item) => item.id === organizationId) ||
-        organizations[0];
-      setActiveItem(selectedOrg);
+      const selectedOrg = organizations.find(
+        (item) => item.id === organizationId
+      );
+      setActiveItem(selectedOrg || null);
     } else {
-      setActiveItem(teams[0] || organizations[0] || null);
+      setActiveItem(null);
     }
   }, [teamId, organizationId, teams, organizations]);
 
   const setItem = (item: SwitcherItem, subUrl: string, id: string) => {
-    setActiveItem(item); // Only setting once here
-
+    setActiveItem(item);
     if (subUrl === "teams") {
       setTeamId(id);
       setOrganizationId("");

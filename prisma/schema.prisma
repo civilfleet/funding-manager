@@ -83,7 +83,7 @@ model FundingRequest {
 model File {
   id          String    @id @default(uuid()) @unique 
   name        String?      @db.VarChar(255)  
-  url         String
+  url         String      @unique
   type        String      @db.VarChar(255)                             
   createdBy   User @relation("CreatedByRelation", fields: [createdById], references: [id])
   createdById String                       
@@ -110,7 +110,6 @@ enum Roles {
 model Teams {
   id          String           @id @default(uuid()) @unique
   name        String           @unique 
-  roleName    String           @db.VarChar(255) @unique
   email       String           @db.VarChar(255) @unique
   phone       String?          @db.VarChar(255)             
   address     String?          @db.VarChar(255)

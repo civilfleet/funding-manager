@@ -18,6 +18,7 @@ type DataSelectBoxProps = {
   attribute: string;
   value: string | null;
   targetKey: string;
+  disabled: boolean;
   onChange: (value: string) => void;
 };
 
@@ -33,6 +34,7 @@ export function DataSelectBox({
   attribute,
   value,
   targetKey,
+  disabled,
   onChange,
 }: DataSelectBoxProps) {
   const fetcher = async (url: string) => {
@@ -51,7 +53,7 @@ export function DataSelectBox({
     });
   }
   return (
-    <Select onValueChange={onChange} value={value ?? ""}>
+    <Select onValueChange={onChange} value={value ?? ""} disabled={disabled}>
       <SelectTrigger className="w-[250px]">
         <SelectValue placeholder={isLoading ? "Loading..." : label} />
       </SelectTrigger>

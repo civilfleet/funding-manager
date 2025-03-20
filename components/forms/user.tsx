@@ -3,23 +3,36 @@
 import { z } from "zod";
 import { toast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
-import { Form } from "@/components/ui/form";
-
-import ButtonControl from "../helper/button-control";
 import { zodResolver } from "@hookform/resolvers/zod";
-import FormInputControl from "../helper/form-input-control";
 import { createUserSchema } from "@/validations/organizations";
+import { useOrganizationStore, useTeamStore } from "@/store/store";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
+
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-} from "../ui/card";
-import { useTeamStore } from "@/store/store";
+  CardFooter,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 export default function UserForm() {
   const { teamId } = useTeamStore();
+  const { organizationId } = useOrganizationStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.infer<typeof createUserSchema>>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
@@ -34,101 +47,201 @@ export default function UserForm() {
   });
 
   async function onSubmit(values: z.infer<typeof createUserSchema>) {
+    setIsSubmitting(true);
+
     try {
       const response = await fetch(`/api/users`, {
         method: "POST",
-        body: JSON.stringify({ ...values, teamId }),
+        body: JSON.stringify({ ...values, teamId, organizationId }),
         headers: {
           "Content-Type": "application/json",
         },
       });
+
       if (!response.ok) {
-        toast({
-          title: "Error",
-          description: response?.statusText,
-          variant: "destructive",
-        });
-        return;
+        throw new Error(response.statusText || "Failed to create user");
       }
+
       await response.json();
 
       toast({
-        title: "Success",
-        description: "User created successfully",
+        title: "User created",
+        description: `${values.name} has been successfully added to your team.`,
         variant: "default",
       });
-    } catch (e) {
+
+      form.reset();
+    } catch (error) {
       toast({
-        title: "Error",
-        description: (e as Error).message,
+        title: "Error creating user",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }
+
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Create User</CardTitle>
+    <Card className="w-full shadow-sm">
+      <CardHeader className="border-b pb-3">
+        <CardTitle className="text-xl font-semibold">Add Team Member</CardTitle>
         <CardDescription>
-          Fill in the form below to create a new user person
+          Enter the details of the new team member you want to add to your
+          organization
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-2 gap-4 ">
-              <FormInputControl
-                form={form}
-                name="name"
-                placeholder="User person name"
-                type="text"
-              />
-              <FormInputControl
-                form={form}
-                name="email"
-                placeholder="User person email"
-                type="text"
-              />
-              <FormInputControl
-                form={form}
-                name="phone"
-                placeholder="User person phone"
-                type="text"
-              />
-              <FormInputControl
-                form={form}
-                name="address"
-                placeholder="User person address"
-                type="text"
-              />
-              <FormInputControl
-                form={form}
-                name="postalCode"
-                placeholder="User person postal code"
-                type="text"
-              />
-              <FormInputControl
-                form={form}
-                name="city"
-                placeholder="User person city"
-                type="text"
-              />
-              <FormInputControl
-                form={form}
-                name="country"
-                placeholder="User person country"
-                type="text"
-              />
-            </div>
 
-            <ButtonControl
-              type={"submit"}
-              disabled={form.formState.isSubmitting}
-              loading={form.formState.isSubmitting}
-            />
-          </form>
-        </Form>
-      </CardContent>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="pt-6">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                  Personal Information
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="john.doe@example.com"
+                            type="email"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="+1 (555) 123-4567" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                  Address Information
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2">
+                        <FormLabel>Street Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123 Main Street" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input placeholder="San Francisco" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="postalCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Postal Code</FormLabel>
+                        <FormControl>
+                          <Input placeholder="94103" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Country</FormLabel>
+                        <FormControl>
+                          <Input placeholder="United States" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+
+          <CardFooter className="flex justify-end border-t pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="mr-2"
+              disabled={isSubmitting}
+              onClick={() => form.reset()}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create User"
+              )}
+            </Button>
+          </CardFooter>
+        </form>
+      </Form>
     </Card>
   );
 }

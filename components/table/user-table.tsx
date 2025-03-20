@@ -21,7 +21,6 @@ export default function UserTable() {
   const { toast } = useToast();
   const { organizationId } = useOrganizationStore();
   const { teamId } = useTeamStore();
-
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
     defaultValues: { query: "" },

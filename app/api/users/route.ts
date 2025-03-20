@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createUserSchema } from "@/validations/organizations";
-import { auth } from "@/auth";
 import { createUser, getUsers, getUsersForDonation } from "@/services/users";
 import { handlePrismaError } from "@/lib/utils";
 import { sendEmail } from "@/lib/nodemailer";
@@ -46,23 +45,24 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
     const user = await req.json();
+    const teamId = user.teamId;
+    const organizationId = user.organizationId;
     const validatedData = createUserSchema.parse({
       ...user,
     });
 
-    if (!user.teamId) {
+    if (!teamId) {
       await createUser({
         ...validatedData,
-        organizationId: session?.user?.organizationId,
-        roles: [Roles.Organization],
+        organizationId: organizationId,
+        roles: user.roles || [Roles.Organization],
       });
     } else {
       await createUser({
         ...validatedData,
-        teamId: session?.user?.teamId,
-        roles: [Roles.Team],
+        teamId: teamId,
+        roles: user.roles || [Roles.Team],
       });
     }
 

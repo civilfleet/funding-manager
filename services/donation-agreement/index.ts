@@ -223,9 +223,13 @@ const getDonationAgreementById = async (id: string) => {
 
 const updateDonationAgreement = async (
   id: string,
-  updatedDonationAgreement: DonationAgreement
+  updatedDonationAgreement: DonationAgreement,
+  userId: string
 ) => {
-  const session = await auth();
+  console.log("updatedDonationAgreement", {
+    donationAgreementId: id,
+    userId: userId,
+  });
   const donation = await prisma.donationAgreement.findUnique({
     where: {
       id,
@@ -239,21 +243,23 @@ const updateDonationAgreement = async (
       },
     },
   });
+
+  console.log("donation", donation);
   await prisma.$transaction(async (prisma) => {
     await prisma.file.update({
       where: {
-        id: donation?.fileId,
+        id: donation?.file.id as string,
       },
       data: {
         url: updatedDonationAgreement.file as string,
-        updatedBy: { connect: { id: session?.user?.userId as string } },
+        updatedBy: { connect: { id: userId } },
       },
     });
     await prisma.donationAgreementSignature.update({
       where: {
         donationAgreementId_userId: {
           donationAgreementId: id,
-          userId: session?.user?.userId as string,
+          userId: userId,
         },
       },
       data: {

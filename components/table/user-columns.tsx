@@ -26,7 +26,7 @@ export const columns: ColumnDef<User>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            <a href={`user/${request.id}`}>
+            <a href={`users/${request.id}`}>
               <DropdownMenuItem>View</DropdownMenuItem>
             </a>
             <DropdownMenuSeparator />

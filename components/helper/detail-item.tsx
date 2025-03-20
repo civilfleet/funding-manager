@@ -5,13 +5,15 @@ function DetailItem({
   label,
   value,
   type = "text",
+  className = "",
 }: {
   label: string;
   value: string | number | undefined;
+  className?: string;
   type?: "text" | "email" | "phone" | "link";
 }) {
   return (
-    <div>
+    <div className={`${className}`}>
       <dt className="text-sm font-medium text-gray-500 mb-1">{label}</dt>
       <dd className="text-gray-800">
         {type === "link" ? (

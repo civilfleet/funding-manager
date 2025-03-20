@@ -64,9 +64,8 @@ export default function OrganizationForm({ data }: { data: Organization }) {
   const { toast } = useToast();
   const { teamId } = useTeamStore();
   const [isUpdate] = useState(data?.email ? true : false);
-  const [isFilledByOrg, setFillByOrg] = useState(data?.isFilledByOrg);
   const schema = isUpdate ? updateOrganizationSchema : createOrganizationSchema;
-
+  console.log(data);
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -78,10 +77,14 @@ export default function OrganizationForm({ data }: { data: Organization }) {
       country: data?.country || "",
       postalCode: data?.postalCode || "",
       website: data?.website || "",
-      taxExemptionCertificate: data?.taxExemptionCertificate || "",
-      articlesOfAssociation: data?.articlesOfAssociation || "",
+      taxExemptionCertificate:
+        data?.Files?.find((file) => file.type === "TAX_EXEMPTION_CERTIFICATE")
+          ?.url || "",
+      articlesOfAssociation:
+        data?.Files?.find((file) => file.type === "ARTICLES_OF_ASSOCIATION")
+          ?.url || "",
       taxID: data?.taxID || "",
-      logo: data?.logo || "",
+      logo: data?.Files?.find((file) => file.type === "LOGO")?.url || "",
       bankDetails: {
         bankName: data?.bankDetails?.bankName || "",
         accountHolder: data?.bankDetails?.accountHolder || "",
@@ -114,7 +117,6 @@ export default function OrganizationForm({ data }: { data: Organization }) {
           method: "PUT",
           body: JSON.stringify({ ...values, isFilledByOrg: true }),
         });
-        setFillByOrg(true);
       }
       // check for error
       if (!response.ok) {
@@ -151,7 +153,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <fieldset disabled={form.formState.isSubmitting || isFilledByOrg}>
+        <fieldset disabled={form.formState.isSubmitting}>
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}

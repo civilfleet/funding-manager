@@ -10,16 +10,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = auth();
-
   if (!session) return redirect("/login");
 
   return (
     <div>
-      {" "}
       <SidebarProvider>
         <AppSidebar navItems={"team"} />
         <SidebarInset>
-          <div className="">{children}</div>
+          <div>{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </div>

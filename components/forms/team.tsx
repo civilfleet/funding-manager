@@ -31,7 +31,6 @@ export default function TeamForm() {
       country: "",
       postalCode: "",
       website: "",
-      roleName: "",
       bankDetails: {
         bankName: "",
         accountHolder: "",
@@ -130,11 +129,6 @@ export default function TeamForm() {
                 form={form}
                 name="website"
                 placeholder="Website"
-              />
-              <FormInputControl
-                form={form}
-                name="roleName"
-                placeholder="Role Name: Starts with 'fm-'"
               />
             </div>
 

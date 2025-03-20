@@ -1,17 +1,13 @@
 import prisma from "@/lib/prisma";
 import { Roles } from "@/types";
 import { CreateTeamInput } from "@/validations/team";
-import _ from "lodash";
+import _, { update } from "lodash";
 
 const getTeamsByRoles = async (roles: string[] | null) => {
   return await prisma.teams.findMany({
-    where: {
-      roleName: { in: roles || [] },
-    },
     select: {
       id: true,
       name: true,
-      roleName: true,
       email: true,
     },
   });
@@ -36,8 +32,8 @@ const createTeam = async (teamData: CreateTeamInput) => {
     select: {
       id: true,
       name: true,
-      roleName: true,
       email: true,
+
       users: {
         select: {
           id: true,
@@ -63,11 +59,21 @@ const createTeam = async (teamData: CreateTeamInput) => {
         id: user.id,
       },
     };
+    await prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        roles: {
+          set: Array.from(new Set([...user.roles, Roles.Team])),
+        },
+      },
+    });
   } else {
     query.data.users = {
       create: {
         ...TeamUser,
-        roles: [Roles.Admin] as Roles[],
+        roles: [Roles.Team] as Roles[],
       },
     };
   }

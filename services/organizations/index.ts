@@ -121,7 +121,10 @@ const createOrUpdateOrganization = async (formData: Organization) => {
           where: { email: formData.email },
           data: organizationData,
         });
-
+    console.log(
+      "organization tax examption certificate",
+      formData.taxExemptionCertificate
+    );
     // Batch file creation
     if (user?.id) {
       const files = [
@@ -140,8 +143,14 @@ const createOrUpdateOrganization = async (formData: Organization) => {
         files.map(
           ({ type, url }) =>
             url &&
-            prisma.file.create({
-              data: {
+            prisma.file.upsert({
+              where: { url },
+              update: {
+                type,
+                url,
+                updatedBy: { connect: { id: user.id } },
+              },
+              create: {
                 type,
                 url,
                 createdBy: {
@@ -158,6 +167,35 @@ const createOrUpdateOrganization = async (formData: Organization) => {
     return { organization, user: orgUser, bankDetail };
   });
 };
+const updateOrganization = async (formData: Organization, id: string) => {
+  const updatedOrganization = await prisma.organization.update({
+    where: {
+      id,
+    },
+    data: {
+      name: formData.name,
+      email: formData.email,
+      address: formData.address,
+      postalCode: formData.postalCode,
+      city: formData.city,
+      country: formData.country,
+      phone: formData.phone,
+      website: formData.website,
+      taxID: formData.taxID,
+      isFilledByOrg: formData.isFilledByOrg,
+      bankDetails: {
+        update: {
+          accountHolder: formData.bankDetails?.accountHolder,
+          iban: formData.bankDetails?.iban,
+          bic: formData.bankDetails?.bic,
+          bankName: formData.bankDetails?.bankName,
+        },
+      },
+    },
+  });
+  return updatedOrganization;
+};
+
 const getOrganizationById = async (id: string) => {
   const organization = await prisma.organization.findUnique({
     where: {
@@ -263,5 +301,6 @@ export {
   createOrUpdateOrganization,
   getOrganizationByEmail,
   getOrganizations,
+  updateOrganization,
   getOrganizationById,
 };

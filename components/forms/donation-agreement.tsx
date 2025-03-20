@@ -1,47 +1,57 @@
 "use client";
+
+import { useState, useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { Form } from "@/components/ui/form";
-import { z } from "zod";
+import type { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createDonationAgreementSchema as schema } from "@/validations/donation-agreement";
-import { useToast } from "@/hooks/use-toast";
+import { Loader2, AlertCircle, CheckCircle2, X } from "lucide-react";
+
+import { Form } from "@/components/ui/form";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-} from "../ui/card";
-import ButtonControl from "../helper/button-control";
-import { useState, useEffect } from "react";
-import FileUpload from "../file-uploader";
-import { DataSelectBox } from "../helper/data-select-box";
-import { FundingRequest } from "@/types";
-import FundingRequestDetail from "../funding-request-details";
-import { Badge } from "../ui/badge";
-import { Label } from "@radix-ui/react-label";
-import { Textarea } from "../ui/textarea";
-import { useTeamStore } from "@/store/store";
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
-type DonationAgreement = {
-  email: string;
-  name: string;
-};
+import { createDonationAgreementSchema as schema } from "@/validations/donation-agreement";
+import { useToast } from "@/hooks/use-toast";
+import { useTeamStore } from "@/store/store";
+import { DataSelectBox } from "../helper/data-select-box";
+import FileUpload from "../file-uploader";
+import FundingRequestDetail from "../funding-request-details";
+import type { FundingRequest } from "@/types";
 
 export default function DonationAgreement() {
   const { toast } = useToast();
   const { teamId } = useTeamStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [fundingRequestDetail, setFundingRequestDetail] =
-    useState<FundingRequest>();
+    useState<FundingRequest | null>(null);
   const [users, setUsers] = useState<string[]>([]);
+
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
       fundingRequestId: "",
+      agreement: "",
+      file: "",
+      user: "",
     },
   });
 
-  // Watch changes to fundingRequestId
+  // Watch changes to form fields
   const fundingRequestId = useWatch({
     control: form.control,
     name: "fundingRequestId",
@@ -52,27 +62,54 @@ export default function DonationAgreement() {
     name: "user",
   });
 
+  // Add user to the list when selected
   useEffect(() => {
-    if (user) {
+    if (user && user.trim() !== "") {
       if (!users.includes(user)) {
         setUsers([...users, user]);
       }
     }
   }, [user, users]);
 
+  // Remove a user from the list
+  const removeUser = (userToRemove: string) => {
+    setUsers(users.filter((u) => u !== userToRemove));
+  };
+
   // Fetch funding request details when fundingRequestId changes
   useEffect(() => {
-    if (!fundingRequestId) return;
+    if (!fundingRequestId) {
+      setFundingRequestDetail(null);
+      return;
+    }
 
     const fetchFundingRequestDetail = async () => {
+      setIsLoading(true);
+      setError(null);
+
       try {
         const response = await fetch(
           `/api/funding-requests/${fundingRequestId}`
         );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch funding request: ${response.statusText}`
+          );
+        }
+
         const { data } = await response.json();
         setFundingRequestDetail(data);
       } catch (error) {
         console.error("Error fetching funding request detail:", error);
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load funding request details"
+        );
+        setFundingRequestDetail(null);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -80,6 +117,18 @@ export default function DonationAgreement() {
   }, [fundingRequestId]);
 
   async function onSubmit(values: z.infer<typeof schema>) {
+    if (users.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please select at least one user person",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
     try {
       const response = await fetch("/api/donation-agreements", {
         method: "POST",
@@ -92,120 +141,257 @@ export default function DonationAgreement() {
           teamId,
         }),
       });
+
       if (!response.ok) {
-        throw new Error("Failed to update donation agreement");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message ||
+            `Failed to create donation agreement: ${response.statusText}`
+        );
       }
 
       toast({
-        title: "Success",
-        description: "Donation Agreement information updated",
+        title: "Donation Agreement Created",
+        description: "The donation agreement has been successfully created",
         variant: "default",
       });
-    } catch (e) {
+
+      // Reset form and selected users
+      form.reset();
+      setUsers([]);
+      setFundingRequestDetail(null);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "An unexpected error occurred"
+      );
       toast({
         title: "Error",
-        description: (e as Error).message,
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to create donation agreement",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
+    <Card className="w-full shadow-sm">
+      <CardHeader className="border-b pb-4">
         <CardTitle>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                Donation Agreement
-              </h1>
-            </div>
-          </div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Donation Agreement
+          </h1>
         </CardTitle>
-        <CardDescription>Please upload information below</CardDescription>
+        <CardDescription>
+          Create a new donation agreement by selecting a funding request and
+          adding user persons
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-8"
-            id="organization-form"
-          >
-            <div className="grid grid-cols-1 gap-4">
-              {/* Controller to handle Select Box */}
+
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          id="donation-agreement-form"
+        >
+          <CardContent className="space-y-6 pt-6">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Funding Request Information
+              </h3>
 
               <Controller
                 control={form.control}
                 name="fundingRequestId"
-                render={({ field }) => (
-                  <DataSelectBox
-                    targetKey="id"
-                    url={`/api/funding-requests/?teamId=${teamId}&status=UnderReview`}
-                    attribute="name"
-                    label="Select Funding Request"
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
+                render={({ field, fieldState }) => (
+                  <div className="space-y-2">
+                    <DataSelectBox
+                      targetKey="id"
+                      url={`/api/funding-requests/?teamId=${teamId}&status=UnderReview`}
+                      attribute="name"
+                      label="Select Funding Request"
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={isLoading}
+                    />
+                    {fieldState.error && (
+                      <p className="text-sm text-destructive">
+                        {fieldState.error.message}
+                      </p>
+                    )}
+                  </div>
                 )}
               />
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                User Persons
+              </h3>
+
               <Controller
                 control={form.control}
                 name="user"
-                render={({ field }) => (
-                  <DataSelectBox
-                    targetKey="email"
-                    url={`/api/users/?teamId=${teamId}&fundingRequestId=${fundingRequestId}`}
-                    attribute="email"
-                    label="Select User person"
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                  />
+                render={({ field, fieldState }) => (
+                  <div className="space-y-2">
+                    <DataSelectBox
+                      targetKey="email"
+                      url={`/api/users/?teamId=${teamId}${
+                        fundingRequestId
+                          ? `&fundingRequestId=${fundingRequestId}`
+                          : ""
+                      }`}
+                      attribute="email"
+                      label="Select User Person"
+                      value={field.value || ""}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        // Clear the select after selection
+                        setTimeout(() => field.onChange(""), 100);
+                      }}
+                      disabled={!fundingRequestId}
+                    />
+                    {!fundingRequestId && (
+                      <p className="text-sm text-muted-foreground">
+                        Please select a funding request first
+                      </p>
+                    )}
+                    {fieldState.error && (
+                      <p className="text-sm text-destructive">
+                        {fieldState.error.message}
+                      </p>
+                    )}
+                  </div>
                 )}
               />
 
-              <Label className="text-sm text-gray-500">
-                Donation Agreement Details *
-              </Label>
-              <Textarea
-                {...form.register("agreement")}
-                name="agreement"
-                placeholder="Agreement details..."
-              />
-
-              <Label className="text-sm text-gray-500">
-                Upload Donation Agreement
-              </Label>
-              <FileUpload
-                placeholder="Donation Agreement"
-                name="file"
-                data={""}
-                onFileUpload={(url) => form.setValue("file", url)}
-              />
+              {users.length > 0 && (
+                <div className="rounded-md border p-4">
+                  <h4 className="text-sm font-medium mb-2">
+                    Selected User Persons
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {users.map((person, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="py-1 px-2"
+                      >
+                        {person}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 ml-1 p-0"
+                          onClick={() => removeUser(person)}
+                        >
+                          <X className="h-3 w-3" />
+                          <span className="sr-only">Remove</span>
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            {users.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold">User Persons</h3>
-                {users.map((person, index) => (
-                  <Badge key={index} className="m-1 p-1">
-                    {person}
-                  </Badge>
-                ))}
+
+            <Separator />
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Agreement Details
+              </h3>
+
+              <div className="space-y-2">
+                <Label htmlFor="agreement">Agreement Text *</Label>
+                <Textarea
+                  id="agreement"
+                  {...form.register("agreement")}
+                  placeholder="Enter the details of the donation agreement..."
+                  className="min-h-[120px] resize-y"
+                />
+                {form.formState.errors.agreement && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.agreement.message}
+                  </p>
+                )}
               </div>
-            )}
-            <ButtonControl
-              className="w-24"
+
+              <div className="space-y-2">
+                <Label htmlFor="file">Upload Donation Agreement Document</Label>
+                <FileUpload
+                  placeholder="Drag and drop or click to upload"
+                  name="file"
+                  data={""}
+                  onFileUpload={(url) => form.setValue("file", url)}
+                />
+                {form.formState.errors.file && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.file.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+
+          <CardFooter className="flex justify-end gap-2 border-t pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                form.reset();
+                setUsers([]);
+                setFundingRequestDetail(null);
+                setError(null);
+              }}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+
+            <Button
               type="submit"
-              disabled={form.formState.isSubmitting}
-            />
-          </form>
-        </Form>
-        {/* Show funding request details if available */}
-        <div className="mt-8">
-          {fundingRequestDetail && (
-            <FundingRequestDetail data={fundingRequestDetail} />
-          )}
+              disabled={isSubmitting || users.length === 0}
+              className="min-w-[120px]"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Create Agreement
+                </>
+              )}
+            </Button>
+          </CardFooter>
+        </form>
+      </Form>
+      {isLoading && (
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-20 w-full" />
         </div>
-      </CardContent>
+      )}
+
+      {fundingRequestDetail && !isLoading && (
+        <div className="p-4 bg-muted/30">
+          <FundingRequestDetail data={fundingRequestDetail} />
+        </div>
+      )}
     </Card>
   );
 }

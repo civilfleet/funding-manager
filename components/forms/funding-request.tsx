@@ -1,38 +1,47 @@
 "use client";
-import { z } from "zod";
+
+import { useState } from "react";
+import type { z } from "zod";
 import { useForm, useFieldArray } from "react-hook-form";
-import { Form, FormControl, FormItem, FormLabel } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFundingRequestSchema } from "@/validations/funding-request";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { useSession } from "next-auth/react";
+import {
+  Loader2,
+  FileText,
+  Plus,
+  Trash2,
+  AlertCircle,
+  Calendar,
+  Euro,
+} from "lucide-react";
+
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-} from "../ui/card";
-import ButtonControl from "../helper/button-control";
-import FormInputControl from "../helper/form-input-control";
-import { useSession } from "next-auth/react";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import FileUpload from "../file-uploader";
+  CardFooter,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
-type FundingRequest = {
-  name: string;
-  status: string;
-  purpose: string;
-  description: string;
-  sustainability: string;
-  amountRequested: string;
-  refinancingConcept: string;
-  expectedCompletionDate: string;
-  createdAt: string;
-  updatedAt: string;
-  files: [];
-};
+import { createFundingRequestSchema } from "@/validations/funding-request";
+import { useToast } from "@/hooks/use-toast";
+import FileUpload from "../file-uploader";
 
 export default function FundingRequest({
   organizationId,
@@ -41,6 +50,8 @@ export default function FundingRequest({
 }) {
   const { toast } = useToast();
   const { data: session } = useSession();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof createFundingRequestSchema>>({
     resolver: zodResolver(createFundingRequestSchema),
@@ -61,6 +72,7 @@ export default function FundingRequest({
       ],
     },
   });
+
   const {
     fields: files,
     append,
@@ -70,184 +82,388 @@ export default function FundingRequest({
     name: "files",
   });
 
-  const { setValue } = form;
-
   async function onSubmit(values: z.infer<typeof createFundingRequestSchema>) {
+    if (!session?.user?.email) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to submit a funding request",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
     try {
       const response = await fetch("/api/funding-requests", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           ...values,
           organizationId,
-          submittedBy: session?.user.email,
+          submittedBy: session.user.email,
         }),
       });
 
-      // check for error
-      if (response.status == 400) {
-        toast({
-          title: "Error",
-          description: response.statusText,
-          variant: "destructive",
-        });
-        return;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message ||
+            `Error: ${response.status} ${response.statusText}`
+        );
       }
 
       await response.json();
+
       toast({
-        title: "Success",
-        description: "Request Submitted Successfully. ",
+        title: "Request Submitted",
+        description:
+          "Your funding request has been successfully submitted for review.",
         variant: "default",
       });
+
       form.reset();
-    } catch (e) {
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "An unexpected error occurred"
+      );
       toast({
-        title: "Error",
-        description: JSON.stringify(e),
+        title: "Submission Failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to submit funding request",
+        variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }
+
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Funding Requests.</CardTitle>
+    <Card className="w-full shadow-sm">
+      <CardHeader className="border-b pb-4">
+        <CardTitle className="text-2xl font-semibold">
+          Funding Request
+        </CardTitle>
         <CardDescription>
-          Please provide the following information to request funding.
+          Complete the form below to submit a new funding request for your
+          organization
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <FormInputControl
-                  name="name"
-                  type="text"
-                  form={form}
-                  placeholder="Name"
-                />
-              </FormControl>
-            </FormItem>
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  id="description"
-                  {...form.register("description")}
-                  placeholder="Description"
-                />
-              </FormControl>
-            </FormItem>
 
-            {form.formState.errors.description && (
-              <p className="text-red-500 text-xs">
-                {form.formState.errors.description.message}
-              </p>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="space-y-6 pt-6">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
 
-            <FormItem>
-              <FormLabel>Purpose</FormLabel>
-              <FormControl>
-                <Textarea
-                  id="purpose"
-                  {...form.register("purpose")}
-                  placeholder="Purpose"
-                />
-              </FormControl>
-            </FormItem>
-            {form.formState.errors.purpose && (
-              <p className="text-red-500 text-xs">
-                {form.formState.errors.purpose.message}
-              </p>
-            )}
-            <FormItem>
-              <FormLabel>Refinancing Concept</FormLabel>
-              <FormControl>
-                <Textarea
-                  id="refinancingConcept"
-                  {...form.register("refinancingConcept")}
-                  placeholder="Refinancing Concept"
-                />
-              </FormControl>
-            </FormItem>
-            {form.formState.errors.refinancingConcept && (
-              <p className="text-red-500 text-xs">
-                {form.formState.errors.refinancingConcept.message}
-              </p>
-            )}
-            <FormItem>
-              <FormLabel>Sustainability</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...form.register("sustainability")}
-                  placeholder="Sustainability"
-                  id="sustainability"
-                />
-              </FormControl>
-            </FormItem>
-            {form.formState.errors.sustainability && (
-              <p className="text-red-500 text-xs">
-                {form.formState.errors.sustainability.message}
-              </p>
-            )}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Basic Information
+              </h3>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormInputControl
-                name="expectedCompletionDate"
-                placeholder="Expected Completion Date"
-                type="datetime-local"
-                label="Expected Completion Date"
-                form={form}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter the name of your project"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Provide a clear, concise name for your funding request
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <FormInputControl
-                name="amountRequested"
-                placeholder="Amount Requested"
-                type="number"
-                label="Amount Request:"
-                form={form}
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="amountRequested"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Amount Requested</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Euro className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="number"
+                            placeholder="0.00"
+                            className="pl-8"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="expectedCompletionDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Expected Completion Date</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Calendar className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="datetime-local"
+                            className="pl-8"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Project Details
+              </h3>
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Provide a detailed description of your project"
+                        className="min-h-[100px] resize-y"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Explain what your project is about and why it matters
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="purpose"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project Purpose</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Describe the purpose and goals of your project"
+                        className="min-h-[100px] resize-y"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Clearly state the objectives and intended outcomes
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
 
-            {files.map((field, index) => (
-              <div key={field.id} className="flex gap-2">
-                <Input
-                  {...form.register(`files.${index}.name`)}
-                  placeholder={`File Name`}
-                  className="border p-2 rounded w-full"
-                />
-                <FileUpload
-                  placeholder="Logo of your Organization"
-                  name={`file ${index + 1}`}
-                  onFileUpload={(url) => setValue(`files.${index}.url`, url)}
-                />
+            <Separator />
 
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Remove
-                </button>
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Financial Planning
+              </h3>
+
+              <FormField
+                control={form.control}
+                name="refinancingConcept"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Refinancing Concept</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Explain your refinancing strategy"
+                        className="min-h-[100px] resize-y"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Detail how the project will be financially sustainable
+                      after initial funding
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="sustainability"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sustainability Plan</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Describe how your project will be sustainable in the long term"
+                        className="min-h-[100px] resize-y"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Outline the long-term viability and impact of your project
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Supporting Documents
+                </h3>
+                <Badge variant="outline" className="text-xs">
+                  {files.length} {files.length === 1 ? "file" : "files"}
+                </Badge>
               </div>
-            ))}
 
-            <Button type="button" onClick={() => append({ url: "", name: "" })}>
-              Add New File
+              <div className="space-y-4">
+                {files.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-end sm:space-x-2"
+                  >
+                    <FormField
+                      control={form.control}
+                      name={`files.${index}.name`}
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel
+                            className={index !== 0 ? "sr-only" : undefined}
+                          >
+                            File Name
+                          </FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <FileText className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="Document name"
+                                className="pl-8"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`files.${index}.url`}
+                      render={({}) => (
+                        <FormItem className="flex-1">
+                          <FormLabel
+                            className={index !== 0 ? "sr-only" : undefined}
+                          >
+                            File Upload
+                          </FormLabel>
+                          <FormControl>
+                            <FileUpload
+                              placeholder="Upload document"
+                              name={`file-${index}`}
+                              data=""
+                              onFileUpload={(url) =>
+                                form.setValue(`files.${index}.url`, url)
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => remove(index)}
+                      className="mt-2 sm:mt-0"
+                      disabled={files.length <= 1}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Remove file</span>
+                    </Button>
+                  </div>
+                ))}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ name: "", url: "" })}
+                  className="mt-2"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Document
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+
+          <CardFooter className="flex justify-end gap-2 border-t pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => form.reset()}
+              disabled={isSubmitting}
+            >
+              Cancel
             </Button>
 
-            {/* <Textarea name="files" placeholder="Files" /> */}
-            <div className="grid grid-cols-2 gap-4"></div>
-            <ButtonControl
-              className="w-24"
+            <Button
               type="submit"
-              loading={form.formState.isSubmitting}
-              label="Save"
-              variant={"default"}
-            />
-          </form>
-        </Form>
-      </CardContent>
+              disabled={isSubmitting}
+              className="min-w-[120px]"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Request"
+              )}
+            </Button>
+          </CardFooter>
+        </form>
+      </Form>
     </Card>
   );
 }
