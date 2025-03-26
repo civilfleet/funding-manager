@@ -8,6 +8,7 @@ import { createUserSchema } from "@/validations/organizations";
 import { useOrganizationStore, useTeamStore } from "@/store/store";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useRouter } from 'next/navigation'
 
 import {
   Form,
@@ -33,6 +34,7 @@ export default function UserForm() {
   const { teamId } = useTeamStore();
   const { organizationId } = useOrganizationStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter()
   const form = useForm<z.infer<typeof createUserSchema>>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
@@ -71,6 +73,7 @@ export default function UserForm() {
       });
 
       form.reset();
+      router.push(`teams/${teamId}/users`);
     } catch (error) {
       toast({
         title: "Error creating user",
