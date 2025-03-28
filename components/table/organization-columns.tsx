@@ -11,6 +11,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
+import { Badge } from "../ui/badge";
 
 export type OrganizationColumns = {
   id: string;
@@ -23,6 +24,7 @@ export type OrganizationColumns = {
   country?: string;
   website?: string;
   taxID?: string;
+  isFilledByOrg: boolean;
   user?: {
     email: string;
   };
@@ -34,29 +36,6 @@ export type OrganizationColumns = {
 };
 
 export const columns: ColumnDef<OrganizationColumns>[] = [
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const organization = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem>
-              <a href={`organizations/${organization.id}`}>View</a>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
   {
     accessorKey: "name",
     header: () => <div className="text-left w-24">Name</div>,
@@ -90,7 +69,20 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
       );
     },
   },
-
+  {
+    accessorKey: "isFilledByOrg",
+    header: () => <div className="text-left w-24">Registration Type</div>,
+    cell: ({ row }) => {
+      const isFilledByOrg = row.getValue("isFilledByOrg");
+      return (
+        <div className="text-left">
+          <Badge variant={isFilledByOrg ? "default" : "secondary"}>
+            {isFilledByOrg ? "Self-Registered" : "Admin-Registered"}
+          </Badge>
+        </div>
+      );
+    },
+  },
   {
     accessorKey: "country",
     header: () => <div className="text-left w-24">Country</div>,
@@ -126,7 +118,6 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
       );
     },
   },
-
   {
     accessorKey: "bankDetails.bankName",
     header: () => <div className="text-left w-24">Bank Name</div>,
@@ -146,6 +137,30 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
         <div className="text-left font-medium">
           {new Date(row.getValue("createdAt")).toLocaleDateString() || "N/A"}
         </div>
+      );
+    },
+  },
+
+  {
+    id: "actions",
+    cell: ({ row }) => {
+      const organization = row.original;
+
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem>
+              <a href={`organizations/${organization.id}`}>View</a>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     },
   },
