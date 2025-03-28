@@ -1,4 +1,23 @@
-export default async function TeamPage() {
+import {auth} from "auth";
+import {Roles} from "@/types";
+import {getAdminUser, getUserCurrent} from "@/services/users";
+import {redirect} from "next/navigation";
+
+export default async function TeamsPage() {
+  let data;
+  const session = await auth();
+  if (session?.user?.roles?.includes(Roles.Admin)) {
+    data = await getAdminUser(session?.user?.userId as string);
+  } else {
+    data = await getUserCurrent(session?.user?.userId as string);
+  }
+
+  const {teams = []} = data || {};
+
+  if (teams?.length > 0) {
+    return redirect(`/teams/${teams?.[0]?.id}`);
+  }
+
   return (
     <div className="p-4 w-full">
       <div className="flex justify-between">
