@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
+import { NextRequest } from "next/server";
+
+type RouteContext = {
+  params: {
+    teamId: string;
+  };
+};
 
 export async function GET(
-  request: Request,
-  context: { params: { teamId: string } }
+    request: Request,
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
-  const { teamId } = await context.params;
+  const { teamId } = await params;
   
   try {
     const team = await prisma.teams.findUnique({
