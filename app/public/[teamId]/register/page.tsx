@@ -284,7 +284,7 @@ export default function RegisterPage() {
                     label="Submit Registration Request"
                   />
                   <Link
-                    href="/login"
+                    href="/"
                     className="text-sm text-muted-foreground hover:text-primary"
                   >
                     Already have an account? Login
