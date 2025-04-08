@@ -23,10 +23,18 @@ export function handlePrismaError(error: unknown): Error {
   } else if (error instanceof Prisma.PrismaClientValidationError) {
     console.error("Validation Error:", error.message);
     return new Error("Invalid input data format.");
+  } else if (error instanceof Error) {
+    // Handle regular Error objects
+    console.error("Error:", error.message);
+    return error;
+  } else if (typeof error === 'string') {
+    // Handle string errors
+    console.error("Error:", error);
+    return new Error(error);
   }
 
   console.error("Unexpected Error:", error);
-  return Error("Operation failed! Please try again later.");
+  return new Error("Operation failed! Please try again later.");
 }
 
 export function cleanFileName(fileName: string): string {

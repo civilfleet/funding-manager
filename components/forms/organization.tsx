@@ -120,9 +120,10 @@ export default function OrganizationForm({ data }: { data: Organization }) {
       }
       // check for error
       if (!response.ok) {
+        const errorData = await response.json();
         toast({
           title: "Error",
-          description: response?.statusText,
+          description: errorData.error || response.statusText,
           variant: "destructive",
         });
         return;
