@@ -67,13 +67,8 @@ export default function OrganizationForm({ data }: { data: Organization }) {
   const schema = isUpdate ? updateOrganizationSchema : createOrganizationSchema;
 
   // Helper function to check if a field is filled
-  const isFieldFilled = (fieldName: string, value: any) => {
-    if (isUpdate) {
-      // For update form, all fields are mandatory
-      return value && value.trim().length > 0;
-    }
-    // For create form, only email is mandatory
-    return fieldName === 'email' && value && value.trim().length > 0;
+  const isFieldFilled = (value: any) => {
+    return value && value.trim().length > 0;
   };
 
   const form = useForm<z.infer<typeof schema>>({
@@ -176,51 +171,51 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   form={form}
                   name="name"
                   placeholder="Organization name"
-                  isFilled={isFieldFilled("name", data?.name)}
+                  isFilled={isFieldFilled(data?.name)}
                 />
                 <FormInputControl
                   form={form}
                   disabled={data?.email ? true : false}
                   name="email"
                   placeholder="Email address"
-                  isFilled={isFieldFilled("email", data?.email)}
+                  isFilled={isFieldFilled(data?.email)}
                 />
                 <FormInputControl
                   form={form}
                   name="phone"
                   placeholder="Phone number"
-                  isFilled={isFieldFilled("phone", data?.phone)}
+                  isFilled={isFieldFilled(data?.phone)}
                 />
                 <FormInputControl
                   form={form}
                   name="address"
                   placeholder="Street address"
-                  isFilled={isFieldFilled("address", data?.address)}
+                  isFilled={isFieldFilled(data?.address)}
                 />
 
                 <FormInputControl 
                   form={form} 
                   name="city" 
                   placeholder="City"
-                  isFilled={isFieldFilled("city", data?.city)}
+                  isFilled={isFieldFilled(data?.city)}
                 />
                 <FormInputControl
                   form={form}
                   name="country"
                   placeholder="Country"
-                  isFilled={isFieldFilled("country", data?.country)}
+                  isFilled={isFieldFilled(data?.country)}
                 />
                 <FormInputControl
                   form={form}
                   name="postalCode"
                   placeholder="Postal code"
-                  isFilled={isFieldFilled("postalCode", data?.postalCode)}
+                  isFilled={isFieldFilled(data?.postalCode)}
                 />
                 <FormInputControl
                   form={form}
                   name="website"
                   placeholder="Website"
-                  isFilled={isFieldFilled("website", data?.website)}
+                  isFilled={isFieldFilled(data?.website)}
                 />
               </div>
               <div>
@@ -236,7 +231,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   form={form}
                   name="taxID"
                   placeholder="Tax ID"
-                  isFilled={isFieldFilled("taxID", data?.taxID)}
+                  isFilled={isFieldFilled(data?.taxID)}
                 />
 
                 <FileUpload
@@ -269,25 +264,25 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   form={form}
                   name="bankDetails.bankName"
                   placeholder="Bank name"
-                  isFilled={isFieldFilled("bankDetails.bankName", data?.bankDetails?.bankName)}
+                  isFilled={isFieldFilled(data?.bankDetails?.bankName)}
                 />
                 <FormInputControl
                   form={form}
                   name="bankDetails.accountHolder"
                   placeholder="Account holder"
-                  isFilled={isFieldFilled("bankDetails.accountHolder", data?.bankDetails?.accountHolder)}
+                  isFilled={isFieldFilled(data?.bankDetails?.accountHolder)}
                 />
                 <FormInputControl
                   form={form}
                   name="bankDetails.iban"
                   placeholder="IBAN"
-                  isFilled={isFieldFilled("bankDetails.iban", data?.bankDetails?.iban)}
+                  isFilled={isFieldFilled(data?.bankDetails?.iban)}
                 />
                 <FormInputControl
                   form={form}
                   name="bankDetails.bic"
                   placeholder="SWIFT"
-                  isFilled={isFieldFilled("bankDetails.bic", data?.bankDetails?.bic)}
+                  isFilled={isFieldFilled(data?.bankDetails?.bic)}
                 />
               </div>
               <h4 className="text-lg font-semibold">
@@ -299,26 +294,26 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   form={form}
                   name="user.name"
                   placeholder="User person name"
-                  isFilled={isFieldFilled("user.name", data?.user?.name)}
+                  isFilled={isFieldFilled(data?.user?.name)}
                 />
                 <FormInputControl
                   form={form}
                   disabled={data?.email ? true : false}
                   name="user.email"
                   placeholder="User person email"
-                  isFilled={isFieldFilled("user.email", data?.user?.email)}
+                  isFilled={isFieldFilled(data?.user?.email)}
                 />
                 <FormInputControl
                   form={form}
                   name="user.phone"
                   placeholder="User person phone"
-                  isFilled={isFieldFilled("user.phone", data?.user?.phone)}
+                  isFilled={isFieldFilled(data?.user?.phone)}
                 />
                 <FormInputControl
                   form={form}
                   name="user.address"
                   placeholder="User person address"
-                  isFilled={isFieldFilled("user.address", data?.user?.address)}
+                  isFilled={isFieldFilled(data?.user?.address)}
                 />
               </div>
 
