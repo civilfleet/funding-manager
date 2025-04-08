@@ -95,50 +95,54 @@ export const columns: ColumnDef<User>[] = [
     id: "actions",
     cell: ({ row }) => {
       const user = row.original;
-      const { toast } = useToast();
-      const router = useRouter();
-      const { organizationId } = useOrganizationStore();
-      const { teamId } = useTeamStore();
-
-      const handleDelete = async () => {
-        try {
-          const response = await fetch(`/api/users/${user.id}`, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ organizationId, teamId }),
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to delete user');
-          }
-
-          toast({
-            title: "Success",
-            description: "User has been removed successfully",
-          });
-          
-          router.refresh();
-        } catch (error) {
-          toast({
-            title: "Error",
-            description: "Failed to remove user",
-            variant: "destructive",
-          });
-        }
-      };
-
-      return (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleDelete}
-          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      );
+      return <UserActions user={user} />;
     },
   },
 ];
+
+const UserActions = ({ user }: { user: User }) => {
+  const { toast } = useToast();
+  const router = useRouter();
+  const { organizationId } = useOrganizationStore();
+  const { teamId } = useTeamStore();
+
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ organizationId, teamId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
+
+      toast({
+        title: "Success",
+        description: "User has been removed successfully",
+      });
+      
+      router.refresh();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove user",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={handleDelete}
+      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+    >
+      <Trash2 className="h-4 w-4" />
+    </Button>
+  );
+};
