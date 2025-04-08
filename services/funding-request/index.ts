@@ -88,15 +88,17 @@ const createFundingRequest = async (data: FundingRequestData) => {
   });
 
   // Save files associated with the funding request
-  const files = data?.files?.map((file) => ({
-    name: file.name,
-    url: file.url,
-    fundingRequestId: fundingRequest.id,
-    organizationId: data.organizationId,
-    createdById: user.id,
-    updatedById: user.id,
-    type: "FundingRequest",
-  }));
+  const files = data?.files
+    ?.filter((file) => file?.name && file?.url)
+    ?.map((file) => ({
+      name: file.name,
+      url: file.url,
+      fundingRequestId: fundingRequest.id,
+      organizationId: data.organizationId,
+      createdById: user.id,
+      updatedById: user.id,
+      type: "FundingRequest",
+    }));
 
   if (files && files.length > 0) {
     await prisma.file.createMany({
@@ -107,11 +109,7 @@ const createFundingRequest = async (data: FundingRequestData) => {
   return { fundingRequest, user, organization };
 };
 
-const updateFundingRequest = async (
-  id: string,
-  data: Partial<FundingRequestData>,
-  teamId: string
-) => {
+const updateFundingRequest = async (id: string, data: Partial<FundingRequestData>, teamId: string) => {
   try {
     const team = await prisma.teams.findFirst({
       where: {
@@ -171,11 +169,7 @@ const updateFundingRequest = async (
   }
 };
 
-const updateFundingRequestStatus = async (
-  id: string,
-  status: FundingStatus,
-  donationId?: string | null
-) => {
+const updateFundingRequestStatus = async (id: string, status: FundingStatus, donationId?: string | null) => {
   const selectedFields = {
     id: true,
     name: true,
@@ -217,14 +211,12 @@ const updateFundingRequestStatus = async (
   };
   try {
     if (donationId) {
-      const signedAgreements = await prisma.donationAgreementSignature.findMany(
-        {
-          where: {
-            donationAgreementId: donationId as string,
-            signedAt: null,
-          },
-        }
-      );
+      const signedAgreements = await prisma.donationAgreementSignature.findMany({
+        where: {
+          donationAgreementId: donationId as string,
+          signedAt: null,
+        },
+      });
 
       if (!signedAgreements?.length) {
         return await prisma.fundingRequest.update({
@@ -249,12 +241,7 @@ const updateFundingRequestStatus = async (
   }
 };
 
-const uploadFundingRequestFile = async (
-  fundingRequestId: string,
-  file: string,
-  type: FileTypes,
-  userId: string
-) => {
+const uploadFundingRequestFile = async (fundingRequestId: string, file: string, type: FileTypes, userId: string) => {
   return await prisma.file.create({
     data: {
       url: file,
@@ -485,3 +472,4 @@ export {
   updateFundingRequestStatus,
   uploadFundingRequestFile,
 };
+
