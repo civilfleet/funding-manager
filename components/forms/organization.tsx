@@ -67,8 +67,8 @@ export default function OrganizationForm({ data }: { data: Organization }) {
   const schema = isUpdate ? updateOrganizationSchema : createOrganizationSchema;
 
   // Helper function to check if a field is filled
-  const isFieldFilled = (value: any) => {
-    return value && value.trim().length > 0;
+  const isFieldFilled = (value: string | undefined): boolean => {
+    return Boolean(value?.trim());
   };
 
   const form = useForm<z.infer<typeof schema>>({
