@@ -7,6 +7,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
+import { CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
 export default function FormInputControl({
   form,
   name,
@@ -14,6 +17,7 @@ export default function FormInputControl({
   placeholder,
   disabled = false,
   type,
+  isFilled = false,
 }: {
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   form: UseFormReturn | any | undefined;
@@ -22,6 +26,7 @@ export default function FormInputControl({
   placeholder: string;
   disabled?: boolean;
   type?: React.HTMLInputTypeAttribute | undefined;
+  isFilled?: boolean;
 }) {
   return (
     <FormField
@@ -31,12 +36,21 @@ export default function FormInputControl({
         <FormItem>
           {label && <FormLabel>{label}</FormLabel>}
           <FormControl>
-            <Input
-              disabled={disabled}
-              type={type}
-              placeholder={placeholder}
-              {...field}
-            />
+            <div className="relative">
+              <Input
+                disabled={disabled}
+                type={type}
+                placeholder={placeholder}
+                className={cn(
+                  isFilled && "bg-green-50 border-green-200",
+                  "pr-8"
+                )}
+                {...field}
+              />
+              {isFilled && (
+                <CheckCircle2 className="absolute right-2 top-2.5 h-4 w-4 text-green-500" />
+              )}
+            </div>
           </FormControl>
           <FormMessage />
         </FormItem>

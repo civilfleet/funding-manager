@@ -65,7 +65,17 @@ export default function OrganizationForm({ data }: { data: Organization }) {
   const { teamId } = useTeamStore();
   const [isUpdate] = useState(data?.email ? true : false);
   const schema = isUpdate ? updateOrganizationSchema : createOrganizationSchema;
-  console.log(data);
+
+  // Helper function to check if a field is filled
+  const isFieldFilled = (fieldName: string, value: any) => {
+    if (isUpdate) {
+      // For update form, all fields are mandatory
+      return value && value.trim().length > 0;
+    }
+    // For create form, only email is mandatory
+    return fieldName === 'email' && value && value.trim().length > 0;
+  };
+
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -166,39 +176,51 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   form={form}
                   name="name"
                   placeholder="Organization name"
+                  isFilled={isFieldFilled("name", data?.name)}
                 />
                 <FormInputControl
                   form={form}
                   disabled={data?.email ? true : false}
                   name="email"
                   placeholder="Email address"
+                  isFilled={isFieldFilled("email", data?.email)}
                 />
                 <FormInputControl
                   form={form}
                   name="phone"
                   placeholder="Phone number"
+                  isFilled={isFieldFilled("phone", data?.phone)}
                 />
                 <FormInputControl
                   form={form}
                   name="address"
                   placeholder="Street address"
+                  isFilled={isFieldFilled("address", data?.address)}
                 />
 
-                <FormInputControl form={form} name="city" placeholder="City" />
+                <FormInputControl 
+                  form={form} 
+                  name="city" 
+                  placeholder="City"
+                  isFilled={isFieldFilled("city", data?.city)}
+                />
                 <FormInputControl
                   form={form}
                   name="country"
                   placeholder="Country"
+                  isFilled={isFieldFilled("country", data?.country)}
                 />
                 <FormInputControl
                   form={form}
                   name="postalCode"
                   placeholder="Postal code"
+                  isFilled={isFieldFilled("postalCode", data?.postalCode)}
                 />
                 <FormInputControl
                   form={form}
                   name="website"
                   placeholder="Website"
+                  isFilled={isFieldFilled("website", data?.website)}
                 />
               </div>
               <div>
@@ -214,6 +236,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   form={form}
                   name="taxID"
                   placeholder="Tax ID"
+                  isFilled={isFieldFilled("taxID", data?.taxID)}
                 />
 
                 <FileUpload
@@ -246,21 +269,25 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   form={form}
                   name="bankDetails.bankName"
                   placeholder="Bank name"
+                  isFilled={isFieldFilled("bankDetails.bankName", data?.bankDetails?.bankName)}
                 />
                 <FormInputControl
                   form={form}
                   name="bankDetails.accountHolder"
                   placeholder="Account holder"
+                  isFilled={isFieldFilled("bankDetails.accountHolder", data?.bankDetails?.accountHolder)}
                 />
                 <FormInputControl
                   form={form}
                   name="bankDetails.iban"
                   placeholder="IBAN"
+                  isFilled={isFieldFilled("bankDetails.iban", data?.bankDetails?.iban)}
                 />
                 <FormInputControl
                   form={form}
                   name="bankDetails.bic"
                   placeholder="SWIFT"
+                  isFilled={isFieldFilled("bankDetails.bic", data?.bankDetails?.bic)}
                 />
               </div>
               <h4 className="text-lg font-semibold">
@@ -272,22 +299,26 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   form={form}
                   name="user.name"
                   placeholder="User person name"
+                  isFilled={isFieldFilled("user.name", data?.user?.name)}
                 />
                 <FormInputControl
                   form={form}
                   disabled={data?.email ? true : false}
                   name="user.email"
                   placeholder="User person email"
+                  isFilled={isFieldFilled("user.email", data?.user?.email)}
                 />
                 <FormInputControl
                   form={form}
                   name="user.phone"
                   placeholder="User person phone"
+                  isFilled={isFieldFilled("user.phone", data?.user?.phone)}
                 />
                 <FormInputControl
                   form={form}
                   name="user.address"
                   placeholder="User person address"
+                  isFilled={isFieldFilled("user.address", data?.user?.address)}
                 />
               </div>
 
