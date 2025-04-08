@@ -73,7 +73,7 @@ const createUserSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
-}).optional();
+});
 
 const createOrganizationSchema = z.object({
   name: z
