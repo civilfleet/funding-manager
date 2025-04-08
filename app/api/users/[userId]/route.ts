@@ -4,10 +4,11 @@ import { handlePrismaError } from "@/lib/utils";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const data = await getUserById(params.userId);
+    const { userId } = await params;
+    const data = await getUserById(userId);
     return NextResponse.json({ data }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
