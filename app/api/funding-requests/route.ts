@@ -7,6 +7,7 @@ import { createFundingRequestSchema } from "@/validations/funding-request";
 import { z } from "zod";
 import { handlePrismaError } from "@/lib/utils";
 import { sendEmail } from "@/lib/nodemailer";
+import { FundingStatus } from "@/types";
 
 export async function GET(req: Request) {
   try {
@@ -23,7 +24,7 @@ export async function GET(req: Request) {
     const data = await getFundingRequests(
       { teamId, orgId },
       searchQuery,
-      status
+      status as FundingStatus[]
     );
 
     return NextResponse.json(

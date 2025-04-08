@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     const organizationId = user.organizationId;
     const validatedData = createUserSchema.parse({
       ...user,
-    });
+    }) as { email: string; name: string } & typeof user;
 
     if (!teamId) {
       await createUser({
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     await sendEmail(
       {
         to: validatedData.email,
-        subject: "You’re In! Welcome to Partner App.",
+        subject: "You're In! Welcome to Partner App.",
         template: "welcome",
       },
       {

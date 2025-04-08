@@ -294,9 +294,9 @@ const getFundingRequests = async (
     orgId: string;
   },
   searchQuery: string,
-  status?: string[] | null
+  status?: FundingStatus[] | null
 ) => {
-  const where: { [key: string]: any } = {};
+  const where: Prisma.FundingRequestWhereInput = {};
   if (orgId) {
     where["organizationId"] = orgId;
   }
