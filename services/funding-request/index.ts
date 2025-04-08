@@ -59,10 +59,6 @@ const createFundingRequest = async (data: FundingRequestData) => {
     throw new Error("Organization not found.");
   }
 
-  if (!organization.isFilledByOrg) {
-    throw new Error("Please fill in the organization details first.");
-  }
-
   // Create the funding request
   const fundingRequest = await prisma.fundingRequest.create({
     data: {
