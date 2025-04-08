@@ -234,6 +234,39 @@ const getTeamsUsers = async (teamId: string) => {
 
   return users;
 };
+
+const deleteUser = async (userId: string, organizationId?: string, teamId?: string) => {
+  try {
+    if (organizationId) {
+      // Remove user from organization
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          organizations: {
+            disconnect: { id: organizationId }
+          }
+        }
+      });
+    }
+    
+    if (teamId) {
+      // Remove user from team
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          teams: {
+            disconnect: { id: teamId }
+          }
+        }
+      });
+    }
+
+    return true;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export {
   getUsers,
   getUserCurrent,
@@ -242,4 +275,5 @@ export {
   getTeamsUsers,
   getUsersForDonation,
   getAdminUser,
+  deleteUser,
 };

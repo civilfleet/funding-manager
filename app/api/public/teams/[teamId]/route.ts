@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
-import { NextRequest } from "next/server";
 
 type RouteContext = {
   params: {

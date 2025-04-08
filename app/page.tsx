@@ -3,15 +3,27 @@ import { LoginForm } from "@/components/login-form";
 import { auth } from "@/auth";
 import { Roles } from "@/types";
 import { redirect } from "next/navigation";
+import { getUserCurrent } from "@/services/users";
 
 export default async function LoginPage() {
   const session = await auth();
-  if (session?.user.roles?.includes(Roles.Admin)) {
-    return redirect("/admin");
-  } else if (session?.user.roles?.includes(Roles.Organization)) {
-    return redirect("/organizations");
-  } else if (session?.user.roles?.includes(Roles.Team)) {
-    return redirect("/teams");
+  
+  if (session?.user?.userId) {
+    if (session.user.roles?.includes(Roles.Admin)) {
+      return redirect("/admin");
+    } else if (session.user.roles?.includes(Roles.Organization)) {
+      const userData = await getUserCurrent(session.user.userId);
+      if (userData?.organizations && userData.organizations.length > 0) {
+        return redirect(`/organizations/${userData.organizations[0].id}`);
+      }
+      return redirect("/organizations");
+    } else if (session.user.roles?.includes(Roles.Team)) {
+      const userData = await getUserCurrent(session.user.userId);
+      if (userData?.teams && userData.teams.length > 0) {
+        return redirect(`/teams/${userData.teams[0].id}`);
+      }
+      return redirect("/teams");
+    }
   }
 
   return (

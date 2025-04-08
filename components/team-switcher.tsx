@@ -52,10 +52,17 @@ export function TeamSwitcher({
         (item) => item.id === organizationId
       );
       setActiveItem(selectedOrg || null);
+    } else if (organizations.length > 0) {
+      // If no organization is selected and there are organizations available,
+      // select the first one
+      const firstOrg = organizations[0];
+      setActiveItem(firstOrg);
+      setOrganizationId(firstOrg.id);
+      router.push(`/organizations/${firstOrg.id}/profile`);
     } else {
       setActiveItem(null);
     }
-  }, [teamId, organizationId, teams, organizations]);
+  }, [teamId, organizationId, teams, organizations, router, setOrganizationId]);
 
   const setItem = (item: SwitcherItem, subUrl: string, id: string) => {
     setActiveItem(item);
