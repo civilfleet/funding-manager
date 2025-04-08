@@ -1,16 +1,10 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import { useToast } from "@/hooks/use-toast";
-import { useOrganizationStore, useTeamStore } from "@/store/store";
-import { useRouter } from "next/navigation";
+
+import { useParams, useRouter } from "next/navigation";
 
 import { User } from "@/types";
 
@@ -19,7 +13,10 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: "name",
     header: () => <div className="text-left w-36">Name</div>,
     cell: ({ row }) => (
-      <div className="text-left cursor-pointer hover:text-primary" onClick={() => window.location.href = `users/${row.original.id}`}>
+      <div
+        className="text-left cursor-pointer hover:text-primary"
+        onClick={() => (window.location.href = `users/${row.original.id}`)}
+      >
         {row.original?.name || "N/A"}
       </div>
     ),
@@ -28,7 +25,10 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: "email",
     header: () => <div className="text-left w-36">Email</div>,
     cell: ({ row }) => (
-      <div className="text-left cursor-pointer hover:text-primary" onClick={() => window.location.href = `users/${row.original.id}`}>
+      <div
+        className="text-left cursor-pointer hover:text-primary"
+        onClick={() => (window.location.href = `users/${row.original.id}`)}
+      >
         {row.original?.email || "N/A"}
       </div>
     ),
@@ -37,7 +37,10 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: "phone",
     header: () => <div className="text-left w-36">Phone</div>,
     cell: ({ row }) => (
-      <div className="text-left cursor-pointer hover:text-primary" onClick={() => window.location.href = `users/${row.original.id}`}>
+      <div
+        className="text-left cursor-pointer hover:text-primary"
+        onClick={() => (window.location.href = `users/${row.original.id}`)}
+      >
         {row.original?.phone || "N/A"}
       </div>
     ),
@@ -46,7 +49,10 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: "city",
     header: () => <div className="text-left w-36">City</div>,
     cell: ({ row }) => (
-      <div className="text-left cursor-pointer hover:text-primary" onClick={() => window.location.href = `users/${row.original.id}`}>
+      <div
+        className="text-left cursor-pointer hover:text-primary"
+        onClick={() => (window.location.href = `users/${row.original.id}`)}
+      >
         {row.original?.city || "N/A"}
       </div>
     ),
@@ -55,7 +61,10 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: "country",
     header: () => <div className="text-left w-36">Country</div>,
     cell: ({ row }) => (
-      <div className="text-left cursor-pointer hover:text-primary" onClick={() => window.location.href = `users/${row.original.id}`}>
+      <div
+        className="text-left cursor-pointer hover:text-primary"
+        onClick={() => (window.location.href = `users/${row.original.id}`)}
+      >
         {row.original?.country || "N/A"}
       </div>
     ),
@@ -64,7 +73,10 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: "roles",
     header: () => <div className="text-left w-36">Roles</div>,
     cell: ({ row }) => (
-      <div className="text-left cursor-pointer hover:text-primary" onClick={() => window.location.href = `users/${row.original.id}`}>
+      <div
+        className="text-left cursor-pointer hover:text-primary"
+        onClick={() => (window.location.href = `users/${row.original.id}`)}
+      >
         {row.original?.roles || "N/A"}
       </div>
     ),
@@ -73,10 +85,11 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: "createdAt",
     header: () => <div className="text-left w-36">Created At</div>,
     cell: ({ row }) => (
-      <div className="text-left cursor-pointer hover:text-primary" onClick={() => window.location.href = `users/${row.original.id}`}>
-        {row.original?.createdAt
-          ? new Date(row.original.createdAt).toLocaleDateString()
-          : "N/A"}
+      <div
+        className="text-left cursor-pointer hover:text-primary"
+        onClick={() => (window.location.href = `users/${row.original.id}`)}
+      >
+        {row.original?.createdAt ? new Date(row.original.createdAt).toLocaleDateString() : "N/A"}
       </div>
     ),
   },
@@ -84,10 +97,11 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: "updatedAt",
     header: () => <div className="text-left w-36">Updated At</div>,
     cell: ({ row }) => (
-      <div className="text-left cursor-pointer hover:text-primary" onClick={() => window.location.href = `users/${row.original.id}`}>
-        {row.original?.updatedAt
-          ? new Date(row.original.updatedAt).toLocaleDateString()
-          : "N/A"}
+      <div
+        className="text-left cursor-pointer hover:text-primary"
+        onClick={() => (window.location.href = `users/${row.original.id}`)}
+      >
+        {row.original?.updatedAt ? new Date(row.original.updatedAt).toLocaleDateString() : "N/A"}
       </div>
     ),
   },
@@ -103,28 +117,30 @@ export const columns: ColumnDef<User>[] = [
 const UserActions = ({ user }: { user: User }) => {
   const { toast } = useToast();
   const router = useRouter();
-  const { organizationId } = useOrganizationStore();
-  const { teamId } = useTeamStore();
+  const params = useParams();
+
+  const teamId = params?.teamId ? params?.teamId : "";
+  const organizationId = params?.organizationId ? params.organizationId : "";
 
   const handleDelete = async () => {
     try {
       const response = await fetch(`/api/users/${user.id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ organizationId, teamId }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete user');
+        throw new Error("Failed to delete user");
       }
 
       toast({
         title: "Success",
         description: "User has been removed successfully",
       });
-      
+
       router.refresh();
     } catch (error) {
       toast({

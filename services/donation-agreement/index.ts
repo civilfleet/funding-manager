@@ -9,11 +9,7 @@ type DonationAgreement = {
   users: string[];
 };
 
-const createDonationAgreement = async (
-  donation: DonationAgreement,
-  createdByUserId: string,
-  teamId: string
-) => {
+const createDonationAgreement = async (donation: DonationAgreement, createdByUserId: string, teamId: string) => {
   const agreementData = await prisma.$transaction(async (prisma) => {
     const users = await prisma.user.findMany({
       where: {
@@ -116,10 +112,7 @@ const createDonationAgreement = async (
   };
 };
 
-const getDonationAgreements = async (
-  { teamId, orgId }: { teamId: string; orgId: string },
-  searchQuery: string
-) => {
+const getDonationAgreements = async ({ teamId, orgId }: { teamId: string; orgId: string }, searchQuery: string) => {
   const where: { [key: string]: any } = {};
   if (orgId) {
     where["organizationId"] = orgId;
@@ -132,7 +125,6 @@ const getDonationAgreements = async (
       contains: searchQuery,
     };
   }
-
   const donationAgreements = await prisma.donationAgreement.findMany({
     where: {
       ...where,
@@ -173,7 +165,6 @@ const getDonationAgreements = async (
       createdAt: "desc",
     },
   });
-
   return donationAgreements;
 };
 
@@ -221,15 +212,7 @@ const getDonationAgreementById = async (id: string) => {
   return donationAgreement;
 };
 
-const updateDonationAgreement = async (
-  id: string,
-  updatedDonationAgreement: DonationAgreement,
-  userId: string
-) => {
-  console.log("updatedDonationAgreement", {
-    donationAgreementId: id,
-    userId: userId,
-  });
+const updateDonationAgreement = async (id: string, updatedDonationAgreement: DonationAgreement, userId: string) => {
   const donation = await prisma.donationAgreement.findUnique({
     where: {
       id,
@@ -244,7 +227,6 @@ const updateDonationAgreement = async (
     },
   });
 
-  console.log("donation", donation);
   await prisma.$transaction(async (prisma) => {
     await prisma.file.update({
       where: {

@@ -75,9 +75,7 @@ const createOrUpdateOrganization = async (formData: Organization) => {
         data: {
           ...formData.user,
           roles: {
-            set: Array.from(
-              new Set([...(orgUser.roles ?? []), Roles.Organization])
-            ),
+            set: Array.from(new Set([...(orgUser.roles ?? []), Roles.Organization])),
           },
         },
       });
@@ -121,10 +119,7 @@ const createOrUpdateOrganization = async (formData: Organization) => {
           where: { email: formData.email },
           data: organizationData,
         });
-    console.log(
-      "organization tax examption certificate",
-      formData.taxExemptionCertificate
-    );
+
     // Batch file creation
     if (user?.id) {
       const files = [
@@ -259,12 +254,8 @@ const getOrganizationByEmail = async (email: string) => {
     return {
       ...organization,
       user: organization.users[0] || {},
-      taxExemptionCertificate: organization.Files.find(
-        (file) => file.type === "TAX_EXEMPTION_CERTIFICATE"
-      )?.id,
-      articlesOfAssociation: organization.Files.find(
-        (file) => file.type === "ARTICLES_OF_ASSOCIATION"
-      )?.id,
+      taxExemptionCertificate: organization.Files.find((file) => file.type === "TAX_EXEMPTION_CERTIFICATE")?.id,
+      articlesOfAssociation: organization.Files.find((file) => file.type === "ARTICLES_OF_ASSOCIATION")?.id,
       logo: organization.Files.find((file) => file.type === "LOGO")?.id,
     };
   }

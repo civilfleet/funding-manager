@@ -9,9 +9,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Form } from "../ui/form";
 import FormInputControl from "../helper/form-input-control";
 import ButtonControl from "../helper/button-control";
-import { useOrganizationStore, useTeamStore } from "@/store/store";
+
 import useSWR from "swr";
 import { Loader } from "../helper/loader";
+import { useParams } from "next/navigation";
 
 const querySchema = z.object({
   query: z.string(),
@@ -19,8 +20,10 @@ const querySchema = z.object({
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 export default function FileTable() {
   const { toast } = useToast();
-  const { teamId } = useTeamStore();
-  const { organizationId } = useOrganizationStore();
+  const params = useParams();
+
+  const teamId = params?.teamId ? params?.teamId : "";
+  const organizationId = params?.organizationId ? params.organizationId : "";
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
     defaultValues: { query: "" },
@@ -51,11 +54,7 @@ export default function FileTable() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-1/2">
           <div className="flex-1">
-            <FormInputControl
-              form={form}
-              name="query"
-              placeholder="Search..."
-            />
+            <FormInputControl form={form} name="query" placeholder="Search..." />
           </div>
 
           <ButtonControl type="submit" label="Submit" className="mx-2" />

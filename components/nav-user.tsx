@@ -11,14 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { signOut } from "next-auth/react";
-import { useOrganizationStore, useTeamStore } from "@/store/store";
 
 export function NavUser({
   user,
@@ -30,8 +24,6 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
-  const { setTeamId } = useTeamStore();
-  const { setOrganizationId } = useOrganizationStore();
 
   return (
     <SidebarMenu>
@@ -44,9 +36,7 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.image} alt={user.name} />
-                <AvatarFallback className="rounded-lg">
-                  {user.name?.split(" ")[0][0]}
-                </AvatarFallback>
+                <AvatarFallback className="rounded-lg">{user.name?.split(" ")[0][0]}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{user.name}</span>
@@ -65,9 +55,7 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.image} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">
-                    {user.name?.split(" ")[0][0]}
-                  </AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{user.name?.split(" ")[0][0]}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{user.name}</span>
@@ -80,8 +68,6 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => {
-                setTeamId("");
-                setOrganizationId("");
                 signOut({ redirectTo: "/" });
               }}
             >

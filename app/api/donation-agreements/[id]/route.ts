@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  getDonationAgreementById,
-  updateDonationAgreement,
-} from "@/services/donation-agreement";
+import { getDonationAgreementById, updateDonationAgreement } from "@/services/donation-agreement";
 import { handlePrismaError } from "@/lib/utils";
 import { auth } from "@/auth";
 
@@ -35,20 +32,10 @@ export async function PUT(
   try {
     const donationAgreementId = (await params).id;
 
-    console.log("req", req);
     const updatedDonationAgreement = await req.json();
     const session = await auth();
-    console.log(session);
-    console.log(
-      "update donation agreement",
-      donationAgreementId,
-      updatedDonationAgreement
-    );
-    await updateDonationAgreement(
-      donationAgreementId,
-      updatedDonationAgreement,
-      session?.user.userId as string
-    );
+
+    await updateDonationAgreement(donationAgreementId, updatedDonationAgreement, session?.user.userId as string);
     return NextResponse.json({ data: "" }, { status: 200 });
   } catch (e) {
     const handledError = handlePrismaError(e);
