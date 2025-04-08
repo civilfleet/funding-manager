@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -23,6 +24,13 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
   const { data: session } = useSession();
   const [organizations, setOrganizations] = useState([]);
   const [teams, setItems] = useState([]);
+  const pathname = usePathname();
+  
+  // Extract the active ID and type from the URL
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const activeType = pathSegments[0] === "teams" ? "team" : 
+                    pathSegments[0] === "organizations" ? "organization" : null;
+  const activeId = pathSegments[1] ?? null;
 
   useEffect(() => {
     const getItems = async () => {
@@ -45,7 +53,12 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher organizations={organizations} teams={teams} />
+        <TeamSwitcher 
+          organizations={organizations} 
+          teams={teams} 
+          activeId={activeId}
+          activeType={activeType}
+        />
       </SidebarHeader>
 
       <SidebarContent>

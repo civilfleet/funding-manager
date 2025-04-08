@@ -18,9 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useOrganizationStore, useTeamStore } from "@/store/store";
 
 type SwitcherItem = {
   id: string;
@@ -32,50 +30,31 @@ type SwitcherItem = {
 export function TeamSwitcher({
   organizations,
   teams,
+  activeId,
+  activeType,
 }: {
   organizations: SwitcherItem[];
   teams: SwitcherItem[];
+  activeId: string | null;
+  activeType: "team" | "organization" | null;
 }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
 
-  const { teamId, setTeamId } = useTeamStore();
-  const { organizationId, setOrganizationId } = useOrganizationStore();
-  const [activeItem, setActiveItem] = useState<SwitcherItem | null>(null);
-
-  useEffect(() => {
-    if (teamId) {
-      const selectedTeam = teams.find((item) => item.id === teamId);
-      setActiveItem(selectedTeam || null);
-    } else if (organizationId) {
-      const selectedOrg = organizations.find(
-        (item) => item.id === organizationId
-      );
-      setActiveItem(selectedOrg || null);
-    } else if (organizations.length > 0) {
-      // If no organization is selected and there are organizations available,
-      // select the first one
-      const firstOrg = organizations[0];
-      setActiveItem(firstOrg);
-      setOrganizationId(firstOrg.id);
-      router.push(`/organizations/${firstOrg.id}/profile`);
-    } else {
-      setActiveItem(null);
-    }
-  }, [teamId, organizationId, teams, organizations, router, setOrganizationId]);
+  const activeItem = activeType === "team" 
+    ? teams.find((item) => item.id === activeId)
+    : activeType === "organization"
+    ? organizations.find((item) => item.id === activeId)
+    : null;
 
   const setItem = (item: SwitcherItem, subUrl: string, id: string) => {
-    setActiveItem(item);
     if (subUrl === "teams") {
-      setTeamId(id);
-      setOrganizationId("");
       router.push(`/${subUrl}/${id}/organizations`);
     } else {
-      setOrganizationId(id);
-      setTeamId("");
       router.push(`/${subUrl}/${id}/profile`);
     }
   };
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -90,10 +69,10 @@ export function TeamSwitcher({
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {activeItem?.name}
+                  {activeItem?.name || "Select team or organization"}
                 </span>
                 <span className="truncate text-xs">
-                  {teamId ? "Team" : "Organization"}
+                  {activeType === "team" ? "Team" : "Organization"}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
@@ -110,7 +89,6 @@ export function TeamSwitcher({
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
                   Teams
                 </DropdownMenuLabel>
-
                 {teams.map((item, index) => (
                   <DropdownMenuItem
                     key={item.id}
@@ -118,20 +96,15 @@ export function TeamSwitcher({
                     className="gap-2 p-2"
                   >
                     <div className="flex size-6 items-center justify-center rounded-sm border">
-                      {/* {item.logo ? (
-            <item.logo className="size-4 shrink-0" />
-          ) : ( */}
                       <GalleryVerticalEnd className="size-4 shrink-0" />
-                      {/* )} */}
                     </div>
                     {item.name}
                     <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
                   </DropdownMenuItem>
                 ))}
+                <DropdownMenuSeparator />
               </>
             )}
-
-            <DropdownMenuSeparator />
             {organizations.length > 0 && (
               <>
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
@@ -144,11 +117,7 @@ export function TeamSwitcher({
                     className="gap-2 p-2"
                   >
                     <div className="flex size-6 items-center justify-center rounded-sm border">
-                      {/* {item.logo ? (
-            <item.logo className="size-4 shrink-0" />
-          ) : ( */}
                       <GalleryVerticalEnd className="size-4 shrink-0" />
-                      {/* )} */}
                     </div>
                     {item.name}
                     <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>

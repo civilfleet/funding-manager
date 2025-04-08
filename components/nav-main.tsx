@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/sidebar";
 import { useSession } from "next-auth/react";
 import { Roles } from "@/types";
-import { useOrganizationStore, useTeamStore } from "@/store/store";
 
 interface NavItem {
   title: string;
@@ -28,13 +27,14 @@ interface NavItem {
 export function NavMain({ items = [] }: { items?: NavItem[] }) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const parts = pathname.split("/");
-  const id = parts[2] ?? null;
-  const subUrl = parts[1] ?? null;
-  const { teamId } = useTeamStore();
-  const { organizationId } = useOrganizationStore();
+  
+  // Extract the subUrl and id from the pathname
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const subUrl = pathSegments[0] ?? null;
+  const id = pathSegments[1] ?? null;
 
-  const hasActiveContext = Boolean(teamId || organizationId);
+  // Determine if we have an active context based on the URL
+  const hasActiveContext = Boolean(id && (subUrl === "organizations" || subUrl === "teams"));
 
   return (
     <SidebarGroup>
