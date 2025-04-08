@@ -12,18 +12,19 @@ import ButtonControl from "../helper/button-control";
 
 import useSWR from "swr";
 import { Loader } from "../helper/loader";
-import { useParams } from "next/navigation";
+
+interface UserTableProps {
+  teamId: string;
+  organizationId: string;
+}
 
 const querySchema = z.object({
   query: z.string(),
 });
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-export default function UserTable() {
+export default function UserTable({ teamId, organizationId }: UserTableProps) {
   const { toast } = useToast();
-  const params = useParams();
 
-  const teamId = params?.teamId ? params?.teamId : "";
-  const organizationId = params?.organizationId ? params.organizationId : "";
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
     defaultValues: { query: "" },

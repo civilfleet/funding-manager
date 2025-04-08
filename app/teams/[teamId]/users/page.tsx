@@ -2,7 +2,15 @@ import UserTable from "@/components/table/user-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export default async function Page() {
+interface PageProps {
+  params: Promise<{
+    teamId: string;
+  }>;
+}
+
+export default async function Page({ params }: PageProps) {
+  const { teamId } = await params;
+  
   return (
     <div className="p-4">
       <div className="flex justify-between">
@@ -11,7 +19,7 @@ export default async function Page() {
           <Button type="button">Create New</Button>
         </Link>
       </div>
-      <UserTable />
+      <UserTable teamId={teamId} organizationId="" />
     </div>
   );
 }

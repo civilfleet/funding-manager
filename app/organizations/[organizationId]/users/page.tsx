@@ -2,7 +2,15 @@ import UserTable from "@/components/table/user-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export default async function Organization() {
+interface PageProps {
+  params: Promise<{
+    organizationId: string;
+  }>;
+}
+
+export default async function Organization({ params }: PageProps) {
+  const { organizationId } = await params;
+  
   return (
     <div className="p-4 w-full">
       <div className="flex justify-between">
@@ -11,7 +19,7 @@ export default async function Organization() {
           <Button type="button">Create New</Button>
         </Link>
       </div>
-      <UserTable />
+      <UserTable teamId="" organizationId={organizationId} />
     </div>
   );
 }
