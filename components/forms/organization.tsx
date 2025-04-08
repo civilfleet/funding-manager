@@ -5,18 +5,9 @@ import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormInputControl from "../helper/form-input-control";
-import {
-  createOrganizationSchema,
-  updateOrganizationSchema,
-} from "@/validations/organizations";
+import { createOrganizationSchema, updateOrganizationSchema } from "@/validations/organizations";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "../ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import ButtonControl from "../helper/button-control";
 import Alert from "@/components/helper/alert";
 import { useState } from "react";
@@ -67,6 +58,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
   const schema = isUpdate ? updateOrganizationSchema : createOrganizationSchema;
 
   // Helper function to check if a field is filled
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   const isFieldFilled = (value: any) => {
     return value && value.trim().length > 0;
   };
@@ -82,12 +74,8 @@ export default function OrganizationForm({ data }: { data: Organization }) {
       country: data?.country || "",
       postalCode: data?.postalCode || "",
       website: data?.website || "",
-      taxExemptionCertificate:
-        data?.Files?.find((file) => file.type === "TAX_EXEMPTION_CERTIFICATE")
-          ?.url || "",
-      articlesOfAssociation:
-        data?.Files?.find((file) => file.type === "ARTICLES_OF_ASSOCIATION")
-          ?.url || "",
+      taxExemptionCertificate: data?.Files?.find((file) => file.type === "TAX_EXEMPTION_CERTIFICATE")?.url || "",
+      articlesOfAssociation: data?.Files?.find((file) => file.type === "ARTICLES_OF_ASSOCIATION")?.url || "",
       taxID: data?.taxID || "",
       logo: data?.Files?.find((file) => file.type === "LOGO")?.url || "",
       bankDetails: {
@@ -136,9 +124,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
       await response.json();
       toast({
         title: "Success",
-        description: isUpdate
-          ? "Organization information updated"
-          : "Organization information created",
+        description: isUpdate ? "Organization information updated" : "Organization information created",
         variant: "default",
       });
     } catch (e) {
@@ -154,18 +140,12 @@ export default function OrganizationForm({ data }: { data: Organization }) {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Update Organization Information</CardTitle>
-        <CardDescription>
-          Please update your organization information below
-        </CardDescription>
+        <CardDescription>Please update your organization information below</CardDescription>
       </CardHeader>
       <CardContent>
         <fieldset disabled={form.formState.isSubmitting}>
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-8"
-              id="organization-form"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8" id="organization-form">
               <div className="grid grid-cols-2 gap-4">
                 <FormInputControl
                   form={form}
@@ -193,12 +173,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   isFilled={isFieldFilled(data?.address)}
                 />
 
-                <FormInputControl 
-                  form={form} 
-                  name="city" 
-                  placeholder="City"
-                  isFilled={isFieldFilled(data?.city)}
-                />
+                <FormInputControl form={form} name="city" placeholder="City" isFilled={isFieldFilled(data?.city)} />
                 <FormInputControl
                   form={form}
                   name="country"
@@ -220,35 +195,21 @@ export default function OrganizationForm({ data }: { data: Organization }) {
               </div>
               <div>
                 <h4 className="text-lg font-semibold">Tax Details</h4>
-                <CardDescription>
-                  Please attached your tax exemption certificate
-                </CardDescription>
+                <CardDescription>Please attached your tax exemption certificate</CardDescription>
                 <hr />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <FormInputControl
-                  form={form}
-                  name="taxID"
-                  placeholder="Tax ID"
-                  isFilled={isFieldFilled(data?.taxID)}
-                />
+                <FormInputControl form={form} name="taxID" placeholder="Tax ID" isFilled={isFieldFilled(data?.taxID)} />
 
                 <FileUpload
                   placeholder="Tax exemption certificate"
                   name="taxExemptionCertificate"
-                  data={
-                    data?.Files?.find(
-                      (file) => file.type === "TAX_EXEMPTION_CERTIFICATE"
-                    )?.id as string
-                  }
-                  onFileUpload={(url) =>
-                    form.setValue("taxExemptionCertificate", url)
-                  }
+                  data={data?.Files?.find((file) => file.type === "TAX_EXEMPTION_CERTIFICATE")?.id as string}
+                  onFileUpload={(url) => form.setValue("taxExemptionCertificate", url)}
                   error={
                     form?.formState?.errors?.taxExemptionCertificate
-                      ? (form.formState.errors?.taxExemptionCertificate
-                          ?.message as string)
+                      ? (form.formState.errors?.taxExemptionCertificate?.message as string)
                       : ""
                   }
                 />
@@ -318,38 +279,25 @@ export default function OrganizationForm({ data }: { data: Organization }) {
               </div>
 
               <div>
-                <h4 className="text-lg font-semibold">
-                  Article of Association & Logo
-                </h4>
-                <CardDescription>
-                  Please attached articles of association and logo
-                </CardDescription>
+                <h4 className="text-lg font-semibold">Article of Association & Logo</h4>
+                <CardDescription>Please attached articles of association and logo</CardDescription>
                 <hr />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-gray-600 text-sm pl-2">
-                    Article of Association
-                  </label>
+                  <label className="text-gray-600 text-sm pl-2">Article of Association</label>
 
                   <FileUpload
                     placeholder="Article of Association"
                     name="articlesOfAssociation"
-                    data={
-                      data?.Files?.find(
-                        (file) => file.type == "ARTICLES_OF_ASSOCIATION"
-                      )?.id
-                    }
+                    data={data?.Files?.find((file) => file.type == "ARTICLES_OF_ASSOCIATION")?.id}
                     error={
                       form?.formState?.errors?.articlesOfAssociation
-                        ? (form.formState.errors?.articlesOfAssociation
-                            ?.message as string)
+                        ? (form.formState.errors?.articlesOfAssociation?.message as string)
                         : ""
                     }
-                    onFileUpload={(url) =>
-                      form.setValue("articlesOfAssociation", url)
-                    }
+                    onFileUpload={(url) => form.setValue("articlesOfAssociation", url)}
                   />
                 </div>
                 <div>
@@ -358,11 +306,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                     placeholder="Logo of your Organization"
                     name="logo"
                     data={data?.Files?.find((file) => file.type == "LOGO")?.id}
-                    error={
-                      form?.formState?.errors?.logo
-                        ? (form.formState.errors?.logo?.message as string)
-                        : ""
-                    }
+                    error={form?.formState?.errors?.logo ? (form.formState.errors?.logo?.message as string) : ""}
                     onFileUpload={(url) => form.setValue("logo", url)}
                   />
                 </div>
@@ -378,11 +322,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   formId="organization-form"
                 />
               ) : (
-                <ButtonControl
-                  className="w-24"
-                  type="submit"
-                  disabled={form.formState.isSubmitting}
-                />
+                <ButtonControl className="w-24" type="submit" disabled={form.formState.isSubmitting} />
               )}
             </form>
           </Form>
@@ -391,3 +331,4 @@ export default function OrganizationForm({ data }: { data: Organization }) {
     </Card>
   );
 }
+
