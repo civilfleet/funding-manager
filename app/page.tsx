@@ -13,9 +13,9 @@ export default async function LoginPage() {
       return redirect("/admin");
     } else if (session.user.roles?.includes(Roles.Organization)) {
       const userData = await getUserCurrent(session.user.userId);
-      if (userData?.organizations && userData.organizations.length > 0) {
-        return redirect(`/organizations/${userData.organizations[0].id}`);
-      }
+      //if (userData?.organizations && userData.organizations.length > 0) {
+      //  return redirect(`/organizations/${userData.organizations[0].id}`);
+      //}
       return redirect("/organizations");
     } else if (session.user.roles?.includes(Roles.Team)) {
       const userData = await getUserCurrent(session.user.userId);
