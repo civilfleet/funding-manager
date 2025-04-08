@@ -18,11 +18,12 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     const { organizationId, teamId } = await request.json();
-    await deleteUser(params.userId, organizationId, teamId);
+    await deleteUser(userId, organizationId, teamId);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting user:", error);
