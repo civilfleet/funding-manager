@@ -18,12 +18,14 @@ const querySchema = z.object({
   query: z.string(),
 });
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-export default function FileTable() {
-  const { toast } = useToast();
-  const params = useParams();
+interface IFileTableProps {
+  teamId: string;
+  organizationId: string;
+}
 
-  const teamId = params?.teamId ? params?.teamId : "";
-  const organizationId = params?.organizationId ? params.organizationId : "";
+export default function FileTable({ teamId, organizationId }: IFileTableProps) {
+  const { toast } = useToast();
+
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
     defaultValues: { query: "" },

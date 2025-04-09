@@ -19,12 +19,13 @@ const querySchema = z.object({
 });
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export default function FundingRequestTable() {
-  const { toast } = useToast();
-  const params = useParams();
+interface IFundingRequestProps {
+  teamId: string;
+  organizationId: string;
+}
 
-  const teamId = params?.teamId ? params?.teamId : "";
-  const organizationId = params?.organizationId ? params.organizationId : "";
+export default function FundingRequestTable({ teamId, organizationId }: IFundingRequestProps) {
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),

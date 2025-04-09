@@ -2,7 +2,15 @@ import DonationAgreementTable from "@/components/table/donation-agreement-table"
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export default async function Organization() {
+interface PageProps {
+  params: Promise<{
+    teamId: string;
+  }>;
+}
+
+export default async function Organization({ params }: PageProps) {
+  const teamId = (await params).teamId;
+
   return (
     <div className="p-4 w-full">
       <div className="flex justify-between">
@@ -11,8 +19,8 @@ export default async function Organization() {
           <Button type="button">Create New</Button>
         </Link>
       </div>
-      {/* <OrganizationTable /> */}
-      <DonationAgreementTable />
+      <DonationAgreementTable teamId={teamId} organizationId="" />
     </div>
   );
 }
+

@@ -16,14 +16,14 @@ import { useParams } from "next/navigation";
 const querySchema = z.object({
   query: z.string(),
 });
+interface IDonationAgreementsProps {
+  teamId: string;
+  organizationId: string;
+}
 
-export default function DonationAgreementTable() {
+export default function DonationAgreementTable({ teamId, organizationId }: IDonationAgreementsProps) {
   const { toast } = useToast();
 
-  const params = useParams();
-
-  const teamId = params?.teamId ? params?.teamId : "";
-  const organizationId = params?.organizationId ? params.organizationId : "";
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
     defaultValues: {

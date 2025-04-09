@@ -1,7 +1,14 @@
 import FundingRequestTable from "@/components/table/funding-request-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-export default async function Page() {
+interface PageProps {
+  params: Promise<{
+    organizationId: string;
+  }>;
+}
+export default async function Page({ params }: PageProps) {
+  const organizationId = (await params).organizationId;
+
   return (
     <div className="p-4 w-full ">
       <div className="flex justify-between">
@@ -11,7 +18,8 @@ export default async function Page() {
         </Link>
       </div>
 
-      <FundingRequestTable />
+      <FundingRequestTable organizationId={organizationId} teamId="" />
     </div>
   );
 }
+

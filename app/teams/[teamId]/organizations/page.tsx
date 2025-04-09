@@ -3,11 +3,7 @@ import { Button } from "@/components/ui/button";
 import { CopyRegistrationLinkButton } from "@/components/buttons/copy-registration-link-button";
 import Link from "next/link";
 
-export default async function Organization({
-  params,
-}: {
-  params: Promise<{ teamId: string }>;
-}) {
+export default async function Organization({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
 
   return (
@@ -21,7 +17,8 @@ export default async function Organization({
           </Link>
         </div>
       </div>
-      <OrganizationTable />
+      <OrganizationTable teamId={teamId} />
     </div>
   );
 }
+
