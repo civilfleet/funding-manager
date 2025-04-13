@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Computer, type LucideIcon } from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 
 import {
   SidebarGroup,
@@ -35,11 +35,34 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
 
   // Determine if we have an active context based on the URL
   const hasActiveContext = Boolean(id && (subUrl === "organizations" || subUrl === "teams"));
+  const isAdminSection = pathname.startsWith("/admin");
 
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {hasActiveContext ? (
+        {isAdminSection ? (
+          <>
+            {items.map((item, index) => {
+              const fullPath = `/admin/${item.url}`;
+              const isActive = pathname.startsWith(fullPath);
+
+              return (
+                <SidebarMenuItem key={index}>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={item.title}
+                    isActive={isActive}
+                  >
+                    <Link href={fullPath}>
+                      {item.icon && <item.icon className="size-4" />}
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </>
+        ) : hasActiveContext ? (
           <>
             {items.map((item, index) => {
               const fullPath = `/${subUrl}/${id}/${item.url}/`;
@@ -66,21 +89,6 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
             <div className="px-3 py-2 text-sm text-muted-foreground">
               Please select a team or organization
             </div>
-          </SidebarMenuItem>
-        )}
-
-        {session?.user?.roles?.includes(Roles.Admin) && (
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Admin"
-              isActive={pathname.startsWith("/admin")}
-            >
-              <Link href="/admin">
-                <Computer className="size-4" />
-                <span>Admin</span>
-              </Link>
-            </SidebarMenuButton>
           </SidebarMenuItem>
         )}
       </SidebarMenu>

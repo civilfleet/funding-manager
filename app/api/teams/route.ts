@@ -1,72 +1,46 @@
 import { NextResponse } from "next/server";
-import { createTeam, getTeamsByRoles } from "@/services/teams";
-import { createTeamSchema } from "@/validations/team";
-import { handlePrismaError } from "@/lib/utils";
-import { sendEmail } from "@/lib/nodemailer";
+import prisma from "@/lib/prisma";
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url);
-    const roles: string[] | null =
-      searchParams.get("roles")?.split(",") || null;
-    const teams = [];
-
-    const response = await getTeamsByRoles(roles);
-
-    if (response) {
-      teams.push(...response);
-    }
-    return NextResponse.json(
-      {
-        teams,
+    const teams = await prisma.teams.findMany({
+      orderBy: {
+        createdAt: "desc",
       },
-      { status: 201 }
-    );
-  } catch (e) {
-    const { message } = handlePrismaError(e);
+    });
+
+    return NextResponse.json({ data: teams });
+  } catch (error) {
     return NextResponse.json(
-      { error: message },
-      { status: 400, statusText: message }
+      { error: "Failed to fetch teams" },
+      { status: 500 }
     );
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const teamData = await req.json();
-    const validatedData = createTeamSchema.parse(teamData);
+    const body = await request.json();
+    const { name, email, phone, address, postalCode, city, country, website } = body;
 
-    const { team } = await createTeam(validatedData);
+    const team = await prisma.teams.create({
+      data: {
+        name,
+        email,
+        phone,
+        address,
+        postalCode,
+        city,
+        country,
+        website,
+      },
+    });
 
-    // if teamId is provided, it means the organization is created by a team
-    await Promise.all([
-      sendEmail(
-        {
-          to: team.email,
-          subject: "You’re In! Welcome to Partner App.",
-          template: "welcome",
-        },
-        {
-          name: team.name,
-          email: team.email,
-        }
-      ),
-      sendEmail(
-        {
-          to: team.users[0].email,
-          subject: "You’re In! Welcome to Partner App.",
-          template: "welcome",
-        },
-        {
-          name: team.users[0].name,
-          email: team.users[0].email,
-        }
-      ),
-    ]);
-
-    return NextResponse.json(team, { status: 201 });
-  } catch (e) {
-    const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json(team);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to create team" },
+      { status: 500 }
+    );
   }
 }

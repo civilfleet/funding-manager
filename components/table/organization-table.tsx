@@ -1,6 +1,5 @@
 "use client";
 import { z } from "zod";
-
 import { useForm } from "react-hook-form";
 import ButtonControl from "../helper/button-control";
 import { DataTable } from "@/components/data-table";
@@ -8,9 +7,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { columns } from "@/components/table/organization-columns";
 import FormInputControl from "../helper/form-input-control";
 import { Form } from "@/components/ui/form";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import useSWR from "swr";
 import { Loader } from "../helper/loader";
+import { usePathname } from "next/navigation";
+import { useTeamStore } from "@/store/store";
 
 const querySchema = z.object({
   query: z.string(),
@@ -20,7 +21,12 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 interface IOrganizationProps {
   teamId: string;
 }
+
 export default function OrganizationTable({ teamId }: IOrganizationProps) {
+  const { toast } = useToast();
+  const pathname = usePathname();
+  const isAdmin = pathname.startsWith("/admin");
+  
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
     defaultValues: { query: "" },
@@ -28,13 +34,16 @@ export default function OrganizationTable({ teamId }: IOrganizationProps) {
 
   const query = form.watch("query"); // Get current query value
 
-  const { data, error, isLoading } = useSWR(`/api/organizations?teamId=${teamId}&query=${query}`, fetcher);
+  const { data, error, isLoading, mutate } = useSWR(
+    `/api/organizations?${isAdmin ? "" : `teamId=${teamId}&`}query=${query}`,
+    fetcher
+  );
   const loading = isLoading || !data;
 
   if (error) {
     toast({
       title: "Error",
-      description: "Error fetching funding requests",
+      description: "Error fetching organizations",
       variant: "destructive",
     });
   }
@@ -64,7 +73,7 @@ export default function OrganizationTable({ teamId }: IOrganizationProps) {
             <Loader className="" />
           </div>
         ) : (
-          <DataTable columns={columns} data={data?.data} />
+          <DataTable columns={columns(mutate)} data={data?.data} />
         )}
       </div>
     </div>

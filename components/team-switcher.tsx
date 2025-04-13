@@ -1,7 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { ChevronsUpDown, GalleryVerticalEnd } from "lucide-react";
+import { ChevronsUpDown, GalleryVerticalEnd, Shield } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Roles } from "@/types";
 
 import {
   DropdownMenu,
@@ -36,20 +38,26 @@ export function TeamSwitcher({
   organizations: SwitcherItem[];
   teams: SwitcherItem[];
   activeId: string | null;
-  activeType: "team" | "organization" | null;
+  activeType: "team" | "organization" | "admin" | null;
 }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.roles?.includes(Roles.Admin);
 
   const activeItem = activeType === "team" 
     ? teams.find((item) => item.id === activeId)
     : activeType === "organization"
     ? organizations.find((item) => item.id === activeId)
+    : activeType === "admin"
+    ? { name: "Admin Dashboard", id: "admin" }
     : null;
 
   const setItem = (item: SwitcherItem, subUrl: string, id: string) => {
     if (subUrl === "teams") {
       router.push(`/${subUrl}/${id}/organizations`);
+    } else if (subUrl === "admin") {
+      router.push("/admin");
     } else {
       router.push(`/${subUrl}/${id}/profile`);
     }
@@ -72,7 +80,7 @@ export function TeamSwitcher({
                   {activeItem?.name || "Select team or organization"}
                 </span>
                 <span className="truncate text-xs">
-                  {activeType === "team" ? "Team" : "Organization"}
+                  {activeType === "team" ? "Team" : activeType === "organization" ? "Organization" : activeType === "admin" ? "Admin" : ""}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
@@ -84,6 +92,24 @@ export function TeamSwitcher({
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
+            {isAdmin && (
+              <>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                  Admin
+                </DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => setItem({ id: "admin", name: "Admin Dashboard", email: "" }, "admin", "admin")}
+                  className="gap-2 p-2"
+                >
+                  <div className="flex size-6 items-center justify-center rounded-sm border">
+                    <Shield className="size-4 shrink-0" />
+                  </div>
+                  Admin Dashboard
+                  <DropdownMenuShortcut>⌘A</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             {teams.length > 0 && (
               <>
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
