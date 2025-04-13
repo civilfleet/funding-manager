@@ -264,7 +264,7 @@ const getOrganizationByEmail = async (email: string) => {
 const getOrganizations = async (searchQuery: string, teamId: string) => {
   const organization = await prisma.organization.findMany({
     where: {
-      teamId,
+      ...(teamId ? { teamId } : {}),
       OR: [
         { name: { contains: searchQuery, mode: "insensitive" } },
         { email: { contains: searchQuery, mode: "insensitive" } },
@@ -279,6 +279,13 @@ const getOrganizations = async (searchQuery: string, teamId: string) => {
     include: {
       bankDetails: true,
       users: true,
+      team: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -288,10 +295,64 @@ const getOrganizations = async (searchQuery: string, teamId: string) => {
   return organization;
 };
 
+const deleteOrganization = async (id: string) => {
+  try {
+    // Get the organization to find associated users
+    const organization = await prisma.organization.findUnique({
+      where: { id },
+      include: {
+        users: true,
+        fundingRequests: true,
+      },
+    });
+
+    if (!organization) {
+      throw new Error("Organization not found");
+    }
+
+    // Delete all donation agreements associated with this organization
+    await prisma.donationAgreement.deleteMany({
+      where: { organizationId: id },
+    });
+
+    // Delete all files associated with this organization
+    await prisma.file.deleteMany({
+      where: { organizationId: id },
+    });
+
+    // Delete all funding requests associated with this organization
+    // This will cascade delete related records due to the schema constraints
+    await prisma.fundingRequest.deleteMany({
+      where: { organizationId: id },
+    });
+
+    // Disconnect all users from the organization
+    await prisma.organization.update({
+      where: { id },
+      data: {
+        users: {
+          set: [], // Disconnect all users
+        },
+      },
+    });
+
+    // Finally, delete the organization
+    await prisma.organization.delete({
+      where: { id },
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error deleting organization:", error);
+    throw error;
+  }
+};
+
 export {
   createOrUpdateOrganization,
   getOrganizationByEmail,
   getOrganizations,
   updateOrganization,
   getOrganizationById,
+  deleteOrganization,
 };

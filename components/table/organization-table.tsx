@@ -12,14 +12,18 @@ import { useToast } from "@/hooks/use-toast";
 import { useTeamStore } from "@/store/store";
 import useSWR from "swr";
 import { Loader } from "../helper/loader";
+import { usePathname } from "next/navigation";
 
 const querySchema = z.object({
   query: z.string(),
 });
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function OrganizationTable() {
   const { toast } = useToast();
   const { teamId } = useTeamStore();
+  const pathname = usePathname();
+  const isAdmin = pathname.startsWith("/admin");
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
@@ -28,8 +32,8 @@ export default function OrganizationTable() {
 
   const query = form.watch("query"); // Get current query value
 
-  const { data, error, isLoading } = useSWR(
-    `/api/organizations?teamId=${teamId}&query=${query}`,
+  const { data, error, isLoading, mutate } = useSWR(
+    `/api/organizations?${isAdmin ? "" : `teamId=${teamId}&`}query=${query}`,
     fetcher
   );
   const loading = isLoading || !data;
@@ -37,7 +41,7 @@ export default function OrganizationTable() {
   if (error) {
     toast({
       title: "Error",
-      description: "Error fetching funding requests",
+      description: "Error fetching organizations",
       variant: "destructive",
     });
   }
@@ -71,7 +75,7 @@ export default function OrganizationTable() {
             <Loader className="" />
           </div>
         ) : (
-          <DataTable columns={columns} data={data?.data} />
+          <DataTable columns={columns(mutate)} data={data?.data} />
         )}
       </div>
     </div>

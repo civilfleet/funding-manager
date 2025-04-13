@@ -1,7 +1,20 @@
-import { Building, BookOpen, Scroll, BookUser, FolderOpen } from "lucide-react";
+import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users } from "lucide-react";
 
 export default {
-  admin: [],
+  admin: [
+    {
+      title: "Teams",
+      url: "teams",
+      icon: Users,
+      isActive: true,
+    },
+    {
+      title: "Organizations",
+      url: "organizations",
+      icon: Building,
+      isActive: true,
+    },
+  ],
   team: [
     {
       title: "Organizations",

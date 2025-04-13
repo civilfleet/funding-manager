@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   getOrganizationById,
   updateOrganization,
+  deleteOrganization,
 } from "@/services/organizations";
 import { handlePrismaError } from "@/lib/utils";
 
@@ -48,6 +49,28 @@ export async function PUT(
     );
 
     return NextResponse.json({ data: updatedOrganization }, { status: 200 });
+  } catch (e) {
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  {
+    params,
+  }: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  try {
+    const organizationId = (await params).id;
+    if (!organizationId) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
+
+    await deleteOrganization(organizationId);
+    return NextResponse.json({ message: "Organization deleted successfully" }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
     return NextResponse.json({ error: message }, { status: 400 });

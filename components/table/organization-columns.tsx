@@ -1,17 +1,11 @@
 "use client";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { Badge } from "../ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export type OrganizationColumns = {
   id: string;
@@ -31,11 +25,72 @@ export type OrganizationColumns = {
   bankDetails?: {
     bankName: string;
   };
+  team?: {
+    id: string;
+    name: string;
+    email: string;
+  };
   createdAt: string;
   updatedAt: string;
 };
 
-export const columns: ColumnDef<OrganizationColumns>[] = [
+function OrganizationActions({ 
+  organization,
+  mutate
+}: { 
+  organization: OrganizationColumns;
+  mutate: () => void;
+}) {
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`/api/organizations/${organization.id}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to delete organization");
+      }
+
+      toast({
+        title: "Success",
+        description: "Organization deleted successfully",
+      });
+
+      // Revalidate the organizations data
+      mutate();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete organization",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="flex gap-2">
+      <Link href={`/admin/organizations/${organization.id}/edit`}>
+        <Button variant="outline" size="sm">
+          Edit
+        </Button>
+      </Link>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={handleDelete}
+      >
+        Delete
+      </Button>
+    </div>
+  );
+}
+
+export const columns = (mutate: () => void): ColumnDef<OrganizationColumns>[] => [
   {
     accessorKey: "name",
     header: () => <div className="text-left w-24">Name</div>,
@@ -54,6 +109,17 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
       return (
         <div className="text-left font-medium">
           {row.getValue("email") || "N/A"}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "team.name",
+    header: () => <div className="text-left w-24">Team</div>,
+    cell: ({ row }) => {
+      return (
+        <div className="text-left font-medium">
+          {row.original.team?.name || "N/A"}
         </div>
       );
     },
@@ -140,28 +206,10 @@ export const columns: ColumnDef<OrganizationColumns>[] = [
       );
     },
   },
-
   {
     id: "actions",
     cell: ({ row }) => {
-      const organization = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem>
-              <a href={`organizations/${organization.id}`}>View</a>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+      return <OrganizationActions organization={row.original} mutate={mutate} />;
     },
   },
 ];
