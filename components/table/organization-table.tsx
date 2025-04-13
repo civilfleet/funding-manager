@@ -19,7 +19,7 @@ const querySchema = z.object({
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 interface IOrganizationProps {
-  teamId: string;
+  teamId?: string;
 }
 
 export default function OrganizationTable({ teamId }: IOrganizationProps) {
