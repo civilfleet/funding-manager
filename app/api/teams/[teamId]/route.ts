@@ -3,12 +3,13 @@ import prisma from "@/lib/prisma";
 
 export async function GET(
   request: Request,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
+    const { teamId } = await params;
     const team = await prisma.teams.findUnique({
       where: {
-        id: params.teamId,
+        id: teamId,
       },
     });
 
@@ -30,15 +31,16 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
+    const { teamId } = await params;
     const body = await request.json();
     const { name, email, phone, address, postalCode, city, country, website } = body;
 
     const team = await prisma.teams.update({
       where: {
-        id: params.teamId,
+        id: teamId,
       },
       data: {
         name,
@@ -63,12 +65,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
+    const { teamId } = await params;
     await prisma.teams.delete({
       where: {
-        id: params.teamId,
+        id: teamId,
       },
     });
 
