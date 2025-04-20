@@ -22,16 +22,11 @@ export default async function Page({ params }: PageProps) {
         <h1 className="text-3xl font-bold">Team Settings</h1>
         <p className="text-muted-foreground mt-2">{`Manage your team's settings and email templates`}</p>
       </div>
-
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsContent value="email">
-          <Card>
-            <div className="space-y-4">
-              <CreateEmailTemplate teamId={teamId} templates={templatesData} />
-            </div>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Card>
+        <div className="space-y-4">
+          <CreateEmailTemplate teamId={teamId} templates={templatesData} />
+        </div>
+      </Card>
     </div>
   );
 }
