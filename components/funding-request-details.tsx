@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -35,28 +29,19 @@ import { type FundingRequest, type FundingStatus, Roles } from "./../types";
 import { StatusBadge } from "./helper/status-badge";
 import { FileList } from "./helper/file-list";
 import FundingRequestDetailsForm from "./forms/funding-request-detail-form";
-import { useTeamStore } from "@/store/store";
+
 import { useState } from "react";
 
-export default function FundingRequestDetail({
-  data,
-}: {
-  data: FundingRequest;
-}) {
+export default function FundingRequestDetail({ data, teamId }: { data: FundingRequest; teamId: string }) {
   const { toast } = useToast();
   const { data: session } = useSession();
-  const { teamId } = useTeamStore();
+
   const [isRejecting, setIsRejecting] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState<FundingStatus>(
-    data.status
-  );
+  const [currentStatus, setCurrentStatus] = useState<FundingStatus>(data.status);
 
-  const isTeam =
-    session?.user?.roles?.includes(Roles.Team) ||
-    session?.user?.roles?.includes(Roles.Admin);
+  const isTeam = session?.user?.roles?.includes(Roles.Team) || session?.user?.roles?.includes(Roles.Admin);
 
-  const showRejectButton =
-    isTeam && !["FundsTransferred", "Rejected"].includes(currentStatus);
+  const showRejectButton = isTeam && !["FundsTransferred", "Rejected"].includes(currentStatus);
 
   async function rejectRequest() {
     setIsRejecting(true);
@@ -68,7 +53,7 @@ export default function FundingRequestDetail({
         },
         body: JSON.stringify({
           status: "Rejected" as FundingStatus,
-          teamId,
+          teamId: teamId,
         }),
       });
 
@@ -87,10 +72,7 @@ export default function FundingRequestDetail({
     } catch (e) {
       toast({
         title: "Error",
-        description:
-          e instanceof Error
-            ? e.message
-            : "An error occurred while rejecting the request",
+        description: e instanceof Error ? e.message : "An error occurred while rejecting the request",
         variant: "destructive",
       });
     } finally {
@@ -122,9 +104,7 @@ export default function FundingRequestDetail({
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">
-                Funding Request
-              </h1>
+              <h1 className="text-3xl font-bold tracking-tight">Funding Request</h1>
               <StatusBadge status={currentStatus} />
             </div>
             <p className="text-muted-foreground mt-2 flex items-center gap-1">
@@ -135,11 +115,7 @@ export default function FundingRequestDetail({
 
           <div className="flex items-center gap-3">
             {showRejectButton && (
-              <Button
-                variant="destructive"
-                onClick={rejectRequest}
-                disabled={isRejecting}
-              >
+              <Button variant="destructive" onClick={rejectRequest} disabled={isRejecting}>
                 {isRejecting ? (
                   <>
                     <span className="mr-2">Processing</span>
@@ -185,9 +161,7 @@ export default function FundingRequestDetail({
                     Project Overview
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-6 text-muted-foreground leading-relaxed">
-                  {data.description}
-                </CardContent>
+                <CardContent className="pt-6 text-muted-foreground leading-relaxed">{data.description}</CardContent>
               </Card>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -201,22 +175,14 @@ export default function FundingRequestDetail({
                   <CardContent>
                     <div className="space-y-4">
                       <div className="p-4 bg-muted/30 rounded-md">
-                        <p className="text-sm font-medium text-muted-foreground">
-                          Requested Amount
-                        </p>
-                        <p className="text-2xl font-bold text-primary">
-                          {formatCurrency(data.amountRequested)}
-                        </p>
+                        <p className="text-sm font-medium text-muted-foreground">Requested Amount</p>
+                        <p className="text-2xl font-bold text-primary">{formatCurrency(data.amountRequested)}</p>
                       </div>
 
                       <div className="p-4 bg-muted/30 rounded-md">
-                        <p className="text-sm font-medium text-muted-foreground">
-                          Agreed Amount
-                        </p>
+                        <p className="text-sm font-medium text-muted-foreground">Agreed Amount</p>
                         <p className="text-2xl font-bold">
-                          {data.amountAgreed
-                            ? formatCurrency(data.amountAgreed)
-                            : "Pending"}
+                          {data.amountAgreed ? formatCurrency(data.amountAgreed) : "Pending"}
                         </p>
                       </div>
                     </div>
@@ -232,9 +198,7 @@ export default function FundingRequestDetail({
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Submission Date
-                      </p>
+                      <p className="text-sm font-medium text-muted-foreground">Submission Date</p>
                       <div className="text-base font-semibold flex items-center gap-2">
                         <Badge variant="outline" className="font-normal">
                           {format(new Date(data.createdAt), "MMMM d, yyyy")}
@@ -243,27 +207,19 @@ export default function FundingRequestDetail({
                     </div>
 
                     <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Expected Completion
-                      </p>
+                      <p className="text-sm font-medium text-muted-foreground">Expected Completion</p>
                       <div className="text-base font-semibold flex items-center gap-2">
                         <Badge variant="outline" className="font-normal">
-                          {format(
-                            new Date(data.expectedCompletionDate),
-                            "MMMM d, yyyy"
-                          )}
+                          {format(new Date(data.expectedCompletionDate), "MMMM d, yyyy")}
                         </Badge>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Duration
-                      </p>
+                      <p className="text-sm font-medium text-muted-foreground">Duration</p>
                       <p className="text-base font-semibold">
                         {Math.ceil(
-                          (new Date(data.expectedCompletionDate).getTime() -
-                            new Date(data.createdAt).getTime()) /
+                          (new Date(data.expectedCompletionDate).getTime() - new Date(data.createdAt).getTime()) /
                             (1000 * 60 * 60 * 24 * 30)
                         )}{" "}
                         months
@@ -315,9 +271,7 @@ export default function FundingRequestDetail({
                         <Building className="h-4 w-4 text-muted-foreground" />
                         Organization
                       </h3>
-                      <p className="font-semibold text-lg">
-                        {data.organization.name}
-                      </p>
+                      <p className="font-semibold text-lg">{data.organization.name}</p>
                       <p className="text-sm text-muted-foreground mt-1">
                         {data.organization.address}
                         <br />
@@ -361,15 +315,10 @@ export default function FundingRequestDetail({
                 <CardContent className="pt-4">
                   <div className="space-y-2">
                     {data.files.slice(0, 3).map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50"
-                      >
+                      <div key={index} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
                         <div className="flex items-center gap-2">
                           <FileIcon className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium truncate max-w-[180px]">
-                            {file.name || file.type}
-                          </span>
+                          <span className="text-sm font-medium truncate max-w-[180px]">{file.name || file.type}</span>
                         </div>
                         <Button variant="ghost" size="sm">
                           <ChevronRight className="h-4 w-4" />
@@ -378,11 +327,7 @@ export default function FundingRequestDetail({
                     ))}
 
                     {data.files.length > 3 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full mt-2"
-                      >
+                      <Button variant="outline" size="sm" className="w-full mt-2">
                         View All Documents
                       </Button>
                     )}
@@ -397,17 +342,10 @@ export default function FundingRequestDetail({
           <Card>
             <CardHeader>
               <CardTitle>Documents</CardTitle>
-              <CardDescription>
-                All documents related to this funding request
-              </CardDescription>
+              <CardDescription>All documents related to this funding request</CardDescription>
             </CardHeader>
             <CardContent>
-              <FileList
-                files={data.files}
-                organizationFiles={
-                  data.organization.Files ? data.organization.Files : []
-                }
-              />
+              <FileList files={data.files} organizationFiles={data.organization.Files ? data.organization.Files : []} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -416,44 +354,24 @@ export default function FundingRequestDetail({
           <Card>
             <CardHeader>
               <CardTitle>Organization Details</CardTitle>
-              <CardDescription>
-                Complete information about {data.organization.name}
-              </CardDescription>
+              <CardDescription>Complete information about {data.organization.name}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Basic Information</h3>
-                  <DetailItem
-                    label="Organization Name"
-                    value={data.organization.name}
-                  />
+                  <DetailItem label="Organization Name" value={data.organization.name} />
                   <DetailItem label="Tax ID" value={data.organization.taxID} />
-                  <DetailItem
-                    label="Registration Number"
-                    value={data.organization.taxID || "N/A"}
-                  />
-                  <DetailItem
-                    label="Website"
-                    value={data.organization.website || "N/A"}
-                  />
+                  <DetailItem label="Registration Number" value={data.organization.taxID || "N/A"} />
+                  <DetailItem label="Website" value={data.organization.website || "N/A"} />
                 </div>
 
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Address</h3>
-                  <DetailItem
-                    label="Street"
-                    value={data.organization.address}
-                  />
+                  <DetailItem label="Street" value={data.organization.address} />
                   <DetailItem label="City" value={data.organization.city} />
-                  <DetailItem
-                    label="Postal Code"
-                    value={data.organization.postalCode}
-                  />
-                  <DetailItem
-                    label="Country"
-                    value={data.organization.country}
-                  />
+                  <DetailItem label="Postal Code" value={data.organization.postalCode} />
+                  <DetailItem label="Country" value={data.organization.country} />
                 </div>
               </div>
             </CardContent>
