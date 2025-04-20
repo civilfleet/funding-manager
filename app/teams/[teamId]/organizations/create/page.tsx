@@ -1,6 +1,8 @@
 import OrganizationForm from "@/components/forms/organization";
 
-export default function Page() {
+export default async function Page({ params }: { params: Promise<{ teamId: string }> }) {
+  const { teamId } = await params;
+
   return (
     <div className="flex flex-col w-2/3 p-4">
       <OrganizationForm
@@ -19,6 +21,7 @@ export default function Page() {
           user: undefined,
           id: "",
           isFilledByOrg: false,
+          teamId: teamId,
         }}
       />
     </div>
