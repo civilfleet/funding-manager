@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import {
-  getFundingRequestById,
-  updateFundingRequest,
-} from "@/services/funding-request";
+import { getFundingRequestById, updateFundingRequest } from "@/services/funding-request";
 import { updateFundingRequestSchema } from "@/validations/funding-request";
 import { handlePrismaError } from "@/lib/utils";
 import { sendEmail } from "@/lib/nodemailer";
+import { getEmailTemplateByType } from "@/services/email-templates";
+import { EMAIL_TEMPLATES_TYPES } from "@/constants";
 
 export async function GET(
   _req: Request,
@@ -45,26 +44,36 @@ export async function PUT(
       ...fundingRequest,
     });
 
-    const response = await updateFundingRequest(
-      fundingRequestId,
-      validatedData,
-      fundingRequest.teamId as string
-    );
+    const response = await updateFundingRequest(fundingRequestId, validatedData, fundingRequest.teamId as string);
+    const status = response.status;
+    let emailTemplate;
+    if (status === "UnderReview") {
+      emailTemplate = await getEmailTemplateByType(
+        fundingRequest.teamId as string,
+        EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_ACCEPTED
+      );
+    } else if (status === "Rejected") {
+      emailTemplate = await getEmailTemplateByType(
+        fundingRequest.teamId as string,
+        EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_REJECTED
+      );
+    }
+    console.log(emailTemplate, "emailtemplates");
+
     sendEmail(
       {
         to: response?.organization?.email as string,
-        subject: `Funding Request Status Updated`,
+        subject: emailTemplate?.subject || `Funding Request Status Updated`,
         template: "funding-status-update",
+        content: emailTemplate?.content || "",
       },
       {
         organizationName: response?.organization?.name,
-
         requestName: response?.name,
         submittedDate: response?.createdAt,
         status: response.status,
-
         requestLink: `${process.env.NEXT_PUBLIC_BASE_URL}/organizations/funding-requests/${response?.id}`,
-        supportEmail: "support@partnerapp.com",
+        supportEmail: response?.organization?.team?.email,
         teamName: response?.organization?.team?.name,
       }
     );

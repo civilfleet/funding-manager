@@ -11,11 +11,7 @@ const transporter = nodemailer.createTransport({
 
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 const compileTemplate = (templateName: string, data: any) => {
-  const filePath = path.join(
-    process.cwd(),
-    "templates",
-    `${templateName}.handlebars`
-  );
+  const filePath = path.join(process.cwd(), "templates", `${templateName}.handlebars`);
   const source = fs.readFileSync(filePath, "utf-8");
   return handlebars.compile(source)(data);
 };
@@ -23,9 +19,16 @@ const compileTemplate = (templateName: string, data: any) => {
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 async function sendEmail(emailContent: EMAIL_CONTENT, data: any) {
   try {
-    const html = compileTemplate(emailContent.template, {
-      ...data,
-    });
+    let html;
+    if (!emailContent.content) {
+      html = compileTemplate(emailContent.template, {
+        ...data,
+      });
+    } else {
+      html = handlebars.compile(emailContent.content)(data);
+    }
+
+    console.log(data);
 
     const info = await transporter.sendMail({
       from: emailContent?.from ?? process.env.BREVO_SENDER_EMAIL,

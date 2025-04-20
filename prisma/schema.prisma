@@ -28,9 +28,11 @@ model Organization {
   fundingRequests         FundingRequest[]                
   Files                   File[]                    
   donationAgreements      DonationAgreement[]
+  
 
   createdAt               DateTime    @default(now()) @db.Timestamptz(6) 
   updatedAt               DateTime    @updatedAt @db.Timestamptz(6) 
+
 }
 
 
@@ -127,6 +129,8 @@ model Teams {
   donationAgreements DonationAgreement[]
   createdAt    DateTime        @default(now()) @db.Timestamptz(6)
   updatedAt    DateTime        @updatedAt @db.Timestamptz(6)
+
+  emailTemplates emailTemplates[]
 }
 
 model User {
@@ -184,4 +188,19 @@ model DonationAgreementSignature {
   user     User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([donationAgreementId, userId]) // Composite key to avoid duplicate signatures
+}
+
+
+model emailTemplates {
+  id String @id @default(uuid()) @unique
+  name String @db.VarChar(255)
+  subject String @db.VarChar(255)
+  content String @db.Text
+  type String @db.VarChar(255)
+  isActive Boolean @default(true)
+  teamId String?
+  team Teams? @relation( fields: [teamId],references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  
 }

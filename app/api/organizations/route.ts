@@ -1,12 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  createOrganizationSchema,
-  updateOrganizationSchema,
-} from "@/validations/organizations";
-import {
-  createOrUpdateOrganization,
-  getOrganizations,
-} from "@/services/organizations";
+import { createOrganizationSchema, updateOrganizationSchema } from "@/validations/organizations";
+import { createOrUpdateOrganization, getOrganizations } from "@/services/organizations";
 import { z } from "zod";
 import { sendEmail } from "@/lib/nodemailer";
 import { handlePrismaError } from "@/lib/utils";
@@ -27,24 +21,19 @@ export async function GET(req: Request) {
     );
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json(
-      { error: message },
-      { status: 400, statusText: message }
-    );
+    return NextResponse.json({ error: message }, { status: 400, statusText: message });
   }
 }
 
 export async function POST(req: Request) {
   try {
     const organizationData = await req.json();
-
+    console.log(organizationData, "organizationData");
     const validatedData = createOrganizationSchema
       .and(z.object({ teamId: z.string().uuid() }))
       .and(z.object({ isFilledByOrg: z.boolean() }))
       .parse({ ...organizationData });
-    const { organization, user } = await createOrUpdateOrganization(
-      validatedData
-    );
+    const { organization, user } = await createOrUpdateOrganization(validatedData);
 
     // if teamId is provided, it means the organization is created by a team
     if (organizationData.teamId) {
@@ -82,10 +71,8 @@ export async function POST(req: Request) {
     );
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json(
-      { error: message },
-      { status: 400, statusText: message }
-    );
+    console.log(message, "message");
+    return NextResponse.json({ error: message }, { status: 400, statusText: message });
   }
 }
 
@@ -105,9 +92,6 @@ export async function PUT(req: Request) {
     );
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json(
-      { error: message },
-      { status: 400, statusText: message }
-    );
+    return NextResponse.json({ error: message }, { status: 400, statusText: message });
   }
 }

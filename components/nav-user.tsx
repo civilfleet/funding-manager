@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronsUpDown, LogOut } from "lucide-react";
+import { ChevronsUpDown, LogOut, Settings } from "lucide-react";
+import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -64,7 +65,12 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-
+            <Link href="settings">
+              <DropdownMenuItem>
+                <Settings />
+                Settings
+              </DropdownMenuItem>
+            </Link>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => {

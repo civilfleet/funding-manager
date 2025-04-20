@@ -2,6 +2,8 @@ import { sendEmail } from "@/lib/nodemailer";
 import { handlePrismaError } from "@/lib/utils";
 import { updateFundingRequestStatus } from "@/services/funding-request";
 import { NextResponse } from "next/server";
+import { getEmailTemplateByType } from "@/services/email-templates";
+import { EMAIL_TEMPLATES_TYPES } from "@/constants";
 
 export async function PUT(
   req: Request,
@@ -20,6 +22,8 @@ export async function PUT(
 
     const fundingRequestData = await req.json();
     const teamId = fundingRequestData?.teamId;
+    console.log(teamId, "teamId");
+    console.log(fundingRequestData, "fundingRequestData");
     if (teamId) {
       const fundingRequest = await updateFundingRequestStatus(
         fundingRequestId,
@@ -27,11 +31,20 @@ export async function PUT(
         fundingRequestData?.donationId
       );
 
+      const status = fundingRequest?.status;
+      let emailTemplate;
+      if (status === "UnderReview") {
+        emailTemplate = await getEmailTemplateByType(teamId as string, EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_ACCEPTED);
+      } else if (status === "Rejected") {
+        emailTemplate = await getEmailTemplateByType(teamId as string, EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_REJECTED);
+      }
+
       sendEmail(
         {
           to: fundingRequest?.organization?.email as string,
-          subject: `Funding Request Status Updated`,
+          subject: emailTemplate?.subject || `Funding Request Status Updated`,
           template: "funding-status-update",
+          content: emailTemplate?.content || "",
         },
         {
           organizationName: fundingRequest?.organization?.name,

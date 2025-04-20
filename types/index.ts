@@ -177,4 +177,18 @@ export type EMAIL_CONTENT = {
   to: string;
   subject: string;
   template: string;
+  content?: string;
+};
+
+export type EmailTemplate = {
+  id?: string;
+  name: string;
+  content: string;
+  subject: string;
+  type: string;
+  teamId: string;
+  team?: Teams;
+  updatedAt?: Date;
+  createdAt?: Date;
+  isActive?: boolean;
 };
