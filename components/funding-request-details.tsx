@@ -29,12 +29,14 @@ import { type FundingRequest, type FundingStatus, Roles } from "./../types";
 import { StatusBadge } from "./helper/status-badge";
 import { FileList } from "./helper/file-list";
 import FundingRequestDetailsForm from "./forms/funding-request-detail-form";
+import { useRouter } from "next/navigation";
 
 import { useState } from "react";
 
 export default function FundingRequestDetail({ data, teamId }: { data: FundingRequest; teamId: string }) {
   const { toast } = useToast();
   const { data: session } = useSession();
+  const router = useRouter();
 
   const [isRejecting, setIsRejecting] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<FundingStatus>(data.status);
@@ -99,45 +101,77 @@ export default function FundingRequestDetail({ data, teamId }: { data: FundingRe
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Header Section */}
-      <div className={`p-6 rounded-lg border ${getStatusColor()} mb-8`}>
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">Funding Request</h1>
-              <StatusBadge status={currentStatus} />
+      <div className={`shadow-lg ${getStatusColor()} rounded-xl p-8 mb-8 bg-white dark:bg-gray-900`}>
+        <div className="space-y-8">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold tracking-tight">Funding Request</h1>
+                <StatusBadge status={currentStatus} />
+              </div>
+              <p className="text-muted-foreground flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Submitted on {format(new Date(data.createdAt), "MMMM d, yyyy")}
+              </p>
             </div>
-            <p className="text-muted-foreground mt-2 flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              Submitted on {format(new Date(data.createdAt), "MMMM d, yyyy")}
-            </p>
+
+            {currentStatus !== "Pending" && (
+              <div className="w-full lg:w-auto p-4 bg-muted/10 rounded-lg border border-muted/20">
+                <p className="text-sm font-medium text-muted-foreground">Agreed Amount</p>
+                <p className="text-2xl font-bold text-primary mt-1">
+                  {data.amountAgreed ? formatCurrency(data.amountAgreed) : "Not Set"}
+                </p>
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-3">
-            {showRejectButton && (
-              <Button variant="destructive" onClick={rejectRequest} disabled={isRejecting}>
-                {isRejecting ? (
-                  <>
-                    <span className="mr-2">Processing</span>
-                    <span className="animate-spin">
-                      <Clock className="h-4 w-4" />
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <AlertTriangle className="h-4 w-4 mr-2" />
-                    Reject Request
-                  </>
-                )}
-              </Button>
+          <div className="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
+            {currentStatus === "Pending" && (
+              <div className="w-full lg:w-1/2">
+                <FundingRequestDetailsForm data={data} isTeam={isTeam} />
+              </div>
             )}
 
-            {currentStatus === "Approved" && (
-              <Button variant="default">
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Transfer Funds
-              </Button>
-            )}
+            <div className="flex flex-wrap gap-3 justify-end">
+              {showRejectButton && (
+                <Button
+                  variant="destructive"
+                  onClick={rejectRequest}
+                  disabled={isRejecting}
+                  className="w-full sm:w-auto"
+                >
+                  {isRejecting ? (
+                    <>
+                      <span className="mr-2">Processing</span>
+                      <Clock className="h-4 w-4 animate-spin" />
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="h-4 w-4 mr-2" />
+                      Reject Request
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {currentStatus === "Approved" && (
+                <Button variant="default" className="w-full sm:w-auto">
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Transfer Funds
+                </Button>
+              )}
+
+              {currentStatus === "UnderReview" && (
+                <Button
+                  variant="outline"
+                  onClick={() => router.push(`/teams/${teamId}/donation-agreements/create?fundingRequestId=${data.id}`)}
+                  className="w-full sm:w-auto"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Create Donation Agreement
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -230,6 +264,7 @@ export default function FundingRequestDetail({ data, teamId }: { data: FundingRe
               </div>
 
               {/* Project Details Section */}
+
               <Card>
                 <CardHeader className="bg-muted/30">
                   <CardTitle className="flex items-center gap-2">
@@ -251,8 +286,6 @@ export default function FundingRequestDetail({ data, teamId }: { data: FundingRe
                   </SectionBlock>
                 </CardContent>
               </Card>
-
-              <FundingRequestDetailsForm data={data} isTeam={isTeam} />
             </div>
 
             {/* Right Column - Contact Information */}

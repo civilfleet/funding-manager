@@ -22,9 +22,7 @@ export default function FundingRequestDetailsForm({
   const isFundsTransferred = data.status === "FundsTransferred";
 
   const isFileMissing = (fileType: string) =>
-    !isTeam &&
-    isFundsTransferred &&
-    data.files.filter((file) => file.type === fileType).length === 0;
+    !isTeam && isFundsTransferred && data.files.filter((file) => file.type === fileType).length === 0;
 
   const showStatementForm = isFileMissing("STATEMENT");
   const showReportForm = isFileMissing("REPORT");
@@ -64,8 +62,8 @@ export default function FundingRequestDetailsForm({
   return (
     <>
       {isTeam && !["FundsTransferred", "Rejected"].includes(data.status) && (
-        <div className="flex flex-col items-end gap-2">
-          <h3 className="text-lg font-semibold">Offer Amount</h3>
+        <div className="flex flex-col items-start gap-2 ">
+          {/* <h3 className="text-lg font-semibold">Funding Amount</h3> */}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="flex items-center  align-middle ">
@@ -74,13 +72,14 @@ export default function FundingRequestDetailsForm({
                   placeholder="Amount to Offer"
                   type="number"
                   form={form}
+                  className="bg-white"
                 />
                 <Button
                   type="submit"
                   className="btn btn-primary align-bottom ml-2"
                   disabled={form.formState.isSubmitting}
                 >
-                  Save
+                  Accept Request
                 </Button>
               </div>
             </form>

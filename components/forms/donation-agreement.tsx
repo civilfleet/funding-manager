@@ -5,6 +5,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, AlertCircle, CheckCircle2, X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 import { Form } from "@/components/ui/form";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -25,6 +26,8 @@ import type { FundingRequest } from "@/types";
 
 export default function DonationAgreement({ teamId }: { teamId: string }) {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const fundingRequestId = searchParams.get("fundingRequestId");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +38,7 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
-      fundingRequestId: "",
+      fundingRequestId: fundingRequestId || "",
       agreement: "",
       file: "",
       user: "",
@@ -43,7 +46,7 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
   });
 
   // Watch changes to form fields
-  const fundingRequestId = useWatch({
+  const fundingRequestIdForm = useWatch({
     control: form.control,
     name: "fundingRequestId",
   });
@@ -67,7 +70,7 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
     setUsers(users.filter((u) => u !== userToRemove));
   };
 
-  // Fetch funding request details when fundingRequestId changes
+  // Fetch funding request details when component mounts or fundingRequestId changes
   useEffect(() => {
     if (!fundingRequestId) {
       setFundingRequestDetail(null);
@@ -87,6 +90,7 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
 
         const { data } = await response.json();
         setFundingRequestDetail(data);
+        form.setValue("fundingRequestId", fundingRequestId);
       } catch (error) {
         console.error("Error fetching funding request detail:", error);
         setError(error instanceof Error ? error.message : "Failed to load funding request details");
@@ -97,7 +101,7 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
     };
 
     fetchFundingRequestDetail();
-  }, [fundingRequestId]);
+  }, [fundingRequestId, form]);
 
   async function onSubmit(values: z.infer<typeof schema>) {
     if (users.length === 0) {
