@@ -62,6 +62,7 @@ export async function PUT(
       return NextResponse.json(
         {
           message: "success",
+          data: fundingRequest,
         },
         { status: 201 }
       );

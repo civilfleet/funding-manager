@@ -80,6 +80,7 @@ export async function PUT(
     return NextResponse.json(
       {
         message: "success",
+        data: response,
       },
       { status: 201 }
     );

@@ -15,9 +15,11 @@ const amountOfferSchema = z.object({
 export default function FundingRequestDetailsForm({
   data,
   isTeam,
+  onUpdate,
 }: {
   data: FundingRequest;
   isTeam: boolean | undefined;
+  onUpdate?: (updatedData: FundingRequest) => void;
 }) {
   const isFundsTransferred = data.status === "FundsTransferred";
 
@@ -44,18 +46,28 @@ export default function FundingRequestDetailsForm({
         },
         body: JSON.stringify({ ...values, status: "UnderReview" }),
       });
-      await response.json();
-      data.amountAgreed = values.amountAgreed;
+
+      if (!response.ok) {
+        throw new Error("Failed to update funding request");
+      }
+
+      const { data: updatedData } = await response.json();
+
+      if (onUpdate) {
+        console.log(updatedData, "updatedData===funding request details form");
+        onUpdate(updatedData);
+      }
 
       toast({
         title: "Success",
-        description: "Request Submitted Successfully. ",
+        description: "Request Submitted Successfully.",
         variant: "default",
       });
     } catch (e) {
       toast({
         title: "Error",
-        description: JSON.stringify(e),
+        description: e instanceof Error ? e.message : "An error occurred while updating the request",
+        variant: "destructive",
       });
     }
   }

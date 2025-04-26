@@ -77,7 +77,7 @@ export interface FundingRequest {
   status: FundingStatus;
   submittedById: string;
   submittedBy?: User;
-
+  donationAgreement?: DonationAgreement[];
   createdAt: Date;
   updatedAt: Date;
   files: File[];

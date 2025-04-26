@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  createFundingRequest,
-  getFundingRequests,
-} from "@/services/funding-request";
+import { createFundingRequest, getFundingRequests } from "@/services/funding-request";
 import { createFundingRequestSchema } from "@/validations/funding-request";
 import { z } from "zod";
 import { handlePrismaError } from "@/lib/utils";
@@ -21,11 +18,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ data: [] });
     }
 
-    const data = await getFundingRequests(
-      { teamId, orgId },
-      searchQuery,
-      status as FundingStatus[]
-    );
+    const data = await getFundingRequests({ teamId, orgId }, searchQuery, status as FundingStatus[]);
 
     return NextResponse.json(
       {
@@ -35,10 +28,7 @@ export async function GET(req: Request) {
     );
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json(
-      { error: message },
-      { status: 400, statusText: message }
-    );
+    return NextResponse.json({ error: message }, { status: 400, statusText: message });
   }
 }
 
@@ -54,9 +44,7 @@ export async function POST(req: Request) {
       )
       .parse(fundingRequestData);
 
-    const { fundingRequest, user, organization } = await createFundingRequest(
-      validatedData
-    );
+    const { fundingRequest, user, organization } = await createFundingRequest(validatedData);
 
     sendEmail(
       {
@@ -78,15 +66,13 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         message: "success",
+        data: fundingRequest,
       },
       { status: 201 }
     );
   } catch (e) {
     const { message } = handlePrismaError(e);
 
-    return NextResponse.json(
-      { error: message },
-      { status: 400, statusText: message }
-    );
+    return NextResponse.json({ error: message }, { status: 400, statusText: message });
   }
 }

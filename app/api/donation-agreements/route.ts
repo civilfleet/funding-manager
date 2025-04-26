@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 
 import { handlePrismaError } from "@/lib/utils";
 import { createDonationAgreementSchema } from "@/validations/donation-agreement";
-import {
-  createDonationAgreement,
-  getDonationAgreements,
-} from "@/services/donation-agreement";
+import { createDonationAgreement, getDonationAgreements } from "@/services/donation-agreement";
 import { omit } from "lodash";
 import { auth } from "@/auth";
 import { sendEmail } from "@/lib/nodemailer";
@@ -37,8 +34,7 @@ export async function POST(req: Request) {
     const session = await auth();
     const donationAgreement = await req.json();
 
-    const validatedData =
-      createDonationAgreementSchema.parse(donationAgreement);
+    const validatedData = createDonationAgreementSchema.parse(donationAgreement);
 
     const { agreement, users } = await createDonationAgreement(
       {
@@ -70,6 +66,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         message: "Donation agreement created successfully",
+        data: agreement,
       },
       { status: 201 }
     );

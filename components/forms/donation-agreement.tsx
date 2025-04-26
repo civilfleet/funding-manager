@@ -5,7 +5,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, AlertCircle, CheckCircle2, X } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 import { Form } from "@/components/ui/form";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -26,6 +26,7 @@ import type { FundingRequest } from "@/types";
 
 export default function DonationAgreement({ teamId }: { teamId: string }) {
   const { toast } = useToast();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const fundingRequestId = searchParams.get("fundingRequestId");
 
@@ -134,16 +135,16 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
         throw new Error(errorData?.message || `Failed to create donation agreement: ${response.statusText}`);
       }
 
+      const { data: createdAgreement } = await response.json();
+
       toast({
         title: "Donation Agreement Created",
         description: "The donation agreement has been successfully created",
         variant: "default",
       });
 
-      // Reset form and selected users
-      form.reset();
-      setUsers([]);
-      setFundingRequestDetail(null);
+      // Redirect to view page
+      router.push(`/teams/${teamId}/donation-agreements/${createdAgreement?.id}`);
     } catch (error) {
       setError(error instanceof Error ? error.message : "An unexpected error occurred");
       toast({

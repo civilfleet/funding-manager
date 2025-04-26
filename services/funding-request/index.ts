@@ -446,6 +446,11 @@ const getFundingRequestById = async (id: string) => {
           },
         },
       },
+      donationAgreement: {
+        select: {
+          id: true,
+        },
+      },
       submittedBy: {
         select: {
           id: true,

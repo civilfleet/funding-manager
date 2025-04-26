@@ -11,7 +11,7 @@ export default async function FundingRequest({ params }: { params: Promise<{ id:
   return (
     <div>
       <div className="container p-8">
-        <FundingRequestData fundingRequestId={id} teamId={teamId} />
+        <FundingRequestData fundingRequestId={id} teamId={teamId} organizationId={organizationId} />
       </div>
     </div>
   );
