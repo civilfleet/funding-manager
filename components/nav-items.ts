@@ -1,4 +1,4 @@
-import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users } from "lucide-react";
+import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users, Settings } from "lucide-react";
 
 export default {
   admin: [
@@ -42,6 +42,11 @@ export default {
       title: "Files",
       url: "files",
       icon: FolderOpen,
+    },
+    {
+      title: "Settings",
+      url: "settings",
+      icon: Settings,
     },
   ],
   organization: [

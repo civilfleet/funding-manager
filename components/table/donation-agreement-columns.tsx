@@ -11,6 +11,7 @@ import {
 import { DonationAgreement } from "@/types";
 import { truncate } from "lodash";
 import Link from "next/link";
+import { DonationAgreementStatusBadge } from "@/components/helper/status-badge";
 
 export const columns: ColumnDef<DonationAgreement>[] = [
   {
@@ -54,9 +55,7 @@ export const columns: ColumnDef<DonationAgreement>[] = [
     cell: ({ row }) => (
       <div className="text-left text-blue-500">
         {
-          <Link
-            href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${row.original.file?.id}`}
-          >
+          <Link href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${row.original.file?.id}`}>
             {row.original?.file?.type || "N/A"}
           </Link>
         }
@@ -64,33 +63,28 @@ export const columns: ColumnDef<DonationAgreement>[] = [
     ),
   },
   {
+    accessorKey: "status",
+    header: () => <div className="text-left w-36">Status</div>,
+    cell: ({ row }) => (
+      <div className="text-left">
+        <DonationAgreementStatusBadge
+          status={row.original.userSignatures.every((user) => user.signedAt) ? "completed" : "pending"}
+        />
+      </div>
+    ),
+  },
+  {
+    accessorKey: "createdBy",
+    header: () => <div className="text-left w-36">Created By</div>,
+    cell: ({ row }) => <div className="text-left">{row.original?.createdBy.email || "N/A"}</div>,
+  },
+  {
     accessorKey: "createdAt",
     header: () => <div className="text-left w-36">Created At</div>,
     cell: ({ row }) => (
       <div className="text-left">
-        {row.original?.createdAt
-          ? new Date(row.original.createdAt).toLocaleString()
-          : "N/A"}
+        {row.original?.createdAt ? new Date(row.original.createdAt).toLocaleString() : "N/A"}
       </div>
-    ),
-  },
-  {
-    accessorKey: "updatedAt",
-    header: () => <div className="text-left w-36">Updated At</div>,
-    cell: ({ row }) => (
-      <div className="text-left">
-        {row.original?.updatedAt
-          ? new Date(row.original.updatedAt).toLocaleString()
-          : "N/A"}
-      </div>
-    ),
-  },
-
-  {
-    accessorKey: "createdBy",
-    header: () => <div className="text-left w-36">Created By</div>,
-    cell: ({ row }) => (
-      <div className="text-left">{row.original?.createdBy.email || "N/A"}</div>
     ),
   },
 ];

@@ -27,3 +27,13 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
 
   return <Badge className={`${colorClass} text-white`}>{status}</Badge>;
 };
+
+interface DonationAgreementStatusBadgeProps {
+  status: "completed" | "pending";
+}
+
+export const DonationAgreementStatusBadge: React.FC<DonationAgreementStatusBadgeProps> = ({ status }) => {
+  const colorClass = status === "completed" ? "bg-green-500" : "bg-gray-500"; // Default to gray if status is unknown
+
+  return <Badge className={`${colorClass} text-white`}>{status}</Badge>;
+};
