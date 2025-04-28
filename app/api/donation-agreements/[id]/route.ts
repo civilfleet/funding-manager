@@ -35,8 +35,12 @@ export async function PUT(
     const updatedDonationAgreement = await req.json();
     const session = await auth();
 
-    await updateDonationAgreement(donationAgreementId, updatedDonationAgreement, session?.user.userId as string);
-    return NextResponse.json({ data: "" }, { status: 200 });
+    const response = await updateDonationAgreement(
+      donationAgreementId,
+      updatedDonationAgreement,
+      session?.user.userId as string
+    );
+    return NextResponse.json({ data: response.data, message: response.message }, { status: 200 });
   } catch (e) {
     const handledError = handlePrismaError(e);
     return NextResponse.json({ error: handledError.message }, { status: 400 });

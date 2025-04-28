@@ -57,8 +57,8 @@ enum FundingStatus {
   UnderReview
   Processing
   Approved
+  Signed
   FundsTransferred
-  Rejected
 }
 model FundingRequest {
   id                        String    @id @default(uuid()) @unique   

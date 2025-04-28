@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { FundingStatus } from "@/types";
 
 type CreateTransaction = {
   amount: number;
@@ -46,6 +47,7 @@ const createTransaction = async (transaction: CreateTransaction) => {
     },
     data: {
       remainingAmount: transaction.remainingAmount,
+      ...(transaction.remainingAmount === 0 && { status: FundingStatus.FundsTransferred }),
     },
   });
 

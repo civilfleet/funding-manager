@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createUserSchema } from "@/validations/organizations";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -15,11 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-export default function UserForm() {
-  const params = useParams();
-
-  const teamId = params?.teamId ? params?.teamId : "";
-  const organizationId = params?.organizationId ? params.organizationId : "";
+export default function UserForm({ teamId, organizationId }: { teamId: string; organizationId: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const form = useForm<z.infer<typeof createUserSchema>>({
@@ -60,7 +56,12 @@ export default function UserForm() {
       });
 
       form.reset();
-      router.push(`teams/${teamId}/users`);
+
+      if (teamId) {
+        router.push(`/teams/${teamId}/users`);
+      } else if (organizationId) {
+        router.push(`/organizations/${organizationId}/users`);
+      }
     } catch (error) {
       toast({
         title: "Error creating user",

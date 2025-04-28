@@ -35,7 +35,7 @@ export default function FundingRequestHeader({
   const [isRejecting, setIsRejecting] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<FundingStatus>(data?.status);
 
-  const showRejectButton = isTeam && !["FundsTransferred", "Rejected"].includes(currentStatus);
+  const showRejectButton = isTeam && !["FundsTransferred", "Rejected", "Approved"].includes(currentStatus);
 
   const statusColors = {
     Pending: "bg-amber-50 border-amber-200",
@@ -169,7 +169,7 @@ export default function FundingRequestHeader({
                 View Donation Agreement
               </Button>
             )}
-            <CreateTransaction fundingRequest={data} />
+            {currentStatus === "Approved" && <CreateTransaction fundingRequest={data} />}
           </div>
         </div>
       </div>

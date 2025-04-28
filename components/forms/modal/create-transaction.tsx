@@ -45,7 +45,7 @@ export default function CreateTransaction({
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRequestData, setSelectedRequestData] = useState<FundingRequest | null>(fundingRequest || null);
-  const [remainingAmount, setRemainingAmount] = useState<number>(0);
+  const [remainingAmount, setRemainingAmount] = useState<number>(fundingRequest?.remainingAmount || 0);
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -66,7 +66,7 @@ export default function CreateTransaction({
       const { data } = await response.json();
       console.log("data", data);
       setSelectedRequestData(data);
-      setRemainingAmount(data.amountAgreed || 0);
+      setRemainingAmount(data.remainingAmount || 0);
     } catch (error) {
       console.error("Error fetching funding request detail:", error);
       toast({
@@ -91,7 +91,7 @@ export default function CreateTransaction({
   // Update remaining amount when amount changes
   const updateRemainingAmount = (amount: number) => {
     if (selectedRequestData) {
-      const baseRemaining = (selectedRequestData.amountAgreed || 0) - amount;
+      const baseRemaining = (selectedRequestData.remainingAmount || 0) - amount;
       setRemainingAmount(baseRemaining);
     }
   };
@@ -109,14 +109,6 @@ export default function CreateTransaction({
         });
         return;
       }
-      console.log("remainingAmount", {
-        fundingRequestId: data.fundingRequestId,
-        amount: data.amount,
-        organizationId: selectedRequestData.organization?.id,
-        teamId: selectedRequestData.organization?.teamId,
-        totalAmount: selectedRequestData.amountAgreed,
-        remainingAmount: remainingAmount,
-      });
 
       // Validate amount doesn't exceed available funds
       const availableAmount = selectedRequestData.amountAgreed || 0;

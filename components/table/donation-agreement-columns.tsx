@@ -53,13 +53,15 @@ export const columns: ColumnDef<DonationAgreement>[] = [
   {
     accessorKey: "status",
     header: () => <div className="text-left w-36">Status</div>,
-    cell: ({ row }) => (
-      <div className="text-left">
-        <DonationAgreementStatusBadge
-          status={row.original.userSignatures.every((user) => user.signedAt) ? "completed" : "pending"}
-        />
-      </div>
-    ),
+    cell: ({ row }) => {
+      const signed = row.original.userSignatures.every((user) => user.signedAt);
+
+      return (
+        <div className="text-left">
+          <DonationAgreementStatusBadge status={signed ? "completed" : "pending"} />
+        </div>
+      );
+    },
   },
   {
     accessorKey: "createdBy",

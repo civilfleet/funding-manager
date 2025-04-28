@@ -117,6 +117,12 @@ export default function FundingRequestDetail({
                           {currentData.amountAgreed ? formatCurrency(currentData.amountAgreed) : "Pending"}
                         </p>
                       </div>
+                      <div className="p-4 bg-muted/30 rounded-md">
+                        <p className="text-sm font-medium text-muted-foreground">Remaining Amount</p>
+                        <p className="text-2xl font-bold">
+                          {currentData.remainingAmount ? formatCurrency(currentData.remainingAmount) : "Pending"}
+                        </p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

@@ -141,6 +141,7 @@ const getDonationAgreements = async ({ teamId, orgId }: { teamId: string; orgId:
               email: true,
             },
           },
+          signedAt: true,
         },
       },
       file: {
@@ -255,7 +256,7 @@ const updateDonationAgreement = async (id: string, updatedDonationAgreement: Don
 
   await deleteFile(donation?.file.url as string);
 
-  return { message: "Donation agreement updated successfully" };
+  return { data: donation, message: "Donation agreement updated successfully" };
 };
 
 const getDonationAgreementPastSevenDays = async () => {

@@ -59,14 +59,11 @@ const FileUpload = ({ onFileUpload, placeholder, name, data, error, disabled = f
         disabled={disabled}
       />
 
-      <a
-        href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${fileUrl}` || ""}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500"
-      >
-        {loading ? <Loader className="text-gray-950" /> : fileUrl && <SquareArrowOutUpRight className="size-4" />}
-      </a>
+      {loading && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <Loader className="text-gray-950" />
+        </div>
+      )}
 
       {error && <p className="text-red-500 text-xs ">{error}</p>}
     </div>
