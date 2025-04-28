@@ -158,13 +158,7 @@ const getUsers = async (
   });
 };
 
-const getUsersForDonation = async ({
-  teamId,
-  fundingRequestId,
-}: {
-  teamId: string;
-  fundingRequestId: string;
-}) => {
+const getUsersForDonation = async ({ teamId, fundingRequestId }: { teamId: string; fundingRequestId: string }) => {
   const fundingRequest = await prisma.fundingRequest.findUnique({
     where: { id: fundingRequestId },
     select: { organizationId: true },
@@ -172,10 +166,7 @@ const getUsersForDonation = async ({
 
   return await prisma.user.findMany({
     where: {
-      OR: [
-        { organizations: { some: { id: fundingRequest?.organizationId } } },
-        { teams: { some: { id: teamId } } },
-      ],
+      OR: [{ organizations: { some: { id: fundingRequest?.organizationId } } }, { teams: { some: { id: teamId } } }],
     },
     orderBy: { createdAt: "desc" },
   });
@@ -243,21 +234,21 @@ const deleteUser = async (userId: string, organizationId?: string, teamId?: stri
         where: { id: userId },
         data: {
           organizations: {
-            disconnect: { id: organizationId }
-          }
-        }
+            disconnect: { id: organizationId },
+          },
+        },
       });
     }
-    
+
     if (teamId) {
       // Remove user from team
       await prisma.user.update({
         where: { id: userId },
         data: {
           teams: {
-            disconnect: { id: teamId }
-          }
-        }
+            disconnect: { id: teamId },
+          },
+        },
       });
     }
 

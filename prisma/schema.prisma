@@ -59,6 +59,7 @@ enum FundingStatus {
   Approved
   Signed
   FundsTransferred
+  Rejected
 }
 model FundingRequest {
   id                        String    @id @default(uuid()) @unique   

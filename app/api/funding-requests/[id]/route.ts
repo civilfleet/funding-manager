@@ -58,7 +58,6 @@ export async function PUT(
         EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_REJECTED
       );
     }
-    console.log(emailTemplate, "emailtemplates");
 
     sendEmail(
       {
