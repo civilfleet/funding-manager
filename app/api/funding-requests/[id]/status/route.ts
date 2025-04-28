@@ -22,8 +22,7 @@ export async function PUT(
 
     const fundingRequestData = await req.json();
     const teamId = fundingRequestData?.teamId;
-    console.log(teamId, "teamId");
-    console.log(fundingRequestData, "fundingRequestData");
+
     if (teamId) {
       const fundingRequest = await updateFundingRequestStatus(
         fundingRequestId,

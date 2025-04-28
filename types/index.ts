@@ -71,6 +71,7 @@ export interface FundingRequest {
   purpose: string;
   amountRequested: number;
   amountAgreed?: number;
+  remainingAmount?: number;
   refinancingConcept: string;
   sustainability: string;
   expectedCompletionDate: Date;
@@ -144,6 +145,7 @@ export enum FileTypes {
   DONATION_AGREEMENT = "DONATION_AGREEMENT",
   DONATION_RECEIPT = "DONATION_RECEIPT",
   STATEMENT = "STATEMENT",
+  TRANSACTION_RECEIPT = "TRANSACTION_RECEIPT",
 }
 
 export type DonationAgreementSignature = {
@@ -191,4 +193,20 @@ export type EmailTemplate = {
   updatedAt?: Date;
   createdAt?: Date;
   isActive?: boolean;
+};
+
+export type Transaction = {
+  id: string;
+  amount: number;
+  totalAmount: number;
+  remainingAmount: number;
+  transactionReciept?: string;
+  fundingRequestId: string;
+  fundingRequest?: FundingRequest;
+  organizationId: string;
+  organization?: Organization;
+  teamId: string;
+  team?: Teams;
+  createdAt: Date;
+  updatedAt: Date;
 };

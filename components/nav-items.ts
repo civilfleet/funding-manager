@@ -43,6 +43,12 @@ export default {
       url: "files",
       icon: FolderOpen,
     },
+
+    {
+      title: "Transactions",
+      url: "transactions",
+      icon: Scroll,
+    },
     {
       title: "Settings",
       url: "settings",
@@ -77,6 +83,11 @@ export default {
       title: "Files",
       url: "files",
       icon: FolderOpen,
+    },
+    {
+      title: "Transactions",
+      url: "transactions",
+      icon: Scroll,
     },
   ],
 };

@@ -44,7 +44,7 @@ export default function FundingRequestDetailsForm({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ...values, status: "UnderReview" }),
+        body: JSON.stringify({ ...values, status: "UnderReview", remainingAmount: values.amountAgreed }),
       });
 
       if (!response.ok) {
@@ -102,12 +102,14 @@ export default function FundingRequestDetailsForm({
       )}
 
       {showReceiptForm && (
-        <FundingRequestPostData
-          title="Upload Receipt"
-          description="Upload the receipt after the funds have been transferred in 7 days."
-          type={"DONATION_RECEIPT" as FileTypes}
-          fundingRequestId={data.id}
-        />
+        <div className="mt-6 p-4 border rounded-lg bg-blue-50">
+          <FundingRequestPostData
+            title="Upload Receipt"
+            description="Please upload the receipt to confirm the funds transfer. This is required within 7 days of the transfer."
+            type={"DONATION_RECEIPT" as FileTypes}
+            fundingRequestId={data.id}
+          />
+        </div>
       )}
 
       {showReportForm && (

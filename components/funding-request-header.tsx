@@ -8,11 +8,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Clock, AlertTriangle, CheckCircle2, FileText } from "lucide-react";
 
-import { StatusBadge } from "./helper/status-badge";
-import FundingRequestDetailsForm from "./forms/funding-request-detail-form";
-import formatCurrency from "./helper/format-currency";
+import { StatusBadge } from "@/components/helper/status-badge";
+import FundingRequestDetailsForm from "@/components/forms/funding-request-detail-form";
+import formatCurrency from "@/components/helper/format-currency";
 
-import { type FundingRequest, type FundingStatus } from "../types";
+import { type FundingRequest, type FundingStatus } from "@/types";
+import CreateTransaction from "@/components/forms/modal/create-transaction";
 
 interface FundingRequestHeaderProps {
   data: FundingRequest;
@@ -29,7 +30,6 @@ export default function FundingRequestHeader({
   isTeam,
   onUpdate,
 }: FundingRequestHeaderProps) {
-  console.log(data, "funding request data");
   const router = useRouter();
   const { toast } = useToast();
   const [isRejecting, setIsRejecting] = useState(false);
@@ -169,6 +169,7 @@ export default function FundingRequestHeader({
                 View Donation Agreement
               </Button>
             )}
+            <CreateTransaction fundingRequest={data} />
           </div>
         </div>
       </div>

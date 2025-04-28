@@ -121,8 +121,11 @@ const getDonationAgreements = async ({ teamId, orgId }: { teamId: string; orgId:
     where["teamId"] = teamId;
   }
   if (searchQuery) {
-    where["purpose"] = {
-      contains: searchQuery,
+    where["fundingRequest"] = {
+      name: {
+        contains: searchQuery,
+        mode: "insensitive",
+      },
     };
   }
   const donationAgreements = await prisma.donationAgreement.findMany({

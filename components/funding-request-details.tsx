@@ -24,6 +24,7 @@ import { FileList } from "./helper/file-list";
 // Types
 import { type FundingRequest, type FundingStatus, Roles } from "./../types";
 import FundingRequestHeader from "./funding-request-header";
+import TransactionTable from "@/components/table/transaction-table";
 
 export default function FundingRequestDetail({
   data,
@@ -72,6 +73,7 @@ export default function FundingRequestDetail({
           <TabsTrigger value="details">Request Details</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="organization">Organization</TabsTrigger>
+          <TabsTrigger value="transactions">Transactions</TabsTrigger>
         </TabsList>
 
         {/* Details Tab */}
@@ -299,6 +301,17 @@ export default function FundingRequestDetail({
                   <DetailItem label="Country" value={currentData.organization.country} />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="transactions">
+          <Card>
+            <CardHeader>
+              <CardTitle>Transactions</CardTitle>
+              <CardDescription>All transactions related to this funding request</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TransactionTable fundingRequestId={currentData.id} />
             </CardContent>
           </Card>
         </TabsContent>

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { SquareArrowOutUpRight } from "lucide-react";
-import { Loader } from "./helper/loader";
+import { Loader } from "@/components/helper/loader";
 
 interface FileUploadProps {
   onFileUpload: (fileUrl: string) => void;
@@ -13,19 +13,10 @@ interface FileUploadProps {
   disabled?: boolean;
 }
 
-const FileUpload = ({
-  onFileUpload,
-  placeholder,
-  name,
-  data,
-  error,
-  disabled = false,
-}: FileUploadProps) => {
+const FileUpload = ({ onFileUpload, placeholder, name, data, error, disabled = false }: FileUploadProps) => {
   const [fileUrl, setFileUrl] = useState<string | null>(data || null);
   const [loading, setLoading] = useState(false);
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setLoading(true);
     const file = event.target.files && event.target.files[0];
     if (!file) return;
@@ -74,11 +65,7 @@ const FileUpload = ({
         rel="noopener noreferrer"
         className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500"
       >
-        {loading ? (
-          <Loader className="text-gray-950" />
-        ) : (
-          fileUrl && <SquareArrowOutUpRight className="size-4" />
-        )}
+        {loading ? <Loader className="text-gray-950" /> : fileUrl && <SquareArrowOutUpRight className="size-4" />}
       </a>
 
       {error && <p className="text-red-500 text-xs ">{error}</p>}

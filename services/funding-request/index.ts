@@ -133,6 +133,7 @@ const updateFundingRequest = async (id: string, data: Partial<FundingRequestData
         refinancingConcept: true,
         sustainability: true,
         expectedCompletionDate: true,
+        remainingAmount: true,
         status: true,
         createdAt: true,
         updatedAt: true,
@@ -322,6 +323,7 @@ const getFundingRequests = async (
       refinancingConcept: true,
       sustainability: true,
       expectedCompletionDate: true,
+      remainingAmount: true,
       status: true,
       createdAt: true,
       updatedAt: true,
@@ -369,6 +371,7 @@ const getFundingRequestsByOrgId = async (searchQuery: string) => {
       refinancingConcept: true,
       sustainability: true,
       expectedCompletionDate: true,
+      remainingAmount: true,
       status: true,
       createdAt: true,
       updatedAt: true,
@@ -412,10 +415,12 @@ const getFundingRequestById = async (id: string) => {
       refinancingConcept: true,
       sustainability: true,
       expectedCompletionDate: true,
+      remainingAmount: true,
       status: true,
       createdAt: true,
       updatedAt: true,
       files: true,
+      organizationId: true,
       organization: {
         select: {
           id: true,
@@ -428,6 +433,7 @@ const getFundingRequestById = async (id: string) => {
           country: true,
           website: true,
           taxID: true,
+          teamId: true,
           Files: {
             select: {
               id: true,

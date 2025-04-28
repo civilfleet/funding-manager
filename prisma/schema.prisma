@@ -33,6 +33,8 @@ model Organization {
   createdAt               DateTime    @default(now()) @db.Timestamptz(6) 
   updatedAt               DateTime    @updatedAt @db.Timestamptz(6) 
 
+
+  Transaction Transaction[]
 }
 
 
@@ -67,6 +69,7 @@ model FundingRequest {
   purpose                   String       @db.Text
   amountRequested           Decimal                                 
   amountAgreed              Decimal?                              
+  remainingAmount           Decimal?    
   refinancingConcept        String       @db.Text
   sustainability            String       @db.Text
   expectedCompletionDate    DateTime                               
@@ -79,7 +82,7 @@ model FundingRequest {
   teamId                    String?
   team                      Teams? @relation(fields: [teamId], references: [id])
   donationAgreement         DonationAgreement[]
-
+  Transaction Transaction[]
 }
 
 model File {
@@ -100,6 +103,8 @@ model File {
   FundingRequest FundingRequest? @relation(fields: [fundingRequestId], references: [id])
   donationAgreement DonationAgreement[]
 
+
+  Transaction Transaction[]
 }
 
 enum Roles {
@@ -131,6 +136,8 @@ model Teams {
   updatedAt    DateTime        @updatedAt @db.Timestamptz(6)
 
   emailTemplates emailTemplates[]
+
+  Transaction Transaction[]
 }
 
 model User {
@@ -203,4 +210,26 @@ model emailTemplates {
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @db.Timestamptz(6)
   
+}
+
+
+
+
+model Transaction {
+  id String @id @default(uuid()) @unique
+  amount Decimal
+  totalAmount Decimal
+  remainingAmount Decimal
+  transactionReciept String? 
+  fundingRequestId String
+  fundingRequest FundingRequest @relation(fields: [fundingRequestId], references: [id])
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id])
+  teamId String
+  
+  team Teams @relation(fields: [teamId], references: [id])  
+  file File? @relation(fields: [transactionReciept], references: [id], onDelete: SetNull, onUpdate: SetNull)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
 }

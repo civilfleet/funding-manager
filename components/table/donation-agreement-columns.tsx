@@ -49,19 +49,7 @@ export const columns: ColumnDef<DonationAgreement>[] = [
       </div>
     ),
   },
-  {
-    accessorKey: "type",
-    header: () => <div className="text-left w-36">Type</div>,
-    cell: ({ row }) => (
-      <div className="text-left text-blue-500">
-        {
-          <Link href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${row.original.file?.id}`}>
-            {row.original?.file?.type || "N/A"}
-          </Link>
-        }
-      </div>
-    ),
-  },
+
   {
     accessorKey: "status",
     header: () => <div className="text-left w-36">Status</div>,

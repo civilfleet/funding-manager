@@ -37,48 +37,35 @@ export const columns: ColumnDef<FundingRequest>[] = [
   {
     accessorKey: "name",
     header: () => <div className="text-left w-36">Funding Request</div>,
-    cell: ({ row }) => (
-      <div className="text-left">{row.original?.name || "N/A"}</div>
-    ),
+    cell: ({ row }) => <div className="text-left">{row.original?.name || "N/A"}</div>,
   },
   {
     accessorKey: "organization.name",
     header: () => <div className="text-left w-36">Organization</div>,
-    cell: ({ row }) => (
-      <div className="text-left">
-        {row.original?.organization?.name || "N/A"}
-      </div>
-    ),
+    cell: ({ row }) => <div className="text-left">{row.original?.organization?.name || "N/A"}</div>,
   },
 
-  {
-    accessorKey: "amountRequested",
-    header: () => <div className="text-left w-32">Amount Requested</div>,
-    cell: ({ row }) => (
-      <div className="text-left">
-        ${row.getValue("amountRequested")?.toLocaleString()}
-      </div>
-    ),
-  },
   {
     accessorKey: "amountAgreed",
     header: () => <div className="text-left w-32">Amount Agreed</div>,
     cell: ({ row }) => {
       const amount = row.getValue("amountAgreed");
-      return (
-        <div className="text-left">
-          {amount ? `$${amount.toLocaleString()}` : "Pending"}
-        </div>
-      );
+      return <div className="text-left">{amount ? `€ ${amount.toLocaleString()}` : "€ 0"}</div>;
+    },
+  },
+  {
+    accessorKey: "remainingAmount",
+    header: () => <div className="text-left w-32">Remaining Amount</div>,
+    cell: ({ row }) => {
+      const remainingAmount = row.getValue("remainingAmount");
+      return <div className="text-left">{remainingAmount ? `€ ${remainingAmount.toLocaleString()}` : "€ 0"}</div>;
     },
   },
   {
     accessorKey: "expectedCompletionDate",
     header: () => <div className="text-left w-36">Completion Date</div>,
     cell: ({ row }) => (
-      <div className="text-left">
-        {new Date(row.getValue("expectedCompletionDate")).toLocaleDateString()}
-      </div>
+      <div className="text-left">{new Date(row.getValue("expectedCompletionDate")).toLocaleDateString()}</div>
     ),
   },
   {
@@ -94,10 +81,6 @@ export const columns: ColumnDef<FundingRequest>[] = [
   {
     accessorKey: "createdAt",
     header: () => <div className="text-left w-32">Created At</div>,
-    cell: ({ row }) => (
-      <div className="text-left">
-        {new Date(row.getValue("createdAt"))?.toLocaleDateString()}
-      </div>
-    ),
+    cell: ({ row }) => <div className="text-left">{new Date(row.getValue("createdAt"))?.toLocaleDateString()}</div>,
   },
 ];
