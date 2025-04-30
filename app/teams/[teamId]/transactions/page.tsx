@@ -1,7 +1,5 @@
+import CreateTransaction from "@/components/forms/modal/create-transaction";
 import TransactionTable from "@/components/table/transaction-table";
-
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 interface PageProps {
   params: Promise<{
@@ -17,9 +15,7 @@ export default async function Page({ params }: PageProps) {
     <div className="p-4">
       <div className="flex justify-between">
         <h1 className="text-2xl  my-2">Transactions</h1>
-        <Link href="transactions/create">
-          <Button type="button">Create New</Button>
-        </Link>
+        <CreateTransaction teamId={teamId} />
       </div>
       <TransactionTable teamId={teamId} organizationId={organizationId} />
     </div>
