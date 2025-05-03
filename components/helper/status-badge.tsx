@@ -1,13 +1,5 @@
 import { Badge } from "@/components/ui/badge"; // Adjust the import path based on your project structure
-
-enum FundingStatus {
-  Pending = "Pending",
-  UnderReview = "UnderReview",
-  Processing = "Processing",
-  Approved = "Approved",
-  FundsTransferred = "FundsTransferred",
-  Rejected = "Rejected",
-}
+import { FundingStatus } from "@/types";
 
 interface StatusBadgeProps {
   status: FundingStatus;

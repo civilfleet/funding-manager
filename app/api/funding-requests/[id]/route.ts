@@ -5,6 +5,7 @@ import { handlePrismaError } from "@/lib/utils";
 import { sendEmail } from "@/lib/nodemailer";
 import { getEmailTemplateByType } from "@/services/email-templates";
 import { EMAIL_TEMPLATES_TYPES } from "@/constants";
+import { FundingStatus } from "@/types";
 
 export async function GET(
   _req: Request,
@@ -47,12 +48,12 @@ export async function PUT(
     const response = await updateFundingRequest(fundingRequestId, validatedData, fundingRequest.teamId as string);
     const status = response.status;
     let emailTemplate;
-    if (status === "UnderReview") {
+    if (status === FundingStatus.UnderReview) {
       emailTemplate = await getEmailTemplateByType(
         fundingRequest.teamId as string,
         EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_ACCEPTED
       );
-    } else if (status === "Rejected") {
+    } else if (status === FundingStatus.Rejected) {
       emailTemplate = await getEmailTemplateByType(
         fundingRequest.teamId as string,
         EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_REJECTED

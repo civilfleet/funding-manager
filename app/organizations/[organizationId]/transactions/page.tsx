@@ -16,9 +16,6 @@ export default async function Page({ params }: PageProps) {
     <div className="p-4">
       <div className="flex justify-between">
         <h1 className="text-2xl  my-2">Transactions</h1>
-        <Link href="transactions/create">
-          <Button type="button">Create New</Button>
-        </Link>
       </div>
       <TransactionTable teamId={teamId} organizationId={organizationId} />
     </div>

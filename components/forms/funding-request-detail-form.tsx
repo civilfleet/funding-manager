@@ -1,5 +1,5 @@
 import { toast } from "@/hooks/use-toast";
-import { FileTypes, FundingRequest } from "@/types";
+import { FileTypes, FundingRequest, FundingStatus } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -7,21 +7,27 @@ import FormInputControl from "@/components/helper/form-input-control";
 import { Button } from "@/components/ui/button";
 import FundingRequestPostData from "@/components/forms/funding-request-post-data";
 import { Form } from "@/components/ui/form";
-
+import { useEffect, useState } from "react";
 const amountOfferSchema = z.object({
   amountAgreed: z.coerce.number(),
 });
 
 export default function FundingRequestDetailsForm({
-  data,
+  fundingRequest,
   isTeam,
   refreshData,
 }: {
-  data: FundingRequest;
+  fundingRequest: FundingRequest;
   isTeam: boolean | undefined;
   refreshData?: () => void;
 }) {
-  const isFundsTransferred = data.status === "FundsTransferred";
+  const [data, setData] = useState<FundingRequest>(fundingRequest);
+
+  useEffect(() => {
+    setData(fundingRequest);
+  }, [fundingRequest]);
+
+  const isFundsTransferred = data.status === FundingStatus.FundsTransferred;
 
   const isFileMissing = (fileType: string) =>
     !isTeam && isFundsTransferred && data.files.filter((file) => file.type === fileType).length === 0;
@@ -51,10 +57,9 @@ export default function FundingRequestDetailsForm({
         throw new Error("Failed to update funding request");
       }
 
-      const { data: updatedData } = await response.json();
+      await response.json();
 
       if (refreshData) {
-        console.log(updatedData, "updatedData===funding request details form");
         refreshData();
       }
 
@@ -73,7 +78,7 @@ export default function FundingRequestDetailsForm({
   }
   return (
     <>
-      {isTeam && !["FundsTransferred", "Rejected"].includes(data.status) && (
+      {isTeam && ![FundingStatus.FundsTransferred, FundingStatus.Rejected].includes(data.status) && (
         <div className="flex flex-col items-start gap-2 ">
           {/* <h3 className="text-lg font-semibold">Funding Amount</h3> */}
           <Form {...form}>

@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DataSelectBox } from "../helper/data-select-box";
 import FileUpload from "../file-uploader";
 import FundingRequestDetail from "../funding-request-details";
-import type { FundingRequest } from "@/types";
+import { FundingStatus, type FundingRequest } from "@/types";
 
 export default function DonationAgreement({ teamId }: { teamId: string }) {
   const { toast } = useToast();
@@ -189,7 +189,7 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
                   <div className="space-y-2">
                     <DataSelectBox
                       targetKey="id"
-                      url={`/api/funding-requests/?teamId=${teamId}&status=UnderReview`}
+                      url={`/api/funding-requests/?teamId=${teamId}&status=${FundingStatus.UnderReview}`}
                       attribute="name"
                       label="Select Funding Request"
                       value={field.value}

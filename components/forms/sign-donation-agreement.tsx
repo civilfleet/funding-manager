@@ -37,7 +37,7 @@ export default function SignDonationAgreement({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
 
-  const approved = data.fundingRequest?.status === "Approved";
+  const approved = data.fundingRequest?.status === FundingStatus.Approved;
   const signaturesCompleted = data.userSignatures.every((signature) => signature?.signedAt);
 
   const form = useForm<z.infer<typeof schema>>({

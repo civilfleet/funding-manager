@@ -1,3 +1,4 @@
+import { FundingStatus } from "@/types";
 import { z } from "zod";
 
 const createFundingRequestSchema = z.object({
@@ -12,7 +13,7 @@ const createFundingRequestSchema = z.object({
   expectedCompletionDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format.",
   }),
-  status: z.enum(["Pending", "UnderReview", "Approved", "Rejected"]),
+  status: z.enum([FundingStatus.Pending, FundingStatus.UnderReview, FundingStatus.Approved, FundingStatus.Rejected]),
   files: z.array(
     z.object({
       name: z.string(),

@@ -20,6 +20,7 @@ import { createFundingRequestSchema } from "@/validations/funding-request";
 import { useToast } from "@/hooks/use-toast";
 import FileUpload from "../file-uploader";
 import { useRouter } from "next/navigation";
+import { FundingStatus } from "@/types";
 
 export default function FundingRequest({ organizationId }: { organizationId: string }) {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function FundingRequest({ organizationId }: { organizationId: str
       refinancingConcept: "",
       sustainability: "",
       expectedCompletionDate: "",
-      status: "Pending",
+      status: FundingStatus.Pending,
       files: [
         {
           name: "",

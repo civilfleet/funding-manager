@@ -4,6 +4,7 @@ import { updateFundingRequestStatus } from "@/services/funding-request";
 import { NextResponse } from "next/server";
 import { getEmailTemplateByType } from "@/services/email-templates";
 import { EMAIL_TEMPLATES_TYPES } from "@/constants";
+import { FundingStatus } from "@/types";
 
 export async function PUT(
   req: Request,
@@ -32,9 +33,9 @@ export async function PUT(
 
       const status = fundingRequest?.status;
       let emailTemplate;
-      if (status === "UnderReview") {
+      if (status === FundingStatus.UnderReview) {
         emailTemplate = await getEmailTemplateByType(teamId as string, EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_ACCEPTED);
-      } else if (status === "Rejected") {
+      } else if (status === FundingStatus.Rejected) {
         emailTemplate = await getEmailTemplateByType(teamId as string, EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_REJECTED);
       }
 

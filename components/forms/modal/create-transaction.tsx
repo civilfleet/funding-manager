@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FundingRequest } from "@/types";
+import { FundingRequest, FundingStatus } from "@/types";
 import { Controller, useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +25,7 @@ import formatCurrency from "@/components/helper/format-currency";
 interface CreateTransactionFormProps {
   fundingRequest?: FundingRequest;
   teamId?: string;
-  onTransactionCreated?: () => void;
+  refreshData?: () => void;
 }
 
 const schema = z.object({
@@ -36,11 +36,7 @@ const schema = z.object({
     .refine((val) => val !== 0, "Amount cannot be zero"),
 });
 
-export default function CreateTransaction({
-  fundingRequest,
-  teamId,
-  onTransactionCreated,
-}: CreateTransactionFormProps) {
+export default function CreateTransaction({ fundingRequest, teamId, refreshData }: CreateTransactionFormProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -151,8 +147,8 @@ export default function CreateTransaction({
       setIsOpen(false);
 
       // Call callback if provided
-      if (onTransactionCreated) {
-        onTransactionCreated();
+      if (refreshData) {
+        refreshData();
       }
     } catch (error) {
       toast({
@@ -219,7 +215,7 @@ export default function CreateTransaction({
                     <div className="space-y-2">
                       <DataSelectBox
                         targetKey="id"
-                        url={`/api/funding-requests/?teamId=${teamId}&status=Processing`}
+                        url={`/api/funding-requests/?teamId=${teamId}&status=${FundingStatus.Processing}`}
                         attribute="name"
                         label="Select Funding Request"
                         value={field.value}

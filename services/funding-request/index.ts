@@ -15,7 +15,7 @@ type FundingRequestData = {
   refinancingConcept: string;
   sustainability: string;
   expectedCompletionDate: string;
-  status: "Pending" | "UnderReview" | "Approved" | "Rejected";
+  status: FundingStatus;
   submittedBy?: string;
   files?: { name: string; url: string }[];
 };

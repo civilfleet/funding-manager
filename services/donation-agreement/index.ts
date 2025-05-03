@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { deleteFile } from "../file/s3-service";
+import { FundingStatus } from "@/types";
 
 type DonationAgreement = {
   agreement: string;
@@ -99,7 +100,7 @@ const createDonationAgreement = async (donation: DonationAgreement, createdByUse
         id: donation?.fundingRequestId,
       },
       data: {
-        status: "Processing",
+        status: FundingStatus.Processing,
       },
     });
 

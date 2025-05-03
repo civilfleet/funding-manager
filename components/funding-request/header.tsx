@@ -12,7 +12,7 @@ import { StatusBadge } from "@/components/helper/status-badge";
 import FundingRequestDetailsForm from "@/components/forms/funding-request-detail-form";
 import formatCurrency from "@/components/helper/format-currency";
 
-import { type FundingRequest, type FundingStatus } from "@/types";
+import { FundingStatus, type FundingRequest } from "@/types";
 import CreateTransaction from "@/components/forms/modal/create-transaction";
 
 interface FundingRequestHeaderProps {
@@ -31,7 +31,8 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
 
   const teamId = data?.organization?.teamId;
   const organizationId = data?.organization?.id;
-  const showRejectButton = isTeam && !["FundsTransferred", "Rejected", "Approved"].includes(currentStatus);
+  const showRejectButton =
+    isTeam && ![FundingStatus.FundsTransferred, FundingStatus.Rejected, FundingStatus.Approved].includes(currentStatus);
 
   const statusColors = {
     Pending: "bg-amber-50 border-amber-200",
@@ -107,7 +108,7 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
         <div className="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
           {currentStatus === "Pending" && (
             <div className="w-full lg:w-1/2">
-              <FundingRequestDetailsForm data={data} isTeam={isTeam} refreshData={refreshData} />
+              <FundingRequestDetailsForm fundingRequest={data} isTeam={isTeam} refreshData={refreshData} />
             </div>
           )}
 
@@ -128,14 +129,14 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
               </Button>
             )}
 
-            {currentStatus === "Approved" && (
+            {currentStatus === FundingStatus.Approved && (
               <Button variant="default" className="w-full sm:w-auto">
                 <CheckCircle2 className="h-4 w-4 mr-2" />
                 Transfer Funds
               </Button>
             )}
 
-            {currentStatus === "UnderReview" && !data?.donationAgreement?.[0]?.id && isTeam && (
+            {currentStatus === FundingStatus.UnderReview && !data?.donationAgreement?.[0]?.id && isTeam && (
               <Button
                 variant="outline"
                 onClick={() => router.push(`/teams/${teamId}/donation-agreements/create?fundingRequestId=${data.id}`)}
@@ -146,7 +147,7 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
               </Button>
             )}
 
-            {(currentStatus === "Processing" || currentStatus === "FundsTransferred") && (
+            {(currentStatus === FundingStatus.Processing || currentStatus === FundingStatus.FundsTransferred) && (
               <Button
                 variant="default"
                 className="w-full sm:w-auto"
@@ -165,7 +166,9 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
                 View Donation Agreement
               </Button>
             )}
-            {currentStatus === "Approved" && isTeam && <CreateTransaction fundingRequest={data} />}
+            {currentStatus === FundingStatus.Approved && isTeam && (
+              <CreateTransaction fundingRequest={data} refreshData={refreshData} />
+            )}
           </div>
         </div>
       </div>

@@ -34,7 +34,7 @@ export default function FundingRequestDetail({ data, refreshData }: { data: Fund
 
         {/* Documents Tab */}
         <TabsContent value="documents">
-          <FileList files={data.files} organizationFiles={[]} />
+          <FileList files={data?.files} organizationFiles={[]} />
         </TabsContent>
 
         {/* Organization Tab */}
@@ -42,7 +42,7 @@ export default function FundingRequestDetail({ data, refreshData }: { data: Fund
           <OrganizationView data={data} />
         </TabsContent>
         <TabsContent value="transactions">
-          <TransactionTable fundingRequestId={data.id} />
+          <TransactionTable fundingRequestId={data?.id} />
         </TabsContent>
       </Tabs>
     </div>

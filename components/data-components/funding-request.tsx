@@ -14,14 +14,16 @@ export default function FundingRequestData({
   organizationId?: string;
 }) {
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
-  const { data: fundingRequest, isLoading, mutate } = useSWR(`/api/funding-requests/${fundingRequestId}`, fetcher);
+  const { data, isLoading, mutate } = useSWR(`/api/funding-requests/${fundingRequestId}`, fetcher);
+  const fundingRequest = data?.data;
 
   const refreshData = () => {
-    mutate();
+    console.log("Refreshing data");
+    mutate(`/api/funding-requests/${fundingRequestId}`);
   };
 
   return !isLoading && fundingRequest ? (
-    <FundingRequestDetails data={fundingRequest?.data} refreshData={refreshData} />
+    <FundingRequestDetails data={fundingRequest} refreshData={refreshData} />
   ) : (
     <div className="flex justify-center items-center h-64">
       <Loader className="" />
