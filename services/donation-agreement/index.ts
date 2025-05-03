@@ -182,6 +182,7 @@ const getDonationAgreementById = async (id: string) => {
         select: {
           user: {
             select: {
+              id: true,
               name: true,
               email: true,
             },
@@ -216,7 +217,10 @@ const getDonationAgreementById = async (id: string) => {
   return donationAgreement;
 };
 
-const updateDonationAgreement = async (id: string, updatedDonationAgreement: DonationAgreement, userId: string) => {
+const updateDonationAgreement = async (
+  id: string,
+  updatedDonationAgreement: DonationAgreement & { userId?: string }
+) => {
   const donation = await prisma.donationAgreement.findUnique({
     where: {
       id,
@@ -226,6 +230,12 @@ const updateDonationAgreement = async (id: string, updatedDonationAgreement: Don
         select: {
           id: true,
           url: true,
+        },
+      },
+      userSignatures: {
+        select: {
+          userId: true,
+          signedAt: true,
         },
       },
     },
@@ -238,25 +248,27 @@ const updateDonationAgreement = async (id: string, updatedDonationAgreement: Don
       },
       data: {
         url: updatedDonationAgreement.file as string,
-        updatedBy: { connect: { id: userId } },
+        updatedBy: { connect: { id: updatedDonationAgreement.userId as string } },
       },
     });
+
+    // Update the signature for either the current user or the selected user (for admin)
+    const signatureUserId = updatedDonationAgreement.userId as string;
+
     await prisma.donationAgreementSignature.update({
       where: {
         donationAgreementId_userId: {
           donationAgreementId: id,
-          userId: userId,
+          userId: signatureUserId,
         },
       },
       data: {
         signedAt: new Date(),
       },
     });
+
+    return { data: donation, message: "Donation agreement updated successfully" };
   });
-
-  await deleteFile(donation?.file.url as string);
-
-  return { data: donation, message: "Donation agreement updated successfully" };
 };
 
 const getDonationAgreementPastSevenDays = async () => {

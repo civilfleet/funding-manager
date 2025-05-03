@@ -27,7 +27,7 @@ export function handlePrismaError(error: unknown): Error {
     // Handle regular Error objects
     console.error("Error:", error.message);
     return error;
-  } else if (typeof error === 'string') {
+  } else if (typeof error === "string") {
     // Handle string errors
     console.error("Error:", error);
     return new Error(error);
@@ -43,4 +43,8 @@ export function cleanFileName(fileName: string): string {
     .replace(/[^a-zA-Z0-9._ ]/g, "") // Remove special characters except dot, underscore, and space
     .replace(/\s+/g, "-") // Replace spaces with dashes
     .toLowerCase(); // Convert to lowercase (optional)
+}
+
+export function calculateMonthsDuration(endDate: Date, startDate: Date): number {
+  return Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24 * 30));
 }

@@ -20,21 +20,17 @@ interface FundingRequestHeaderProps {
   teamId?: string;
   organizationId?: string;
   isTeam?: boolean;
-  onUpdate: (updatedData: FundingRequest) => void;
+  refreshData: () => void;
 }
 
-export default function FundingRequestHeader({
-  data,
-  teamId,
-  organizationId,
-  isTeam,
-  onUpdate,
-}: FundingRequestHeaderProps) {
+export default function FundingRequestHeader({ data, isTeam, refreshData }: FundingRequestHeaderProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isRejecting, setIsRejecting] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<FundingStatus>(data?.status);
 
+  const teamId = data?.organization?.teamId;
+  const organizationId = data?.organization?.id;
   const showRejectButton = isTeam && !["FundsTransferred", "Rejected", "Approved"].includes(currentStatus);
 
   const statusColors = {
@@ -65,7 +61,7 @@ export default function FundingRequestHeader({
 
       const { data: updatedData } = await response.json();
       setCurrentStatus(updatedData.status);
-      onUpdate(updatedData);
+      refreshData();
 
       toast({
         title: "Request Rejected",
@@ -111,7 +107,7 @@ export default function FundingRequestHeader({
         <div className="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
           {currentStatus === "Pending" && (
             <div className="w-full lg:w-1/2">
-              <FundingRequestDetailsForm data={data} isTeam={isTeam} onUpdate={onUpdate} />
+              <FundingRequestDetailsForm data={data} isTeam={isTeam} refreshData={refreshData} />
             </div>
           )}
 
@@ -139,7 +135,7 @@ export default function FundingRequestHeader({
               </Button>
             )}
 
-            {currentStatus === "UnderReview" && (
+            {currentStatus === "UnderReview" && !data?.donationAgreement?.[0]?.id && isTeam && (
               <Button
                 variant="outline"
                 onClick={() => router.push(`/teams/${teamId}/donation-agreements/create?fundingRequestId=${data.id}`)}
@@ -169,7 +165,7 @@ export default function FundingRequestHeader({
                 View Donation Agreement
               </Button>
             )}
-            {currentStatus === "Approved" && <CreateTransaction fundingRequest={data} />}
+            {currentStatus === "Approved" && isTeam && <CreateTransaction fundingRequest={data} />}
           </div>
         </div>
       </div>

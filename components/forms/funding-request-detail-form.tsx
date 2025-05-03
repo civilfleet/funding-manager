@@ -15,11 +15,11 @@ const amountOfferSchema = z.object({
 export default function FundingRequestDetailsForm({
   data,
   isTeam,
-  onUpdate,
+  refreshData,
 }: {
   data: FundingRequest;
   isTeam: boolean | undefined;
-  onUpdate?: (updatedData: FundingRequest) => void;
+  refreshData?: () => void;
 }) {
   const isFundsTransferred = data.status === "FundsTransferred";
 
@@ -53,9 +53,9 @@ export default function FundingRequestDetailsForm({
 
       const { data: updatedData } = await response.json();
 
-      if (onUpdate) {
+      if (refreshData) {
         console.log(updatedData, "updatedData===funding request details form");
-        onUpdate(updatedData);
+        refreshData();
       }
 
       toast({

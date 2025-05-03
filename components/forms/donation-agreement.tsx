@@ -329,11 +329,11 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
         </div>
       )}
 
-      {fundingRequestDetail && !isLoading && (
+      {/* {fundingRequestDetail && !isLoading && (
         <div className="p-4 bg-muted/30">
-          <FundingRequestDetail data={fundingRequestDetail} teamId={teamId} />
+          <FundingRequestDetail data={fundingRequestDetail} refreshData={() => {}} />
         </div>
-      )}
+      )} */}
     </Card>
   );
 }

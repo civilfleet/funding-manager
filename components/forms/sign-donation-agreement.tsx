@@ -8,6 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import Link from "next/link";
 import { CheckCircle, CreditCard, Download, Upload } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Roles } from "@/types";
 
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
@@ -17,27 +19,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import FileUpload from "@/components/file-uploader";
-
-import { useTeamStore } from "@/store/store";
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-lg font-semibold mb-2">{children}</h2>;
-}
-
-function DetailItem({ label, value, type = "text" }: { label: string; value?: string; type?: string }) {
-  return (
-    <div className="flex flex-col space-y-1">
-      <span className="text-sm font-medium text-muted-foreground">{label}</span>
-      {type === "email" ? (
-        <a href={`mailto:${value}`} className="text-blue-600 hover:underline">
-          {value}
-        </a>
-      ) : (
-        <span className="text-sm">{value || "N/A"}</span>
-      )}
-    </div>
-  );
-}
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import DetailItem from "../helper/detail-item";
 
 export default function SignDonationAgreement({
   data: initialData,
@@ -47,9 +30,12 @@ export default function SignDonationAgreement({
   teamId?: string;
 }) {
   const { toast } = useToast();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.roles?.includes(Roles.Admin);
 
   const [data, setData] = useState<DonationAgreement>(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
 
   const approved = data.fundingRequest?.status === "Approved";
   const signaturesCompleted = data.userSignatures.every((signature) => signature?.signedAt);
@@ -85,6 +71,7 @@ export default function SignDonationAgreement({
         body: JSON.stringify({
           ...values,
           id: data.id,
+          userId: isAdmin ? selectedUserId : session?.user.userId,
         }),
       });
       if (!response.ok) {
@@ -156,7 +143,7 @@ export default function SignDonationAgreement({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8" id="organization-form">
             <div className="space-y-6">
               <div>
-                <SectionTitle>Funding Request Details</SectionTitle>
+                <h2 className="text-lg font-semibold mb-2">Funding Request Details</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <DetailItem label="Funding Request Name" value={data.fundingRequest?.name} />
                   <DetailItem label="Purpose" value={data.fundingRequest?.purpose} />
@@ -166,7 +153,7 @@ export default function SignDonationAgreement({
               <Separator />
 
               <div>
-                <SectionTitle>Agreement Details</SectionTitle>
+                <h2 className="text-lg font-semibold mb-2">Agreement Details</h2>
                 <div className="bg-muted p-4 rounded-md">
                   <p className="text-sm whitespace-pre-wrap">{data.agreement}</p>
                 </div>
@@ -179,7 +166,7 @@ export default function SignDonationAgreement({
               <Separator />
 
               <div>
-                <SectionTitle>Created By</SectionTitle>
+                <h2 className="text-lg font-semibold mb-2">Created By</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <DetailItem label="Name" value={data.createdBy?.name} />
                   <DetailItem label="Email" value={data.createdBy?.email} type="email" />
@@ -189,7 +176,7 @@ export default function SignDonationAgreement({
               <Separator />
 
               <div>
-                <SectionTitle>Agreement File</SectionTitle>
+                <h2 className="text-lg font-semibold mb-2">Agreement File</h2>
                 <p className="text-sm text-muted-foreground mb-2">
                   Please download the agreement, sign it, and re-upload it.
                 </p>
@@ -206,7 +193,7 @@ export default function SignDonationAgreement({
               <Separator />
 
               <div>
-                <SectionTitle>User Signatures</SectionTitle>
+                <h2 className="text-lg font-semibold mb-2">User Signatures</h2>
                 {data.userSignatures.length > 0 ? (
                   <div className="space-y-2">
                     {data.userSignatures.map((signature, index) => (
@@ -229,7 +216,29 @@ export default function SignDonationAgreement({
               <Separator />
               {!signaturesCompleted && (
                 <div>
-                  <SectionTitle>Upload Signed Agreement</SectionTitle>
+                  <h2 className="text-lg font-semibold mb-2">Upload Signed Agreement</h2>
+                  {isAdmin && (
+                    <div className="mb-4">
+                      <label className="text-sm font-medium mb-2 block">Sign on behalf of:</label>
+                      <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select user to sign for" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {data.userSignatures.map((signature, index) => (
+                            <SelectItem
+                              key={index}
+                              value={signature.user?.id || ""}
+                              disabled={signature.signedAt !== null}
+                            >
+                              {signature.user?.email}
+                              {signature.signedAt && " (Already signed)"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <FileUpload
                     placeholder="Drag and drop or click to upload"
                     name="file"
@@ -244,9 +253,9 @@ export default function SignDonationAgreement({
       </CardContent>
       <CardFooter>
         {!signaturesCompleted && (
-          <Button type="submit" form="organization-form" disabled={isSubmitting}>
+          <Button type="submit" form="organization-form" disabled={isSubmitting || (isAdmin && !selectedUserId)}>
             <Upload className="mr-2 h-4 w-4" />
-            Submit Signed Agreement
+            {isAdmin ? "Submit Signed Agreement on Behalf of User" : "Submit Signed Agreement"}
           </Button>
         )}
 
