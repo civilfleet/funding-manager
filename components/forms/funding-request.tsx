@@ -39,7 +39,7 @@ export default function FundingRequest({ organizationId }: { organizationId: str
       refinancingConcept: "",
       sustainability: "",
       expectedCompletionDate: "",
-      status: FundingStatus.Pending,
+      status: FundingStatus.Submitted,
       files: [
         {
           name: "",

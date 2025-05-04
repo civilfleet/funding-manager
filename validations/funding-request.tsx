@@ -13,7 +13,7 @@ const createFundingRequestSchema = z.object({
   expectedCompletionDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format.",
   }),
-  status: z.enum([FundingStatus.Pending, FundingStatus.UnderReview, FundingStatus.Approved, FundingStatus.Rejected]),
+  status: z.enum([FundingStatus.Submitted, FundingStatus.Accepted, FundingStatus.Approved, FundingStatus.Rejected]),
   files: z.array(
     z.object({
       name: z.string(),

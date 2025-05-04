@@ -215,7 +215,7 @@ export default function CreateTransaction({ fundingRequest, teamId, refreshData 
                     <div className="space-y-2">
                       <DataSelectBox
                         targetKey="id"
-                        url={`/api/funding-requests/?teamId=${teamId}&status=${FundingStatus.Processing}`}
+                        url={`/api/funding-requests/?teamId=${teamId}&status=${FundingStatus.FundsDisbursing}`}
                         attribute="name"
                         label="Select Funding Request"
                         value={field.value}

@@ -100,7 +100,7 @@ const createDonationAgreement = async (donation: DonationAgreement, createdByUse
         id: donation?.fundingRequestId,
       },
       data: {
-        status: FundingStatus.Processing,
+        status: FundingStatus.WaitingForSignature,
       },
     });
 

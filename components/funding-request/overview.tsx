@@ -57,13 +57,13 @@ const FundingRequestOverview = ({ data }: { data: FundingRequest }) => {
                 <div className="p-4 bg-muted/30 rounded-md">
                   <p className="text-sm font-medium text-muted-foreground">Agreed Amount</p>
                   <p className="text-2xl font-bold">
-                    {data.amountAgreed ? formatCurrency(data.amountAgreed) : "Pending"}
+                    {data.amountAgreed ? formatCurrency(data.amountAgreed) : "Submitted"}
                   </p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-md">
                   <p className="text-sm font-medium text-muted-foreground">Remaining Amount</p>
                   <p className="text-2xl font-bold">
-                    {data.remainingAmount ? formatCurrency(data.remainingAmount) : "Pending"}
+                    {data.remainingAmount ? formatCurrency(data.remainingAmount) : "Submitted"}
                   </p>
                 </div>
               </div>

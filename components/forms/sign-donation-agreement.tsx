@@ -37,7 +37,9 @@ export default function SignDonationAgreement({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
 
-  const approved = data.fundingRequest?.status === FundingStatus.Approved;
+  const approved =
+    data.fundingRequest?.status === FundingStatus.FundsDisbursing ||
+    data.fundingRequest?.status === FundingStatus.Completed;
   const signaturesCompleted = data.userSignatures.every((signature) => signature?.signedAt);
 
   const form = useForm<z.infer<typeof schema>>({
@@ -105,7 +107,7 @@ export default function SignDonationAgreement({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          status: FundingStatus.Approved,
+          status: FundingStatus.FundsDisbursing,
           donationId: data.id,
           teamId,
         }),
@@ -262,7 +264,7 @@ export default function SignDonationAgreement({
         {signaturesCompleted && teamId && (
           <Button type="button" className="m-2" disabled={approved} onClick={changeFundingRequestStatus}>
             <CreditCard className="mr-2 h-5 w-5" />
-            {!approved ? "Approve Funding Request" : "Funding Request Approved"}
+            {!approved ? "Disburse Funds" : "Funds Disbursed"}
           </Button>
         )}
       </CardFooter>

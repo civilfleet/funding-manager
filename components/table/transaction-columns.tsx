@@ -80,7 +80,7 @@ export const columns: ColumnDef<Transaction>[] = [
     header: () => <div className="text-left w-36">Receipt</div>,
     cell: ({ row }) => (
       <div className="text-left">
-        <Badge variant={row.getValue("transactionReciept") ? "outline" : "secondary"}>
+        <Badge variant="secondary" className={row.getValue("transactionReciept") ? "bg-green-300" : "bg-red-300"}>
           {row.getValue("transactionReciept") ? (
             <a
               href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${row.getValue("transactionReciept")}`}

@@ -54,10 +54,11 @@ export interface File {
 }
 
 export enum FundingStatus {
-  Pending = "Pending", // When the funding request is created and is received by the organization
-  UnderReview = "UnderReview", // When the funding request agreed amount is set and waiting for donation agreement and board approval
-  Processing = "Processing", // When the funding request is approved by the board and being signed by the organiation and board members
-  FundsTransferred = "FundsTransferred", // When the funds are transferred to the organization completely
+  Submitted = "Submitted", // When the funding request is created and is received by the organization
+  Accepted = "Accepted", // When the funding request agreed amount is set and waiting for donation agreement and board approval
+  WaitingForSignature = "WaitingForSignature", // When the funding request is approved by the board and being signed by the organiation and board members
+  FundsDisbursing = "FundsDisbursing", // When the funding request is approved by the board and being signed by the organiation and board members
+  Completed = "Completed", // When the funds are transferred to the organization completely
   Approved = "Approved", // When the funding request when funding requested is complete signed by the organization and board members
   Rejected = "Rejected", // When the funding request is rejected by the organization or board
 }

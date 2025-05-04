@@ -48,7 +48,7 @@ export async function PUT(
     const response = await updateFundingRequest(fundingRequestId, validatedData, fundingRequest.teamId as string);
     const status = response.status;
     let emailTemplate;
-    if (status === FundingStatus.UnderReview) {
+    if (status === FundingStatus.Accepted) {
       emailTemplate = await getEmailTemplateByType(
         fundingRequest.teamId as string,
         EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_ACCEPTED

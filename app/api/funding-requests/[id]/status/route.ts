@@ -33,7 +33,7 @@ export async function PUT(
 
       const status = fundingRequest?.status;
       let emailTemplate;
-      if (status === FundingStatus.UnderReview) {
+      if (status === FundingStatus.Accepted) {
         emailTemplate = await getEmailTemplateByType(teamId as string, EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_ACCEPTED);
       } else if (status === FundingStatus.Rejected) {
         emailTemplate = await getEmailTemplateByType(teamId as string, EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_REJECTED);

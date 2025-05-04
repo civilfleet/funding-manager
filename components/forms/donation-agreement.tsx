@@ -189,7 +189,7 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
                   <div className="space-y-2">
                     <DataSelectBox
                       targetKey="id"
-                      url={`/api/funding-requests/?teamId=${teamId}&status=${FundingStatus.UnderReview}`}
+                      url={`/api/funding-requests/?teamId=${teamId}&status=${FundingStatus.Accepted}`}
                       attribute="name"
                       label="Select Funding Request"
                       value={field.value}

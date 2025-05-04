@@ -47,7 +47,7 @@ const createTransaction = async (transaction: CreateTransaction) => {
     },
     data: {
       remainingAmount: transaction.remainingAmount,
-      ...(transaction.remainingAmount === 0 && { status: FundingStatus.FundsTransferred }),
+      ...(transaction.remainingAmount === 0 && { status: FundingStatus.Completed }),
     },
   });
 

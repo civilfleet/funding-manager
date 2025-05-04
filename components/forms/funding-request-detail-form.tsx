@@ -27,7 +27,7 @@ export default function FundingRequestDetailsForm({
     setData(fundingRequest);
   }, [fundingRequest]);
 
-  const isFundsTransferred = data.status === FundingStatus.FundsTransferred;
+  const isFundsTransferred = data.status === FundingStatus.Completed;
 
   const isFileMissing = (fileType: string) =>
     !isTeam && isFundsTransferred && data.files.filter((file) => file.type === fileType).length === 0;
@@ -50,7 +50,7 @@ export default function FundingRequestDetailsForm({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ...values, status: "UnderReview", remainingAmount: values.amountAgreed }),
+        body: JSON.stringify({ ...values, status: "Accepted", remainingAmount: values.amountAgreed }),
       });
 
       if (!response.ok) {
@@ -78,7 +78,7 @@ export default function FundingRequestDetailsForm({
   }
   return (
     <>
-      {isTeam && ![FundingStatus.FundsTransferred, FundingStatus.Rejected].includes(data.status) && (
+      {isTeam && ![FundingStatus.Completed, FundingStatus.Rejected].includes(data.status) && (
         <div className="flex flex-col items-start gap-2 ">
           {/* <h3 className="text-lg font-semibold">Funding Amount</h3> */}
           <Form {...form}>

@@ -53,13 +53,20 @@ model BankDetails {
 
 
 enum FundingStatus {
-  Pending
-  UnderReview
-  Processing
+  Submitted
+  Accepted
+  WaitingForSignature
   Approved
-  Signed
-  FundsTransferred
+  FundsDisbursing
+  Completed
   Rejected
+
+
+  // remove below
+  UnderReview
+  Pending
+  Processing 
+  FundsTransferred
 }
 model FundingRequest {
   id                        String    @id @default(uuid()) @unique   
@@ -74,7 +81,7 @@ model FundingRequest {
   refinancingConcept        String       @db.Text
   sustainability            String       @db.Text
   expectedCompletionDate    DateTime                               
-  status                    FundingStatus @default(Pending)   
+  status                    FundingStatus @default(Submitted)   
   submittedById             String           
   submittedBy               User? @relation(fields: [submittedById], references: [id])
   createdAt                 DateTime @default(now()) @db.Timestamptz(6) 

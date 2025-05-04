@@ -35,7 +35,6 @@ export async function POST(req: Request) {
     const donationAgreement = await req.json();
 
     const validatedData = createDonationAgreementSchema.parse(donationAgreement);
-    console.log(validatedData, "validatedData");
     const { agreement, users } = await createDonationAgreement(
       {
         ...omit(validatedData, "user", "teamId"),

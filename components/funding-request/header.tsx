@@ -27,61 +27,69 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
   const router = useRouter();
   const { toast } = useToast();
   const [isRejecting, setIsRejecting] = useState(false);
+  const [isTransferring, setIsTransferring] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<FundingStatus>(data?.status);
 
   const teamId = data?.organization?.teamId;
   const organizationId = data?.organization?.id;
   const showRejectButton =
-    isTeam && ![FundingStatus.FundsTransferred, FundingStatus.Rejected, FundingStatus.Approved].includes(currentStatus);
+    isTeam && ![FundingStatus.Completed, FundingStatus.Rejected, FundingStatus.Approved].includes(currentStatus);
 
   const statusColors = {
-    Pending: "bg-amber-50 border-amber-200",
-    Approved: "bg-green-50 border-green-200",
-    Rejected: "bg-red-50 border-red-200",
-    FundsTransferred: "bg-blue-50 border-blue-200",
-    UnderReview: "bg-purple-50 border-purple-200",
-    Processing: "bg-yellow-50 border-yellow-200",
+    Submitted: "bg-amber-50 border-amber-200",
+    Accepted: "bg-blue-50 border-blue-200",
+    WaitingForSignature: "bg-indigo-50 border-indigo-200",
+    Approved: "bg-emerald-50 border-emerald-200",
+    FundsDisbursing: "bg-violet-50 border-violet-200",
+    Completed: "bg-green-50 border-green-200",
+    Rejected: "bg-rose-50 border-rose-200",
     default: "bg-gray-50 border-gray-200",
   };
 
   const getStatusColor = () => statusColors[currentStatus] || statusColors.default;
 
-  async function rejectRequest() {
-    setIsRejecting(true);
+  async function updateStatus(newStatus: FundingStatus) {
+    const isRejecting = newStatus === FundingStatus.Rejected;
+    const isTransferring = newStatus === FundingStatus.FundsDisbursing;
+
+    if (isRejecting) setIsRejecting(true);
+    if (isTransferring) setIsTransferring(true);
+
     try {
       const response = await fetch(`/api/funding-requests/${data.id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          status: "Rejected" as FundingStatus,
+          status: newStatus,
           teamId,
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to reject request");
+      if (!response.ok) throw new Error(`Failed to update status to ${newStatus}`);
 
       const { data: updatedData } = await response.json();
       setCurrentStatus(updatedData.status);
       refreshData();
 
       toast({
-        title: "Request Rejected",
-        description: "The funding request has been successfully rejected.",
+        title: "Status Updated",
+        description: `The funding request status has been updated to ${newStatus}.`,
         variant: "default",
       });
     } catch (e) {
       toast({
         title: "Error",
-        description: e instanceof Error ? e.message : "An error occurred while rejecting the request",
+        description: e instanceof Error ? e.message : "An error occurred while updating the status",
         variant: "destructive",
       });
     } finally {
-      setIsRejecting(false);
+      if (isRejecting) setIsRejecting(false);
+      if (isTransferring) setIsTransferring(false);
     }
   }
 
   return (
-    <div className={`shadow-lg ${getStatusColor()} rounded-xl p-8 mb-8 bg-white dark:bg-gray-900`}>
+    <div className={`shadow-lg ${getStatusColor()} rounded-xl p-8 mb-8 dark:bg-gray-900`}>
       <div className="space-y-8">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
           <div className="space-y-4">
@@ -95,7 +103,7 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
             </p>
           </div>
 
-          {currentStatus !== "Pending" && currentStatus !== "Rejected" && (
+          {currentStatus !== "Submitted" && currentStatus !== "Rejected" && (
             <div className="w-full lg:w-auto p-4 bg-muted/10 rounded-lg border border-muted/20">
               <p className="text-sm font-medium text-muted-foreground">Agreed Amount</p>
               <p className="text-2xl font-bold text-primary mt-1">
@@ -106,7 +114,7 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
         </div>
 
         <div className="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
-          {currentStatus === "Pending" && (
+          {currentStatus === "Submitted" && (
             <div className="w-full lg:w-1/2">
               <FundingRequestDetailsForm fundingRequest={data} isTeam={isTeam} refreshData={refreshData} />
             </div>
@@ -114,10 +122,15 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
 
           <div className="flex flex-wrap gap-3 justify-end">
             {showRejectButton && (
-              <Button variant="destructive" onClick={rejectRequest} disabled={isRejecting} className="w-full sm:w-auto">
+              <Button
+                variant="destructive"
+                onClick={() => updateStatus(FundingStatus.Rejected)}
+                disabled={isRejecting}
+                className="w-full sm:w-auto"
+              >
                 {isRejecting ? (
                   <>
-                    <span className="mr-2">Processing</span>
+                    <span className="mr-2">Rejecting</span>
                     <Clock className="h-4 w-4 animate-spin" />
                   </>
                 ) : (
@@ -130,13 +143,27 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
             )}
 
             {currentStatus === FundingStatus.Approved && (
-              <Button variant="default" className="w-full sm:w-auto">
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Transfer Funds
+              <Button
+                variant="default"
+                className="w-full sm:w-auto"
+                onClick={() => updateStatus(FundingStatus.FundsDisbursing)}
+                disabled={isTransferring}
+              >
+                {isTransferring ? (
+                  <>
+                    <span className="mr-2">Updating</span>
+                    <Clock className="h-4 w-4 animate-spin" />
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Transfer Funds
+                  </>
+                )}
               </Button>
             )}
 
-            {currentStatus === FundingStatus.UnderReview && !data?.donationAgreement?.[0]?.id && isTeam && (
+            {currentStatus === FundingStatus.Accepted && !data?.donationAgreement?.[0]?.id && isTeam && (
               <Button
                 variant="outline"
                 onClick={() => router.push(`/teams/${teamId}/donation-agreements/create?fundingRequestId=${data.id}`)}
@@ -147,7 +174,7 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
               </Button>
             )}
 
-            {(currentStatus === FundingStatus.Processing || currentStatus === FundingStatus.FundsTransferred) && (
+            {currentStatus !== FundingStatus.Submitted && currentStatus !== FundingStatus.Rejected && (
               <Button
                 variant="default"
                 className="w-full sm:w-auto"
@@ -166,7 +193,7 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
                 View Donation Agreement
               </Button>
             )}
-            {currentStatus === FundingStatus.Approved && isTeam && (
+            {currentStatus === FundingStatus.FundsDisbursing && isTeam && (
               <CreateTransaction fundingRequest={data} refreshData={refreshData} />
             )}
           </div>
