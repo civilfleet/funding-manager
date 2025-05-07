@@ -174,7 +174,7 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
               </Button>
             )}
 
-            {currentStatus !== FundingStatus.Submitted && currentStatus !== FundingStatus.Rejected && (
+            {data?.donationAgreement?.[0]?.id && (
               <Button
                 variant="default"
                 className="w-full sm:w-auto"
