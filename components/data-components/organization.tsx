@@ -77,8 +77,8 @@ export default function OrganizationData({ organizationId }: { organizationId: s
   };
 
   return (
-    <div className="container px-5 py-8 mx-auto">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className=" px-5 py-8 mx-auto">
+      <div className=" p-6">
         {isAdminOrTeam && (
           <div className="flex justify-between items-center mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
             <div className="flex flex-col">
