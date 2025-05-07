@@ -12,15 +12,9 @@ import { Roles } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export default function OrganizationData({
-  organizationId,
-}: {
-  organizationId: string;
-}) {
+export default function OrganizationData({ organizationId }: { organizationId: string }) {
   const { data: session } = useSession();
-  const showEditButton =
-    session?.user.roles?.includes(Roles.Admin) ||
-    session?.user.roles?.includes(Roles.Team);
+  const isAdminOrTeam = session?.user.roles?.includes(Roles.Admin) || session?.user.roles?.includes(Roles.Team);
 
   const {
     data: organizationData,
@@ -83,25 +77,35 @@ export default function OrganizationData({
   };
 
   return (
-    <div className="container px-5 py-1">
-      {isFilledByOrg ? (
-        <OrganizationDetails
-          organization={organizationData?.data}
-          fundingRequests={fundingRequestsData?.data}
-        />
-      ) : (
-        <OrganizationForm data={organizationData?.data} />
-      )}
+    <div className="container px-5 py-8 mx-auto">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        {isAdminOrTeam && (
+          <div className="flex justify-between items-center mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div className="flex flex-col">
+              <h3 className="text-base font-semibold text-gray-800">Organization Edit Mode</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {isFilledByOrg
+                  ? "Edit mode is locked. Organization details can only be viewed by the organization."
+                  : "Edit mode is active. Organization can modify organization details."}
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-medium text-gray-700">{isFilledByOrg ? "Unlock" : "Lock"}</span>
+              <Switch
+                checked={isFilledByOrg}
+                onCheckedChange={allowEditOrganization}
+                className="data-[state=checked]:bg-blue-600"
+              />
+            </div>
+          </div>
+        )}
 
-      {showEditButton && (
-        <div className="flex flex-row items-center justify-between mt-4">
-          <h2 className="text-lg font-semibold">Lock Edit</h2>
-          <Switch
-            checked={isFilledByOrg}
-            onCheckedChange={allowEditOrganization}
-          />
-        </div>
-      )}
+        {isFilledByOrg && !isAdminOrTeam ? (
+          <OrganizationDetails organization={organizationData?.data} fundingRequests={fundingRequestsData?.data} />
+        ) : (
+          <OrganizationForm data={organizationData?.data} />
+        )}
+      </div>
     </div>
   );
 }
