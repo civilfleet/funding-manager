@@ -17,10 +17,14 @@ import {
 import ButtonControl from "@/components/helper/button-control";
 import FileUpload from "@/components/file-uploader";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { redirect, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useRouter } from 'next/navigation'
+
 
 export default function RegisterPage() {
+  const router = useRouter()
+
   const { toast } = useToast();
   const params = useParams();
   const [teamName, setTeamName] = useState<string>("");
@@ -31,6 +35,7 @@ export default function RegisterPage() {
       try {
         const response = await fetch(`/api/public/teams/${params.teamId}`);
         if (!response.ok) {
+          router.replace('/')
           throw new Error("Team not found");
         }
         const data = await response.json();
