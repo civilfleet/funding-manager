@@ -158,7 +158,7 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
   }
 
   return (
-    <Card className="w-full shadow-sm">
+    <Card className="w-full shadow-xs">
       <CardHeader className="border-b pb-4">
         <CardTitle>
           <h1 className="text-2xl font-semibold tracking-tight">Donation Agreement</h1>

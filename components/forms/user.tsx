@@ -74,7 +74,7 @@ export default function UserForm({ teamId, organizationId }: { teamId: string; o
   }
 
   return (
-    <Card className="w-full shadow-sm">
+    <Card className="w-full shadow-xs">
       <CardHeader className="border-b pb-3">
         <CardTitle className="text-xl font-semibold">Add Team Member</CardTitle>
         <CardDescription>Enter the details of the new team member you want to add to your organization</CardDescription>

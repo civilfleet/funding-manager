@@ -102,7 +102,7 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
           <p className="mt-1 text-gray-500">Design your new email template with full HTML support</p>
         </div>
 
-        <div className="rounded-lg border bg-white p-6 shadow-sm">
+        <div className="rounded-lg border bg-white p-6 shadow-xs">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

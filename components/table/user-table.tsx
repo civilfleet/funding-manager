@@ -63,7 +63,7 @@ export default function UserTable({ teamId, organizationId }: UserTableProps) {
       </Form>
       <div
         className="rounded-md border my-2 flex  justify-center items-center
-      flex-grow h-full"
+      grow h-full"
       >
         {loading ? (
           <div className="flex justify-center items-center h-32">

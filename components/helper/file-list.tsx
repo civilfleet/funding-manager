@@ -50,7 +50,7 @@ export const FileList = ({ files, organizationFiles }: FileListProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-shrink-0 flex items-center gap-2" // Prevent button from shrinking
+                  className="shrink-0 flex items-center gap-2" // Prevent button from shrinking
                   asChild
                 >
                   <a

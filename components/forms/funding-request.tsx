@@ -112,7 +112,7 @@ export default function FundingRequest({ organizationId }: { organizationId: str
   }
 
   return (
-    <Card className="w-full shadow-sm">
+    <Card className="w-full shadow-xs">
       <CardHeader className="border-b pb-4">
         <CardTitle className="text-2xl font-semibold">Funding Request</CardTitle>
         <CardDescription>Complete the form below to submit a new funding request for your organization</CardDescription>
