@@ -1,36 +1,31 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+// import { MoreHorizontal } from "lucide-react"; // No longer needed
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuSeparator,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu"; // No longer needed
 import { FundingRequest } from "@/types";
 import { StatusBadge } from "../helper/status-badge";
+import Link from "next/link"; // Import Link
+
 export const columns: ColumnDef<FundingRequest>[] = [
   {
     id: "actions",
+    header: () => <div className="text-left">Actions</div>,
     cell: ({ row }) => {
       const request = row.original;
-
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+        <div className="text-left">
+          <Link href={`funding-requests/${request.id}`} passHref legacyBehavior>
+            <Button asChild variant="outline" size="sm">
+              <a>View</a>
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <a href={`funding-requests/${request.id}`}>
-              <DropdownMenuItem>View</DropdownMenuItem>
-            </a>
-            <DropdownMenuSeparator />
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </Link>
+        </div>
       );
     },
   },
@@ -77,7 +72,6 @@ export const columns: ColumnDef<FundingRequest>[] = [
       </div>
     ),
   },
-
   {
     accessorKey: "createdAt",
     header: () => <div className="text-left w-32">Created At</div>,
