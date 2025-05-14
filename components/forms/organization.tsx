@@ -268,12 +268,6 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   placeholder="User person phone"
                   isFilled={isFieldFilled(data?.user?.phone)}
                 />
-                <FormInputControl
-                  form={form}
-                  name="user.address"
-                  placeholder="User person address"
-                  isFilled={isFieldFilled(data?.user?.address)}
-                />
               </div>
 
               <div>

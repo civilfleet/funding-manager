@@ -104,7 +104,7 @@ export default function RegisterPage() {
         description: "Your organization registration request has been submitted. We will review it and get back to you soon.",
         variant: "default",
       });
-      
+
       // Reset form
       form.reset();
     } catch (e) {
@@ -205,26 +205,14 @@ export default function RegisterPage() {
                   <FileUpload
                     placeholder="Tax exemption certificate"
                     name="taxExemptionCertificate"
+                    label="Tax exemption certificate"
                     onFileUpload={(url) =>
                       form.setValue("taxExemptionCertificate", url)
                     }
                     error={
                       form?.formState?.errors?.taxExemptionCertificate
                         ? (form.formState.errors?.taxExemptionCertificate
-                            ?.message as string)
-                        : ""
-                    }
-                  />
-                  <FileUpload
-                    placeholder="Articles of association"
-                    name="articlesOfAssociation"
-                    onFileUpload={(url) =>
-                      form.setValue("articlesOfAssociation", url)
-                    }
-                    error={
-                      form?.formState?.errors?.articlesOfAssociation
-                        ? (form.formState.errors?.articlesOfAssociation
-                            ?.message as string)
+                          ?.message as string)
                         : ""
                     }
                   />
@@ -250,6 +238,30 @@ export default function RegisterPage() {
                     form={form}
                     name="user.phone"
                     placeholder="Contact person phone"
+                  />
+                </div>
+
+
+                <div>
+                  <h4 className="text-lg font-semibold">Article of Association & Logo
+                  </h4>
+                  <hr className="my-4" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FileUpload
+                    placeholder="Articles of association"
+                    name="articlesOfAssociation"
+                    label="Articles of association"
+                    onFileUpload={(url) =>
+                      form.setValue("articlesOfAssociation", url)
+                    }
+                    error={
+                      form?.formState?.errors?.articlesOfAssociation
+                        ? (form.formState.errors?.articlesOfAssociation
+                          ?.message as string)
+                        : ""
+                    }
                   />
                 </div>
 

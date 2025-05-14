@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
+import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { SquareArrowOutUpRight } from "lucide-react";
 import { Loader } from "@/components/helper/loader";
 
@@ -11,11 +11,22 @@ interface FileUploadProps {
   error?: string;
   data?: string;
   disabled?: boolean;
+  label: string;
 }
 
-const FileUpload = ({ onFileUpload, placeholder, name, data, error, disabled = false }: FileUploadProps) => {
+const FileUpload = ({
+  onFileUpload,
+  placeholder,
+  name,
+  data,
+  error,
+  disabled = false,
+  label,
+}: FileUploadProps) => {
   const [fileUrl, setFileUrl] = useState<string | null>(data || null);
   const [loading, setLoading] = useState(false);
+  const fieldId = `${name}-${useState(() => Math.random().toString(36).substr(2, 9))[0]}`;
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setLoading(true);
     const file = event.target.files && event.target.files[0];
@@ -50,11 +61,12 @@ const FileUpload = ({ onFileUpload, placeholder, name, data, error, disabled = f
 
   return (
     <div className="relative w-full">
-      <Input
+      <FloatingLabelInput
+        id={fieldId}
+        label={label}
         type="file"
         className="pr-10"
         onChange={handleFileChange}
-        placeholder={placeholder}
         name={name}
         disabled={disabled}
       />
