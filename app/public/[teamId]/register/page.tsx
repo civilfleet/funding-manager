@@ -158,7 +158,7 @@ export default function RegisterPage() {
                   <FormInputControl
                     form={form}
                     name="email"
-                    placeholder="Email address"
+                    placeholder="Email address *"
                   />
                   <FormInputControl
                     form={form}
@@ -248,8 +248,11 @@ export default function RegisterPage() {
                   <FormInputControl
                     form={form}
                     name="user.email"
-                    placeholder="Contact person email"
+                    placeholder="Contact person email *"
                   />
+                  <p className="text-xs text-muted-foreground col-span-2">
+                    This email address will be used for logging into the platform.
+                  </p>
                   <FormInputControl
                     form={form}
                     name="user.phone"

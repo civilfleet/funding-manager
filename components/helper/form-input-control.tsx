@@ -1,8 +1,9 @@
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import React from "react";
+import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 
 export default function FormInputControl({
   form,
@@ -24,26 +25,34 @@ export default function FormInputControl({
   isFilled?: boolean;
   className?: string;
 }) {
+  const fieldId = `${name}-${React.useId()}`;
+  const actualLabel = label || placeholder;
+
   return (
     <FormField
       control={form.control}
       name={name}
       render={({ field }) => (
         <FormItem>
-          {label && <FormLabel>{label}</FormLabel>}
           <FormControl>
             <div className="relative">
-              <Input
-                disabled={disabled}
+              <FloatingLabelInput
+                id={fieldId}
+                label={actualLabel}
                 type={type}
-                placeholder={placeholder}
-                className={cn(isFilled && "bg-green-50 border-green-200", "pr-8", className)}
+                disabled={disabled}
+                className={cn(
+                  isFilled && "border-green-500 !bg-green-50",
+                  className
+                )}
                 {...field}
               />
-              {isFilled && <CheckCircle2 className="absolute right-2 top-2.5 h-4 w-4 text-green-500" />}
+              {isFilled && !form.formState.errors[name] && (
+                <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500" />
+              )}
             </div>
           </FormControl>
-          <FormMessage />
+          <FormMessage className="mt-1" />
         </FormItem>
       )}
     />
