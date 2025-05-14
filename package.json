@@ -46,7 +46,7 @@
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "lucide-react": "^0.486.0",
-    "next": "^15.4.0-canary.34",
+    "next": "^15.3.2",
     "next-auth": "^5.0.0-beta.25",
     "nextjs-toploader": "^3.8.16",
     "nodemailer": "^6.10.0",
@@ -74,5 +74,5 @@
     "typescript": "5.8.2"
   },
   "prisma": {},
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "packageManager": "yarn@4.9.1"
 }
