@@ -278,8 +278,6 @@ export default function OrganizationForm({ data }: { data: Organization }) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-gray-600 text-sm pl-2">Article of Association</label>
-
                   <FileUpload
                     placeholder="Article of Association"
                     name="articlesOfAssociation"
@@ -293,7 +291,6 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   />
                 </div>
                 <div>
-                  <label className="text-gray-600 text-sm  pl-2"> Logo</label>
                   <FileUpload
                     placeholder="Logo of your Organization"
                     name="logo"
