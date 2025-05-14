@@ -7,7 +7,7 @@ import { getUserCurrent } from "@/services/users";
 
 export default async function LoginPage() {
   const session = await auth();
-  
+
   if (session?.user?.userId) {
     if (session.user.roles?.includes(Roles.Admin)) {
       return redirect("/admin");
@@ -43,13 +43,6 @@ export default async function LoginPage() {
           </div>
         </div>
       </div>
-      {/* <div className="relative hidden bg-muted lg:block">
-        <img
-          src="/placeholder.svg"
-          alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
-      </div> */}
     </div>
   );
 }

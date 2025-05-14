@@ -3,6 +3,8 @@ import authConfig from "./config/auth";
 
 import prisma from "./lib/prisma";
 import { Roles } from "./types";
+import Nodemailer from "next-auth/providers/nodemailer";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 
 declare module "next-auth" {
   interface Session {
@@ -20,6 +22,22 @@ declare module "next-auth" {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    Nodemailer({
+      server: {
+        host: process.env.BREVO_HOST,
+        port: parseInt(process.env.BREVO_PORT || "587"),
+        auth: {
+          user: process.env.BREVO_USERNAME,
+          pass: process.env.BREVO_PASSWORD,
+        },
+      },
+      from: process.env.BREVO_SENDER_EMAIL,
+      maxAge: 24 * 60 * 60, // 24 hours
+    }),
+  ],
+  session: { strategy: "jwt" },
   callbacks: {
     async signIn({ user, account }) {
       if (!account) return false;
@@ -57,9 +75,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.accessToken = accessToken;
         session.user.userId = token.userId as string | undefined;
         session.user.roles = token.roles as Roles[] | undefined;
-        session.user.organizationId = token.organizationId as
-          | string
-          | undefined;
+        session.user.organizationId = token.organizationId as string | undefined;
         session.user.teamId = token.teamId as string | undefined;
       }
 

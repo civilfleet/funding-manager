@@ -14,10 +14,7 @@ export default auth(async (req) => {
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET,
-    cookieName:
-      process.env.NODE_ENV === "production"
-        ? "__Secure-authjs.session-token"
-        : "authjs.session-token",
+    cookieName: process.env.NODE_ENV === "production" ? "__Secure-authjs.session-token" : "authjs.session-token",
   });
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -36,11 +33,7 @@ export default auth(async (req) => {
     return NextResponse.redirect(new URL("/teams", nextUrl));
   }
 
-  if (
-    isOrganization &&
-    !isTeam &&
-    !nextUrl.pathname.startsWith("/organizations")
-  ) {
+  if (isOrganization && !isTeam && !nextUrl.pathname.startsWith("/organizations")) {
     return NextResponse.redirect(new URL("/organizations", nextUrl));
   }
 });
