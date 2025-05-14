@@ -57,7 +57,7 @@ export default {
   ],
   organization: [
     {
-      title: "Organizations",
+      title: "Organization Profile",
       url: "profile",
       icon: Building,
       isActive: true,
