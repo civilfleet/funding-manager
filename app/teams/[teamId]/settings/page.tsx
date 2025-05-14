@@ -1,5 +1,7 @@
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
+import {  getEmailTemplates } from "@/services/email-templates";
+import { EmailTemplate } from "@/types";
 
 import CreateEmailTemplate from "@/components/forms/create-email-template";
 
@@ -12,9 +14,8 @@ interface PageProps {
 export default async function Page({ params }: PageProps) {
   const { teamId } = await params;
 
-  const templates = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/teams/${teamId}/email-templates`);
-  const templatesData = await templates.json();
-  console.log(templatesData);
+  
+  const templates = await getEmailTemplates(teamId);
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -24,7 +25,7 @@ export default async function Page({ params }: PageProps) {
       </div>
       <Card>
         <div className="space-y-4">
-          <CreateEmailTemplate teamId={teamId} templates={templatesData} />
+          <CreateEmailTemplate teamId={teamId} templates={templates.filter(template => template.teamId !== null) as EmailTemplate[]} />
         </div>
       </Card>
     </div>
