@@ -74,10 +74,6 @@ export default function RegisterPage() {
         name: "",
         email: "",
         phone: "",
-        address: "",
-        postalCode: "",
-        city: "",
-        country: "",
       },
     },
   });
@@ -248,35 +244,12 @@ export default function RegisterPage() {
                   <FormInputControl
                     form={form}
                     name="user.email"
-                    placeholder="Contact person email *"
+                    placeholder="Contact person email (used for login) *"
                   />
-                  <p className="text-xs text-muted-foreground col-span-2">
-                    This email address will be used for logging into the platform.
-                  </p>
                   <FormInputControl
                     form={form}
                     name="user.phone"
                     placeholder="Contact person phone"
-                  />
-                  <FormInputControl
-                    form={form}
-                    name="user.address"
-                    placeholder="Contact person address"
-                  />
-                  <FormInputControl
-                    form={form}
-                    name="user.postalCode"
-                    placeholder="Contact person postal code"
-                  />
-                  <FormInputControl
-                    form={form}
-                    name="user.city"
-                    placeholder="Contact person city"
-                  />
-                  <FormInputControl
-                    form={form}
-                    name="user.country"
-                    placeholder="Contact person country"
                   />
                 </div>
 

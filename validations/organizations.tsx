@@ -45,34 +45,6 @@ const createUserSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
-  address: z
-    .string()
-    .min(2, {
-      message: "Address must be at least 2 characters.",
-    })
-    .optional()
-    .or(z.literal("")),
-  postalCode: z
-    .string()
-    .min(2, {
-      message: "Postal code must be at least 2 characters.",
-    })
-    .optional()
-    .or(z.literal("")),
-  city: z
-    .string()
-    .min(2, {
-      message: "City must be at least 2 characters.",
-    })
-    .optional()
-    .or(z.literal("")),
-  country: z
-    .string()
-    .min(2, {
-      message: "Country must be at least 2 characters.",
-    })
-    .optional()
-    .or(z.literal("")),
 });
 
 const createOrganizationSchema = z.object({
