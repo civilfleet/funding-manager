@@ -20,11 +20,11 @@ export const columns: ColumnDef<FundingRequest>[] = [
       const request = row.original;
       return (
         <div className="text-left">
-          <Link href={`funding-requests/${request.id}`} passHref legacyBehavior>
-            <Button asChild variant="outline" size="sm">
-              <a>View</a>
-            </Button>
-          </Link>
+          <Button asChild variant="outline" size="sm">
+            <Link href={`funding-requests/${request.id}`} passHref >
+              View
+            </Link>
+          </Button>
         </div>
       );
     },

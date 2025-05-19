@@ -78,7 +78,6 @@ export default function OrganizationDetails({
         <Building className="h-6 w-6 text-primary" />
         <h1 className="text-3xl font-bold tracking-tight">{organization.name}</h1>
       </div>
-
       <Collapsible open={isSectionExpanded("profile")} onOpenChange={() => toggleSection("profile")} className="w-full">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 py-4 px-6">
@@ -138,7 +137,6 @@ export default function OrganizationDetails({
           </CollapsibleContent>
         </Card>
       </Collapsible>
-
       {organization.bankDetails && (
         <Collapsible
           open={isSectionExpanded("banking")}
@@ -194,7 +192,6 @@ export default function OrganizationDetails({
           </Card>
         </Collapsible>
       )}
-
       {organization.Files && organization.Files.length > 0 && (
         <Collapsible open={isSectionExpanded("files")} onOpenChange={() => toggleSection("files")} className="w-full">
           <Card>
@@ -220,12 +217,15 @@ export default function OrganizationDetails({
                         <span className="font-medium truncate max-w-[180px]">{file?.name || file.type}</span>
                       </div>
 
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.id}`}>
-                          <Download className="w-4 h-4 mr-2" />
-                          Download
-                        </Link>
-                      </Button>
+                      <Link
+                        href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.id}`}
+                        className="inline-flex items-center px-3 py-2 border rounded text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary bg-white text-primary hover:bg-muted"
+                        tabIndex={0}
+                        aria-label="Download file"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </Link>
                     </div>
                   ))}
                 </div>
@@ -234,7 +234,6 @@ export default function OrganizationDetails({
           </Card>
         </Collapsible>
       )}
-
       {users && users.length > 0 && (
         <Collapsible open={isSectionExpanded("users")} onOpenChange={() => toggleSection("users")} className="w-full">
           <Card>
@@ -293,7 +292,6 @@ export default function OrganizationDetails({
           </Card>
         </Collapsible>
       )}
-
       {fundingRequests && fundingRequests.length > 0 && (
         <Collapsible
           open={isSectionExpanded("funding")}

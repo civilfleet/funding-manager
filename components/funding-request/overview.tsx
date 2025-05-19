@@ -126,7 +126,6 @@ const FundingRequestOverview = ({ data }: { data: FundingRequest }) => {
           </CardContent>
         </Card>
       </div>
-
       {/* Right Column */}
       <div className="space-y-6">
         {/* Contact Information */}
@@ -191,7 +190,10 @@ const FundingRequestOverview = ({ data }: { data: FundingRequest }) => {
           <CardContent className="pt-4">
             <div className="space-y-2">
               {data.files.slice(0, 3).map((file: { id: string; name: string; type: string }, index: number) => (
-                <Link href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.id}`} key={index}>
+                <Link
+                  href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.id}`}
+                  key={index}
+                  >
                   <div key={index} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
                     <div className="flex items-center gap-2">
                       <FileIcon className="h-4 w-4 text-muted-foreground" />

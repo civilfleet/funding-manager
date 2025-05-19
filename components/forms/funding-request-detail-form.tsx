@@ -79,7 +79,7 @@ export default function FundingRequestDetailsForm({
   return (
     <>
       {isTeam && ![FundingStatus.Completed, FundingStatus.Rejected].includes(data.status) && (
-        <div className="flex flex-col items-start gap-2 ">
+        (<div className="flex flex-col items-start gap-2 ">
           {/* <h3 className="text-lg font-semibold">Funding Amount</h3> */}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -101,11 +101,10 @@ export default function FundingRequestDetailsForm({
               </div>
             </form>
           </Form>
-        </div>
+        </div>)
 
         // add button for uploading the donation agreement.
       )}
-
       {showReceiptForm && (
         <div className="mt-6 p-4 border rounded-lg bg-blue-50">
           <FundingRequestPostData
@@ -116,7 +115,6 @@ export default function FundingRequestDetailsForm({
           />
         </div>
       )}
-
       {showReportForm && (
         <FundingRequestPostData
           title="Upload Report"
@@ -125,7 +123,6 @@ export default function FundingRequestDetailsForm({
           fundingRequestId={data.id}
         />
       )}
-
       {showStatementForm && (
         <FundingRequestPostData
           title="Upload Budget statement"

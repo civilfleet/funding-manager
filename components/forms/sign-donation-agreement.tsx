@@ -184,7 +184,9 @@ export default function SignDonationAgreement({
                 </p>
                 {data.file?.url && (
                   <Button asChild variant="outline" size="sm">
-                    <Link href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${data.file?.id}`}>
+                    <Link
+                      href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${data.file?.id}`}
+                      >
                       <Download className="mr-2 h-4 w-4" />
                       Download Agreement
                     </Link>

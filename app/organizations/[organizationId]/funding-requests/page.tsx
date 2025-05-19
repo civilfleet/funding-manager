@@ -17,7 +17,6 @@ export default async function Page({ params }: PageProps) {
           <Button type="button">Create New</Button>
         </Link>
       </div>
-
       <FundingRequestTable organizationId={organizationId} teamId="" />
     </div>
   );
