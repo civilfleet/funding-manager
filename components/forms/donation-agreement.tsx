@@ -214,9 +214,7 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
                   <div className="space-y-2">
                     <DataSelectBox
                       targetKey="email"
-                      url={`/api/users/?teamId=${teamId}${
-                        fundingRequestId ? `&fundingRequestId=${fundingRequestId}` : ""
-                      }`}
+                      url={`/api/users/?teamId=${teamId}${fundingRequestIdForm ? `&fundingRequestId=${fundingRequestIdForm}` : ""}`}
                       attribute="email"
                       label="Select User Person"
                       value={field.value || ""}
@@ -225,9 +223,9 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
                         // Clear the select after selection
                         setTimeout(() => field.onChange(""), 100);
                       }}
-                      disabled={!fundingRequestId}
+                      disabled={!fundingRequestIdForm}
                     />
-                    {!fundingRequestId && (
+                    {!fundingRequestIdForm && (
                       <p className="text-sm text-muted-foreground">Please select a funding request first</p>
                     )}
                     {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
