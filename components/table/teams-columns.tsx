@@ -5,6 +5,18 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 export type Team = {
   id: string;
@@ -29,6 +41,7 @@ const ActionsCell = ({
 }) => {
   const { toast } = useToast();
   const router = useRouter();
+  const [open, setOpen] = useState(false);
 
   const handleDelete = async () => {
     try {
@@ -47,6 +60,7 @@ const ActionsCell = ({
 
       // Revalidate the teams data
       mutate();
+      setOpen(false);
     } catch (error) {
       toast({
         title: "Error",
@@ -63,13 +77,27 @@ const ActionsCell = ({
           Edit
         </Button>
       </Link>
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={handleDelete}
-      >
-        Delete
-      </Button>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogTrigger asChild>
+          <Button variant="destructive" size="sm">
+            Delete
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the team "{team.name}" and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete Team
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
