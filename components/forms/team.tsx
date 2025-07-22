@@ -126,7 +126,8 @@ export default function TeamForm({ team }: TeamFormProps) {
       });
 
       if (!team) {
-        form.reset();
+        // Redirect to the newly created team
+        router.push(`/teams/${data.id}`);
       } else {
         router.refresh();
       }
