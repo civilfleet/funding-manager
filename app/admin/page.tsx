@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Building, FileText, DollarSign } from "lucide-react";
 import Link from "next/link";
+import RecentActivity from "@/components/recent-activity";
 
 export default async function AdminDashboard() {
   return (
@@ -56,14 +57,7 @@ export default async function AdminDashboard() {
         </Link>
       </div>
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center text-muted-foreground py-8">
-              No recent activity to display
-            </div>
-          </CardContent>
-        </Card>
+        <RecentActivity />
       </div>
     </div>
   );
