@@ -87,7 +87,7 @@ const ActionsCell = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the team "{team.name}" and all associated data.
+              This action cannot be undone. This will permanently delete the team &#34;{team.name}&#34; and all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
