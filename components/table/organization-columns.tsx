@@ -134,9 +134,18 @@ export const columns = (mutate: () => void): ColumnDef<OrganizationColumns>[] =>
     accessorKey: "website",
     header: () => <div className="text-left w-24">Website</div>,
     cell: ({ row }) => {
+      const website = row.getValue("website") as string;
+      const websiteUrl = website && !website.startsWith("http") ? `https://${website}` : website;
+      
       return (
-        <div className="text-left  text-blue-500">
-          <Link href={row.getValue("website") || "#"}>{row.getValue("website") || "N/A"}</Link>
+        <div className="text-left text-blue-500">
+          {website ? (
+            <Link href={websiteUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+              {website}
+            </Link>
+          ) : (
+            "N/A"
+          )}
         </div>
       );
     },
