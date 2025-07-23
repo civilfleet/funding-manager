@@ -53,12 +53,6 @@ export default function TeamForm({ team }: TeamFormProps) {
       country: "",
       postalCode: "",
       website: "",
-      bankDetails: {
-        bankName: "",
-        accountHolder: "",
-        iban: "",
-        bic: "",
-      },
       user: {
         name: "",
         email: "",
@@ -79,12 +73,6 @@ export default function TeamForm({ team }: TeamFormProps) {
         country: team.country || "",
         postalCode: team.postalCode || "",
         website: team.website || "",
-        bankDetails: {
-          bankName: team.bankDetails?.bankName || "",
-          accountHolder: team.bankDetails?.accountHolder || "",
-          iban: team.bankDetails?.iban || "",
-          bic: team.bankDetails?.bic || "",
-        },
         user: {
           name: team.users?.[0]?.name || "",
           email: team.users?.[0]?.email || "",
@@ -161,17 +149,6 @@ export default function TeamForm({ team }: TeamFormProps) {
               <FormInputControl form={form} name="website" placeholder="Website" />
             </div>
 
-            <div>
-              <h4 className="text-lg font-semibold">Bank Details</h4>
-              <hr />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormInputControl form={form} name="bankDetails.bankName" placeholder="Bank name" />
-              <FormInputControl form={form} name="bankDetails.accountHolder" placeholder="Account holder" />
-              <FormInputControl form={form} name="bankDetails.iban" placeholder="IBAN" />
-              <FormInputControl form={form} name="bankDetails.bic" placeholder="SWIFT" />
-            </div>
             <h4 className="text-lg font-semibold">
               User Person
               <hr />

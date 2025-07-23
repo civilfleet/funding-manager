@@ -21,23 +21,69 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, phone, address, postalCode, city, country, website } = body;
+    const { name, email, phone, address, postalCode, city, country, website, user } = body;
 
-    const team = await prisma.teams.create({
-      data: {
-        name,
-        email,
-        phone,
-        address,
-        postalCode,
-        city,
-        country,
-        website,
-      },
+    // Use transaction to handle team creation with user
+    const team = await prisma.$transaction(async (tx) => {
+      // Create the team
+      const newTeam = await tx.teams.create({
+        data: {
+          name,
+          email,
+          phone,
+          address,
+          postalCode,
+          city,
+          country,
+          website,
+        },
+        include: {
+          users: true,
+        },
+      });
+
+      // Create or connect user if provided
+      if (user) {
+        // Check if user already exists with this email
+        const existingUser = await tx.user.findUnique({
+          where: { email: user.email },
+        });
+
+        if (existingUser) {
+          // Connect existing user to team and add Team role if not already present
+          const updatedRoles = Array.from(new Set([...existingUser.roles, "Team"]));
+          await tx.user.update({
+            where: { id: existingUser.id },
+            data: {
+              roles: updatedRoles,
+              teams: {
+                connect: { id: newTeam.id },
+              },
+            },
+          });
+        } else {
+          // Create new user and connect to team
+          await tx.user.create({
+            data: {
+              name: user.name,
+              email: user.email,
+              phone: user.phone,
+              address: user.address,
+              roles: ["Team"],
+              teams: {
+                connect: { id: newTeam.id },
+              },
+            },
+          });
+        }
+      }
+
+      return newTeam;
     });
 
     return NextResponse.json(team);
   } catch (error) {
+    console.error("Error creating team:", error);
     return NextResponse.json(
       { error: "Failed to create team" },
       { status: 500 }
