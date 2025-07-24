@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Roles } from "@/types";
 
 export async function GET() {
   try {
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
 
         if (existingUser) {
           // Connect existing user to team and add Team role if not already present
-          const updatedRoles = Array.from(new Set([...existingUser.roles, "Team"]));
+          const updatedRoles = Array.from(new Set([...existingUser.roles, Roles.Team]));
           await tx.user.update({
             where: { id: existingUser.id },
             data: {
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
               email: user.email,
               phone: user.phone,
               address: user.address,
-              roles: ["Team"],
+              roles: [Roles.Team],
               teams: {
                 connect: { id: newTeam.id },
               },
