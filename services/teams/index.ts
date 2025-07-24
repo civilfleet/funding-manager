@@ -4,7 +4,7 @@ import { CreateTeamInput } from "@/validations/team";
 import _, { update } from "lodash";
 
 const getTeamsByRoles = async (roles: string[] | null) => {
-  return await prisma.teams.findMany({
+  return prisma.teams.findMany({
     select: {
       id: true,
       name: true,
