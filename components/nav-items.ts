@@ -1,6 +1,6 @@
 import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users, Settings } from "lucide-react";
 
-export default {
+const navItems = {
   admin: [
     {
       title: "Teams",
@@ -91,3 +91,5 @@ export default {
     },
   ],
 };
+
+export default navItems;

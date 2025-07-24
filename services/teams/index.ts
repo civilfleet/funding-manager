@@ -15,19 +15,13 @@ const getTeamsByRoles = async (roles: string[] | null) => {
 
 const createTeam = async (teamData: CreateTeamInput) => {
   const TeamUser = teamData.user;
-  const bankDetails = teamData.bankDetails;
 
-  const sanitizedTeamData = _.omit(teamData, ["user", "bankDetails"]);
+  const sanitizedTeamData = _.omit(teamData, ["user"]);
 
   const query = {
     data: {
       ...sanitizedTeamData,
       users: {},
-      bankDetails: {
-        create: {
-          ...bankDetails,
-        },
-      },
     },
     select: {
       id: true,

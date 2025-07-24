@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FundingRequest, FundingStatus } from "@/types";
 import { Controller, useForm } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -52,7 +52,7 @@ export default function CreateTransaction({ fundingRequest, teamId, refreshData 
   });
 
   // Fetch funding request details
-  const fetchFundingRequestDetails = async (requestId: string) => {
+  const fetchFundingRequestDetails = useCallback(async (requestId: string) => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/funding-requests/${requestId}`);
@@ -74,7 +74,7 @@ export default function CreateTransaction({ fundingRequest, teamId, refreshData 
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   // Initialize component with fundingRequest prop data
   useEffect(() => {
@@ -82,7 +82,7 @@ export default function CreateTransaction({ fundingRequest, teamId, refreshData 
       fetchFundingRequestDetails(fundingRequest.id);
       form.setValue("fundingRequestId", fundingRequest.id);
     }
-  }, [fundingRequest, form]);
+  }, [fundingRequest, form, fetchFundingRequestDetails]);
 
   // Update remaining amount when amount changes
   const updateRemainingAmount = (amount: number) => {

@@ -52,7 +52,7 @@ export default function RegisterPage() {
     }
 
     fetchTeamName();
-  }, [params.teamId, toast]);
+  }, [params.teamId, toast, router]);
 
   const form = useForm<z.infer<typeof createOrganizationSchema>>({
     resolver: zodResolver(createOrganizationSchema),
