@@ -21,6 +21,7 @@ export async function GET(
       },
       select: {
         name: true,
+        strategicPriorities: true,
       },
     });
 

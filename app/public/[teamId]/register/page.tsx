@@ -28,10 +28,11 @@ export default function RegisterPage() {
   const { toast } = useToast();
   const params = useParams();
   const [teamName, setTeamName] = useState<string>("");
+  const [strategicPriorities, setStrategicPriorities] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchTeamName() {
+    async function fetchTeamData() {
       try {
         const response = await fetch(`/api/public/teams/${params.teamId}`);
         if (!response.ok) {
@@ -40,6 +41,7 @@ export default function RegisterPage() {
         }
         const data = await response.json();
         setTeamName(data.name);
+        setStrategicPriorities(data.strategicPriorities || "");
       } catch (error) {
         toast({
           title: "Error",
@@ -51,7 +53,7 @@ export default function RegisterPage() {
       }
     }
 
-    fetchTeamName();
+    fetchTeamData();
   }, [params.teamId, toast, router]);
 
   const form = useForm<z.infer<typeof createOrganizationSchema>>({
@@ -141,6 +143,16 @@ export default function RegisterPage() {
           <CardDescription>
             Please fill out the form below to request an organization account with {teamName}. We will review your application and get back to you soon.
           </CardDescription>
+          {strategicPriorities && (
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
+              <h3 className="font-semibold text-sm text-muted-foreground mb-2">
+                About {teamName}
+              </h3>
+              <div className="text-sm whitespace-pre-wrap text-foreground">
+                {strategicPriorities}
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <fieldset disabled={form.formState.isSubmitting}>

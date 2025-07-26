@@ -4,6 +4,7 @@ import {  getEmailTemplates } from "@/services/email-templates";
 import { EmailTemplate } from "@/types";
 
 import CreateEmailTemplate from "@/components/forms/create-email-template";
+import StrategicPrioritiesForm from "@/components/forms/strategic-priorities";
 
 interface PageProps {
   params: Promise<{
@@ -23,11 +24,14 @@ export default async function Page({ params }: PageProps) {
         <h1 className="text-3xl font-bold">Team Settings</h1>
         <p className="text-muted-foreground mt-2">{`Manage your team's settings and email templates`}</p>
       </div>
-      <Card>
-        <div className="space-y-4">
-          <CreateEmailTemplate teamId={teamId} templates={templates.filter(template => template.teamId !== null) as EmailTemplate[]} />
-        </div>
-      </Card>
+      <div className="space-y-8">
+        <StrategicPrioritiesForm teamId={teamId} />
+        <Card>
+          <div className="space-y-4">
+            <CreateEmailTemplate teamId={teamId} templates={templates.filter(template => template.teamId !== null) as EmailTemplate[]} />
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }

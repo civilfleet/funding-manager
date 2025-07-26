@@ -132,6 +132,7 @@ model Teams {
   city        String?          @db.VarChar(255)  
   country     String?          @db.VarChar(255)  
   website     String?          @db.VarChar(255)
+  strategicPriorities String?  @db.Text
 
   bankDetailsId String?        @unique
   bankDetails   BankDetails?   @relation(fields: [bankDetailsId], references: [id])

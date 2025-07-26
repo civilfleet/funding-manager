@@ -9,6 +9,7 @@ const createTeamSchema = z.object({
   city: z.string().min(1, "City is required"),
   country: z.string().min(1, "Country is required"),
   website: z.string().min(1, "Website is required"),
+  strategicPriorities: z.string().optional(),
   user: z.object({
     name: z.string().min(1, "Name is required"),
     email: z.string().email("Invalid email address"),
