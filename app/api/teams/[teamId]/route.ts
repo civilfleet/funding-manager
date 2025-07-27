@@ -24,7 +24,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ te
   try {
     const { teamId } = await params;
     const body = await request.json();
-    const { name, email, phone, address, postalCode, city, country, website, bankDetails, user } = body;
+    const { name, email, phone, address, postalCode, city, country, website, strategicPriorities, bankDetails, user } = body;
 
     // Start a transaction to handle all updates
     const team = await prisma.$transaction(async (tx) => {
@@ -76,6 +76,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ te
           city,
           country,
           website,
+          strategicPriorities,
           bankDetailsId,
         },
         include: {
