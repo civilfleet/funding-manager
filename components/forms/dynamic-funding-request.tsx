@@ -45,7 +45,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
     
     sections.forEach(section => {
       section.fields.forEach(field => {
-        let fieldSchema: z.ZodString | z.ZodNumber | z.ZodDate | z.ZodBoolean | z.ZodArray<z.ZodString> | z.ZodEnum<[string, ...string[]]>;
+        let fieldSchema: z.ZodTypeAny;
         
         switch (field.type) {
           case FieldType.TEXT:
@@ -90,21 +90,21 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
             if (field.isRequired) {
               dateSchema = dateSchema.min(1, `${field.label} is required`);
             }
-            dateSchema = dateSchema.refine((date) => !isNaN(Date.parse(date)), {
+            fieldSchema = dateSchema.refine((date) => !isNaN(Date.parse(date)), {
               message: "Invalid date format",
             });
-            fieldSchema = dateSchema;
             break;
             
           case FieldType.SELECT:
           case FieldType.RADIO:
             if (field.options && field.options.length > 0) {
               const values = field.options.map(opt => opt.value);
-              let enumSchema = z.enum(values as [string, ...string[]]);
+              const enumSchema = z.enum(values as [string, ...string[]]);
               if (field.isRequired) {
-                enumSchema = enumSchema.refine(val => val.length > 0, `${field.label} is required`);
+                fieldSchema = enumSchema.refine(val => val.length > 0, `${field.label} is required`);
+              } else {
+                fieldSchema = enumSchema;
               }
-              fieldSchema = enumSchema;
             } else {
               let selectSchema = z.string();
               if (field.isRequired) {
@@ -123,13 +123,14 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
             break;
             
           case FieldType.CHECKBOX:
-            let boolSchema = z.boolean();
+            const boolSchema = z.boolean();
             if (field.isRequired) {
-              boolSchema = boolSchema.refine(val => val === true, {
+              fieldSchema = boolSchema.refine(val => val === true, {
                 message: `${field.label} must be checked`,
               });
+            } else {
+              fieldSchema = boolSchema;
             }
-            fieldSchema = boolSchema;
             break;
             
           default:
@@ -158,7 +159,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
     return z.object(schemaFields);
   };
 
-  const form = useForm({
+  const form = useForm<Record<string, unknown>>({
     resolver: formConfiguration.length > 0 ? zodResolver(generateSchema(formConfiguration)) : undefined,
     defaultValues: {},
   });
@@ -252,6 +253,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                         placeholder={field.placeholder}
                         type={field.type === FieldType.EMAIL ? "email" : field.type === FieldType.URL ? "url" : "text"}
                         {...formField}
+                        value={formField.value as string}
                       />
                     );
                     
@@ -261,6 +263,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                         placeholder={field.placeholder}
                         className="min-h-[100px] resize-y"
                         {...formField}
+                        value={formField.value as string}
                       />
                     );
                     
@@ -275,6 +278,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                           placeholder={field.placeholder}
                           className={field.key === "amountRequested" ? "pl-8" : ""}
                           {...formField}
+                          value={formField.value as string}
                           onChange={(e) => formField.onChange(Number(e.target.value))}
                         />
                       </div>
@@ -288,13 +292,14 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                           type="datetime-local"
                           className="pl-8"
                           {...formField}
+                          value={formField.value as string}
                         />
                       </div>
                     );
                     
                   case FieldType.SELECT:
                     return (
-                      <Select onValueChange={formField.onChange} value={formField.value}>
+                      <Select onValueChange={formField.onChange} value={formField.value as string}>
                         <SelectTrigger>
                           <SelectValue placeholder={field.placeholder || "Select an option"} />
                         </SelectTrigger>
@@ -310,7 +315,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                     
                   case FieldType.RADIO:
                     return (
-                      <Select onValueChange={formField.onChange} value={formField.value}>
+                      <Select onValueChange={formField.onChange} value={formField.value as string}>
                         <SelectTrigger>
                           <SelectValue placeholder={field.placeholder || "Select an option"} />
                         </SelectTrigger>
@@ -328,7 +333,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                     return (
                       <div className="flex items-center space-x-2">
                         <Checkbox
-                          checked={formField.value}
+                          checked={formField.value as boolean}
                           onCheckedChange={formField.onChange}
                           id={fieldName}
                         />
@@ -343,6 +348,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                       <Input
                         placeholder={field.placeholder}
                         {...formField}
+                        value={formField.value as string}
                       />
                     );
                 }
@@ -467,12 +473,12 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium text-muted-foreground">Supporting Documents</h3>
                 <Badge variant="outline" className="text-xs">
-                  {form.watch("files")?.length || 0} files
+                  {(form.watch("files") as { name: string; url: string }[] | undefined)?.length || 0} files
                 </Badge>
               </div>
 
               <div className="space-y-4">
-                {form.watch("files")?.map((file: { name: string; url: string }, index: number) => (
+                {(form.watch("files") as { name: string; url: string }[] | undefined)?.map((file: { name: string; url: string }, index: number) => (
                   <div
                     key={index}
                     className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-end sm:space-x-2"
@@ -486,7 +492,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                           <FormControl>
                             <div className="relative">
                               <FileText className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                              <Input placeholder="Document name" className="pl-8" {...field} />
+                              <Input placeholder="Document name" className="pl-8" {...field} value={field.value as string} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -505,7 +511,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                               placeholder="Upload document"
                               name={`file-${index}`}
                               data=""
-                              onFileUpload={(url) => form.setValue(`files.${index}.url`, url)}
+                              onFileUpload={(url) => form.setValue(`files.${index}.url` as keyof Record<string, unknown>, url)}
                             />
                           </FormControl>
                           <FormMessage />
@@ -518,12 +524,12 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                       variant="destructive"
                       size="icon"
                       onClick={() => {
-                        const currentFiles = form.getValues("files") || [];
+                        const currentFiles = (form.getValues("files") as { name: string; url: string }[] | undefined) || [];
                         const updatedFiles = currentFiles.filter((_: unknown, i: number) => i !== index);
-                        form.setValue("files", updatedFiles);
+                        form.setValue("files" as keyof Record<string, unknown>, updatedFiles);
                       }}
                       className="mt-2 sm:mt-0"
-                      disabled={(form.watch("files")?.length || 0) <= 1}
+                      disabled={((form.watch("files") as { name: string; url: string }[] | undefined)?.length || 0) <= 1}
                     >
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Remove file</span>
@@ -536,8 +542,8 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const currentFiles = form.getValues("files") || [];
-                    form.setValue("files", [...currentFiles, { name: "", url: "" }]);
+                    const currentFiles = (form.getValues("files") as { name: string; url: string }[] | undefined) || [];
+                    form.setValue("files" as keyof Record<string, unknown>, [...currentFiles, { name: "", url: "" }]);
                   }}
                   className="mt-2"
                 >

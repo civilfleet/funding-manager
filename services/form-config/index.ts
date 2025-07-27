@@ -31,7 +31,7 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
       name: "Basic Information",
       description: "Essential project details",
       order: 1,
-      teamId: null,
+      teamId: undefined,
       fields: [
         {
           id: "default-field-1",
@@ -80,7 +80,7 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
       name: "Project Details",
       description: "Detailed information about your project",
       order: 2,
-      teamId: null,
+      teamId: undefined,
       fields: [
         {
           id: "default-field-4",
@@ -119,7 +119,7 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
       name: "Financial Planning",
       description: "Financial sustainability and planning details",
       order: 3,
-      teamId: null,
+      teamId: undefined,
       fields: [
         {
           id: "default-field-6",
