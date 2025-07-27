@@ -211,3 +211,55 @@ export type Transaction = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export enum FieldType {
+  TEXT = "TEXT",
+  TEXTAREA = "TEXTAREA", 
+  NUMBER = "NUMBER",
+  DATE = "DATE",
+  EMAIL = "EMAIL",
+  URL = "URL",
+  SELECT = "SELECT",
+  MULTISELECT = "MULTISELECT",
+  CHECKBOX = "CHECKBOX",
+  RADIO = "RADIO",
+  FILE = "FILE",
+}
+
+export type FormFieldOption = {
+  label: string;
+  value: string;
+};
+
+export type FormField = {
+  id: string;
+  key: string;
+  label: string;
+  description?: string;
+  type: FieldType;
+  placeholder?: string;
+  defaultValue?: string;
+  isRequired: boolean;
+  order: number;
+  minLength?: number;
+  maxLength?: number;
+  minValue?: number;
+  maxValue?: number;
+  pattern?: string;
+  options?: FormFieldOption[];
+  sectionId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type FormSection = {
+  id: string;
+  name: string;
+  description?: string;
+  order: number;
+  teamId?: string;
+  team?: Teams;
+  fields: FormField[];
+  createdAt: Date;
+  updatedAt: Date;
+};

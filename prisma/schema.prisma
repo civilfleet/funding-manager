@@ -145,6 +145,7 @@ model Teams {
   updatedAt    DateTime        @updatedAt @db.Timestamptz(6)
 
   emailTemplates emailTemplates[]
+  formSections FormSection[]
 
   Transaction Transaction[]
 }
@@ -225,6 +226,62 @@ model emailTemplates {
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @db.Timestamptz(6)
   
+}
+
+enum FieldType {
+  TEXT
+  TEXTAREA
+  NUMBER
+  DATE
+  EMAIL
+  URL
+  SELECT
+  MULTISELECT
+  CHECKBOX
+  RADIO
+  FILE
+}
+
+model FormSection {
+  id String @id @default(uuid()) @unique
+  name String @db.VarChar(255)
+  description String? @db.Text
+  order Int
+  teamId String?
+  team Teams? @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  fields FormField[]
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+}
+
+model FormField {
+  id String @id @default(uuid()) @unique
+  key String @db.VarChar(255)
+  label String @db.VarChar(255)
+  description String? @db.Text
+  type FieldType
+  placeholder String? @db.VarChar(255)
+  defaultValue String? @db.Text
+  isRequired Boolean @default(false)
+  order Int
+  
+  // Validation rules
+  minLength Int?
+  maxLength Int?
+  minValue Decimal?
+  maxValue Decimal?
+  pattern String? @db.VarChar(255)
+  
+  // Select/Radio options (JSON array of {label: string, value: string})
+  options Json?
+  
+  sectionId String
+  section FormSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  
+  @@unique([sectionId, key])
 }
 
 
