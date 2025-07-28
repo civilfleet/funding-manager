@@ -90,7 +90,7 @@ export default function UserForm({ teamId, organizationId }: { teamId: string; o
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="John Doe" {...field} />
+                          <Input placeholder="John Doe" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -104,7 +104,7 @@ export default function UserForm({ teamId, organizationId }: { teamId: string; o
                       <FormItem>
                         <FormLabel>Email Address</FormLabel>
                         <FormControl>
-                          <Input placeholder="john.doe@example.com" type="email" {...field} />
+                          <Input placeholder="john.doe@example.com" type="email" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -118,7 +118,7 @@ export default function UserForm({ teamId, organizationId }: { teamId: string; o
                       <FormItem>
                         <FormLabel>Phone Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="+1 (555) 123-4567" {...field} />
+                          <Input placeholder="+1 (555) 123-4567" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

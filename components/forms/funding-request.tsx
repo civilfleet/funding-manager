@@ -139,7 +139,7 @@ export default function FundingRequest({ organizationId }: { organizationId: str
                   <FormItem>
                     <FormLabel>Project Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter the name of your project" {...field} />
+                      <Input placeholder="Enter the name of your project" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormDescription>Provide a clear, concise name for your funding request</FormDescription>
                     <FormMessage />
@@ -180,7 +180,7 @@ export default function FundingRequest({ organizationId }: { organizationId: str
                       <FormControl>
                         <div className="relative">
                           <Calendar className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input type="datetime-local" className="pl-8" {...field} />
+                          <Input type="datetime-local" className="pl-8" {...field} value={field.value || ""} />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -305,7 +305,7 @@ export default function FundingRequest({ organizationId }: { organizationId: str
                           <FormControl>
                             <div className="relative">
                               <FileText className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                              <Input placeholder="Document name" className="pl-8" {...field} />
+                              <Input placeholder="Document name" className="pl-8" {...field} value={field.value || ""} />
                             </div>
                           </FormControl>
                           <FormMessage />

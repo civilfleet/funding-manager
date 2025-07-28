@@ -113,7 +113,7 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
                     <FormItem>
                       <FormLabel>Template name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter template name" {...field} />
+                        <Input placeholder="Enter template name" {...field} value={field.value || ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -153,7 +153,7 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
                   <FormItem>
                     <FormLabel>Email Subject</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter email subject" {...field} />
+                      <Input placeholder="Enter email subject" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

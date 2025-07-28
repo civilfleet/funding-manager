@@ -351,7 +351,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                 <FormItem>
                                   <FormLabel>Section Name</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="e.g., Basic Information" {...field} />
+                                    <Input placeholder="e.g., Basic Information" {...field} value={field.value || ""} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -368,6 +368,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                     <Input 
                                       type="number" 
                                       {...field} 
+                                      value={field.value || ""}
                                       onChange={(e) => field.onChange(Number(e.target.value))}
                                     />
                                   </FormControl>
@@ -388,6 +389,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                     placeholder="Brief description of this section"
                                     className="resize-none"
                                     {...field}
+                                    value={field.value || ""}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -434,7 +436,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                         <FormItem>
                                           <FormLabel>Field Key</FormLabel>
                                           <FormControl>
-                                            <Input placeholder="field_name" {...field} />
+                                            <Input placeholder="field_name" {...field} value={field.value || ""} />
                                           </FormControl>
                                           <FormDescription>
                                             Unique identifier (no spaces, underscore allowed)
@@ -451,7 +453,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                         <FormItem>
                                           <FormLabel>Label</FormLabel>
                                           <FormControl>
-                                            <Input placeholder="Field Label" {...field} />
+                                            <Input placeholder="Field Label" {...field} value={field.value || ""} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -516,6 +518,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                             placeholder="Help text for this field"
                                             className="resize-none"
                                             {...field}
+                                            value={field.value || ""}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -530,12 +533,241 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                       <FormItem>
                                         <FormLabel>Placeholder (Optional)</FormLabel>
                                         <FormControl>
-                                          <Input placeholder="Enter placeholder text" {...field} />
+                                          <Input placeholder="Enter placeholder text" {...field} value={field.value || ""} />
                                         </FormControl>
                                         <FormMessage />
                                       </FormItem>
                                     )}
                                   />
+                                  
+                                  {/* Field-specific configuration options */}
+                                  {(() => {
+                                    const fieldType = form.watch(`sections.${sectionIndex}.fields.${fieldIndex}.type`);
+                                    
+                                    return (
+                                      <div className="space-y-4">
+                                        {/* Text validation options */}
+                                        {(fieldType === FieldType.TEXT || fieldType === FieldType.TEXTAREA || fieldType === FieldType.EMAIL || fieldType === FieldType.URL) && (
+                                          <div className="space-y-4">
+                                            <h5 className="font-medium text-sm">Text Validation</h5>
+                                            <div className="grid gap-4 md:grid-cols-2">
+                                              <FormField
+                                                control={form.control}
+                                                name={`sections.${sectionIndex}.fields.${fieldIndex}.minLength`}
+                                                render={({ field }) => (
+                                                  <FormItem>
+                                                    <FormLabel>Minimum Length</FormLabel>
+                                                    <FormControl>
+                                                      <Input 
+                                                        type="number" 
+                                                        placeholder="0"
+                                                        {...field} 
+                                                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                                        value={field.value || ""}
+                                                      />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                  </FormItem>
+                                                )}
+                                              />
+                                              
+                                              <FormField
+                                                control={form.control}
+                                                name={`sections.${sectionIndex}.fields.${fieldIndex}.maxLength`}
+                                                render={({ field }) => (
+                                                  <FormItem>
+                                                    <FormLabel>Maximum Length</FormLabel>
+                                                    <FormControl>
+                                                      <Input 
+                                                        type="number" 
+                                                        placeholder="255"
+                                                        {...field} 
+                                                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                                        value={field.value || ""}
+                                                      />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                  </FormItem>
+                                                )}
+                                              />
+                                            </div>
+                                            
+                                            <FormField
+                                              control={form.control}
+                                              name={`sections.${sectionIndex}.fields.${fieldIndex}.pattern`}
+                                              render={({ field }) => (
+                                                <FormItem>
+                                                  <FormLabel>Validation Pattern (Regex)</FormLabel>
+                                                  <FormControl>
+                                                    <Input 
+                                                      placeholder="^[A-Za-z0-9]+$"
+                                                      {...field}
+                                                      value={field.value || ""}
+                                                    />
+                                                  </FormControl>
+                                                  <FormDescription>
+                                                    Optional regular expression for validation
+                                                  </FormDescription>
+                                                  <FormMessage />
+                                                </FormItem>
+                                              )}
+                                            />
+                                          </div>
+                                        )}
+                                        
+                                        {/* Number validation options */}
+                                        {fieldType === FieldType.NUMBER && (
+                                          <div className="space-y-4">
+                                            <h5 className="font-medium text-sm">Number Validation</h5>
+                                            <div className="grid gap-4 md:grid-cols-2">
+                                              <FormField
+                                                control={form.control}
+                                                name={`sections.${sectionIndex}.fields.${fieldIndex}.minValue`}
+                                                render={({ field }) => (
+                                                  <FormItem>
+                                                    <FormLabel>Minimum Value</FormLabel>
+                                                    <FormControl>
+                                                      <Input 
+                                                        type="number" 
+                                                        placeholder="0"
+                                                        {...field} 
+                                                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                                        value={field.value || ""}
+                                                      />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                  </FormItem>
+                                                )}
+                                              />
+                                              
+                                              <FormField
+                                                control={form.control}
+                                                name={`sections.${sectionIndex}.fields.${fieldIndex}.maxValue`}
+                                                render={({ field }) => (
+                                                  <FormItem>
+                                                    <FormLabel>Maximum Value</FormLabel>
+                                                    <FormControl>
+                                                      <Input 
+                                                        type="number" 
+                                                        placeholder="999999"
+                                                        {...field} 
+                                                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                                        value={field.value || ""}
+                                                      />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                  </FormItem>
+                                                )}
+                                              />
+                                            </div>
+                                          </div>
+                                        )}
+                                        
+                                        {/* Options for SELECT and RADIO fields */}
+                                        {(fieldType === FieldType.SELECT || fieldType === FieldType.RADIO) && (
+                                          <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                              <h5 className="font-medium text-sm">Field Options</h5>
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                  const currentOptions = form.getValues(`sections.${sectionIndex}.fields.${fieldIndex}.options`) || [];
+                                                  form.setValue(`sections.${sectionIndex}.fields.${fieldIndex}.options`, [
+                                                    ...currentOptions,
+                                                    { label: "New Option", value: `option_${currentOptions.length + 1}` }
+                                                  ]);
+                                                }}
+                                              >
+                                                <Plus className="h-4 w-4 mr-2" />
+                                                Add Option
+                                              </Button>
+                                            </div>
+                                            
+                                            {form.watch(`sections.${sectionIndex}.fields.${fieldIndex}.options`)?.map((option, optionIndex) => (
+                                              <Card key={optionIndex} className="border border-muted">
+                                                <CardContent className="pt-4 space-y-4">
+                                                  <div className="flex items-center justify-between">
+                                                    <Badge variant="outline">Option {optionIndex + 1}</Badge>
+                                                    <Button
+                                                      type="button"
+                                                      variant="destructive"
+                                                      size="sm"
+                                                      onClick={() => {
+                                                        const currentOptions = form.getValues(`sections.${sectionIndex}.fields.${fieldIndex}.options`) || [];
+                                                        const updatedOptions = currentOptions.filter((_, idx) => idx !== optionIndex);
+                                                        form.setValue(`sections.${sectionIndex}.fields.${fieldIndex}.options`, updatedOptions);
+                                                      }}
+                                                    >
+                                                      <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                  </div>
+                                                  
+                                                  <div className="grid gap-4 md:grid-cols-2">
+                                                    <FormField
+                                                      control={form.control}
+                                                      name={`sections.${sectionIndex}.fields.${fieldIndex}.options.${optionIndex}.label`}
+                                                      render={({ field }) => (
+                                                        <FormItem>
+                                                          <FormLabel>Display Label</FormLabel>
+                                                          <FormControl>
+                                                            <Input placeholder="Option label" {...field} value={field.value || ""} />
+                                                          </FormControl>
+                                                          <FormMessage />
+                                                        </FormItem>
+                                                      )}
+                                                    />
+                                                    
+                                                    <FormField
+                                                      control={form.control}
+                                                      name={`sections.${sectionIndex}.fields.${fieldIndex}.options.${optionIndex}.value`}
+                                                      render={({ field }) => (
+                                                        <FormItem>
+                                                          <FormLabel>Value</FormLabel>
+                                                          <FormControl>
+                                                            <Input placeholder="option_value" {...field} value={field.value || ""} />
+                                                          </FormControl>
+                                                          <FormDescription>
+                                                            Internal value (no spaces)
+                                                          </FormDescription>
+                                                          <FormMessage />
+                                                        </FormItem>
+                                                      )}
+                                                    />
+                                                  </div>
+                                                </CardContent>
+                                              </Card>
+                                            ))}
+                                            
+                                            {(!form.watch(`sections.${sectionIndex}.fields.${fieldIndex}.options`) || form.watch(`sections.${sectionIndex}.fields.${fieldIndex}.options`)?.length === 0) && (
+                                              <div className="text-center py-4 text-muted-foreground">
+                                                No options added yet. Click &quot;Add Option&quot; to create choices for this field.
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                        
+                                        {/* Default value field */}
+                                        <FormField
+                                          control={form.control}
+                                          name={`sections.${sectionIndex}.fields.${fieldIndex}.defaultValue`}
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel>Default Value (Optional)</FormLabel>
+                                              <FormControl>
+                                                <Input placeholder="Default value for this field" {...field} value={field.value || ""} />
+                                              </FormControl>
+                                              <FormDescription>
+                                                Pre-filled value when the form loads
+                                              </FormDescription>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+                                    );
+                                  })()}
                                 </CardContent>
                               </Card>
                             ))}

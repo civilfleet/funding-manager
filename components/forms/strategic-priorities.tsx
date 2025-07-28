@@ -121,6 +121,7 @@ export default function StrategicPrioritiesForm({ teamId }: StrategicPrioritiesF
                       placeholder="Enter information about your team's strategic priorities, available grants, and any other details organizations should know when registering..."
                       className="min-h-[150px]"
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
