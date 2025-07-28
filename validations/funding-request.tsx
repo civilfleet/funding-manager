@@ -1,27 +1,55 @@
 import { FundingStatus } from "@/types";
 import { z } from "zod";
 
-const createFundingRequestSchema = z.object({
+// Schema for static/core fields that are always required
+const staticFundingRequestSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters."),
   description: z.string().min(10, "Description must be at least 10 characters."),
   purpose: z.string().min(10, "Purpose must be at least 10 characters."),
-  amountAgreed: z.coerce.number().optional(),
   amountRequested: z.coerce.number().positive("Amount must be a positive number."),
   refinancingConcept: z.string().min(10, "Refinancing concept must be at least 10 characters."),
-  remainingAmount: z.coerce.number().optional(),
   sustainability: z.string().min(10, "Sustainability details must be at least 10 characters."),
   expectedCompletionDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format.",
   }),
-  status: z.enum([FundingStatus.Submitted, FundingStatus.Accepted, FundingStatus.Approved, FundingStatus.Rejected]),
-  files: z.array(
-    z.object({
-      name: z.string(),
-      url: z.string(),
-    })
-  ),
 });
 
-const updateFundingRequestSchema = createFundingRequestSchema.partial();
+// Schema for dynamic fields (anything can be added)
+const dynamicFieldsSchema = z.record(z.unknown());
 
-export { createFundingRequestSchema, updateFundingRequestSchema };
+// Combined schema for creating funding requests
+const createFundingRequestSchema = staticFundingRequestSchema.merge(
+  z.object({
+    // System fields
+    organizationId: z.string().uuid().optional(),
+    submittedBy: z.string().email().optional().or(z.literal("")),
+    // File uploads
+    files: z.array(
+      z.object({
+        name: z.string(),
+        url: z.string(),
+      })
+    ).optional().default([]),
+    // Dynamic fields
+    customFields: dynamicFieldsSchema.optional(),
+  })
+);
+
+// Legacy schema for backward compatibility - includes fields set by teams/system
+const legacyCreateFundingRequestSchema = createFundingRequestSchema.merge(
+  z.object({
+    amountAgreed: z.coerce.number().optional(),
+    remainingAmount: z.coerce.number().optional(),
+    status: z.enum([FundingStatus.Submitted, FundingStatus.Accepted, FundingStatus.Approved, FundingStatus.Rejected]).optional(),
+  })
+);
+
+const updateFundingRequestSchema = legacyCreateFundingRequestSchema.partial();
+
+export { 
+  staticFundingRequestSchema,
+  dynamicFieldsSchema,
+  createFundingRequestSchema, 
+  legacyCreateFundingRequestSchema,
+  updateFundingRequestSchema 
+};

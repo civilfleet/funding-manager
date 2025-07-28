@@ -16,7 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
-import { createFundingRequestSchema } from "@/validations/funding-request";
+import { legacyCreateFundingRequestSchema } from "@/validations/funding-request";
 import { useToast } from "@/hooks/use-toast";
 import FileUpload from "../file-uploader";
 import { useRouter } from "next/navigation";
@@ -29,8 +29,8 @@ export default function FundingRequest({ organizationId }: { organizationId: str
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const form = useForm<z.infer<typeof createFundingRequestSchema>>({
-    resolver: zodResolver(createFundingRequestSchema),
+  const form = useForm<z.infer<typeof legacyCreateFundingRequestSchema>>({
+    resolver: zodResolver(legacyCreateFundingRequestSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -58,7 +58,7 @@ export default function FundingRequest({ organizationId }: { organizationId: str
     name: "files",
   });
 
-  async function onSubmit(values: z.infer<typeof createFundingRequestSchema>) {
+  async function onSubmit(values: z.infer<typeof legacyCreateFundingRequestSchema>) {
     if (!session?.user?.email) {
       toast({
         title: "Authentication Error",

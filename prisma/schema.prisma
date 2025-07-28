@@ -84,6 +84,7 @@ model FundingRequest {
   status                    FundingStatus @default(Submitted)   
   submittedById             String           
   submittedBy               User? @relation(fields: [submittedById], references: [id])
+  customFields              Json?                                  // Store dynamic field data as JSON
   createdAt                 DateTime @default(now()) @db.Timestamptz(6) 
   updatedAt                 DateTime @updatedAt @db.Timestamptz(6) 
   files                     File[]          

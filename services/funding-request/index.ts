@@ -15,9 +15,10 @@ type FundingRequestData = {
   refinancingConcept: string;
   sustainability: string;
   expectedCompletionDate: string;
-  status: FundingStatus;
+  status?: FundingStatus; // Optional - defaults to Submitted
   submittedBy?: string;
   files?: { name: string; url: string }[];
+  [key: string]: unknown; // Accept dynamic fields
 };
 
 const createFundingRequest = async (data: FundingRequestData) => {
@@ -59,16 +60,40 @@ const createFundingRequest = async (data: FundingRequestData) => {
     throw new Error("Organization not found.");
   }
 
+  // Separate static fields from dynamic fields
+  const staticFields = {
+    name: data.name,
+    description: data.description,
+    purpose: data.purpose,
+    amountRequested: data.amountRequested,
+    refinancingConcept: data.refinancingConcept,
+    sustainability: data.sustainability,
+    expectedCompletionDate: completionDate,
+  };
+
+  // Extract dynamic fields (everything not in staticFields, status, files, organizationId, submittedBy)
+  const excludedKeys = new Set([
+    ...Object.keys(staticFields),
+    'status',
+    'files',
+    'organizationId',
+    'submittedBy',
+    'id',
+  ]);
+  
+  const customFields: Record<string, unknown> = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (!excludedKeys.has(key)) {
+      customFields[key] = value;
+    }
+  });
+
   // Create the funding request
   const fundingRequest = await prisma.fundingRequest.create({
     data: {
-      name: data.name,
-      description: data.description,
-      purpose: data.purpose,
-      amountRequested: data.amountRequested,
-      refinancingConcept: data.refinancingConcept,
-      sustainability: data.sustainability,
-      expectedCompletionDate: completionDate,
+      ...staticFields,
+      status: data.status || FundingStatus.Submitted, // Default to Submitted if not provided
+      customFields: Object.keys(customFields).length > 0 ? (customFields as Prisma.InputJsonValue) : undefined,
       organization: {
         connect: {
           id: data.organizationId,
@@ -417,6 +442,7 @@ const getFundingRequestById = async (id: string) => {
       expectedCompletionDate: true,
       remainingAmount: true,
       status: true,
+      customFields: true,
       createdAt: true,
       updatedAt: true,
       files: true,

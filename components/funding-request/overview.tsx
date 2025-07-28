@@ -1,6 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
+import { useState, useEffect } from "react";
 
 // UI Components
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,19 +10,75 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
 // Icons
-import { FileText, Calendar, Banknote, User, Building, ClipboardList, FileIcon, ChevronRight } from "lucide-react";
+import { FileText, Calendar, Banknote, User, Building, ClipboardList, FileIcon, ChevronRight, Settings } from "lucide-react";
 
 // Custom Components
 import LongText from "@/components/helper/long-text";
 import SectionBlock from "@/components/helper/section-block";
 import formatCurrency from "@/components/helper/format-currency";
+import DynamicFieldRenderer from "@/components/dynamic-field-renderer";
 
 // Types
-import { type FundingRequest } from "@/types";
+import { type FundingRequest, FormSection } from "@/types";
 import Link from "next/link";
 import { calculateMonthsDuration } from "@/lib/utils";
 
 const FundingRequestOverview = ({ data }: { data: FundingRequest }) => {
+  const [formConfiguration, setFormConfiguration] = useState<FormSection[]>([]);
+  const [isLoadingConfig, setIsLoadingConfig] = useState(true);
+
+  // Fetch form configuration when component mounts
+  useEffect(() => {
+    const fetchFormConfiguration = async () => {
+      try {
+        if (data.organization?.teamId) {
+          const response = await fetch(`/api/teams/${data.organization.teamId}/form-config`);
+          if (response.ok) {
+            const config = await response.json();
+            setFormConfiguration(config.sections || []);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch form configuration:', error);
+      } finally {
+        setIsLoadingConfig(false);
+      }
+    };
+
+    fetchFormConfiguration();
+  }, [data.organization?.teamId]);
+
+  // Extract dynamic fields and match them with form configuration
+  const getDynamicFieldsWithConfig = () => {
+    // Handle the case where customFields might be nested
+    const customFields = data.customFields?.customFields || data.customFields;
+    
+    if (!customFields || !formConfiguration.length || typeof customFields !== 'object') {
+      return [];
+    }
+    
+    const dynamicFields: Array<{ field: FormSection['fields'][0]; value: unknown }> = [];
+    
+    // Cast to Record<string, unknown> for type safety
+    const customFieldsObj = customFields as Record<string, unknown>;
+    
+    // Iterate through form configuration to maintain order and get field metadata
+    formConfiguration.forEach(section => {
+      section.fields.forEach(field => {
+        if (customFieldsObj[field.key] !== undefined) {
+          dynamicFields.push({
+            field,
+            value: customFieldsObj[field.key]
+          });
+        }
+      });
+    });
+    
+    return dynamicFields;
+  };
+
+  const dynamicFields = getDynamicFieldsWithConfig();
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Column */}
@@ -125,6 +182,46 @@ const FundingRequestOverview = ({ data }: { data: FundingRequest }) => {
             </SectionBlock>
           </CardContent>
         </Card>
+
+        {/* Dynamic Fields */}
+        {dynamicFields.length > 0 && (
+          <Card>
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5 text-primary" />
+                Additional Information
+              </CardTitle>
+              <CardDescription>
+                Custom fields configured for this funding request
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {dynamicFields.map(({ field, value }, index) => (
+                  <div key={field.id || index}>
+                    <DynamicFieldRenderer field={field} value={value} />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+
+        {/* Loading state for dynamic fields */}
+        {isLoadingConfig && (data.customFields?.customFields || data.customFields) && Object.keys(data.customFields?.customFields || data.customFields || {}).length > 0 && (
+          <Card>
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5 text-primary" />
+                Additional Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="text-muted-foreground">Loading additional field configuration...</div>
+            </CardContent>
+          </Card>
+        )}
       </div>
       {/* Right Column */}
       <div className="space-y-6">

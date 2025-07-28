@@ -24,17 +24,19 @@ export async function getFormConfiguration(teamId: string): Promise<FormSection[
   })) as FormSection[];
 }
 
-export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
+export async function getStaticFieldsConfiguration(): Promise<FormSection[]> {
+  // Return the static fields configuration for display purposes only
+  // These fields are always present and cannot be modified
   return [
     {
-      id: "default-1",
+      id: "static-1",
       name: "Basic Information",
-      description: "Essential project details",
+      description: "Essential project details (always present)",
       order: 1,
       teamId: undefined,
       fields: [
         {
-          id: "default-field-1",
+          id: "static-field-1",
           key: "name",
           label: "Project Name",
           description: "Provide a clear, concise name for your funding request",
@@ -43,12 +45,12 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
           isRequired: true,
           order: 1,
           minLength: 3,
-          sectionId: "default-1",
+          sectionId: "static-1",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
-          id: "default-field-2",
+          id: "static-field-2",
           key: "amountRequested",
           label: "Amount Requested",
           type: FieldType.NUMBER,
@@ -56,18 +58,18 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
           isRequired: true,
           order: 2,
           minValue: 0,
-          sectionId: "default-1",
+          sectionId: "static-1",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
-          id: "default-field-3",
+          id: "static-field-3",
           key: "expectedCompletionDate",
           label: "Expected Completion Date",
           type: FieldType.DATE,
           isRequired: true,
           order: 3,
-          sectionId: "default-1",
+          sectionId: "static-1",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -76,14 +78,14 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
       updatedAt: new Date(),
     },
     {
-      id: "default-2",
+      id: "static-2",
       name: "Project Details",
-      description: "Detailed information about your project",
+      description: "Detailed information about your project (always present)",
       order: 2,
       teamId: undefined,
       fields: [
         {
-          id: "default-field-4",
+          id: "static-field-4",
           key: "description",
           label: "Project Description",
           description: "Explain what your project is about and why it matters",
@@ -92,12 +94,12 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
           isRequired: true,
           order: 1,
           minLength: 10,
-          sectionId: "default-2",
+          sectionId: "static-2",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
-          id: "default-field-5",
+          id: "static-field-5",
           key: "purpose",
           label: "Project Purpose",
           description: "Clearly state the objectives and intended outcomes",
@@ -106,7 +108,7 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
           isRequired: true,
           order: 2,
           minLength: 10,
-          sectionId: "default-2",
+          sectionId: "static-2",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -115,14 +117,14 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
       updatedAt: new Date(),
     },
     {
-      id: "default-3",
+      id: "static-3",
       name: "Financial Planning",
-      description: "Financial sustainability and planning details",
+      description: "Financial sustainability and planning details (always present)",
       order: 3,
       teamId: undefined,
       fields: [
         {
-          id: "default-field-6",
+          id: "static-field-6",
           key: "refinancingConcept",
           label: "Refinancing Concept",
           description: "Detail how the project will be financially sustainable after initial funding",
@@ -131,12 +133,12 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
           isRequired: true,
           order: 1,
           minLength: 10,
-          sectionId: "default-3",
+          sectionId: "static-3",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
-          id: "default-field-7",
+          id: "static-field-7",
           key: "sustainability",
           label: "Sustainability Plan",
           description: "Outline the long-term viability and impact of your project",
@@ -145,7 +147,73 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
           isRequired: true,
           order: 2,
           minLength: 10,
-          sectionId: "default-3",
+          sectionId: "static-3",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+}
+
+export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
+  // Return example additional fields configuration
+  // Teams can use this as a starting point for their custom fields
+  return [
+    {
+      id: "example-1",
+      name: "Additional Project Information",
+      description: "Custom fields for additional project details (example section)",
+      order: 1,
+      teamId: undefined,
+      fields: [
+        {
+          id: "example-field-1",
+          key: "targetAudience",
+          label: "Target Audience",
+          description: "Who will benefit from this project?",
+          type: FieldType.TEXTAREA,
+          placeholder: "Describe your target audience",
+          isRequired: false,
+          order: 1,
+          sectionId: "example-1",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: "example-field-2",
+          key: "projectCategory",
+          label: "Project Category",
+          description: "Select the category that best describes your project",
+          type: FieldType.SELECT,
+          isRequired: false,
+          order: 2,
+          options: [
+            { label: "Education", value: "education" },
+            { label: "Healthcare", value: "healthcare" },
+            { label: "Environment", value: "environment" },
+            { label: "Community Development", value: "community" },
+            { label: "Arts & Culture", value: "arts" },
+            { label: "Other", value: "other" }
+          ],
+          sectionId: "example-1",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: "example-field-3",
+          key: "teamSize",
+          label: "Team Size",
+          description: "Number of people working on this project",
+          type: FieldType.NUMBER,
+          placeholder: "5",
+          isRequired: false,
+          order: 3,
+          minValue: 1,
+          maxValue: 1000,
+          sectionId: "example-1",
           createdAt: new Date(),
           updatedAt: new Date(),
         },

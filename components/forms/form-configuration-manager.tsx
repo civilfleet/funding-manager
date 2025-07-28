@@ -26,9 +26,22 @@ const fieldOptionSchema = z.object({
   value: z.string().min(1, "Value is required"),
 });
 
+// Reserved field keys that cannot be used (static fields)
+const RESERVED_FIELD_KEYS = [
+  'name', 'description', 'purpose', 'amountRequested', 'refinancingConcept', 
+  'sustainability', 'expectedCompletionDate', 'organizationId', 'submittedBy', 
+  'files', 'status', 'id', 'createdAt', 'updatedAt'
+];
+
 const formFieldSchema = z.object({
   id: z.string().optional(),
-  key: z.string().min(1, "Key is required").regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, "Key must be a valid identifier"),
+  key: z.string()
+    .min(1, "Key is required")
+    .regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, "Key must be a valid identifier")
+    .refine(
+      (key) => !RESERVED_FIELD_KEYS.includes(key), 
+      "This field key is reserved and cannot be used. Please choose a different key."
+    ),
   label: z.string().min(1, "Label is required"),
   description: z.string().optional(),
   type: z.nativeEnum(FieldType),
@@ -99,106 +112,69 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
           }, {});
           setOpenSections(openState);
         } else {
-          // Load default configuration if none exists
-          loadDefaultConfiguration();
+          // No configuration exists - show empty state
+          form.reset({ sections: [] });
+          setOpenSections({});
         }
       } else {
-        loadDefaultConfiguration();
+        // API error - show empty state
+        form.reset({ sections: [] });
+        setOpenSections({});
       }
     } catch (error) {
       console.error("Failed to load form configuration:", error);
-      loadDefaultConfiguration();
+      // Error loading - show empty state
+      form.reset({ sections: [] });
+      setOpenSections({});
     } finally {
       setIsLoading(false);
     }
   };
 
   const loadDefaultConfiguration = () => {
+    // Load the new default configuration that only contains example additional fields
+    // Static fields (name, description, purpose, etc.) are no longer configurable
     const defaultSections = [
       {
-        name: "Basic Information",
-        description: "Essential project details",
+        name: "Additional Project Information",
+        description: "Configure additional fields for your funding requests (examples shown)",
         order: 1,
         fields: [
           {
-            key: "name",
-            label: "Project Name",
-            description: "Provide a clear, concise name for your funding request",
-            type: FieldType.TEXT,
-            placeholder: "Enter the name of your project",
-            isRequired: true,
+            key: "targetAudience",
+            label: "Target Audience",
+            description: "Who will benefit from this project?",
+            type: FieldType.TEXTAREA,
+            placeholder: "Describe your target audience",
+            isRequired: false,
             order: 1,
-            minLength: 3,
           },
           {
-            key: "amountRequested",
-            label: "Amount Requested",
+            key: "projectCategory",
+            label: "Project Category",
+            description: "Select the category that best describes your project",
+            type: FieldType.SELECT,
+            isRequired: false,
+            order: 2,
+            options: [
+              { label: "Education", value: "education" },
+              { label: "Healthcare", value: "healthcare" },
+              { label: "Environment", value: "environment" },
+              { label: "Community Development", value: "community" },
+              { label: "Arts & Culture", value: "arts" },
+              { label: "Other", value: "other" }
+            ],
+          },
+          {
+            key: "teamSize",
+            label: "Team Size",
+            description: "Number of people working on this project",
             type: FieldType.NUMBER,
-            placeholder: "0.00",
-            isRequired: true,
-            order: 2,
-            minValue: 0,
-          },
-          {
-            key: "expectedCompletionDate",
-            label: "Expected Completion Date",
-            type: FieldType.DATE,
-            isRequired: true,
+            placeholder: "5",
+            isRequired: false,
             order: 3,
-          },
-        ],
-      },
-      {
-        name: "Project Details",
-        description: "Detailed information about your project",
-        order: 2,
-        fields: [
-          {
-            key: "description",
-            label: "Project Description",
-            description: "Explain what your project is about and why it matters",
-            type: FieldType.TEXTAREA,
-            placeholder: "Provide a detailed description of your project",
-            isRequired: true,
-            order: 1,
-            minLength: 10,
-          },
-          {
-            key: "purpose",
-            label: "Project Purpose",
-            description: "Clearly state the objectives and intended outcomes",
-            type: FieldType.TEXTAREA,
-            placeholder: "Describe the purpose and goals of your project",
-            isRequired: true,
-            order: 2,
-            minLength: 10,
-          },
-        ],
-      },
-      {
-        name: "Financial Planning",
-        description: "Financial sustainability and planning details",
-        order: 3,
-        fields: [
-          {
-            key: "refinancingConcept",
-            label: "Refinancing Concept",
-            description: "Detail how the project will be financially sustainable after initial funding",
-            type: FieldType.TEXTAREA,
-            placeholder: "Explain your refinancing strategy",
-            isRequired: true,
-            order: 1,
-            minLength: 10,
-          },
-          {
-            key: "sustainability",
-            label: "Sustainability Plan",
-            description: "Outline the long-term viability and impact of your project",
-            type: FieldType.TEXTAREA,
-            placeholder: "Describe how your project will be sustainable in the long term",
-            isRequired: true,
-            order: 2,
-            minLength: 10,
+            minValue: 1,
+            maxValue: 1000,
           },
         ],
       },
@@ -299,10 +275,92 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
         </p>
       </CardHeader>
       <CardContent>
+        {/* Static Fields Information */}
+        <Alert className="mb-6">
+          <AlertDescription>
+            <div className="space-y-2">
+              <h4 className="font-medium">Always Present Fields</h4>
+              <p className="text-sm text-muted-foreground">
+                The following fields are always included in funding request forms and cannot be modified:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span className="text-sm">Project Name</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span className="text-sm">Amount Requested</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span className="text-sm">Expected Completion Date</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span className="text-sm">Project Description</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span className="text-sm">Project Purpose</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span className="text-sm">Refinancing Concept</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span className="text-sm">Sustainability Plan</span>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mt-3">
+                Configure additional fields below to collect extra information specific to your team&apos;s requirements.
+              </p>
+            </div>
+          </AlertDescription>
+        </Alert>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-4">
-              {sections.map((section, sectionIndex) => {
+              {sections.length === 0 ? (
+                // Empty State
+                <Card className="border-dashed border-2">
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <div className="text-center space-y-4">
+                      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
+                        <Settings className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-medium">No Additional Fields Configured</h3>
+                        <p className="text-sm text-muted-foreground max-w-md">
+                          You haven&apos;t configured any additional fields yet. The static fields shown above will always be present in funding requests.
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          onClick={addSection}
+                          className="mt-4"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add First Section
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={loadDefaultConfiguration}
+                          className="mt-4"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Load Example Fields
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                sections.map((section, sectionIndex) => {
                 const sectionKey = `section-${sectionIndex}`;
                 const isOpen = openSections[sectionKey];
                 
@@ -777,34 +835,37 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                     </Collapsible>
                   </Card>
                 );
-              })}
+              }))}
             </div>
             
-            <div className="flex justify-between">
-              <Button type="button" variant="outline" onClick={addSection}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Section
-              </Button>
-              
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={loadDefaultConfiguration}>
-                  Reset to Default
+            {sections.length > 0 && (
+              <div className="flex justify-between">
+                <Button type="button" variant="outline" onClick={addSection}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Section
                 </Button>
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? (
-                    <>
-                      <Save className="h-4 w-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Configuration
-                    </>
-                  )}
-                </Button>
+                
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={loadDefaultConfiguration}>
+                    <Eye className="h-4 w-4 mr-2" />
+                    Load Example Fields
+                  </Button>
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? (
+                      <>
+                        <Save className="h-4 w-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Configuration
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </form>
         </Form>
       </CardContent>

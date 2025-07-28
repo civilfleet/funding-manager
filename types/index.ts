@@ -79,6 +79,7 @@ export interface FundingRequest {
   status: FundingStatus;
   submittedById: string;
   submittedBy?: User;
+  customFields?: Record<string, unknown>; // Dynamic field data
   donationAgreement?: DonationAgreement[];
   createdAt: Date;
   updatedAt: Date;
