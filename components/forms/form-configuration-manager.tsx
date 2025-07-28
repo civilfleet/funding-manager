@@ -337,24 +337,46 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                           You haven&apos;t configured any additional fields yet. The static fields shown above will always be present in funding requests.
                         </p>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          onClick={addSection}
-                          className="mt-4"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add First Section
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={loadDefaultConfiguration}
-                          className="mt-4"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Load Example Fields
-                        </Button>
+                      <div className="flex flex-col gap-3">
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            onClick={addSection}
+                            className="mt-4"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add First Section
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={loadDefaultConfiguration}
+                            className="mt-4"
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Load Example Fields
+                          </Button>
+                        </div>
+                        <div className="flex justify-center">
+                          <Button
+                            type="submit"
+                            variant="secondary"
+                            disabled={isSaving}
+                            className="mt-2"
+                          >
+                            {isSaving ? (
+                              <>
+                                <Save className="h-4 w-4 mr-2 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              <>
+                                <Save className="h-4 w-4 mr-2" />
+                                Save Empty Configuration
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
