@@ -76,10 +76,10 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
             if (field.isRequired) {
               numberSchema = numberSchema.min(0, `${field.label} is required`);
             }
-            if (field.minValue !== undefined) {
+            if (field.minValue !== null && field.minValue !== undefined) {
               numberSchema = numberSchema.min(field.minValue, `${field.label} must be at least ${field.minValue}`);
             }
-            if (field.maxValue !== undefined) {
+            if (field.maxValue !== null && field.maxValue !== undefined) {
               numberSchema = numberSchema.max(field.maxValue, `${field.label} must be at most ${field.maxValue}`);
             }
             fieldSchema = numberSchema;
