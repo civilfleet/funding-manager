@@ -12,7 +12,7 @@ export default async function Page() {
     } else if (session.user.roles?.includes(Roles.Organization)) {
       const userData = await getUserCurrent(session.user.userId);
       if (userData?.organizations && userData.organizations.length > 0) {
-        return redirect(`/organizations/${userData.organizations[0].id}/profile`);
+        return redirect(`/organizations/${userData.organizations[0].id}`);
       }
       return redirect("/organizations");
     } else if (session.user.roles?.includes(Roles.Team)) {

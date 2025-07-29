@@ -17,6 +17,14 @@ interface ActivityItem {
   entityId: string;
 }
 
+export type ActivityScope = 'admin' | 'team' | 'organization';
+
+interface RecentActivityProps {
+  scope?: ActivityScope;
+  scopeId?: string;
+  title?: string;
+}
+
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const activityIcons = {
@@ -35,14 +43,30 @@ const activityColors = {
   file: "bg-gray-500",
 };
 
-export default function RecentActivity() {
-  const { data, error, isLoading } = useSWR('/api/admin/recent-activity', fetcher);
+export default function RecentActivity({ 
+  scope = 'admin', 
+  scopeId, 
+  title = 'Recent Activity' 
+}: RecentActivityProps) {
+  // Build API URL based on scope
+  const getApiUrl = () => {
+    switch (scope) {
+      case 'team':
+        return scopeId ? `/api/teams/${scopeId}/recent-activity` : '/api/admin/recent-activity';
+      case 'organization':
+        return scopeId ? `/api/organizations/${scopeId}/recent-activity` : '/api/admin/recent-activity';
+      default:
+        return '/api/admin/recent-activity';
+    }
+  };
+
+  const { data, error, isLoading } = useSWR(getApiUrl(), fetcher);
   
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex justify-center items-center py-8">
@@ -57,7 +81,7 @@ export default function RecentActivity() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center text-red-500 py-8">

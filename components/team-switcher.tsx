@@ -55,11 +55,11 @@ export function TeamSwitcher({
 
   const setItem = (item: SwitcherItem, subUrl: string, id: string) => {
     if (subUrl === "teams") {
-      router.push(`/${subUrl}/${id}/organizations`);
+      router.push(`/${subUrl}/${id}`); // Team dashboard
     } else if (subUrl === "admin") {
-      router.push("/admin");
+      router.push("/admin"); // Admin dashboard
     } else {
-      router.push(`/${subUrl}/${id}/profile`);
+      router.push(`/${subUrl}/${id}`); // Organization dashboard
     }
   };
 
