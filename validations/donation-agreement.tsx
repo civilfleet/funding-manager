@@ -4,7 +4,7 @@ const createDonationAgreementSchema = z.object({
   fundingRequestId: z.string().uuid(),
   users: z.array(z.string()).optional(),
   user: z.string().optional(),
-  file: z.string().min(1, "File is required"),
+  file: z.string().optional(),
   agreement: z.string().min(1, "Agreement is required"),
 });
 
