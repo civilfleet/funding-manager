@@ -43,30 +43,30 @@ const formFieldSchema = z.object({
       "This field key is reserved and cannot be used. Please choose a different key."
     ),
   label: z.string().min(1, "Label is required"),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   type: z.nativeEnum(FieldType),
-  placeholder: z.string().optional(),
-  defaultValue: z.string().optional(),
-  isRequired: z.boolean(),
-  order: z.number(),
-  minLength: z.number().optional(),
-  maxLength: z.number().optional(),
-  minValue: z.number().optional(),
-  maxValue: z.number().optional(),
-  pattern: z.string().optional(),
+  placeholder: z.string().nullish(),
+  defaultValue: z.string().nullish(),
+  isRequired: z.boolean().default(false),
+  order: z.number().default(1),
+  minLength: z.number().min(0).nullish(),
+  maxLength: z.number().min(1).nullish(),
+  minValue: z.number().nullish(),
+  maxValue: z.number().nullish(),
+  pattern: z.string().nullish(),
   options: z.array(fieldOptionSchema).optional(),
 });
 
 const formSectionSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Section name is required"),
-  description: z.string().optional(),
-  order: z.number(),
-  fields: z.array(formFieldSchema),
+  description: z.string().nullish(),
+  order: z.number().default(1),
+  fields: z.array(formFieldSchema).default([]),
 });
 
 const formConfigSchema = z.object({
-  sections: z.array(formSectionSchema),
+  sections: z.array(formSectionSchema).default([]),
 });
 
 type FormConfigValues = z.infer<typeof formConfigSchema>;
@@ -431,7 +431,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                 <FormItem>
                                   <FormLabel>Section Name</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="e.g., Basic Information" {...field} value={field.value || ""} />
+                                    <Input placeholder="e.g., Basic Information" {...field} value={field.value ?? ""} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -448,7 +448,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                     <Input 
                                       type="number" 
                                       {...field} 
-                                      value={field.value || ""}
+                                      value={field.value ?? ""}
                                       onChange={(e) => field.onChange(Number(e.target.value))}
                                     />
                                   </FormControl>
@@ -469,7 +469,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                     placeholder="Brief description of this section"
                                     className="resize-none"
                                     {...field}
-                                    value={field.value || ""}
+                                    value={field.value ?? ""}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -516,7 +516,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                         <FormItem>
                                           <FormLabel>Field Key</FormLabel>
                                           <FormControl>
-                                            <Input placeholder="field_name" {...field} value={field.value || ""} />
+                                            <Input placeholder="field_name" {...field} value={field.value ?? ""} />
                                           </FormControl>
                                           <FormDescription>
                                             Unique identifier (no spaces, underscore allowed)
@@ -533,7 +533,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                         <FormItem>
                                           <FormLabel>Label</FormLabel>
                                           <FormControl>
-                                            <Input placeholder="Field Label" {...field} value={field.value || ""} />
+                                            <Input placeholder="Field Label" {...field} value={field.value ?? ""} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -598,7 +598,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                             placeholder="Help text for this field"
                                             className="resize-none"
                                             {...field}
-                                            value={field.value || ""}
+                                            value={field.value ?? ""}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -613,7 +613,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                       <FormItem>
                                         <FormLabel>Placeholder (Optional)</FormLabel>
                                         <FormControl>
-                                          <Input placeholder="Enter placeholder text" {...field} value={field.value || ""} />
+                                          <Input placeholder="Enter placeholder text" {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <FormMessage />
                                       </FormItem>
@@ -643,7 +643,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                                         placeholder="0"
                                                         {...field} 
                                                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                                        value={field.value || ""}
+                                                        value={field.value ?? ""}
                                                       />
                                                     </FormControl>
                                                     <FormMessage />
@@ -663,7 +663,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                                         placeholder="255"
                                                         {...field} 
                                                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                                        value={field.value || ""}
+                                                        value={field.value ?? ""}
                                                       />
                                                     </FormControl>
                                                     <FormMessage />
@@ -682,7 +682,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                                     <Input 
                                                       placeholder="^[A-Za-z0-9]+$"
                                                       {...field}
-                                                      value={field.value || ""}
+                                                      value={field.value ?? ""}
                                                     />
                                                   </FormControl>
                                                   <FormDescription>
@@ -712,7 +712,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                                         placeholder="0"
                                                         {...field} 
                                                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                                        value={field.value || ""}
+                                                        value={field.value ?? ""}
                                                       />
                                                     </FormControl>
                                                     <FormMessage />
@@ -732,7 +732,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                                         placeholder="999999"
                                                         {...field} 
                                                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                                        value={field.value || ""}
+                                                        value={field.value ?? ""}
                                                       />
                                                     </FormControl>
                                                     <FormMessage />
@@ -792,7 +792,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                                         <FormItem>
                                                           <FormLabel>Display Label</FormLabel>
                                                           <FormControl>
-                                                            <Input placeholder="Option label" {...field} value={field.value || ""} />
+                                                            <Input placeholder="Option label" {...field} value={field.value ?? ""} />
                                                           </FormControl>
                                                           <FormMessage />
                                                         </FormItem>
@@ -806,7 +806,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                                         <FormItem>
                                                           <FormLabel>Value</FormLabel>
                                                           <FormControl>
-                                                            <Input placeholder="option_value" {...field} value={field.value || ""} />
+                                                            <Input placeholder="option_value" {...field} value={field.value ?? ""} />
                                                           </FormControl>
                                                           <FormDescription>
                                                             Internal value (no spaces)
@@ -836,7 +836,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                                             <FormItem>
                                               <FormLabel>Default Value (Optional)</FormLabel>
                                               <FormControl>
-                                                <Input placeholder="Default value for this field" {...field} value={field.value || ""} />
+                                                <Input placeholder="Default value for this field" {...field} value={field.value ?? ""} />
                                               </FormControl>
                                               <FormDescription>
                                                 Pre-filled value when the form loads

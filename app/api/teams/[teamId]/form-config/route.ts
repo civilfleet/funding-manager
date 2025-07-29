@@ -12,30 +12,30 @@ const formFieldSchema = z.object({
   id: z.string().optional(),
   key: z.string(),
   label: z.string(),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   type: z.enum(["TEXT", "TEXTAREA", "NUMBER", "DATE", "EMAIL", "URL", "SELECT", "MULTISELECT", "CHECKBOX", "RADIO", "FILE"]),
-  placeholder: z.string().optional(),
-  defaultValue: z.string().optional(),
-  isRequired: z.boolean(),
-  order: z.number(),
-  minLength: z.number().optional(),
-  maxLength: z.number().optional(),
-  minValue: z.number().optional(),
-  maxValue: z.number().optional(),
-  pattern: z.string().optional(),
+  placeholder: z.string().nullish(),
+  defaultValue: z.string().nullish(),
+  isRequired: z.boolean().default(false),
+  order: z.number().default(1),
+  minLength: z.number().min(0).nullish(),
+  maxLength: z.number().min(1).nullish(),
+  minValue: z.number().nullish(),
+  maxValue: z.number().nullish(),
+  pattern: z.string().nullish(),
   options: z.array(fieldOptionSchema).optional(),
 });
 
 const formSectionSchema = z.object({
   id: z.string().optional(),
   name: z.string(),
-  description: z.string().optional(),
-  order: z.number(),
-  fields: z.array(formFieldSchema),
+  description: z.string().nullish(),
+  order: z.number().default(1),
+  fields: z.array(formFieldSchema).default([]),
 });
 
 const formConfigSchema = z.object({
-  sections: z.array(formSectionSchema),
+  sections: z.array(formSectionSchema).default([]),
 });
 
 export async function GET(
