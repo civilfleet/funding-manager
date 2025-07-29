@@ -48,7 +48,7 @@ const FileUpload = ({
       });
 
       if (uploadFile.ok) {
-        const fileUrl = putUrl.split("?")[0].split("/").pop(); // Remove query params
+        const fileUrl = putUrl.split("?")[0]; // Remove query params but keep full URL
         setFileUrl(fileUrl);
         onFileUpload(fileUrl); // Send file URL to parent
         setLoading(false);
