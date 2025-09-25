@@ -1,222 +1,213 @@
-# Next.js Example
+# Funding Manager
 
-This example shows how to implement a simple web app using [Next.js](https://nextjs.org/) and [Prisma Client](https://www.prisma.io/docs/concepts/components/prisma-client). The example uses an SQLite database file with some initial dummy data. The example was bootstrapped using the Next.js CLI command `create-next-app`.
+A comprehensive funding management application built with Next.js 15, designed to streamline the relationship between funding providers (Teams) and recipients (Organizations). The platform manages the complete funding lifecycle from application submission to fund disbursement.
 
-## Getting started
+## 🎯 Overview
 
-### 1. Download example and navigate into the project directory
+Funding Manager serves three primary user roles:
+- **Organizations**: Non-profit entities that submit funding requests
+- **Teams**: Funding providers that review and approve requests
+- **Admins**: System administrators managing the platform
 
-Download this example:
+## ✨ Key Features
 
+- **Funding Request Management**: Complete workflow from submission to approval
+- **Document Management**: Secure file uploads and storage with AWS S3
+- **Digital Signatures**: Electronic signature workflow for donation agreements
+- **Financial Tracking**: Transaction management with receipt tracking
+- **Email Notifications**: Automated notifications for status changes and reminders
+- **Role-based Access Control**: Secure access management for different user types
+- **Real-time Status Updates**: Live tracking of funding request progress
+
+## 🛠 Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js with email-based login
+- **UI**: Tailwind CSS with Radix UI components (shadcn/ui)
+- **File Storage**: AWS S3
+- **Email**: Brevo/Nodemailer for notifications
+- **Monitoring**: Sentry for error tracking
+- **Language**: TypeScript
+
+## 🏗 Architecture
+
+### Core Domain Models
+- **Organizations**: Non-profit entities submitting funding requests
+- **Teams**: Funding providers reviewing applications
+- **Users**: Individuals with specific roles and permissions
+- **FundingRequests**: Applications with status workflow management
+- **DonationAgreements**: Legal agreements with signature tracking
+- **Transactions**: Financial transfers with receipt management
+- **Files**: Document management with secure storage
+
+### Status Workflow
 ```
-npx try-prisma@latest --template orm/nextjs
-```
-
-Then, navigate into the project directory:
-
-```
-cd nextjs
-```
-
-<details><summary><strong>Alternative:</strong> Clone the entire repo</summary>
-
-Clone this repository:
-
-```
-git clone git@github.com:prisma/prisma-examples.git --depth=1
-```
-
-Install npm dependencies:
-
-```
-cd prisma-examples/orm/nextjs
-npm install
-```
-
-</details>
-
-#### [Optional] Switch database to Prisma Postgres
-
-This example uses a local SQLite database by default. If you want to use to [Prisma Postgres](https://prisma.io/postgres), follow these instructions (otherwise, skip to the next step):
-
-1. Set up a new Prisma Postgres instance in the Prisma Data Platform [Console](https://console.prisma.io) and copy the database connection URL.
-2. Update the `datasource` block to use `postgresql` as the `provider` and paste the database connection URL as the value for `url`:
-    ```prisma
-    datasource db {
-      provider = "postgresql"
-      url      = "prisma+postgres://accelerate.prisma-data.net/?api_key=ey...."
-    }
-    ```
-
-    > **Note**: In production environments, we recommend that you set your connection URL via an [environment variable](https://www.prisma.io/docs/orm/more/development-environment/environment-variables/managing-env-files-and-setting-variables), e.g. using a `.env` file.
-3. Install the Prisma Accelerate extension:
-    ```
-    npm install @prisma/extension-accelerate
-    ```
-4. Add the Accelerate extension to the `PrismaClient` instance:
-    ```diff
-    + import { withAccelerate } from "@prisma/extension-accelerate"
-
-    + const prisma = new PrismaClient().$extends(withAccelerate())
-    ```
-
-That's it, your project is now configured to use Prisma Postgres!
-
-### 2. Create and seed the database
-
-Run the following command to create your database. This also creates the `User` and `Post` tables that are defined in [`prisma/schema.prisma`](./prisma/schema.prisma):
-
-```
-npx prisma migrate dev --name init
+Submitted → Accepted → WaitingForSignature → Approved → FundsDisbursing → Completed
+                    ↘ Rejected (possible at any stage)
 ```
 
-When `npx prisma migrate dev` is executed against a newly created database, seeding is also triggered. The seed file in [`prisma/seed.ts`](./prisma/seed.ts) will be executed and your database will be populated with the sample data.
+## 🚀 Getting Started
 
-**If you switched to Prisma Postgres in the previous step**, you need to trigger seeding manually (because Prisma Postgres already created an empty database instance for you, so seeding isn't triggered):
+### Prerequisites
 
-```
-npx prisma db seed
-```
+- Node.js 18+
+- PostgreSQL database
+- AWS S3 bucket for file storage
+- Email service (Brevo/SMTP)
 
+### Installation
 
-### 3. Start the Next.js server
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd funding-manager
+   ```
 
-```
-npm run dev
-```
+2. **Install dependencies**
+   ```bash
+   yarn install
+   ```
 
-The server is now running on `http://localhost:3000`. You can now view pages, e.g. [`http://localhost:3000/posts`](http://localhost:3000/posts).
+3. **Environment Setup**
 
-## Evolving the app
+   Copy the environment template and configure your variables:
+   ```bash
+   cp .env.example .env.local
+   ```
 
-Evolving the application typically requires two steps:
+   Required environment variables:
+   ```env
+   # Database
+   DATABASE_URL="postgresql://username:password@localhost:5432/funding_manager"
 
-1. Migrate your database using Prisma Migrate
-1. Update your application code
+   # NextAuth
+   NEXTAUTH_SECRET="your-secret-key"
+   NEXTAUTH_URL="http://localhost:3000"
 
-For the following example scenario, assume you want to add a "profile" feature to the app where users can create a profile and write a short bio about themselves.
+   # AWS S3
+   AWS_ACCESS_KEY_ID="your-aws-access-key"
+   AWS_SECRET_ACCESS_KEY="your-aws-secret-key"
+   AWS_S3_BUCKET_NAME="your-bucket-name"
+   AWS_REGION="us-east-1"
 
-### 1. Migrate your database using Prisma Migrate
+   # Email (Brevo)
+   BREVO_API_KEY="your-brevo-api-key"
+   BREVO_SENDER_EMAIL="noreply@yourdomain.com"
 
-The first step is to add a new table, e.g. called `Profile`, to the database. You can do this by adding a new model to your [Prisma schema file](./prisma/schema.prisma) file and then running a migration afterwards:
+   # Sentry (optional)
+   SENTRY_DSN="your-sentry-dsn"
+   ```
 
-```diff
-// ./prisma/schema.prisma
+4. **Database Setup**
+   ```bash
+   # Generate Prisma client
+   npx prisma generate
 
-model User {
-  id      Int      @default(autoincrement()) @id
-  name    String?
-  email   String   @unique
-  posts   Post[]
-+ profile Profile?
-}
+   # Run database migrations
+   npx prisma migrate dev
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  viewCount Int      @default(0)
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  Int?
-}
+   # (Optional) Open Prisma Studio
+   npx prisma studio
+   ```
 
-+model Profile {
-+  id     Int     @default(autoincrement()) @id
-+  bio    String?
-+  user   User    @relation(fields: [userId], references: [id])
-+  userId Int     @unique
-+}
-```
+5. **Start Development Server**
+   ```bash
+   yarn dev
+   ```
 
-Once you've updated your data model, you can execute the changes against your database with the following command:
+   The application will be available at `http://localhost:3000`
 
-```
-npx prisma migrate dev --name add-profile
-```
+## 📜 Available Scripts
 
-This adds another migration to the `prisma/migrations` directory and creates the new `Profile` table in the database.
+```bash
+# Development server with Turbopack
+yarn dev
 
-### 2. Update your application code
+# Build the application
+yarn build
 
-You can now use your `PrismaClient` instance to perform operations against the new `Profile` table. Those operations can be used to implement new pages in the app.
+# Start production server
+yarn start
 
-## Switch to another database (e.g. PostgreSQL, MySQL, SQL Server, MongoDB)
+# Run linting
+yarn lint
 
-If you want to try this example with another database than SQLite, you can adjust the the database connection in [`prisma/schema.prisma`](./prisma/schema.prisma) by reconfiguring the `datasource` block.
-
-Learn more about the different connection configurations in the [docs](https://www.prisma.io/docs/reference/database-reference/connection-urls).
-
-<details><summary>Expand for an overview of example configurations with different databases</summary>
-
-### PostgreSQL
-
-For PostgreSQL, the connection URL has the following structure:
-
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = "postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=SCHEMA"
-}
-```
-
-Here is an example connection string with a local PostgreSQL database:
-
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = "postgresql://janedoe:mypassword@localhost:5432/notesapi?schema=public"
-}
+# Database operations
+npx prisma generate      # Generate Prisma client
+npx prisma migrate dev   # Run database migrations
+npx prisma db push       # Push schema changes to database
+npx prisma studio        # Open Prisma Studio
 ```
 
-### MySQL
+## 📁 Project Structure
 
-For MySQL, the connection URL has the following structure:
-
-```prisma
-datasource db {
-  provider = "mysql"
-  url      = "mysql://USER:PASSWORD@HOST:PORT/DATABASE"
-}
+```
+├── app/                 # Next.js App Router
+│   ├── admin/          # Admin dashboard pages
+│   ├── organizations/  # Organization-specific pages
+│   ├── teams/         # Team-specific pages
+│   └── api/           # API endpoints
+├── components/         # Reusable UI components
+│   ├── ui/            # Base UI components (shadcn/ui)
+│   ├── forms/         # Form components with validation
+│   └── table/         # Data table components
+├── services/          # Business logic layer
+├── lib/              # Utilities (Prisma, S3, etc.)
+├── types/            # TypeScript type definitions
+├── validations/      # Zod schemas for validation
+├── prisma/           # Database schema and migrations
+└── templates/        # Email templates
 ```
 
-Here is an example connection string with a local MySQL database:
+## 🔐 Authentication & Authorization
 
-```prisma
-datasource db {
-  provider = "mysql"
-  url      = "mysql://janedoe:mypassword@localhost:3306/notesapi"
-}
+- **Email-based Authentication**: Secure login via NextAuth.js
+- **Role-based Access Control**: Organization, Team, and Admin roles
+- **Route Protection**: Middleware handles access control and redirects
+- **Session Management**: Includes user roles, organizationId, and teamId
+
+## 🚀 Deployment
+
+The application is designed to be deployed on platforms that support Next.js:
+
+### Environment Variables for Production
+
+Ensure all required environment variables are configured in your deployment environment. Pay special attention to:
+
+- `NEXTAUTH_URL`: Must match your production domain
+- `DATABASE_URL`: Production database connection string
+- AWS credentials and S3 bucket configuration
+- Email service configuration
+
+### Database Migrations
+
+Run migrations in production:
+```bash
+npx prisma migrate deploy
 ```
 
-### Microsoft SQL Server
+## 🤝 Contributing
 
-Here is an example connection string with a local Microsoft SQL Server database:
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-```prisma
-datasource db {
-  provider = "sqlserver"
-  url      = "sqlserver://localhost:1433;initial catalog=sample;user=sa;password=mypassword;"
-}
-```
+## 📝 Code Conventions
 
-### MongoDB
+- Follow TypeScript strict typing
+- Use Tailwind CSS exclusively for styling
+- Implement early returns for better readability
+- Use const arrow functions over function declarations
+- Prefix event handlers with "handle"
+- Include accessibility features on interactive elements
 
-Here is an example connection string with a local MongoDB database:
+## 📄 License
 
-```prisma
-datasource db {
-  provider = "mongodb"
-  url      = "mongodb://USERNAME:PASSWORD@HOST/DATABASE?authSource=admin&retryWrites=true&w=majority"
-}
-```
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-</details>
+## 🐛 Issues & Support
 
-## Next steps
-
-- Check out the [Prisma docs](https://www.prisma.io/docs)
-- Share your feedback on the [Prisma Discord](https://pris.ly/discord/)
-- Create issues and ask questions on [GitHub](https://github.com/prisma/prisma/)
+If you encounter any issues or have questions, please [open an issue](../../issues) on GitHub.
