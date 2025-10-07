@@ -49,7 +49,7 @@
     "next": "^15.3.2",
     "next-auth": "^5.0.0-beta.25",
     "nextjs-toploader": "^3.8.16",
-    "nodemailer": "^6.10.0",
+    "nodemailer": "^7.0.7",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.55.0",
