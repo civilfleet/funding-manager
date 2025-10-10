@@ -1,0 +1,118 @@
+import { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { ContactAttributeType, ContactProfileAttribute } from "@/types";
+
+export type ContactRow = {
+  id: string;
+  teamId: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  profileAttributes: ContactProfileAttribute[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
+};
+
+const formatDate = (value?: string | Date | null) => {
+  if (!value) {
+    return "—";
+  }
+
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value instanceof Date ? value.toISOString() : value;
+  }
+
+  return format(parsed, "PP");
+};
+
+const formatAttributeValue = (attribute: ContactProfileAttribute) => {
+  switch (attribute.type) {
+    case ContactAttributeType.NUMBER:
+      return attribute.value.toString();
+    case ContactAttributeType.DATE:
+      return formatDate(attribute.value);
+    case ContactAttributeType.LOCATION: {
+      const parts: string[] = [];
+      if ("label" in attribute.value && attribute.value.label) {
+        parts.push(attribute.value.label);
+      }
+      if ("latitude" in attribute.value && typeof attribute.value.latitude === "number") {
+        parts.push(`Lat: ${attribute.value.latitude}`);
+      }
+      if ("longitude" in attribute.value && typeof attribute.value.longitude === "number") {
+        parts.push(`Lng: ${attribute.value.longitude}`);
+      }
+
+      return parts.length > 0 ? parts.join(" • ") : "—";
+    }
+    default:
+      return attribute.value || "—";
+  }
+};
+
+const renderAttributes = (attributes: ContactProfileAttribute[] = []) => {
+  if (!attributes.length) {
+    return <span className="text-muted-foreground">No attributes</span>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {attributes.slice(0, 4).map((attribute) => (
+        <Badge key={`${attribute.key}-${attribute.type}`} variant="secondary" className="text-xs font-normal">
+          <span className="font-medium">{attribute.key}:</span>{" "}
+          <span className="ml-1">{formatAttributeValue(attribute)}</span>
+        </Badge>
+      ))}
+    </div>
+  );
+};
+
+export const contactColumns: ColumnDef<ContactRow>[] = [
+  {
+    accessorKey: "name",
+    header: "Name",
+    cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+  },
+  {
+    accessorKey: "email",
+    header: "Email",
+    cell: ({ row }) => <span>{row.original.email || "—"}</span>,
+  },
+  {
+    accessorKey: "phone",
+    header: "Phone",
+    cell: ({ row }) => <span>{row.original.phone || "—"}</span>,
+  },
+  {
+    accessorKey: "profileAttributes",
+    header: "Attributes",
+    cell: ({ row }) => renderAttributes(row.original.profileAttributes),
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Created",
+    cell: ({ row }) => <span>{formatDate(row.original.createdAt)}</span>,
+  },
+];
+
+export const renderContactCard = (contact: ContactRow) => {
+  return (
+    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-3">
+      <div>
+        <h3 className="text-base font-semibold">{contact.name}</h3>
+        {(contact.email || contact.phone) && (
+          <p className="text-xs text-muted-foreground">
+            {[contact.email, contact.phone].filter(Boolean).join(" • ")}
+          </p>
+        )}
+      </div>
+      <div className="space-y-2">
+        <p className="text-xs text-muted-foreground uppercase tracking-wide">Attributes</p>
+        {renderAttributes(contact.profileAttributes)}
+      </div>
+      <p className="text-xs text-muted-foreground">Added {formatDate(contact.createdAt)}</p>
+    </div>
+  );
+};

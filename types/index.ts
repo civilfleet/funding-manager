@@ -16,6 +16,47 @@ export enum Roles {
   Admin = "Admin",
 }
 
+export enum ContactAttributeType {
+  STRING = "STRING",
+  NUMBER = "NUMBER",
+  DATE = "DATE",
+  LOCATION = "LOCATION",
+}
+
+export type ContactLocationValue = {
+  label?: string;
+  latitude?: number;
+  longitude?: number;
+};
+
+export type ContactProfileAttribute =
+  | {
+      key: string;
+      type: ContactAttributeType.STRING | ContactAttributeType.DATE;
+      value: string;
+    }
+  | {
+      key: string;
+      type: ContactAttributeType.NUMBER;
+      value: number;
+    }
+  | {
+      key: string;
+      type: ContactAttributeType.LOCATION;
+      value: ContactLocationValue;
+    };
+
+export interface Contact {
+  id: string;
+  teamId: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  profileAttributes: ContactProfileAttribute[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface User {
   id: string;
   name?: string;
@@ -135,6 +176,7 @@ export interface Teams {
   bankDetails?: BankDetails;
   organizations: Organization[];
   users: User[];
+  contacts?: Contact[];
   createdAt: Date;
   updatedAt: Date;
 }

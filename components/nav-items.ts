@@ -1,4 +1,4 @@
-import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users, Settings } from "lucide-react";
+import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users, Settings, UserCircle2 } from "lucide-react";
 
 const navItems = {
   admin: [
@@ -37,6 +37,11 @@ const navItems = {
       title: "Users",
       url: "users",
       icon: BookUser,
+    },
+    {
+      title: "Contacts",
+      url: "contacts",
+      icon: UserCircle2,
     },
     {
       title: "Files",

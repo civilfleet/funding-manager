@@ -5,6 +5,7 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
+  RowSelectionState,
   useReactTable,
 } from "@tanstack/react-table";
 import { LayoutGrid, List } from "lucide-react";
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -26,6 +28,12 @@ interface DataTableProps<TData, TValue> {
   renderCard?: (item: TData) => React.ReactNode;
   initialView?: "table" | "card";
   toolbar?: React.ReactNode;
+  selectable?: boolean;
+  onSelectionChange?: (selectedRows: TData[]) => void;
+  renderBatchActions?: (params: {
+    selectedRows: TData[];
+    clearSelection: () => void;
+  }) => React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -34,16 +42,82 @@ export function DataTable<TData, TValue>({
   renderCard,
   initialView = "table",
   toolbar,
+  selectable = false,
+  onSelectionChange,
+  renderBatchActions,
 }: DataTableProps<TData, TValue>) {
   const [view, setView] = React.useState<"table" | "card">(initialView);
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+
+  const selectionColumn = React.useMemo<ColumnDef<TData, TValue>[]>(
+    () =>
+      selectable
+        ? [
+            {
+              id: "__select",
+              size: 40,
+              enableSorting: false,
+              enableHiding: false,
+              header: ({ table }) => (
+                <Checkbox
+                  aria-label="Select all"
+                  checked={
+                    table.getIsAllPageRowsSelected() ||
+                    (table.getIsSomePageRowsSelected() && "indeterminate")
+                  }
+                  onCheckedChange={(value) =>
+                    table.toggleAllPageRowsSelected(Boolean(value))
+                  }
+                  className="translate-y-0.5"
+                />
+              ),
+              cell: ({ row }) => (
+                <Checkbox
+                  aria-label="Select row"
+                  checked={row.getIsSelected()}
+                  disabled={!row.getCanSelect()}
+                  onCheckedChange={(value) =>
+                    row.toggleSelected(Boolean(value))
+                  }
+                  className="translate-y-0.5"
+                />
+              ),
+            } satisfies ColumnDef<TData>,
+          ].map((column) => column as ColumnDef<TData, TValue>)
+        : [],
+    [selectable]
+  );
+
+  const enhancedColumns = React.useMemo(
+    () => [...selectionColumn, ...columns],
+    [selectionColumn, columns]
+  );
 
   const table = useReactTable({
     data,
-    columns,
+    columns: enhancedColumns,
     getCoreRowModel: getCoreRowModel(),
+    enableRowSelection: selectable,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      rowSelection,
+    },
   });
 
   const hasRows = table.getRowModel().rows?.length > 0;
+  const selectedRows = table
+    .getSelectedRowModel()
+    .rows.map((row) => row.original as TData);
+
+  const clearSelection = React.useCallback(() => {
+    setRowSelection({});
+  }, []);
+
+  React.useEffect(() => {
+    if (selectable && onSelectionChange) {
+      onSelectionChange(selectedRows);
+    }
+  }, [selectable, selectedRows, onSelectionChange]);
 
   return (
     <div className="w-full">
@@ -68,6 +142,13 @@ export function DataTable<TData, TValue>({
           </Button>
         </div>
       </div>
+      {selectable &&
+        selectedRows.length > 0 &&
+        renderBatchActions && (
+          <div className="flex items-center justify-between gap-3 px-3 pb-2">
+            {renderBatchActions({ selectedRows, clearSelection })}
+          </div>
+        )}
 
       {view === "table" ? (
         <Table>
@@ -108,7 +189,10 @@ export function DataTable<TData, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={table.getVisibleLeafColumns().length}
+                  className="h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>

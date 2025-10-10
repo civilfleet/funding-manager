@@ -149,6 +149,7 @@ model Teams {
   formSections FormSection[]
 
   Transaction Transaction[]
+  contacts     Contact[]
 }
 
 model User {
@@ -212,6 +213,44 @@ model DonationAgreementSignature {
   user     User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([donationAgreementId, userId]) // Composite key to avoid duplicate signatures
+}
+
+enum ContactAttributeType {
+  STRING
+  NUMBER
+  DATE
+  LOCATION
+}
+
+model Contact {
+  id                String               @id @default(uuid()) @unique
+  teamId            String
+  team              Teams                @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name              String
+  email             String?              @db.VarChar(255)
+  phone             String?              @db.VarChar(255)
+  createdAt         DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime             @updatedAt @db.Timestamptz(6)
+  attributes        ContactAttribute[]
+}
+
+model ContactAttribute {
+  id            String                @id @default(uuid()) @unique
+  contactId     String
+  contact       Contact               @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  key           String                @db.VarChar(255)
+  type          ContactAttributeType
+  stringValue   String?               @db.Text
+  numberValue   Decimal?
+  dateValue     DateTime?             @db.Timestamptz(6)
+  locationLabel String?               @db.VarChar(255)
+  latitude      Decimal?
+  longitude     Decimal?
+  createdAt     DateTime              @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime              @updatedAt @db.Timestamptz(6)
+
+  @@index([key])
+  @@unique([contactId, key])
 }
 
 
