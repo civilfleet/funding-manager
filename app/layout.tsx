@@ -4,6 +4,9 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from "next-auth/react";
 import NextTopLoader from "nextjs-toploader";
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   title: "Partner App",
@@ -17,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body className={inter.className}>
         <NextTopLoader color="#2563eb" showSpinner={false} />
         <SessionProvider>
           <main>
