@@ -253,7 +253,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                         placeholder={field.placeholder}
                         type={field.type === FieldType.EMAIL ? "email" : field.type === FieldType.URL ? "url" : "text"}
                         {...formField}
-                        value={formField.value as string}
+                        value={typeof formField.value === "string" ? formField.value : ""}
                       />
                     );
                     
@@ -263,7 +263,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                         placeholder={field.placeholder}
                         className="min-h-[100px] resize-y"
                         {...formField}
-                        value={formField.value as string}
+                        value={typeof formField.value === "string" ? formField.value : ""}
                       />
                     );
                     
@@ -278,7 +278,13 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                           placeholder={field.placeholder}
                           className={field.key === "amountRequested" ? "pl-8" : ""}
                           {...formField}
-                          value={formField.value as string}
+                          value={
+                            typeof formField.value === "number"
+                              ? String(formField.value)
+                              : typeof formField.value === "string"
+                              ? formField.value
+                              : ""
+                          }
                           onChange={(e) => formField.onChange(Number(e.target.value))}
                         />
                       </div>
@@ -292,14 +298,14 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                           type="datetime-local"
                           className="pl-8"
                           {...formField}
-                          value={formField.value as string}
+                          value={typeof formField.value === "string" ? formField.value : ""}
                         />
                       </div>
                     );
                     
                   case FieldType.SELECT:
                     return (
-                      <Select onValueChange={formField.onChange} value={formField.value as string}>
+                      <Select onValueChange={formField.onChange} value={typeof formField.value === "string" ? formField.value : ""}>
                         <SelectTrigger>
                           <SelectValue placeholder={field.placeholder || "Select an option"} />
                         </SelectTrigger>
@@ -315,7 +321,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                     
                   case FieldType.RADIO:
                     return (
-                      <Select onValueChange={formField.onChange} value={formField.value as string}>
+                      <Select onValueChange={formField.onChange} value={typeof formField.value === "string" ? formField.value : ""}>
                         <SelectTrigger>
                           <SelectValue placeholder={field.placeholder || "Select an option"} />
                         </SelectTrigger>
@@ -333,7 +339,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                     return (
                       <div className="flex items-center space-x-2">
                         <Checkbox
-                          checked={formField.value as boolean}
+                          checked={!!formField.value}
                           onCheckedChange={formField.onChange}
                           id={fieldName}
                         />
@@ -348,7 +354,7 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                       <Input
                         placeholder={field.placeholder}
                         {...formField}
-                        value={formField.value as string}
+                        value={typeof formField.value === "string" ? formField.value : ""}
                       />
                     );
                 }
@@ -492,7 +498,12 @@ export default function DynamicFundingRequest({ organizationId, teamId }: Dynami
                           <FormControl>
                             <div className="relative">
                               <FileText className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                              <Input placeholder="Document name" className="pl-8" {...field} value={field.value as string} />
+                              <Input
+                                placeholder="Document name"
+                                className="pl-8"
+                                {...field}
+                                value={typeof field.value === "string" ? field.value : ""}
+                              />
                             </div>
                           </FormControl>
                           <FormMessage />
