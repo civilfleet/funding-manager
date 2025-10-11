@@ -149,7 +149,15 @@ export default function ContactForm({ teamId }: ContactFormProps) {
               <FormItem className="sm:col-span-2">
                 <FormLabel>Value</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} value={field.value ?? ""} />
+                  <Input
+                    type="date"
+                    {...field}
+                    value={
+                      typeof field.value === "string" || typeof field.value === "number"
+                        ? field.value
+                        : ""
+                    }
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -165,7 +173,15 @@ export default function ContactForm({ teamId }: ContactFormProps) {
               <FormItem className="sm:col-span-2">
                 <FormLabel>Value</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} value={field.value ?? ""} />
+                  <Input
+                    type="number"
+                    {...field}
+                    value={
+                      typeof field.value === "number" || typeof field.value === "string"
+                        ? field.value
+                        : ""
+                    }
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -182,7 +198,15 @@ export default function ContactForm({ teamId }: ContactFormProps) {
                 <FormItem>
                   <FormLabel>Location name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Office" {...field} value={field.value ?? ""} />
+                    <Input
+                      placeholder="Office"
+                      {...field}
+                      value={
+                        typeof field.value === "string" || typeof field.value === "number"
+                          ? field.value
+                          : ""
+                      }
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -195,7 +219,16 @@ export default function ContactForm({ teamId }: ContactFormProps) {
                 <FormItem>
                   <FormLabel>Latitude</FormLabel>
                   <FormControl>
-                    <Input type="number" step="any" {...field} value={field.value ?? ""} />
+                    <Input
+                      type="number"
+                      step="any"
+                      {...field}
+                      value={
+                        typeof field.value === "number" || typeof field.value === "string"
+                          ? field.value
+                          : ""
+                      }
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -208,7 +241,16 @@ export default function ContactForm({ teamId }: ContactFormProps) {
                 <FormItem>
                   <FormLabel>Longitude</FormLabel>
                   <FormControl>
-                    <Input type="number" step="any" {...field} value={field.value ?? ""} />
+                    <Input
+                      type="number"
+                      step="any"
+                      {...field}
+                      value={
+                        typeof field.value === "number" || typeof field.value === "string"
+                          ? field.value
+                          : ""
+                      }
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -225,7 +267,15 @@ export default function ContactForm({ teamId }: ContactFormProps) {
               <FormItem className="sm:col-span-2">
                 <FormLabel>Value</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter value" {...field} value={field.value ?? ""} />
+                  <Input
+                    placeholder="Enter value"
+                    {...field}
+                    value={
+                      typeof field.value === "string" || typeof field.value === "number"
+                        ? field.value
+                        : ""
+                    }
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

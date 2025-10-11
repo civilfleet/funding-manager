@@ -124,7 +124,7 @@ export default function ContactTable({ teamId }: ContactTableProps) {
       <div className="rounded-md border p-2">
         {isLoading ? (
           <div className="flex justify-center items-center h-32">
-            <Loader />
+            <Loader className="h-6 w-6 text-muted-foreground" />
           </div>
         ) : (
           <DataTable
