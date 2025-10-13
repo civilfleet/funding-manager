@@ -81,10 +81,10 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
   const [isSaving, setIsSaving] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
-  const form = useForm<FormConfigValues>({
+  const form = useForm({
     resolver: zodResolver(formConfigSchema),
     defaultValues: {
-      sections: [],
+      sections: [] as FormConfigValues["sections"],
     },
   });
 
@@ -211,7 +211,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
   };
 
   const removeField = (sectionIndex: number, fieldIndex: number) => {
-    const currentFields = form.getValues(`sections.${sectionIndex}.fields`);
+    const currentFields = form.getValues(`sections.${sectionIndex}.fields`) || [];
     const updatedFields = currentFields.filter((_, index) => index !== fieldIndex);
     form.setValue(`sections.${sectionIndex}.fields`, updatedFields);
   };

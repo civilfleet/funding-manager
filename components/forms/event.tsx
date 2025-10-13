@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import useSWR from "swr";
 
 import { createEventSchema, updateEventSchema } from "@/validations/events";
@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 
 type CreateEventFormValues = z.infer<typeof createEventSchema>;
 type UpdateEventFormValues = z.infer<typeof updateEventSchema>;
@@ -40,6 +41,11 @@ interface EventFormProps {
     contacts: Array<{
       id: string;
       name: string;
+      roles: Array<{
+        id: string;
+        name: string;
+        color?: string;
+      }>;
     }>;
   };
 }
@@ -61,14 +67,23 @@ export default function EventForm({ teamId, event }: EventFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contactRoles, setContactRoles] = useState<Record<string, string[]>>(() => {
+    const roles: Record<string, string[]> = {};
+    event?.contacts.forEach((c) => {
+      roles[c.id] = c.roles.map((r) => r.id);
+    });
+    return roles;
+  });
 
   const isEditMode = !!event;
 
   const { data: contactsData } = useSWR(`/api/contacts?teamId=${teamId}`, fetcher);
+  const { data: rolesData } = useSWR(`/api/event-roles?teamId=${teamId}`, fetcher);
 
   const contacts = contactsData?.data || [];
+  const availableRoles = rolesData?.data || [];
 
-  const form = useForm<CreateEventFormValues | UpdateEventFormValues>({
+  const form = useForm({
     resolver: zodResolver(isEditMode ? updateEventSchema : createEventSchema),
     defaultValues: {
       teamId,
@@ -77,8 +92,11 @@ export default function EventForm({ teamId, event }: EventFormProps) {
       location: event?.location || "",
       startDate: formatDateForInput(event?.startDate) || "",
       endDate: formatDateForInput(event?.endDate) || "",
-      contactIds: event?.contacts.map((c) => c.id) || [],
-      ...(isEditMode && { id: event.id }),
+      contacts:
+        event?.contacts.map((c) => ({
+          contactId: c.id,
+          roleIds: c.roles.map((r) => r.id),
+        })) || [],
     },
   });
 
@@ -87,14 +105,49 @@ export default function EventForm({ teamId, event }: EventFormProps) {
   }, [teamId, form]);
 
   const { control, watch, setValue } = form;
-  const selectedContactIds = watch("contactIds");
+  const typedControl = control as unknown as import("react-hook-form").Control<CreateEventFormValues>;
+  const selectedContacts = watch("contacts") || [];
+
+  const isContactSelected = (contactId: string) => {
+    return selectedContacts.some((c) => c.contactId === contactId);
+  };
 
   const handleContactToggle = (contactId: string) => {
-    const currentIds = selectedContactIds || [];
-    const newIds = currentIds.includes(contactId)
-      ? currentIds.filter((id) => id !== contactId)
-      : [...currentIds, contactId];
-    setValue("contactIds", newIds);
+    const currentContacts = selectedContacts || [];
+    const isSelected = currentContacts.some((c) => c.contactId === contactId);
+
+    if (isSelected) {
+      // Remove contact
+      const newContacts = currentContacts.filter((c) => c.contactId !== contactId);
+      setValue("contacts", newContacts);
+      // Also clear roles from state
+      const newRoles = { ...contactRoles };
+      delete newRoles[contactId];
+      setContactRoles(newRoles);
+    } else {
+      // Add contact
+      setValue("contacts", [...currentContacts, { contactId, roleIds: contactRoles[contactId] || [] }]);
+    }
+  };
+
+  const handleRoleToggle = (contactId: string, roleId: string) => {
+    const currentRoles = contactRoles[contactId] || [];
+    const newRoles = currentRoles.includes(roleId)
+      ? currentRoles.filter((id) => id !== roleId)
+      : [...currentRoles, roleId];
+
+    setContactRoles({ ...contactRoles, [contactId]: newRoles });
+
+    // Update the form value
+    const currentContacts = selectedContacts || [];
+    const newContacts = currentContacts.map((c) =>
+      c.contactId === contactId ? { ...c, roleIds: newRoles } : c
+    );
+    setValue("contacts", newContacts);
+  };
+
+  const getRoleById = (roleId: string) => {
+    return availableRoles.find((r: { id: string }) => r.id === roleId);
   };
 
   const onSubmit = async (values: CreateEventFormValues | UpdateEventFormValues) => {
@@ -104,12 +157,14 @@ export default function EventForm({ teamId, event }: EventFormProps) {
       const url = isEditMode ? `/api/events/${event.id}` : "/api/events";
       const method = isEditMode ? "PUT" : "POST";
 
+      const payload = isEditMode ? { ...values, id: event.id } : values;
+
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -149,12 +204,11 @@ export default function EventForm({ teamId, event }: EventFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <input type="hidden" {...form.register("teamId")} value={teamId} />
-          {isEditMode && <input type="hidden" {...form.register("id")} value={event.id} />}
 
           <CardContent className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
-                control={control}
+                control={typedControl}
                 name="title"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
@@ -168,7 +222,7 @@ export default function EventForm({ teamId, event }: EventFormProps) {
               />
 
               <FormField
-                control={control}
+                control={typedControl}
                 name="location"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
@@ -182,7 +236,7 @@ export default function EventForm({ teamId, event }: EventFormProps) {
               />
 
               <FormField
-                control={control}
+                control={typedControl}
                 name="startDate"
                 render={({ field }) => (
                   <FormItem>
@@ -196,7 +250,7 @@ export default function EventForm({ teamId, event }: EventFormProps) {
               />
 
               <FormField
-                control={control}
+                control={typedControl}
                 name="endDate"
                 render={({ field }) => (
                   <FormItem>
@@ -210,7 +264,7 @@ export default function EventForm({ teamId, event }: EventFormProps) {
               />
 
               <FormField
-                control={control}
+                control={typedControl}
                 name="description"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
@@ -233,9 +287,15 @@ export default function EventForm({ teamId, event }: EventFormProps) {
               <div>
                 <h3 className="text-base font-semibold">Linked Contacts</h3>
                 <p className="text-sm text-muted-foreground">
-                  Select contacts associated with this event.
+                  Select contacts and assign roles from the dropdown.
                 </p>
               </div>
+
+              {availableRoles.length === 0 && (
+                <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+                  No event roles configured. Visit Settings to create event roles like &quot;Partner&quot;, &quot;Musician&quot;, etc.
+                </div>
+              )}
 
               <div className="space-y-2">
                 {contacts.length === 0 ? (
@@ -243,25 +303,62 @@ export default function EventForm({ teamId, event }: EventFormProps) {
                     No contacts available. Create contacts first to link them to events.
                   </div>
                 ) : (
-                  <div className="max-h-64 overflow-y-auto rounded-md border p-4 space-y-2">
-                    {contacts.map((contact: { id: string; name: string; email?: string }) => (
-                      <div key={contact.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`contact-${contact.id}`}
-                          checked={selectedContactIds?.includes(contact.id)}
-                          onCheckedChange={() => handleContactToggle(contact.id)}
-                        />
-                        <label
-                          htmlFor={`contact-${contact.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  <div className="max-h-96 overflow-y-auto rounded-md border p-4 space-y-3">
+                    {contacts.map((contact: { id: string; name: string; email?: string }) => {
+                      const isSelected = isContactSelected(contact.id);
+                      const selectedRoleIds = contactRoles[contact.id] || [];
+                      return (
+                        <div
+                          key={contact.id}
+                          className="flex flex-col gap-2 p-3 rounded-md border bg-muted/30"
                         >
-                          {contact.name}
-                          {contact.email && (
-                            <span className="text-muted-foreground ml-2">({contact.email})</span>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`contact-${contact.id}`}
+                              checked={isSelected}
+                              onCheckedChange={() => handleContactToggle(contact.id)}
+                            />
+                            <label
+                              htmlFor={`contact-${contact.id}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                            >
+                              {contact.name}
+                              {contact.email && (
+                                <span className="text-muted-foreground ml-2">({contact.email})</span>
+                              )}
+                            </label>
+                          </div>
+                          {isSelected && availableRoles.length > 0 && (
+                            <div className="ml-6 space-y-2">
+                              <div className="text-xs text-muted-foreground">Roles:</div>
+                              <div className="flex flex-wrap gap-2">
+                                {availableRoles.map((role: { id: string; name: string; color?: string }) => {
+                                  const isRoleSelected = selectedRoleIds.includes(role.id);
+                                  return (
+                                    <Badge
+                                      key={role.id}
+                                      variant={isRoleSelected ? "default" : "outline"}
+                                      className="cursor-pointer"
+                                      style={
+                                        isRoleSelected && role.color
+                                          ? { backgroundColor: role.color, borderColor: role.color }
+                                          : role.color
+                                          ? { borderColor: role.color, color: role.color }
+                                          : {}
+                                      }
+                                      onClick={() => handleRoleToggle(contact.id, role.id)}
+                                    >
+                                      {role.name}
+                                      {isRoleSelected && <X className="ml-1 h-3 w-3" />}
+                                    </Badge>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           )}
-                        </label>
-                      </div>
-                    ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

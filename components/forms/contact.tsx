@@ -42,14 +42,14 @@ export default function ContactForm({ teamId }: ContactFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<ContactFormValues>({
+  const form = useForm({
     resolver: zodResolver(createContactSchema),
     defaultValues: {
       teamId,
       name: "",
       email: "",
       phone: "",
-      profileAttributes: [],
+      profileAttributes: [] as ContactFormValues["profileAttributes"],
     },
   });
 
@@ -58,6 +58,7 @@ export default function ContactForm({ teamId }: ContactFormProps) {
   }, [teamId, form]);
 
   const { control, watch, setValue } = form;
+  const typedControl = control as unknown as import("react-hook-form").Control<ContactFormValues>;
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -143,7 +144,7 @@ export default function ContactForm({ teamId }: ContactFormProps) {
       case ContactAttributeType.DATE:
         return (
           <FormField
-            control={control}
+            control={typedControl}
             name={`profileAttributes.${index}.value`}
             render={({ field }) => (
               <FormItem className="sm:col-span-2">
@@ -167,7 +168,7 @@ export default function ContactForm({ teamId }: ContactFormProps) {
       case ContactAttributeType.NUMBER:
         return (
           <FormField
-            control={control}
+            control={typedControl}
             name={`profileAttributes.${index}.value`}
             render={({ field }) => (
               <FormItem className="sm:col-span-2">
@@ -192,7 +193,7 @@ export default function ContactForm({ teamId }: ContactFormProps) {
         return (
           <div className="grid gap-3 sm:grid-cols-3 sm:col-span-3">
             <FormField
-              control={control}
+              control={typedControl}
               name={`profileAttributes.${index}.value.label`}
               render={({ field }) => (
                 <FormItem>
@@ -213,7 +214,7 @@ export default function ContactForm({ teamId }: ContactFormProps) {
               )}
             />
             <FormField
-              control={control}
+              control={typedControl}
               name={`profileAttributes.${index}.value.latitude`}
               render={({ field }) => (
                 <FormItem>
@@ -235,7 +236,7 @@ export default function ContactForm({ teamId }: ContactFormProps) {
               )}
             />
             <FormField
-              control={control}
+              control={typedControl}
               name={`profileAttributes.${index}.value.longitude`}
               render={({ field }) => (
                 <FormItem>
@@ -261,7 +262,7 @@ export default function ContactForm({ teamId }: ContactFormProps) {
       default:
         return (
           <FormField
-            control={control}
+            control={typedControl}
             name={`profileAttributes.${index}.value`}
             render={({ field }) => (
               <FormItem className="sm:col-span-2">
@@ -298,7 +299,7 @@ export default function ContactForm({ teamId }: ContactFormProps) {
           <CardContent className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
-                control={control}
+                control={typedControl}
                 name="name"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
@@ -311,7 +312,7 @@ export default function ContactForm({ teamId }: ContactFormProps) {
                 )}
               />
               <FormField
-                control={control}
+                control={typedControl}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
@@ -324,7 +325,7 @@ export default function ContactForm({ teamId }: ContactFormProps) {
                 )}
               />
               <FormField
-                control={control}
+                control={typedControl}
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
@@ -364,7 +365,7 @@ export default function ContactForm({ teamId }: ContactFormProps) {
                     <div key={field.id} className="rounded-md border p-4 space-y-4">
                       <div className="grid gap-3 sm:grid-cols-5">
                         <FormField
-                          control={control}
+                          control={typedControl}
                           name={`profileAttributes.${index}.key`}
                           render={({ field }) => (
                             <FormItem className="sm:col-span-2">
@@ -378,7 +379,7 @@ export default function ContactForm({ teamId }: ContactFormProps) {
                         />
 
                         <FormField
-                          control={control}
+                          control={typedControl}
                           name={`profileAttributes.${index}.type`}
                           render={({ field }) => (
                             <FormItem>

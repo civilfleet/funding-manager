@@ -29,7 +29,7 @@ export default function FundingRequest({ organizationId }: { organizationId: str
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const form = useForm<z.infer<typeof legacyCreateFundingRequestSchema>>({
+  const form = useForm({
     resolver: zodResolver(legacyCreateFundingRequestSchema),
     defaultValues: {
       name: "",
@@ -162,6 +162,7 @@ export default function FundingRequest({ organizationId }: { organizationId: str
                             placeholder="0.00"
                             className="pl-8"
                             {...field}
+                            value={field.value as number}
                             onChange={(e) => field.onChange(Number(e.target.value))}
                           />
                         </div>

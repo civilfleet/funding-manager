@@ -218,7 +218,7 @@ export default function HybridFundingRequestForm({ organizationId, teamId }: Hyb
                       <Input
                         placeholder={field.placeholder}
                         {...formField}
-                        value={formField.value || ""}
+                        value={(formField.value as string) || ""}
                       />
                     );
                   
@@ -228,7 +228,7 @@ export default function HybridFundingRequestForm({ organizationId, teamId }: Hyb
                         placeholder={field.placeholder}
                         rows={3}
                         {...formField}
-                        value={formField.value || ""}
+                        value={(formField.value as string) || ""}
                       />
                     );
                   
@@ -238,7 +238,7 @@ export default function HybridFundingRequestForm({ organizationId, teamId }: Hyb
                         type="number"
                         placeholder={field.placeholder}
                         {...formField}
-                        value={formField.value || ""}
+                        value={(formField.value as string) || ""}
                         onChange={(e) => formField.onChange(e.target.value ? parseFloat(e.target.value) : "")}
                       />
                     );
@@ -248,7 +248,7 @@ export default function HybridFundingRequestForm({ organizationId, teamId }: Hyb
                       <Input
                         type="date"
                         {...formField}
-                        value={formField.value || ""}
+                        value={(formField.value as string) || ""}
                       />
                     );
                   
@@ -258,7 +258,7 @@ export default function HybridFundingRequestForm({ organizationId, teamId }: Hyb
                         type="email"
                         placeholder={field.placeholder}
                         {...formField}
-                        value={formField.value || ""}
+                        value={(formField.value as string) || ""}
                       />
                     );
                   
@@ -268,13 +268,13 @@ export default function HybridFundingRequestForm({ organizationId, teamId }: Hyb
                         type="url"
                         placeholder={field.placeholder}
                         {...formField}
-                        value={formField.value || ""}
+                        value={(formField.value as string) || ""}
                       />
                     );
                   
                   case FieldType.SELECT:
                     return (
-                      <Select onValueChange={formField.onChange} value={formField.value || ""}>
+                      <Select onValueChange={formField.onChange} value={(formField.value as string) || ""}>
                         <SelectTrigger>
                           <SelectValue placeholder={field.placeholder || "Select an option"} />
                         </SelectTrigger>
@@ -292,7 +292,7 @@ export default function HybridFundingRequestForm({ organizationId, teamId }: Hyb
                     return (
                       <div className="flex items-center space-x-2">
                         <Checkbox
-                          checked={formField.value || false}
+                          checked={(formField.value as boolean) || false}
                           onCheckedChange={formField.onChange}
                         />
                         <span className="text-sm">{field.placeholder || "Check if applicable"}</span>
@@ -304,7 +304,7 @@ export default function HybridFundingRequestForm({ organizationId, teamId }: Hyb
                       <Input
                         placeholder={field.placeholder}
                         {...formField}
-                        value={formField.value || ""}
+                        value={(formField.value as string) || ""}
                       />
                     );
                 }

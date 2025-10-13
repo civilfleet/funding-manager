@@ -17,6 +17,11 @@ export type EventRow = {
     name: string;
     email?: string;
     phone?: string;
+    roles: Array<{
+      id: string;
+      name: string;
+      color?: string;
+    }>;
   }>;
   createdAt: string | Date;
   updatedAt: string | Date;
@@ -56,9 +61,25 @@ const renderContacts = (contacts: EventRow["contacts"] = []) => {
   return (
     <div className="flex flex-wrap gap-1">
       {contacts.slice(0, 3).map((contact) => (
-        <Badge key={contact.id} variant="secondary" className="text-xs font-normal">
-          {contact.name}
-        </Badge>
+        <div key={contact.id} className="flex flex-col gap-0.5">
+          <Badge variant="secondary" className="text-xs font-normal">
+            {contact.name}
+          </Badge>
+          {contact.roles.length > 0 && (
+            <div className="flex flex-wrap gap-0.5">
+              {contact.roles.map((role) => (
+                <Badge
+                  key={role.id}
+                  variant="outline"
+                  className="text-[10px] px-1 py-0"
+                  style={role.color ? { borderColor: role.color, color: role.color } : {}}
+                >
+                  {role.name}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
       ))}
       {contacts.length > 3 && (
         <Badge variant="secondary" className="text-xs font-normal">

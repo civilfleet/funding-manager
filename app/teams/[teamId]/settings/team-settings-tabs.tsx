@@ -9,13 +9,14 @@ import { EmailTemplate } from "@/types";
 import CreateEmailTemplate from "@/components/forms/create-email-template";
 import StrategicPrioritiesForm from "@/components/forms/strategic-priorities";
 import FormConfigurationManager from "@/components/forms/form-configuration-manager";
+import EventRolesManager from "@/components/forms/event-roles-manager";
 
 interface TeamSettingsTabsProps {
   teamId: string;
   templates: EmailTemplate[];
 }
 
-const VALID_TABS = ["general", "email-templates", "form-configuration"] as const;
+const VALID_TABS = ["general", "email-templates", "form-configuration", "event-roles"] as const;
 type TabValue = typeof VALID_TABS[number];
 
 export default function TeamSettingsTabs({ teamId, templates }: TeamSettingsTabsProps) {
@@ -61,10 +62,11 @@ export default function TeamSettingsTabs({ teamId, templates }: TeamSettingsTabs
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="general">General Settings</TabsTrigger>
         <TabsTrigger value="email-templates">Email Templates</TabsTrigger>
         <TabsTrigger value="form-configuration">Funding Request Form</TabsTrigger>
+        <TabsTrigger value="event-roles">Event Roles</TabsTrigger>
       </TabsList>
       
       <TabsContent value="general" className="space-y-8">
@@ -81,6 +83,10 @@ export default function TeamSettingsTabs({ teamId, templates }: TeamSettingsTabs
       
       <TabsContent value="form-configuration" className="space-y-8">
         <FormConfigurationManager teamId={teamId} />
+      </TabsContent>
+
+      <TabsContent value="event-roles" className="space-y-8">
+        <EventRolesManager teamId={teamId} />
       </TabsContent>
     </Tabs>
   );

@@ -15,7 +15,7 @@ const staticFundingRequestSchema = z.object({
 });
 
 // Schema for dynamic fields (anything can be added)
-const dynamicFieldsSchema = z.record(z.unknown());
+const dynamicFieldsSchema = z.record(z.string(), z.unknown());
 
 // Combined schema for creating funding requests
 const createFundingRequestSchema = staticFundingRequestSchema.merge(

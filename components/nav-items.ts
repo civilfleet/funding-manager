@@ -1,6 +1,24 @@
-import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users, Settings, UserCircle2, Calendar } from "lucide-react";
+import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users, Settings, UserCircle2, Calendar, type LucideIcon } from "lucide-react";
 
-const navItems = {
+type NavItemBase = {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  isActive?: boolean;
+};
+
+type NavItemSeparator = {
+  type: "separator";
+  label?: string;
+};
+
+type NavItem = NavItemBase | NavItemSeparator;
+
+const navItems: {
+  admin: NavItem[];
+  team: NavItem[];
+  organization: NavItem[];
+} = {
   admin: [
     {
       title: "Teams",

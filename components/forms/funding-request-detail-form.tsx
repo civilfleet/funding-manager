@@ -36,7 +36,7 @@ export default function FundingRequestDetailsForm({
   const showReportForm = isFileMissing("REPORT");
   const showReceiptForm = isFileMissing("DONATION_RECEIPT");
 
-  const form = useForm<z.infer<typeof amountOfferSchema>>({
+  const form = useForm({
     resolver: zodResolver(amountOfferSchema),
     defaultValues: {
       amountAgreed: data.amountAgreed || 0,

@@ -1,6 +1,11 @@
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
+type EventContactInput = {
+  contactId: string;
+  roleIds?: string[];
+};
+
 type CreateEventInput = {
   teamId: string;
   title: string;
@@ -8,7 +13,7 @@ type CreateEventInput = {
   location?: string;
   startDate: string;
   endDate?: string;
-  contactIds?: string[];
+  contacts?: EventContactInput[];
 };
 
 type UpdateEventInput = {
@@ -19,7 +24,7 @@ type UpdateEventInput = {
   location?: string;
   startDate: string;
   endDate?: string;
-  contactIds?: string[];
+  contacts?: EventContactInput[];
 };
 
 type EventWithContacts = Prisma.EventGetPayload<{
@@ -27,6 +32,11 @@ type EventWithContacts = Prisma.EventGetPayload<{
     contacts: {
       include: {
         contact: true;
+        roles: {
+          include: {
+            eventRole: true;
+          };
+        };
       };
     };
   };
@@ -47,6 +57,11 @@ type EventType = {
     name: string;
     email?: string;
     phone?: string;
+    roles: Array<{
+      id: string;
+      name: string;
+      color?: string;
+    }>;
   }>;
 };
 
@@ -65,6 +80,11 @@ const mapEvent = (event: EventWithContacts): EventType => ({
     name: ec.contact.name,
     email: ec.contact.email ?? undefined,
     phone: ec.contact.phone ?? undefined,
+    roles: ec.roles.map((r) => ({
+      id: r.eventRole.id,
+      name: r.eventRole.name,
+      color: r.eventRole.color ?? undefined,
+    })),
   })),
 });
 
@@ -96,6 +116,11 @@ export const getTeamEvents = async (teamId: string, query?: string) => {
       contacts: {
         include: {
           contact: true,
+          roles: {
+            include: {
+              eventRole: true,
+            },
+          },
         },
       },
     },
@@ -117,6 +142,11 @@ export const getEventById = async (eventId: string, teamId: string) => {
       contacts: {
         include: {
           contact: true,
+          roles: {
+            include: {
+              eventRole: true,
+            },
+          },
         },
       },
     },
@@ -130,7 +160,7 @@ export const getEventById = async (eventId: string, teamId: string) => {
 };
 
 export const createEvent = async (input: CreateEventInput) => {
-  const { teamId, title, description, location, startDate, endDate, contactIds = [] } = input;
+  const { teamId, title, description, location, startDate, endDate, contacts = [] } = input;
 
   return prisma.$transaction(async (tx) => {
     const event = await tx.event.create({
@@ -144,9 +174,12 @@ export const createEvent = async (input: CreateEventInput) => {
       },
     });
 
-    if (contactIds.length > 0) {
+    if (contacts.length > 0) {
+      // Extract contact IDs
+      const contactIds = contacts.map((c) => c.contactId);
+
       // Verify all contacts belong to the same team
-      const contacts = await tx.contact.findMany({
+      const validContacts = await tx.contact.findMany({
         where: {
           id: { in: contactIds },
           teamId,
@@ -154,15 +187,45 @@ export const createEvent = async (input: CreateEventInput) => {
         select: { id: true },
       });
 
-      const validContactIds = contacts.map((c) => c.id);
+      const validContactIds = new Set(validContacts.map((c) => c.id));
 
-      if (validContactIds.length > 0) {
+      // Filter to only valid contacts
+      const validContactsWithRoles = contacts.filter((c) => validContactIds.has(c.contactId));
+
+      if (validContactsWithRoles.length > 0) {
+        // Create EventContact entries
         await tx.eventContact.createMany({
-          data: validContactIds.map((contactId) => ({
+          data: validContactsWithRoles.map((c) => ({
             eventId: event.id,
-            contactId,
+            contactId: c.contactId,
           })),
         });
+
+        // Create EventContactRole entries
+        for (const contact of validContactsWithRoles) {
+          if (contact.roleIds && contact.roleIds.length > 0) {
+            // Verify roles belong to team
+            const validRoles = await tx.eventRole.findMany({
+              where: {
+                id: { in: contact.roleIds },
+                teamId,
+              },
+              select: { id: true },
+            });
+
+            const validRoleIds = validRoles.map((r) => r.id);
+
+            if (validRoleIds.length > 0) {
+              await tx.eventContactRole.createMany({
+                data: validRoleIds.map((roleId) => ({
+                  eventId: event.id,
+                  contactId: contact.contactId,
+                  eventRoleId: roleId,
+                })),
+              });
+            }
+          }
+        }
       }
     }
 
@@ -172,6 +235,11 @@ export const createEvent = async (input: CreateEventInput) => {
         contacts: {
           include: {
             contact: true,
+            roles: {
+              include: {
+                eventRole: true,
+              },
+            },
           },
         },
       },
@@ -182,7 +250,7 @@ export const createEvent = async (input: CreateEventInput) => {
 };
 
 export const updateEvent = async (input: UpdateEventInput) => {
-  const { id, teamId, title, description, location, startDate, endDate, contactIds = [] } = input;
+  const { id, teamId, title, description, location, startDate, endDate, contacts = [] } = input;
 
   return prisma.$transaction(async (tx) => {
     // Verify event belongs to team
@@ -205,15 +273,18 @@ export const updateEvent = async (input: UpdateEventInput) => {
       },
     });
 
-    // Delete existing contact associations
+    // Delete existing contact associations (cascades to role associations)
     await tx.eventContact.deleteMany({
       where: { eventId: id },
     });
 
     // Add new contact associations
-    if (contactIds.length > 0) {
+    if (contacts.length > 0) {
+      // Extract contact IDs
+      const contactIds = contacts.map((c) => c.contactId);
+
       // Verify all contacts belong to the same team
-      const contacts = await tx.contact.findMany({
+      const validContacts = await tx.contact.findMany({
         where: {
           id: { in: contactIds },
           teamId,
@@ -221,15 +292,45 @@ export const updateEvent = async (input: UpdateEventInput) => {
         select: { id: true },
       });
 
-      const validContactIds = contacts.map((c) => c.id);
+      const validContactIds = new Set(validContacts.map((c) => c.id));
 
-      if (validContactIds.length > 0) {
+      // Filter to only valid contacts
+      const validContactsWithRoles = contacts.filter((c) => validContactIds.has(c.contactId));
+
+      if (validContactsWithRoles.length > 0) {
+        // Create EventContact entries
         await tx.eventContact.createMany({
-          data: validContactIds.map((contactId) => ({
+          data: validContactsWithRoles.map((c) => ({
             eventId: event.id,
-            contactId,
+            contactId: c.contactId,
           })),
         });
+
+        // Create EventContactRole entries
+        for (const contact of validContactsWithRoles) {
+          if (contact.roleIds && contact.roleIds.length > 0) {
+            // Verify roles belong to team
+            const validRoles = await tx.eventRole.findMany({
+              where: {
+                id: { in: contact.roleIds },
+                teamId,
+              },
+              select: { id: true },
+            });
+
+            const validRoleIds = validRoles.map((r) => r.id);
+
+            if (validRoleIds.length > 0) {
+              await tx.eventContactRole.createMany({
+                data: validRoleIds.map((roleId) => ({
+                  eventId: event.id,
+                  contactId: contact.contactId,
+                  eventRoleId: roleId,
+                })),
+              });
+            }
+          }
+        }
       }
     }
 
@@ -239,6 +340,11 @@ export const updateEvent = async (input: UpdateEventInput) => {
         contacts: {
           include: {
             contact: true,
+            roles: {
+              include: {
+                eventRole: true,
+              },
+            },
           },
         },
       },

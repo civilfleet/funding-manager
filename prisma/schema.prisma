@@ -151,6 +151,7 @@ model Teams {
   Transaction Transaction[]
   contacts     Contact[]
   events       Event[]
+  eventRoles   EventRole[]
 }
 
 model User {
@@ -400,12 +401,37 @@ model Event {
 }
 
 model EventContact {
-  eventId   String
-  contactId String
-  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  eventId      String
+  contactId    String
+  event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  contact      Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  roles        EventContactRole[]
 
   @@id([eventId, contactId])
   @@index([eventId])
   @@index([contactId])
+}
+
+model EventContactRole {
+  eventId      String
+  contactId    String
+  eventRoleId  String
+  eventContact EventContact @relation(fields: [eventId, contactId], references: [eventId, contactId], onDelete: Cascade)
+  eventRole    EventRole    @relation(fields: [eventRoleId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, contactId, eventRoleId])
+}
+
+model EventRole {
+  id        String    @id @default(uuid()) @unique
+  teamId    String
+  team      Teams     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name      String    @db.VarChar(255)
+  color     String?   @db.VarChar(50)
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  contacts  EventContactRole[]
+
+  @@unique([teamId, name])
+  @@index([teamId])
 }

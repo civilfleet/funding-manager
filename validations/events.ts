@@ -5,6 +5,11 @@ const preprocessEmptyString = (value: unknown) =>
 
 const optionalText = (schema: z.ZodString) => z.preprocess(preprocessEmptyString, schema.optional());
 
+const eventContactSchema = z.object({
+  contactId: z.string().uuid("Contact id must be a valid UUID"),
+  roleIds: z.array(z.string().uuid("Role id must be a valid UUID")).default([]),
+});
+
 export const createEventSchema = z.object({
   teamId: z.string().uuid("Team id must be a valid UUID"),
   title: z.string().min(1, "Title is required"),
@@ -22,7 +27,7 @@ export const createEventSchema = z.object({
       },
       { message: "Invalid end date" }
     ),
-  contactIds: z.array(z.string().uuid("Contact id must be a valid UUID")).default([]),
+  contacts: z.array(eventContactSchema).default([]),
 });
 
 export type CreateEventInput = z.infer<typeof createEventSchema>;
@@ -45,7 +50,7 @@ export const updateEventSchema = z.object({
       },
       { message: "Invalid end date" }
     ),
-  contactIds: z.array(z.string().uuid("Contact id must be a valid UUID")).default([]),
+  contacts: z.array(eventContactSchema).default([]),
 });
 
 export type UpdateEventInput = z.infer<typeof updateEventSchema>;
