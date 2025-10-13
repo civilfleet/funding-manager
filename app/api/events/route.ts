@@ -1,0 +1,50 @@
+import { NextResponse } from "next/server";
+import { handlePrismaError } from "@/lib/utils";
+import { createEventSchema, deleteEventsSchema } from "@/validations/events";
+import { createEvent, deleteEvents, getTeamEvents } from "@/services/events";
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const teamId = searchParams.get("teamId");
+    const query = searchParams.get("query") || "";
+
+    if (!teamId) {
+      return NextResponse.json({ error: "teamId is required" }, { status: 400 });
+    }
+
+    const events = await getTeamEvents(teamId, query || undefined);
+    return NextResponse.json({ data: events }, { status: 200 });
+  } catch (e) {
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const payload = await req.json();
+    const validated = createEventSchema.parse(payload);
+
+    const event = await createEvent(validated);
+
+    return NextResponse.json({ data: event }, { status: 201 });
+  } catch (e) {
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const payload = await req.json();
+    const validated = deleteEventsSchema.parse(payload);
+
+    await deleteEvents(validated.teamId, validated.ids);
+
+    return NextResponse.json({ data: "success" }, { status: 200 });
+  } catch (e) {
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+  }
+}

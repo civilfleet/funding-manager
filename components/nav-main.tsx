@@ -10,14 +10,17 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 import { useSession } from "next-auth/react";
 import { Roles } from "@/types";
 
 interface NavItem {
-  title: string;
-  url: string;
+  title?: string;
+  url?: string;
   icon?: LucideIcon;
   isActive?: boolean;
+  type?: "separator";
+  label?: string;
   items?: {
     title: string;
     url: string;
@@ -43,6 +46,19 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
         {isAdminSection ? (
           <>
             {items.map((item, index) => {
+              if (item.type === "separator") {
+                return (
+                  <div key={index} className="px-2 py-2">
+                    {item.label && (
+                      <div className="px-2 pb-1 text-xs font-semibold text-muted-foreground">
+                        {item.label}
+                      </div>
+                    )}
+                    <Separator />
+                  </div>
+                );
+              }
+
               const fullPath = `/admin/${item.url}`;
               const isActive = pathname.startsWith(fullPath);
 
@@ -65,6 +81,19 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
         ) : hasActiveContext ? (
           <>
             {items.map((item, index) => {
+              if (item.type === "separator") {
+                return (
+                  <div key={index} className="px-2 py-2">
+                    {item.label && (
+                      <div className="px-2 pb-1 text-xs font-semibold text-muted-foreground">
+                        {item.label}
+                      </div>
+                    )}
+                    <Separator />
+                  </div>
+                );
+              }
+
               const fullPath = `/${subUrl}/${id}/${item.url}/`;
               const isActive = pathname.startsWith(fullPath);
 

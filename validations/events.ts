@@ -1,0 +1,58 @@
+import { z } from "zod";
+
+const preprocessEmptyString = (value: unknown) =>
+  typeof value === "string" && value.trim() === "" ? undefined : value;
+
+const optionalText = (schema: z.ZodString) => z.preprocess(preprocessEmptyString, schema.optional());
+
+export const createEventSchema = z.object({
+  teamId: z.string().uuid("Team id must be a valid UUID"),
+  title: z.string().min(1, "Title is required"),
+  description: optionalText(z.string()),
+  location: optionalText(z.string()),
+  startDate: z.string().min(1, "Start date is required").refine((value) => !Number.isNaN(Date.parse(value)), {
+    message: "Invalid start date",
+  }),
+  endDate: z
+    .preprocess(preprocessEmptyString, z.string().optional())
+    .refine(
+      (value) => {
+        if (!value) return true;
+        return !Number.isNaN(Date.parse(value));
+      },
+      { message: "Invalid end date" }
+    ),
+  contactIds: z.array(z.string().uuid("Contact id must be a valid UUID")).default([]),
+});
+
+export type CreateEventInput = z.infer<typeof createEventSchema>;
+
+export const updateEventSchema = z.object({
+  id: z.string().uuid("Event id must be a valid UUID"),
+  teamId: z.string().uuid("Team id must be a valid UUID"),
+  title: z.string().min(1, "Title is required"),
+  description: optionalText(z.string()),
+  location: optionalText(z.string()),
+  startDate: z.string().min(1, "Start date is required").refine((value) => !Number.isNaN(Date.parse(value)), {
+    message: "Invalid start date",
+  }),
+  endDate: z
+    .preprocess(preprocessEmptyString, z.string().optional())
+    .refine(
+      (value) => {
+        if (!value) return true;
+        return !Number.isNaN(Date.parse(value));
+      },
+      { message: "Invalid end date" }
+    ),
+  contactIds: z.array(z.string().uuid("Contact id must be a valid UUID")).default([]),
+});
+
+export type UpdateEventInput = z.infer<typeof updateEventSchema>;
+
+export const deleteEventsSchema = z.object({
+  teamId: z.string().uuid("Team id must be a valid UUID"),
+  ids: z.array(z.string().uuid("Event id must be a valid UUID")).min(1, "Select at least one event"),
+});
+
+export type DeleteEventsInput = z.infer<typeof deleteEventsSchema>;

@@ -125,20 +125,20 @@ enum Roles {
 
 model Teams {
   id          String           @id @default(uuid()) @unique
-  name        String           @unique 
+  name        String           @unique
   email       String           @db.VarChar(255) @unique
-  phone       String?          @db.VarChar(255)             
+  phone       String?          @db.VarChar(255)
   address     String?          @db.VarChar(255)
-  postalCode  String?          @db.VarChar(255)  
-  city        String?          @db.VarChar(255)  
-  country     String?          @db.VarChar(255)  
+  postalCode  String?          @db.VarChar(255)
+  city        String?          @db.VarChar(255)
+  country     String?          @db.VarChar(255)
   website     String?          @db.VarChar(255)
   strategicPriorities String?  @db.Text
 
   bankDetailsId String?        @unique
   bankDetails   BankDetails?   @relation(fields: [bankDetailsId], references: [id])
   organizations Organization[]
-  
+
   users     User[] @relation("TeamUsers") // Many-to-Many relation
   fundingRequests    FundingRequest[]
   donationAgreements DonationAgreement[]
@@ -150,6 +150,7 @@ model Teams {
 
   Transaction Transaction[]
   contacts     Contact[]
+  events       Event[]
 }
 
 model User {
@@ -232,6 +233,7 @@ model Contact {
   createdAt         DateTime             @default(now()) @db.Timestamptz(6)
   updatedAt         DateTime             @updatedAt @db.Timestamptz(6)
   attributes        ContactAttribute[]
+  events            EventContact[]
 }
 
 model ContactAttribute {
@@ -379,6 +381,31 @@ model VerificationToken {
   identifier String
   token      String
   expires    DateTime
- 
+
   @@unique([identifier, token])
+}
+
+model Event {
+  id          String         @id @default(uuid()) @unique
+  teamId      String
+  team        Teams          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  title       String         @db.VarChar(255)
+  description String?        @db.Text
+  location    String?        @db.VarChar(255)
+  startDate   DateTime       @db.Timestamptz(6)
+  endDate     DateTime?      @db.Timestamptz(6)
+  createdAt   DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime       @updatedAt @db.Timestamptz(6)
+  contacts    EventContact[]
+}
+
+model EventContact {
+  eventId   String
+  contactId String
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, contactId])
+  @@index([eventId])
+  @@index([contactId])
 }

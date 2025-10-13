@@ -1,4 +1,4 @@
-import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users, Settings, UserCircle2 } from "lucide-react";
+import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users, Settings, UserCircle2, Calendar } from "lucide-react";
 
 const navItems = {
   admin: [
@@ -17,6 +17,10 @@ const navItems = {
   ],
   team: [
     {
+      type: "separator",
+      label: "Funding",
+    },
+    {
       title: "Organizations",
       url: "organizations",
       icon: Building,
@@ -32,11 +36,19 @@ const navItems = {
       url: "donation-agreements",
       icon: Scroll,
     },
-
     {
-      title: "Users",
-      url: "users",
-      icon: BookUser,
+      title: "Transactions",
+      url: "transactions",
+      icon: Scroll,
+    },
+    {
+      title: "Files",
+      url: "files",
+      icon: FolderOpen,
+    },
+    {
+      type: "separator",
+      label: "CRM",
     },
     {
       title: "Contacts",
@@ -44,15 +56,17 @@ const navItems = {
       icon: UserCircle2,
     },
     {
-      title: "Files",
-      url: "files",
-      icon: FolderOpen,
+      title: "Events",
+      url: "events",
+      icon: Calendar,
     },
-
     {
-      title: "Transactions",
-      url: "transactions",
-      icon: Scroll,
+      type: "separator",
+    },
+    {
+      title: "Users",
+      url: "users",
+      icon: BookUser,
     },
     {
       title: "Settings",
