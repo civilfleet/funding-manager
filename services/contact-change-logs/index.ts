@@ -39,8 +39,11 @@ const getContactChangeLogs = async (contactId: string) => {
   return logs.map(mapChangeLog);
 };
 
-const createChangeLog = async (input: CreateChangeLogInput) => {
-  const log = await prisma.contactChangeLog.create({
+const createChangeLog = async (
+  input: CreateChangeLogInput,
+  tx?: Prisma.TransactionClient
+) => {
+  const log = await (tx ?? prisma).contactChangeLog.create({
     data: {
       contactId: input.contactId,
       action: input.action,
@@ -59,14 +62,15 @@ const createChangeLog = async (input: CreateChangeLogInput) => {
 const logContactCreation = async (
   contactId: string,
   userId?: string,
-  userName?: string
+  userName?: string,
+  tx?: Prisma.TransactionClient
 ) => {
   return createChangeLog({
     contactId,
     action: ChangeAction.CREATED,
     userId,
     userName,
-  });
+  }, tx);
 };
 
 // Helper function to log field updates
@@ -76,7 +80,8 @@ const logFieldUpdate = async (
   oldValue: unknown,
   newValue: unknown,
   userId?: string,
-  userName?: string
+  userName?: string,
+  tx?: Prisma.TransactionClient
 ) => {
   // Convert values to strings for storage
   const oldStr = oldValue !== undefined && oldValue !== null ? JSON.stringify(oldValue) : undefined;
@@ -90,7 +95,7 @@ const logFieldUpdate = async (
     newValue: newStr,
     userId,
     userName,
-  });
+  }, tx);
 };
 
 export { getContactChangeLogs, createChangeLog, logContactCreation, logFieldUpdate };

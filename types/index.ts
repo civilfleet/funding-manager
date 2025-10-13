@@ -46,6 +46,32 @@ export type ContactProfileAttribute =
       value: ContactLocationValue;
     };
 
+export interface EventRole {
+  id: string;
+  teamId: string;
+  name: string;
+  color?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Event {
+  id: string;
+  teamId: string;
+  title: string;
+  description?: string;
+  location?: string;
+  startDate: Date;
+  endDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ContactEvent {
+  event: Event;
+  roles: { eventRole: EventRole }[];
+}
+
 export interface Contact {
   id: string;
   teamId: string;
@@ -53,6 +79,7 @@ export interface Contact {
   email?: string;
   phone?: string;
   profileAttributes: ContactProfileAttribute[];
+  events?: ContactEvent[];
   createdAt: Date;
   updatedAt: Date;
 }

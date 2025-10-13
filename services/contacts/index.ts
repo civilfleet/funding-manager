@@ -37,7 +37,19 @@ type NormalizedAttribute = {
 };
 
 type ContactWithAttributes = Prisma.ContactGetPayload<{
-  include: { attributes: true };
+  include: {
+    attributes: true;
+    events: {
+      include: {
+        event: true;
+        roles: {
+          include: {
+            eventRole: true;
+          };
+        };
+      };
+    };
+  };
 }>;
 
 const normalizeAttributes = (
@@ -194,6 +206,29 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
   profileAttributes: contact.attributes
     .map(toProfileAttribute)
     .filter((attribute): attribute is ContactProfileAttribute => Boolean(attribute)),
+  events: (contact.events || []).map((eventContact) => ({
+    event: {
+      id: eventContact.event.id,
+      teamId: eventContact.event.teamId,
+      title: eventContact.event.title,
+      description: eventContact.event.description ?? undefined,
+      location: eventContact.event.location ?? undefined,
+      startDate: eventContact.event.startDate,
+      endDate: eventContact.event.endDate ?? undefined,
+      createdAt: eventContact.event.createdAt,
+      updatedAt: eventContact.event.updatedAt,
+    },
+    roles: eventContact.roles.map((role) => ({
+      eventRole: {
+        id: role.eventRole.id,
+        teamId: role.eventRole.teamId,
+        name: role.eventRole.name,
+        color: role.eventRole.color ?? undefined,
+        createdAt: role.eventRole.createdAt,
+        updatedAt: role.eventRole.updatedAt,
+      },
+    })),
+  })),
   createdAt: contact.createdAt,
   updatedAt: contact.updatedAt,
 });
@@ -226,6 +261,16 @@ const getTeamContacts = async (teamId: string, query?: string) => {
     where,
     include: {
       attributes: true,
+      events: {
+        include: {
+          event: true,
+          roles: {
+            include: {
+              eventRole: true,
+            },
+          },
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -243,6 +288,16 @@ const getContactById = async (contactId: string, teamId: string) => {
     },
     include: {
       attributes: true,
+      events: {
+        include: {
+          event: true,
+          roles: {
+            include: {
+              eventRole: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -286,11 +341,23 @@ const createContact = async (input: CreateContactInput, userId?: string, userNam
     }
 
     // Log contact creation
-    await logContactCreation(contact.id, userId, userName);
+    await logContactCreation(contact.id, userId, userName, tx);
 
     const created = await tx.contact.findUniqueOrThrow({
       where: { id: contact.id },
-      include: { attributes: true },
+      include: {
+        attributes: true,
+        events: {
+          include: {
+            event: true,
+            roles: {
+              include: {
+                eventRole: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     return mapContact(created);
@@ -320,17 +387,17 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
     const updates: Prisma.ContactUpdateInput = {};
 
     if (name !== undefined && name !== existing.name) {
-      await logFieldUpdate(contactId, "name", existing.name, name, userId, userName);
+      await logFieldUpdate(contactId, "name", existing.name, name, userId, userName, tx);
       updates.name = name;
     }
 
     if (email !== undefined && email !== existing.email) {
-      await logFieldUpdate(contactId, "email", existing.email, email, userId, userName);
+      await logFieldUpdate(contactId, "email", existing.email, email, userId, userName, tx);
       updates.email = email;
     }
 
     if (phone !== undefined && phone !== existing.phone) {
-      await logFieldUpdate(contactId, "phone", existing.phone, phone, userId, userName);
+      await logFieldUpdate(contactId, "phone", existing.phone, phone, userId, userName, tx);
       updates.phone = phone;
     }
 
@@ -366,7 +433,8 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
             oldValue,
             null,
             userId,
-            userName
+            userName,
+            tx
           );
           await tx.contactAttribute.delete({
             where: { id: existingAttr.id },
@@ -386,7 +454,8 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
             null,
             newAttr,
             userId,
-            userName
+            userName,
+            tx
           );
           await tx.contactAttribute.create({
             data: {
@@ -420,7 +489,8 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
               oldValue,
               newAttr,
               userId,
-              userName
+              userName,
+              tx
             );
             await tx.contactAttribute.update({
               where: { id: existingAttr.id },
@@ -442,7 +512,19 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
     // Return updated contact
     const updated = await tx.contact.findUniqueOrThrow({
       where: { id: contactId },
-      include: { attributes: true },
+      include: {
+        attributes: true,
+        events: {
+          include: {
+            event: true,
+            roles: {
+              include: {
+                eventRole: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     return mapContact(updated);
