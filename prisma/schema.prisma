@@ -236,6 +236,7 @@ model Contact {
   attributes        ContactAttribute[]
   events            EventContact[]
   engagements       ContactEngagement[]
+  changeLogs        ContactChangeLog[]
 }
 
 model ContactAttribute {
@@ -469,4 +470,26 @@ model ContactEngagement {
   @@index([contactId])
   @@index([teamId])
   @@index([engagedAt])
+}
+
+enum ChangeAction {
+  CREATED
+  UPDATED
+  DELETED
+}
+
+model ContactChangeLog {
+  id          String       @id @default(uuid()) @unique
+  contactId   String
+  contact     Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  action      ChangeAction
+  fieldName   String?      @db.VarChar(255) // Field that changed (null for CREATE/DELETE)
+  oldValue    String?      @db.Text         // Previous value (JSON for complex types)
+  newValue    String?      @db.Text         // New value (JSON for complex types)
+  userId      String?      // User who made the change
+  userName    String?      @db.VarChar(255) // Store name for display
+  createdAt   DateTime     @default(now()) @db.Timestamptz(6)
+
+  @@index([contactId])
+  @@index([createdAt])
 }

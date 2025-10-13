@@ -78,6 +78,17 @@ export const createContactSchema = z.object({
 
 export type CreateContactInput = z.infer<typeof createContactSchema>;
 
+export const updateContactSchema = z.object({
+  contactId: z.string().uuid("Contact id must be a valid UUID"),
+  teamId: z.string().uuid("Team id must be a valid UUID"),
+  name: z.string().min(1, "Name is required").optional(),
+  email: optionalEmail,
+  phone: optionalText(z.string()),
+  profileAttributes: z.array(contactAttributeSchema).optional(),
+});
+
+export type UpdateContactInput = z.infer<typeof updateContactSchema>;
+
 export const deleteContactsSchema = z.object({
   teamId: z.string().uuid("Team id must be a valid UUID"),
   ids: z

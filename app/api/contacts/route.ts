@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { handlePrismaError } from "@/lib/utils";
-import { createContactSchema, deleteContactsSchema } from "@/validations/contacts";
-import { createContact, deleteContacts, getTeamContacts } from "@/services/contacts";
+import { createContactSchema, updateContactSchema, deleteContactsSchema } from "@/validations/contacts";
+import { createContact, updateContact, deleteContacts, getTeamContacts } from "@/services/contacts";
 
 export async function GET(req: Request) {
   try {
@@ -29,6 +29,20 @@ export async function POST(req: Request) {
     const contact = await createContact(validated);
 
     return NextResponse.json({ data: contact }, { status: 201 });
+  } catch (e) {
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+  }
+}
+
+export async function PATCH(req: Request) {
+  try {
+    const payload = await req.json();
+    const validated = updateContactSchema.parse(payload);
+
+    const contact = await updateContact(validated);
+
+    return NextResponse.json({ data: contact }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
     return NextResponse.json({ error: message }, { status: 400, statusText: message });

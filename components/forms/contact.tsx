@@ -7,8 +7,8 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 
-import { createContactSchema } from "@/validations/contacts";
-import { ContactAttributeType } from "@/types";
+import { createContactSchema, updateContactSchema } from "@/validations/contacts";
+import { ContactAttributeType, Contact } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
 import {
@@ -31,26 +31,40 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type ContactFormValues = z.infer<typeof createContactSchema>;
+type CreateContactFormValues = z.infer<typeof createContactSchema>;
+type UpdateContactFormValues = z.infer<typeof updateContactSchema>;
+type ContactFormValues = CreateContactFormValues | UpdateContactFormValues;
 
 interface ContactFormProps {
   teamId: string;
+  contact?: Contact;
 }
 
-export default function ContactForm({ teamId }: ContactFormProps) {
+export default function ContactForm({ teamId, contact }: ContactFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditMode = Boolean(contact);
 
-  const form = useForm({
-    resolver: zodResolver(createContactSchema),
-    defaultValues: {
-      teamId,
-      name: "",
-      email: "",
-      phone: "",
-      profileAttributes: [] as ContactFormValues["profileAttributes"],
-    },
+  const form = useForm<ContactFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(isEditMode ? updateContactSchema : createContactSchema) as any,
+    defaultValues: isEditMode
+      ? {
+          teamId,
+          contactId: contact?.id ?? "",
+          name: contact?.name ?? "",
+          email: contact?.email ?? "",
+          phone: contact?.phone ?? "",
+          profileAttributes: (contact?.profileAttributes ?? []) as CreateContactFormValues["profileAttributes"],
+        }
+      : {
+          teamId,
+          name: "",
+          email: "",
+          phone: "",
+          profileAttributes: [] as CreateContactFormValues["profileAttributes"],
+        },
   });
 
   useEffect(() => {
@@ -58,7 +72,7 @@ export default function ContactForm({ teamId }: ContactFormProps) {
   }, [teamId, form]);
 
   const { control, watch, setValue } = form;
-  const typedControl = control as unknown as import("react-hook-form").Control<ContactFormValues>;
+  const typedControl = control as unknown as import("react-hook-form").Control<CreateContactFormValues>;
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -78,14 +92,14 @@ export default function ContactForm({ teamId }: ContactFormProps) {
   const attributes = watch("profileAttributes");
 
   const handleTypeChange = (index: number, type: ContactAttributeType) => {
-    let initialValue: ContactFormValues["profileAttributes"][number]["value"];
+    let initialValue: CreateContactFormValues["profileAttributes"][number]["value"];
 
     switch (type) {
       case ContactAttributeType.LOCATION:
-        initialValue = { label: "", latitude: undefined, longitude: undefined } as ContactFormValues["profileAttributes"][number]["value"];
+        initialValue = { label: "", latitude: undefined, longitude: undefined } as CreateContactFormValues["profileAttributes"][number]["value"];
         break;
       default:
-        initialValue = "" as ContactFormValues["profileAttributes"][number]["value"];
+        initialValue = "" as CreateContactFormValues["profileAttributes"][number]["value"];
         break;
     }
 
@@ -101,15 +115,15 @@ export default function ContactForm({ teamId }: ContactFormProps) {
       key: "",
       type: ContactAttributeType.STRING,
       value: "",
-    } as ContactFormValues["profileAttributes"][number]);
+    } as CreateContactFormValues["profileAttributes"][number]);
   };
 
-  const onSubmit = async (values: ContactFormValues) => {
+  const onSubmit = async (values: ContactFormValues, shouldExit: boolean = true) => {
     setIsSubmitting(true);
 
     try {
       const response = await fetch("/api/contacts", {
-        method: "POST",
+        method: isEditMode ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -118,19 +132,27 @@ export default function ContactForm({ teamId }: ContactFormProps) {
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody.error || "Failed to create contact");
+        throw new Error(errorBody.error || `Failed to ${isEditMode ? "update" : "create"} contact`);
       }
 
       toast({
-        title: "Contact created",
-        description: `${values.name} has been added to your CRM contacts.`,
+        title: isEditMode ? "Contact updated" : "Contact created",
+        description: isEditMode
+          ? `${values.name} has been successfully updated.`
+          : `${values.name} has been added to your CRM contacts.`,
       });
 
-      router.push(`/teams/${teamId}/contacts`);
+      if (shouldExit) {
+        if (isEditMode && contact?.id) {
+          router.push(`/teams/${teamId}/contacts/${contact.id}`);
+        } else {
+          router.push(`/teams/${teamId}/contacts`);
+        }
+      }
       router.refresh();
     } catch (error) {
       toast({
-        title: "Unable to create contact",
+        title: isEditMode ? "Unable to update contact" : "Unable to create contact",
         description: error instanceof Error ? error.message : "An unexpected error occurred.",
         variant: "destructive",
       });
@@ -289,13 +311,20 @@ export default function ContactForm({ teamId }: ContactFormProps) {
   return (
     <Card className="w-full shadow-sm">
       <CardHeader className="border-b pb-3">
-        <CardTitle className="text-xl font-semibold">Add Contact</CardTitle>
-        <CardDescription>Create a contact record with flexible CRM attributes.</CardDescription>
+        <CardTitle className="text-xl font-semibold">
+          {isEditMode ? "Edit Contact" : "Add Contact"}
+        </CardTitle>
+        <CardDescription>
+          {isEditMode
+            ? "Update contact information and CRM attributes."
+            : "Create a contact record with flexible CRM attributes."}
+        </CardDescription>
       </CardHeader>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
           <input type="hidden" {...form.register("teamId")} value={teamId} />
+          {isEditMode && <input type="hidden" {...form.register("contactId")} value={contact?.id} />}
           <CardContent className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
@@ -435,11 +464,33 @@ export default function ContactForm({ teamId }: ContactFormProps) {
             <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => router.back()}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            {isEditMode && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                onClick={form.handleSubmit((values) => onSubmit(values, false))}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving
+                  </>
+                ) : (
+                  "Save"
+                )}
+              </Button>
+            )}
+            <Button
+              type="button"
+              disabled={isSubmitting}
+              onClick={form.handleSubmit((values) => onSubmit(values, true))}
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving
                 </>
+              ) : isEditMode ? (
+                "Save & Exit"
               ) : (
                 "Save contact"
               )}

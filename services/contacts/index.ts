@@ -6,10 +6,20 @@ import {
   ContactLocationValue,
   ContactProfileAttribute,
 } from "@/types";
+import { logContactCreation, logFieldUpdate } from "@/services/contact-change-logs";
 
 type CreateContactInput = {
   teamId: string;
   name: string;
+  email?: string;
+  phone?: string;
+  profileAttributes?: ContactProfileAttribute[];
+};
+
+type UpdateContactInput = {
+  contactId: string;
+  teamId: string;
+  name?: string;
   email?: string;
   phone?: string;
   profileAttributes?: ContactProfileAttribute[];
@@ -243,7 +253,7 @@ const getContactById = async (contactId: string, teamId: string) => {
   return mapContact(contact);
 };
 
-const createContact = async (input: CreateContactInput) => {
+const createContact = async (input: CreateContactInput, userId?: string, userName?: string) => {
   const { teamId, name, email, phone, profileAttributes } = input;
   const normalizedAttributes = normalizeAttributes(profileAttributes);
 
@@ -275,12 +285,167 @@ const createContact = async (input: CreateContactInput) => {
       }
     }
 
+    // Log contact creation
+    await logContactCreation(contact.id, userId, userName);
+
     const created = await tx.contact.findUniqueOrThrow({
       where: { id: contact.id },
       include: { attributes: true },
     });
 
     return mapContact(created);
+  });
+};
+
+const updateContact = async (input: UpdateContactInput, userId?: string, userName?: string) => {
+  const { contactId, teamId, name, email, phone, profileAttributes } = input;
+
+  return prisma.$transaction(async (tx) => {
+    // Get the existing contact
+    const existing = await tx.contact.findFirst({
+      where: {
+        id: contactId,
+        teamId,
+      },
+      include: {
+        attributes: true,
+      },
+    });
+
+    if (!existing) {
+      throw new Error("Contact not found");
+    }
+
+    // Track changes to basic fields
+    const updates: Prisma.ContactUpdateInput = {};
+
+    if (name !== undefined && name !== existing.name) {
+      await logFieldUpdate(contactId, "name", existing.name, name, userId, userName);
+      updates.name = name;
+    }
+
+    if (email !== undefined && email !== existing.email) {
+      await logFieldUpdate(contactId, "email", existing.email, email, userId, userName);
+      updates.email = email;
+    }
+
+    if (phone !== undefined && phone !== existing.phone) {
+      await logFieldUpdate(contactId, "phone", existing.phone, phone, userId, userName);
+      updates.phone = phone;
+    }
+
+    // Update basic contact fields if there are changes
+    if (Object.keys(updates).length > 0) {
+      await tx.contact.update({
+        where: { id: contactId },
+        data: updates,
+      });
+    }
+
+    // Handle profile attributes if provided
+    if (profileAttributes !== undefined) {
+      const normalizedAttributes = normalizeAttributes(profileAttributes);
+
+      // Get existing attributes as a map
+      const existingAttrsMap = new Map(
+        existing.attributes.map((attr) => [attr.key, attr])
+      );
+
+      // Get new attributes as a map
+      const newAttrsMap = new Map(
+        normalizedAttributes.map((attr) => [attr.key, attr])
+      );
+
+      // Find attributes to delete (in existing but not in new)
+      for (const [key, existingAttr] of existingAttrsMap) {
+        if (!newAttrsMap.has(key)) {
+          const oldValue = toProfileAttribute(existingAttr);
+          await logFieldUpdate(
+            contactId,
+            `profileAttribute.${key}`,
+            oldValue,
+            null,
+            userId,
+            userName
+          );
+          await tx.contactAttribute.delete({
+            where: { id: existingAttr.id },
+          });
+        }
+      }
+
+      // Find attributes to add or update
+      for (const [key, newAttr] of newAttrsMap) {
+        const existingAttr = existingAttrsMap.get(key);
+
+        if (!existingAttr) {
+          // New attribute - create it
+          await logFieldUpdate(
+            contactId,
+            `profileAttribute.${key}`,
+            null,
+            newAttr,
+            userId,
+            userName
+          );
+          await tx.contactAttribute.create({
+            data: {
+              contactId,
+              key: newAttr.key,
+              type: newAttr.type,
+              stringValue: newAttr.stringValue,
+              numberValue: newAttr.numberValue,
+              dateValue: newAttr.dateValue,
+              locationLabel: newAttr.locationLabel,
+              latitude: newAttr.latitude,
+              longitude: newAttr.longitude,
+            },
+          });
+        } else {
+          // Check if attribute changed
+          const oldValue = toProfileAttribute(existingAttr);
+          const hasChanged =
+            existingAttr.type !== newAttr.type ||
+            existingAttr.stringValue !== newAttr.stringValue ||
+            existingAttr.numberValue?.toString() !== newAttr.numberValue?.toString() ||
+            existingAttr.dateValue?.toISOString() !== newAttr.dateValue?.toISOString() ||
+            existingAttr.locationLabel !== newAttr.locationLabel ||
+            existingAttr.latitude?.toString() !== newAttr.latitude?.toString() ||
+            existingAttr.longitude?.toString() !== newAttr.longitude?.toString();
+
+          if (hasChanged) {
+            await logFieldUpdate(
+              contactId,
+              `profileAttribute.${key}`,
+              oldValue,
+              newAttr,
+              userId,
+              userName
+            );
+            await tx.contactAttribute.update({
+              where: { id: existingAttr.id },
+              data: {
+                type: newAttr.type,
+                stringValue: newAttr.stringValue,
+                numberValue: newAttr.numberValue,
+                dateValue: newAttr.dateValue,
+                locationLabel: newAttr.locationLabel,
+                latitude: newAttr.latitude,
+                longitude: newAttr.longitude,
+              },
+            });
+          }
+        }
+      }
+    }
+
+    // Return updated contact
+    const updated = await tx.contact.findUniqueOrThrow({
+      where: { id: contactId },
+      include: { attributes: true },
+    });
+
+    return mapContact(updated);
   });
 };
 
@@ -297,4 +462,4 @@ const deleteContacts = async (teamId: string, ids: string[]) => {
   });
 };
 
-export { getTeamContacts, getContactById, createContact, deleteContacts };
+export { getTeamContacts, getContactById, createContact, updateContact, deleteContacts };

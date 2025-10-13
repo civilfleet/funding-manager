@@ -86,6 +86,24 @@ export interface ContactEngagement {
   updatedAt: Date;
 }
 
+export enum ChangeAction {
+  CREATED = "CREATED",
+  UPDATED = "UPDATED",
+  DELETED = "DELETED",
+}
+
+export interface ContactChangeLog {
+  id: string;
+  contactId: string;
+  action: ChangeAction;
+  fieldName?: string;
+  oldValue?: string;
+  newValue?: string;
+  userId?: string;
+  userName?: string;
+  createdAt: Date;
+}
+
 export interface User {
   id: string;
   name?: string;

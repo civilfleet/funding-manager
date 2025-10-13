@@ -9,6 +9,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { ContactAttributeType } from "@/types";
 import ContactEngagementHistory from "@/components/contact-engagement-history";
+import ContactChangeHistory from "@/components/contact-change-history";
 
 interface ContactDetailPageProps {
   params: Promise<{
@@ -186,6 +187,11 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
         {/* Engagement History */}
         <div className="mt-6">
           <ContactEngagementHistory contactId={id} teamId={teamId} />
+        </div>
+
+        {/* Change History */}
+        <div className="mt-6">
+          <ContactChangeHistory contactId={id} />
         </div>
       </div>
     </div>
