@@ -57,6 +57,35 @@ export interface Contact {
   updatedAt: Date;
 }
 
+export enum EngagementDirection {
+  INBOUND = "INBOUND",
+  OUTBOUND = "OUTBOUND",
+}
+
+export enum EngagementSource {
+  EMAIL = "EMAIL",
+  PHONE = "PHONE",
+  SMS = "SMS",
+  MEETING = "MEETING",
+  EVENT = "EVENT",
+  OTHER = "OTHER",
+}
+
+export interface ContactEngagement {
+  id: string;
+  contactId: string;
+  teamId: string;
+  direction: EngagementDirection;
+  source: EngagementSource;
+  subject?: string;
+  message: string;
+  userId?: string;
+  userName?: string;
+  engagedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface User {
   id: string;
   name?: string;

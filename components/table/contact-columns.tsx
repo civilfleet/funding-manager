@@ -1,7 +1,11 @@
+"use client";
+
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { ContactAttributeType, ContactProfileAttribute } from "@/types";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 
 export type ContactRow = {
   id: string;
@@ -69,11 +73,22 @@ const renderAttributes = (attributes: ContactProfileAttribute[] = []) => {
   );
 };
 
+const ContactNameCell = ({ contact }: { contact: ContactRow }) => {
+  const params = useParams();
+  const teamId = params.teamId as string;
+
+  return (
+    <Link href={`/teams/${teamId}/contacts/${contact.id}`} className="font-medium hover:underline">
+      {contact.name}
+    </Link>
+  );
+};
+
 export const contactColumns: ColumnDef<ContactRow>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+    cell: ({ row }) => <ContactNameCell contact={row.original} />,
   },
   {
     accessorKey: "email",
@@ -97,22 +112,24 @@ export const contactColumns: ColumnDef<ContactRow>[] = [
   },
 ];
 
-export const renderContactCard = (contact: ContactRow) => {
+export const renderContactCard = (contact: ContactRow, teamId: string) => {
   return (
-    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-3">
-      <div>
-        <h3 className="text-base font-semibold">{contact.name}</h3>
-        {(contact.email || contact.phone) && (
-          <p className="text-xs text-muted-foreground">
-            {[contact.email, contact.phone].filter(Boolean).join(" • ")}
-          </p>
-        )}
+    <Link href={`/teams/${teamId}/contacts/${contact.id}`}>
+      <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-3 hover:bg-accent transition-colors cursor-pointer">
+        <div>
+          <h3 className="text-base font-semibold">{contact.name}</h3>
+          {(contact.email || contact.phone) && (
+            <p className="text-xs text-muted-foreground">
+              {[contact.email, contact.phone].filter(Boolean).join(" • ")}
+            </p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide">Attributes</p>
+          {renderAttributes(contact.profileAttributes)}
+        </div>
+        <p className="text-xs text-muted-foreground">Added {formatDate(contact.createdAt)}</p>
       </div>
-      <div className="space-y-2">
-        <p className="text-xs text-muted-foreground uppercase tracking-wide">Attributes</p>
-        {renderAttributes(contact.profileAttributes)}
-      </div>
-      <p className="text-xs text-muted-foreground">Added {formatDate(contact.createdAt)}</p>
-    </div>
+    </Link>
   );
 };

@@ -225,6 +225,24 @@ const getTeamContacts = async (teamId: string, query?: string) => {
   return contacts.map(mapContact);
 };
 
+const getContactById = async (contactId: string, teamId: string) => {
+  const contact = await prisma.contact.findFirst({
+    where: {
+      id: contactId,
+      teamId,
+    },
+    include: {
+      attributes: true,
+    },
+  });
+
+  if (!contact) {
+    return null;
+  }
+
+  return mapContact(contact);
+};
+
 const createContact = async (input: CreateContactInput) => {
   const { teamId, name, email, phone, profileAttributes } = input;
   const normalizedAttributes = normalizeAttributes(profileAttributes);
@@ -279,4 +297,4 @@ const deleteContacts = async (teamId: string, ids: string[]) => {
   });
 };
 
-export { getTeamContacts, createContact, deleteContacts };
+export { getTeamContacts, getContactById, createContact, deleteContacts };

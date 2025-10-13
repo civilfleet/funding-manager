@@ -1,8 +1,13 @@
+"use client";
+
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { Copy, Check } from "lucide-react";
+import { useState } from "react";
 
 export type EventRow = {
   id: string;
@@ -101,6 +106,62 @@ const EventTitleCell = ({ event }: { event: EventRow }) => {
   );
 };
 
+const CopyContactsButton = ({ event }: { event: EventRow }) => {
+  const [copied, setCopied] = useState(false);
+
+  const copyContactsToClipboard = () => {
+    if (event.contacts.length === 0) {
+      return;
+    }
+
+    // Format contacts with names, emails, phones, and roles
+    const contactsText = event.contacts
+      .map((contact) => {
+        const parts = [contact.name];
+        if (contact.email) parts.push(contact.email);
+        if (contact.phone) parts.push(contact.phone);
+        if (contact.roles.length > 0) {
+          parts.push(`(${contact.roles.map((r) => r.name).join(", ")})`);
+        }
+        return parts.join(" - ");
+      })
+      .join("\n");
+
+    navigator.clipboard.writeText(contactsText).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  if (event.contacts.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={copyContactsToClipboard}
+        className="gap-2"
+        title="Copy contacts to clipboard"
+      >
+        {copied ? (
+          <>
+            <Check className="h-4 w-4 text-green-600" />
+            <span className="text-green-600">Copied!</span>
+          </>
+        ) : (
+          <>
+            <Copy className="h-4 w-4" />
+            <span>Copy Contacts</span>
+          </>
+        )}
+      </Button>
+    </div>
+  );
+};
+
 export const eventColumns: ColumnDef<EventRow>[] = [
   {
     accessorKey: "title",
@@ -126,6 +187,11 @@ export const eventColumns: ColumnDef<EventRow>[] = [
     accessorKey: "contacts",
     header: "Contacts",
     cell: ({ row }) => renderContacts(row.original.contacts),
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => <CopyContactsButton event={row.original} />,
   },
 ];
 

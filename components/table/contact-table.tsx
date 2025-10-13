@@ -37,6 +37,9 @@ export default function ContactTable({ teamId }: ContactTableProps) {
 
   const query = form.watch("query");
 
+  // Wrap renderContactCard with teamId
+  const renderCard = (contact: ContactRow) => renderContactCard(contact, teamId);
+
   const { data, error, isLoading, mutate } = useSWR(
     `/api/contacts?teamId=${teamId}&query=${encodeURIComponent(query)}`,
     fetcher
@@ -130,7 +133,7 @@ export default function ContactTable({ teamId }: ContactTableProps) {
           <DataTable
             columns={contactColumns}
             data={contacts}
-            renderCard={renderContactCard}
+            renderCard={renderCard}
             initialView="table"
             selectable
             renderBatchActions={({ selectedRows, clearSelection }) => (

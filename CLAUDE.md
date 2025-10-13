@@ -106,4 +106,3 @@ FundingRequest statuses:
 
 ### Testing
 No test framework is currently configured. Check with the user before setting up testing infrastructure.
-- at least test if `npm run build` builds succesfully

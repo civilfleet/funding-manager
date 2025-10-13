@@ -235,6 +235,7 @@ model Contact {
   updatedAt         DateTime             @updatedAt @db.Timestamptz(6)
   attributes        ContactAttribute[]
   events            EventContact[]
+  engagements       ContactEngagement[]
 }
 
 model ContactAttribute {
@@ -434,4 +435,38 @@ model EventRole {
 
   @@unique([teamId, name])
   @@index([teamId])
+}
+
+enum EngagementDirection {
+  INBOUND   // Message received by contact
+  OUTBOUND  // Message sent to contact
+}
+
+enum EngagementSource {
+  EMAIL
+  PHONE
+  SMS
+  MEETING
+  EVENT
+  OTHER
+}
+
+model ContactEngagement {
+  id          String               @id @default(uuid()) @unique
+  contactId   String
+  contact     Contact              @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  teamId      String
+  direction   EngagementDirection
+  source      EngagementSource
+  subject     String?              @db.VarChar(500)
+  message     String               @db.Text
+  userId      String?              // Team user who sent/received the message
+  userName    String?              @db.VarChar(255) // Store name for display even if user deleted
+  engagedAt   DateTime             @db.Timestamptz(6) // When the engagement occurred
+  createdAt   DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime             @updatedAt @db.Timestamptz(6)
+
+  @@index([contactId])
+  @@index([teamId])
+  @@index([engagedAt])
 }
