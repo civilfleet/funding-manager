@@ -451,9 +451,9 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                                       checked={field.value?.includes(user.id)}
                                       onCheckedChange={(checked) => {
                                         return checked
-                                          ? field.onChange([...field.value, user.id])
+                                          ? field.onChange([...(field.value || []), user.id])
                                           : field.onChange(
-                                              field.value?.filter(
+                                              (field.value || []).filter(
                                                 (value) => value !== user.id
                                               )
                                             );

@@ -282,7 +282,7 @@ const getTeamContacts = async (teamId: string, query?: string, userId?: string) 
   }
 
   if (query) {
-    const searchConditions = [
+    const searchConditions: Prisma.ContactWhereInput[] = [
       { name: { contains: query, mode: "insensitive" } },
       { email: { contains: query, mode: "insensitive" } },
       { phone: { contains: query, mode: "insensitive" } },
@@ -315,6 +315,7 @@ const getTeamContacts = async (teamId: string, query?: string, userId?: string) 
     where,
     include: {
       attributes: true,
+      group: true,
       events: {
         include: {
           event: true,
@@ -403,6 +404,7 @@ const createContact = async (input: CreateContactInput, userId?: string, userNam
       where: { id: contact.id },
       include: {
         attributes: true,
+        group: true,
         events: {
           include: {
             event: true,
@@ -440,7 +442,7 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
     }
 
     // Track changes to basic fields
-    const updates: Prisma.ContactUpdateInput = {};
+    const updates: Prisma.ContactUncheckedUpdateInput = {};
 
     if (name !== undefined && name !== existing.name) {
       await logFieldUpdate(contactId, "name", existing.name, name, userId, userName, tx);
@@ -575,6 +577,7 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
       where: { id: contactId },
       include: {
         attributes: true,
+        group: true,
         events: {
           include: {
             event: true,
