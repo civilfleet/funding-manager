@@ -12,7 +12,7 @@ type CreateChangeLogInput = {
   userName?: string;
 };
 
-type ContactChangeLogWithDefaults = Prisma.ContactChangeLogGetPayload<{}>;
+type ContactChangeLogWithDefaults = Prisma.ContactChangeLogGetPayload<Record<string, never>>;
 
 const mapChangeLog = (log: ContactChangeLogWithDefaults): ContactChangeLog => ({
   id: log.id,

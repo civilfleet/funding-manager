@@ -60,7 +60,7 @@ const getTransactions = async ({
   fundingRequestId,
   searchQuery,
 }: GetTransactionsParams = {}) => {
-  const where: { [key: string]: any } = {};
+  const where: Record<string, unknown> = {};
 
   if (organizationId) {
     where["organizationId"] = organizationId;

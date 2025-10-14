@@ -30,7 +30,7 @@ type RemoveUsersFromGroupInput = {
   userIds: string[];
 };
 
-type GroupWithDefaults = Prisma.GroupGetPayload<{}>;
+type GroupWithDefaults = Prisma.GroupGetPayload<Record<string, never>>;
 
 const mapGroup = (group: GroupWithDefaults): Group => ({
   id: group.id,

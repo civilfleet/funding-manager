@@ -29,7 +29,7 @@ type UpdateEngagementInput = {
   dueDate?: Date;
 };
 
-type ContactEngagementWithDefaults = Prisma.ContactEngagementGetPayload<{}>;
+type ContactEngagementWithDefaults = Prisma.ContactEngagementGetPayload<Record<string, never>>;
 
 const mapEngagement = (engagement: ContactEngagementWithDefaults): ContactEngagement => ({
   id: engagement.id,

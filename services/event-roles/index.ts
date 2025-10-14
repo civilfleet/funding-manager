@@ -23,7 +23,7 @@ type EventRoleType = {
   updatedAt: Date;
 };
 
-const mapEventRole = (role: Prisma.EventRoleGetPayload<{}>): EventRoleType => ({
+const mapEventRole = (role: Prisma.EventRoleGetPayload<Record<string, never>>): EventRoleType => ({
   id: role.id,
   teamId: role.teamId,
   name: role.name,

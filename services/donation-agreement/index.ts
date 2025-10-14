@@ -114,7 +114,7 @@ const createDonationAgreement = async (donation: DonationAgreement, createdByUse
 };
 
 const getDonationAgreements = async ({ teamId, orgId }: { teamId: string; orgId: string }, searchQuery: string) => {
-  const where: { [key: string]: any } = {};
+  const where: Record<string, unknown> = {};
   if (orgId) {
     where["organizationId"] = orgId;
   }

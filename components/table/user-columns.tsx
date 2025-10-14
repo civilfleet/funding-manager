@@ -102,7 +102,7 @@ export const columns: ColumnDef<User>[] = [
           className="flex flex-wrap gap-1 cursor-pointer"
           onClick={() => (window.location.href = `users/${row.original.id}`)}
         >
-          {groups.map((userGroup: any) => (
+          {groups.map((userGroup: { groupId: string; group: { id: string; name: string } }) => (
             <Badge key={userGroup.groupId} variant="secondary" className="text-xs">
               {userGroup.group.name}
             </Badge>
