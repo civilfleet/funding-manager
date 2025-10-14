@@ -72,12 +72,30 @@ export interface ContactEvent {
   roles: { eventRole: EventRole }[];
 }
 
+export interface Group {
+  id: string;
+  teamId: string;
+  name: string;
+  description?: string;
+  canAccessAllContacts: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface UserGroup {
+  userId: string;
+  groupId: string;
+  createdAt: Date;
+}
+
 export interface Contact {
   id: string;
   teamId: string;
   name: string;
   email?: string;
   phone?: string;
+  groupId?: string;
+  group?: Group;
   profileAttributes: ContactProfileAttribute[];
   events?: ContactEvent[];
   createdAt: Date;
@@ -158,6 +176,13 @@ export interface User {
   teamId?: string;
   team?: Teams;
   roles: Roles[];
+  groups?: Array<{
+    groupId: string;
+    group: {
+      id: string;
+      name: string;
+    };
+  }>;
 
   createdAt: Date;
   updatedAt: Date;

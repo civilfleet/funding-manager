@@ -1,6 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -80,6 +81,35 @@ export const columns: ColumnDef<User>[] = [
         {row.original?.roles || "N/A"}
       </div>
     ),
+  },
+  {
+    accessorKey: "groups",
+    header: () => <div className="text-left w-48">Groups</div>,
+    cell: ({ row }) => {
+      const groups = row.original?.groups;
+      if (!groups || groups.length === 0) {
+        return (
+          <div
+            className="text-left cursor-pointer hover:text-primary"
+            onClick={() => (window.location.href = `users/${row.original.id}`)}
+          >
+            No groups
+          </div>
+        );
+      }
+      return (
+        <div
+          className="flex flex-wrap gap-1 cursor-pointer"
+          onClick={() => (window.location.href = `users/${row.original.id}`)}
+        >
+          {groups.map((userGroup: any) => (
+            <Badge key={userGroup.groupId} variant="secondary" className="text-xs">
+              {userGroup.group.name}
+            </Badge>
+          ))}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "createdAt",

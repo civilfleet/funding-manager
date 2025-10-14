@@ -154,6 +154,20 @@ const getUsers = async (
         ...whereConditions,
       ],
     },
+    include: teamId
+      ? {
+          groups: {
+            include: {
+              group: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        }
+      : undefined,
     orderBy: { createdAt: "desc" },
   });
 };

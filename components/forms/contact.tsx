@@ -6,6 +6,7 @@ import { z } from "zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
+import useSWR from "swr";
 
 import { createContactSchema, updateContactSchema } from "@/validations/contacts";
 import { ContactAttributeType, Contact } from "@/types";
@@ -35,16 +36,30 @@ type CreateContactFormValues = z.infer<typeof createContactSchema>;
 type UpdateContactFormValues = z.infer<typeof updateContactSchema>;
 type ContactFormValues = CreateContactFormValues | UpdateContactFormValues;
 
+type Group = {
+  id: string;
+  name: string;
+};
+
 interface ContactFormProps {
   teamId: string;
   contact?: Contact;
 }
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function ContactForm({ teamId, contact }: ContactFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = Boolean(contact);
+
+  const { data: groupsData } = useSWR(
+    `/api/groups?teamId=${teamId}`,
+    fetcher
+  );
+
+  const groups: Group[] = groupsData?.data || [];
 
   const form = useForm<ContactFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,6 +71,7 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           name: contact?.name ?? "",
           email: contact?.email ?? "",
           phone: contact?.phone ?? "",
+          groupId: contact?.groupId ?? undefined,
           profileAttributes: (contact?.profileAttributes ?? []) as CreateContactFormValues["profileAttributes"],
         }
       : {
@@ -63,6 +79,7 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           name: "",
           email: "",
           phone: "",
+          groupId: undefined,
           profileAttributes: [] as CreateContactFormValues["profileAttributes"],
         },
   });
@@ -362,6 +379,34 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                     <FormControl>
                       <Input placeholder="+1 (555) 123-4567" {...field} value={field.value ?? ""} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={typedControl}
+                name="groupId"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Group (optional)</FormLabel>
+                    <Select
+                      onValueChange={(value) => field.onChange(value === "none" ? undefined : value)}
+                      value={field.value || "none"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="No group" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">No group</SelectItem>
+                        {groups.map((group) => (
+                          <SelectItem key={group.id} value={group.id}>
+                            {group.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

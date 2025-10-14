@@ -13,6 +13,7 @@ type CreateContactInput = {
   name: string;
   email?: string;
   phone?: string;
+  groupId?: string;
   profileAttributes?: ContactProfileAttribute[];
 };
 
@@ -22,6 +23,7 @@ type UpdateContactInput = {
   name?: string;
   email?: string;
   phone?: string;
+  groupId?: string;
   profileAttributes?: ContactProfileAttribute[];
 };
 
@@ -39,6 +41,7 @@ type NormalizedAttribute = {
 type ContactWithAttributes = Prisma.ContactGetPayload<{
   include: {
     attributes: true;
+    group: true;
     events: {
       include: {
         event: true;
@@ -203,6 +206,18 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
   name: contact.name,
   email: contact.email ?? undefined,
   phone: contact.phone ?? undefined,
+  groupId: contact.groupId ?? undefined,
+  group: contact.group
+    ? {
+        id: contact.group.id,
+        teamId: contact.group.teamId,
+        name: contact.group.name,
+        description: contact.group.description ?? undefined,
+        canAccessAllContacts: contact.group.canAccessAllContacts,
+        createdAt: contact.group.createdAt,
+        updatedAt: contact.group.updatedAt,
+      }
+    : undefined,
   profileAttributes: contact.attributes
     .map(toProfileAttribute)
     .filter((attribute): attribute is ContactProfileAttribute => Boolean(attribute)),
@@ -233,13 +248,41 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
   updatedAt: contact.updatedAt,
 });
 
-const getTeamContacts = async (teamId: string, query?: string) => {
+const getTeamContacts = async (teamId: string, query?: string, userId?: string) => {
   const where: Prisma.ContactWhereInput = {
     teamId,
   };
 
+  // If userId is provided, filter by group access
+  if (userId) {
+    const userGroups = await prisma.userGroup.findMany({
+      where: { userId },
+      include: {
+        group: {
+          select: {
+            id: true,
+            canAccessAllContacts: true,
+          },
+        },
+      },
+    });
+
+    // Check if user belongs to any group with canAccessAllContacts permission
+    const hasAllAccessPermission = userGroups.some((ug) => ug.group.canAccessAllContacts);
+
+    if (!hasAllAccessPermission) {
+      // User can only see contacts with no group OR contacts in their groups
+      const groupIds = userGroups.map((ug) => ug.groupId);
+      where.OR = [
+        { groupId: null },
+        { groupId: { in: groupIds } },
+      ];
+    }
+    // If user has canAccessAllContacts permission, don't apply any group filtering
+  }
+
   if (query) {
-    where.OR = [
+    const searchConditions = [
       { name: { contains: query, mode: "insensitive" } },
       { email: { contains: query, mode: "insensitive" } },
       { phone: { contains: query, mode: "insensitive" } },
@@ -255,6 +298,17 @@ const getTeamContacts = async (teamId: string, query?: string) => {
         },
       },
     ];
+
+    // Combine group filtering with search
+    if (where.OR) {
+      where.AND = [
+        { OR: where.OR },
+        { OR: searchConditions },
+      ];
+      delete where.OR;
+    } else {
+      where.OR = searchConditions;
+    }
   }
 
   const contacts = await prisma.contact.findMany({
@@ -288,6 +342,7 @@ const getContactById = async (contactId: string, teamId: string) => {
     },
     include: {
       attributes: true,
+      group: true,
       events: {
         include: {
           event: true,
@@ -309,7 +364,7 @@ const getContactById = async (contactId: string, teamId: string) => {
 };
 
 const createContact = async (input: CreateContactInput, userId?: string, userName?: string) => {
-  const { teamId, name, email, phone, profileAttributes } = input;
+  const { teamId, name, email, phone, groupId, profileAttributes } = input;
   const normalizedAttributes = normalizeAttributes(profileAttributes);
 
   return prisma.$transaction(async (tx) => {
@@ -319,6 +374,7 @@ const createContact = async (input: CreateContactInput, userId?: string, userNam
         name,
         email,
         phone,
+        groupId,
       },
     });
 
@@ -365,7 +421,7 @@ const createContact = async (input: CreateContactInput, userId?: string, userNam
 };
 
 const updateContact = async (input: UpdateContactInput, userId?: string, userName?: string) => {
-  const { contactId, teamId, name, email, phone, profileAttributes } = input;
+  const { contactId, teamId, name, email, phone, groupId, profileAttributes } = input;
 
   return prisma.$transaction(async (tx) => {
     // Get the existing contact
@@ -399,6 +455,11 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
     if (phone !== undefined && phone !== existing.phone) {
       await logFieldUpdate(contactId, "phone", existing.phone, phone, userId, userName, tx);
       updates.phone = phone;
+    }
+
+    if (groupId !== undefined && groupId !== existing.groupId) {
+      await logFieldUpdate(contactId, "groupId", existing.groupId, groupId, userId, userName, tx);
+      updates.groupId = groupId;
     }
 
     // Update basic contact fields if there are changes

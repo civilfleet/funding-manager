@@ -1,4 +1,4 @@
-import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users, Settings, UserCircle2, Calendar, type LucideIcon } from "lucide-react";
+import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users, Settings, UserCircle2, Calendar, UsersRound, type LucideIcon } from "lucide-react";
 
 type NavItemBase = {
   title: string;
@@ -85,6 +85,11 @@ const navItems: {
       title: "Users",
       url: "users",
       icon: BookUser,
+    },
+    {
+      title: "Groups",
+      url: "groups",
+      icon: UsersRound,
     },
     {
       title: "Settings",

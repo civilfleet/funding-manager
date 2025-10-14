@@ -3,7 +3,7 @@ import { getContactById } from "@/services/contacts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, Calendar, MapPin, Hash, Type, CalendarDays } from "lucide-react";
+import { Mail, Phone, Calendar, MapPin, Hash, Type, CalendarDays, Users } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ContactAttributeType } from "@/types";
@@ -134,6 +134,20 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                 </div>
 
                 <div className="grid gap-3">
+                  {contact.group && (
+                    <div className="rounded-md border bg-muted/30 p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-sm font-medium text-muted-foreground">Group</p>
+                      </div>
+                      <p className="text-base">{contact.group.name}</p>
+                      {contact.group.description && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {contact.group.description}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <div className="rounded-md border bg-muted/30 p-3">
                     <p className="text-sm font-medium text-muted-foreground">Created At</p>
                     <p className="text-base">{format(new Date(contact.createdAt), "PPpp")}</p>

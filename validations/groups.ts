@@ -1,0 +1,36 @@
+import { z } from "zod";
+
+export const createGroupSchema = z.object({
+  teamId: z.string().uuid(),
+  name: z.string().min(1, "Name is required").max(255),
+  description: z.string().optional(),
+  canAccessAllContacts: z.boolean().optional().default(false),
+  userIds: z.array(z.string().uuid()).optional(),
+});
+
+export type CreateGroupInput = z.infer<typeof createGroupSchema>;
+
+export const updateGroupSchema = z.object({
+  id: z.string().uuid(),
+  teamId: z.string().uuid(),
+  name: z.string().min(1, "Name is required").max(255).optional(),
+  description: z.string().optional(),
+  canAccessAllContacts: z.boolean().optional(),
+});
+
+export type UpdateGroupInput = z.infer<typeof updateGroupSchema>;
+
+export const deleteGroupsSchema = z.object({
+  teamId: z.string().uuid(),
+  ids: z.array(z.string().uuid()).min(1, "At least one group ID is required"),
+});
+
+export type DeleteGroupsInput = z.infer<typeof deleteGroupsSchema>;
+
+export const manageGroupUsersSchema = z.object({
+  groupId: z.string().uuid(),
+  teamId: z.string().uuid(),
+  userIds: z.array(z.string().uuid()).min(1, "At least one user ID is required"),
+});
+
+export type ManageGroupUsersInput = z.infer<typeof manageGroupUsersSchema>;

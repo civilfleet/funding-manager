@@ -1,0 +1,55 @@
+import { NextRequest, NextResponse } from "next/server";
+import { handlePrismaError } from "@/lib/utils";
+import { z } from "zod";
+import { manageGroupUsersSchema } from "@/validations/groups";
+import { addUsersToGroup, removeUsersFromGroup } from "@/services/groups";
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const validated = manageGroupUsersSchema.parse({ ...body, groupId: id });
+
+    await addUsersToGroup(validated);
+
+    return NextResponse.json({ data: "success" }, { status: 200 });
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation failed", details: e.issues },
+        { status: 400 }
+      );
+    }
+
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const validated = manageGroupUsersSchema.parse({ ...body, groupId: id });
+
+    await removeUsersFromGroup(validated);
+
+    return NextResponse.json({ data: "success" }, { status: 200 });
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation failed", details: e.issues },
+        { status: 400 }
+      );
+    }
+
+    const { message } = handlePrismaError(e);
+    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+  }
+}

@@ -152,24 +152,26 @@ model Teams {
   contacts     Contact[]
   events       Event[]
   eventRoles   EventRole[]
+  groups       Group[]
 }
 
 model User {
-  id             String           @id @default(uuid()) @unique 
-  name           String?          @db.VarChar(255)          
-  address        String?          @db.VarChar(255)          
-  email          String           @db.VarChar(255) @unique         
-  phone          String?          @db.VarChar(255)          
-  postalCode     String?          @db.VarChar(255)  
-  city           String?          @db.VarChar(255)  
-  country        String?          @db.VarChar(255)                           
+  id             String           @id @default(uuid()) @unique
+  name           String?          @db.VarChar(255)
+  address        String?          @db.VarChar(255)
+  email          String           @db.VarChar(255) @unique
+  phone          String?          @db.VarChar(255)
+  postalCode     String?          @db.VarChar(255)
+  city           String?          @db.VarChar(255)
+  country        String?          @db.VarChar(255)
   roles          Roles[]
-  emailVerified DateTime? 
+  emailVerified DateTime?
   image         String?
-  
-  fundingRequests FundingRequest[]  
+
+  fundingRequests FundingRequest[]
   teams           Teams[]          @relation("TeamUsers") // Many-to-Many relation
   organizations   Organization[]   @relation("OrganizationUsers") // Many-to-Many relation
+  groups          UserGroup[]      // Many-to-Many relation through UserGroup
 
   signedAgreements DonationAgreementSignature[]
   donationAgreement DonationAgreement[] @relation("CreatedByRelation")
@@ -178,10 +180,10 @@ model User {
   updatedBy       File[]           @relation("UpdatedByRelation") // One-to-Many relation
   accounts      Account[]
   sessions      Session[]
- 
+
 
   createdAt      DateTime         @default(now()) @db.Timestamptz(6)
-  updatedAt      DateTime         @updatedAt @db.Timestamptz(6) 
+  updatedAt      DateTime         @updatedAt @db.Timestamptz(6)
 
 }
 
@@ -231,12 +233,17 @@ model Contact {
   name              String
   email             String?              @db.VarChar(255)
   phone             String?              @db.VarChar(255)
+  groupId           String?              // Optional group for access control
+  group             Group?               @relation(fields: [groupId], references: [id], onDelete: SetNull)
   createdAt         DateTime             @default(now()) @db.Timestamptz(6)
   updatedAt         DateTime             @updatedAt @db.Timestamptz(6)
   attributes        ContactAttribute[]
   events            EventContact[]
   engagements       ContactEngagement[]
   changeLogs        ContactChangeLog[]
+
+  @@index([groupId])
+  @@index([teamId, groupId])
 }
 
 model ContactAttribute {
@@ -509,4 +516,34 @@ model ContactChangeLog {
 
   @@index([contactId])
   @@index([createdAt])
+}
+
+// Group and UserGroup models for access control
+model Group {
+  id                    String      @id @default(uuid()) @unique
+  teamId                String
+  team                  Teams       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name                  String      @db.VarChar(255)
+  description           String?     @db.Text
+  canAccessAllContacts  Boolean     @default(false)  // If true, users in this group can see all contacts
+  createdAt             DateTime    @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime    @updatedAt @db.Timestamptz(6)
+
+  users       UserGroup[]
+  contacts    Contact[]
+
+  @@unique([teamId, name])
+  @@index([teamId])
+}
+
+model UserGroup {
+  userId    String
+  groupId   String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group     Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@id([userId, groupId])
+  @@index([userId])
+  @@index([groupId])
 }

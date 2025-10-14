@@ -74,6 +74,7 @@ export const createContactSchema = z.object({
   email: optionalEmail,
   phone: optionalText(z.string()),
   profileAttributes: z.array(contactAttributeSchema).default([]),
+  groupId: z.preprocess(preprocessEmptyString, z.string().uuid("Group id must be a valid UUID").optional()),
 });
 
 export type CreateContactInput = z.infer<typeof createContactSchema>;
@@ -85,6 +86,7 @@ export const updateContactSchema = z.object({
   email: optionalEmail,
   phone: optionalText(z.string()),
   profileAttributes: z.array(contactAttributeSchema).optional(),
+  groupId: z.preprocess(preprocessEmptyString, z.string().uuid("Group id must be a valid UUID").optional()),
 });
 
 export type UpdateContactInput = z.infer<typeof updateContactSchema>;

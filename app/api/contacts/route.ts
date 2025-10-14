@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
 import { createContactSchema, updateContactSchema, deleteContactsSchema } from "@/validations/contacts";
 import { createContact, updateContact, deleteContacts, getTeamContacts } from "@/services/contacts";
@@ -13,7 +15,19 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "teamId is required" }, { status: 400 });
     }
 
-    const contacts = await getTeamContacts(teamId, query || undefined);
+    // Get the current user's ID for group filtering
+    const session = await auth();
+    let userId: string | undefined;
+
+    if (session?.user?.email) {
+      const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { id: true },
+      });
+      userId = user?.id;
+    }
+
+    const contacts = await getTeamContacts(teamId, query || undefined, userId);
     return NextResponse.json({ data: contacts }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
