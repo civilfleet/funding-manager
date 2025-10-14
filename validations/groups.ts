@@ -30,7 +30,7 @@ export type DeleteGroupsInput = z.infer<typeof deleteGroupsSchema>;
 export const manageGroupUsersSchema = z.object({
   groupId: z.string().uuid(),
   teamId: z.string().uuid(),
-  userIds: z.array(z.string().uuid()).min(1, "At least one user ID is required"),
+  userIds: z.array(z.string().uuid()),
 });
 
 export type ManageGroupUsersInput = z.infer<typeof manageGroupUsersSchema>;

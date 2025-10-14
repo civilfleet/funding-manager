@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, Pencil, Trash2, Users } from "lucide-react";
 import useSWR from "swr";
 
-import { createGroupSchema, updateGroupSchema } from "@/validations/groups";
+import { createGroupSchema } from "@/validations/groups";
 import { useToast } from "@/hooks/use-toast";
 
 import {
@@ -91,7 +91,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
   const users: User[] = usersData?.data || [];
 
   const form = useForm({
-    resolver: zodResolver(editingGroup ? updateGroupSchema : createGroupSchema),
+    resolver: zodResolver(createGroupSchema),
     defaultValues: {
       teamId,
       name: "",
@@ -136,25 +136,84 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
     setIsSubmitting(true);
 
     try {
-      const url = editingGroup
-        ? `/api/groups/${editingGroup.id}`
-        : "/api/groups";
-      const method = editingGroup ? "PATCH" : "POST";
+      if (editingGroup) {
+        // Update group basic info
+        const updateResponse = await fetch(`/api/groups/${editingGroup.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            teamId: values.teamId,
+            name: values.name,
+            description: values.description,
+            canAccessAllContacts: values.canAccessAllContacts,
+          }),
+        });
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
+        if (!updateResponse.ok) {
+          const errorBody = await updateResponse.json().catch(() => ({}));
+          throw new Error(errorBody.error || "Failed to update group");
+        }
 
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        throw new Error(
-          errorBody.error ||
-            `Failed to ${editingGroup ? "update" : "create"} group`
-        );
+        // Update group users
+        const existingUserIds = editingGroup.users?.map(u => u.userId) || [];
+        const newUserIds = values.userIds || [];
+
+        const usersToAdd = newUserIds.filter(id => !existingUserIds.includes(id));
+        const usersToRemove = existingUserIds.filter(id => !newUserIds.includes(id));
+
+        // Add new users
+        if (usersToAdd.length > 0) {
+          const addResponse = await fetch(`/api/groups/${editingGroup.id}/users`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              teamId: values.teamId,
+              userIds: usersToAdd,
+            }),
+          });
+
+          if (!addResponse.ok) {
+            const errorBody = await addResponse.json().catch(() => ({}));
+            throw new Error(errorBody.error || "Failed to add users to group");
+          }
+        }
+
+        // Remove users
+        if (usersToRemove.length > 0) {
+          const removeResponse = await fetch(`/api/groups/${editingGroup.id}/users`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              teamId: values.teamId,
+              userIds: usersToRemove,
+            }),
+          });
+
+          if (!removeResponse.ok) {
+            const errorBody = await removeResponse.json().catch(() => ({}));
+            throw new Error(errorBody.error || "Failed to remove users from group");
+          }
+        }
+      } else {
+        // Create new group
+        const response = await fetch("/api/groups", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.json().catch(() => ({}));
+          throw new Error(errorBody.error || "Failed to create group");
+        }
       }
 
       toast({
