@@ -95,7 +95,15 @@ export enum EngagementSource {
   SMS = "SMS",
   MEETING = "MEETING",
   EVENT = "EVENT",
+  TODO = "TODO",
   OTHER = "OTHER",
+}
+
+export enum TodoStatus {
+  PENDING = "PENDING",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
 }
 
 export interface ContactEngagement {
@@ -108,6 +116,10 @@ export interface ContactEngagement {
   message: string;
   userId?: string;
   userName?: string;
+  assignedToUserId?: string;
+  assignedToUserName?: string;
+  todoStatus?: TodoStatus;
+  dueDate?: Date;
   engagedAt: Date;
   createdAt: Date;
   updatedAt: Date;

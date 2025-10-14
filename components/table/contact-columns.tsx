@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { ContactAttributeType, ContactProfileAttribute } from "@/types";
+import { ContactAttributeType, ContactProfileAttribute, ContactEvent } from "@/types";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -14,6 +14,7 @@ export type ContactRow = {
   email?: string | null;
   phone?: string | null;
   profileAttributes: ContactProfileAttribute[];
+  events?: ContactEvent[];
   createdAt: string | Date;
   updatedAt: string | Date;
 };

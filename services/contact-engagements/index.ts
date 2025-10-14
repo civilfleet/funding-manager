@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { ContactEngagement, EngagementDirection, EngagementSource } from "@/types";
+import { ContactEngagement, EngagementDirection, EngagementSource, TodoStatus } from "@/types";
 import { Prisma } from "@prisma/client";
 
 type CreateEngagementInput = {
@@ -11,7 +11,22 @@ type CreateEngagementInput = {
   message: string;
   userId?: string;
   userName?: string;
+  assignedToUserId?: string;
+  assignedToUserName?: string;
+  todoStatus?: TodoStatus;
+  dueDate?: Date;
   engagedAt: Date;
+};
+
+type UpdateEngagementInput = {
+  id: string;
+  teamId: string;
+  subject?: string;
+  message?: string;
+  assignedToUserId?: string;
+  assignedToUserName?: string;
+  todoStatus?: TodoStatus;
+  dueDate?: Date;
 };
 
 type ContactEngagementWithDefaults = Prisma.ContactEngagementGetPayload<{}>;
@@ -26,6 +41,10 @@ const mapEngagement = (engagement: ContactEngagementWithDefaults): ContactEngage
   message: engagement.message,
   userId: engagement.userId ?? undefined,
   userName: engagement.userName ?? undefined,
+  assignedToUserId: engagement.assignedToUserId ?? undefined,
+  assignedToUserName: engagement.assignedToUserName ?? undefined,
+  todoStatus: engagement.todoStatus ? (engagement.todoStatus as TodoStatus) : undefined,
+  dueDate: engagement.dueDate ?? undefined,
   engagedAt: engagement.engagedAt,
   createdAt: engagement.createdAt,
   updatedAt: engagement.updatedAt,
@@ -56,8 +75,26 @@ const createEngagement = async (input: CreateEngagementInput) => {
       message: input.message,
       userId: input.userId,
       userName: input.userName,
+      assignedToUserId: input.assignedToUserId,
+      assignedToUserName: input.assignedToUserName,
+      todoStatus: input.todoStatus,
+      dueDate: input.dueDate,
       engagedAt: input.engagedAt,
     },
+  });
+
+  return mapEngagement(engagement);
+};
+
+const updateEngagement = async (input: UpdateEngagementInput) => {
+  const { id, teamId, ...updateData } = input;
+
+  const engagement = await prisma.contactEngagement.update({
+    where: {
+      id,
+      teamId,
+    },
+    data: updateData,
   });
 
   return mapEngagement(engagement);
@@ -72,4 +109,4 @@ const deleteEngagement = async (id: string, teamId: string) => {
   });
 };
 
-export { getContactEngagements, createEngagement, deleteEngagement };
+export { getContactEngagements, createEngagement, updateEngagement, deleteEngagement };

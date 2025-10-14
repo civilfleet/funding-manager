@@ -14,7 +14,8 @@ import { Form } from "@/components/ui/form";
 import { Loader } from "@/components/helper/loader";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Filter, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface ContactTableProps {
   teamId: string;
@@ -29,6 +30,7 @@ const querySchema = z.object({
 export default function ContactTable({ teamId }: ContactTableProps) {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
@@ -45,13 +47,41 @@ export default function ContactTable({ teamId }: ContactTableProps) {
     fetcher
   );
 
-  const contacts = useMemo<ContactRow[]>(() => {
+  const { data: rolesData, isLoading: rolesLoading } = useSWR(
+    `/api/event-roles?teamId=${teamId}`,
+    fetcher
+  );
+
+  const eventRoles = useMemo(() => {
+    if (!rolesData?.data) {
+      return [];
+    }
+    return rolesData.data as Array<{ id: string; name: string; color?: string }>;
+  }, [rolesData]);
+
+  const allContacts = useMemo<ContactRow[]>(() => {
     if (!data?.data) {
       return [];
     }
 
     return data.data as ContactRow[];
   }, [data]);
+
+  const contacts = useMemo<ContactRow[]>(() => {
+    if (!selectedRoleFilter) {
+      return allContacts;
+    }
+
+    return allContacts.filter((contact) => {
+      if (!contact.events || contact.events.length === 0) {
+        return false;
+      }
+
+      return contact.events.some((eventContact) =>
+        eventContact.roles.some((role) => role.eventRole.id === selectedRoleFilter)
+      );
+    });
+  }, [allContacts, selectedRoleFilter]);
 
   if (error) {
     toast({
@@ -115,6 +145,10 @@ export default function ContactTable({ teamId }: ContactTableProps) {
     }
   };
 
+  const handleRoleFilterToggle = (roleId: string) => {
+    setSelectedRoleFilter((current) => (current === roleId ? null : roleId));
+  };
+
   return (
     <div className="flex flex-col gap-4 my-4">
       <Form {...form}>
@@ -123,6 +157,37 @@ export default function ContactTable({ teamId }: ContactTableProps) {
           <ButtonControl type="submit" label="Search" className="ml-2" />
         </form>
       </Form>
+
+      {!rolesLoading && eventRoles.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Filter className="h-4 w-4" />
+            <span>Filter by event role:</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {eventRoles.map((role) => (
+              <Badge
+                key={role.id}
+                variant={selectedRoleFilter === role.id ? "default" : "outline"}
+                className="cursor-pointer hover:bg-accent transition-colors"
+                style={
+                  selectedRoleFilter === role.id && role.color
+                    ? {
+                        backgroundColor: `${role.color}20`,
+                        color: role.color,
+                        borderColor: role.color,
+                      }
+                    : {}
+                }
+                onClick={() => handleRoleFilterToggle(role.id)}
+              >
+                {role.name}
+                {selectedRoleFilter === role.id && <X className="ml-1 h-3 w-3" />}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="rounded-md border p-2">
         {isLoading ? (

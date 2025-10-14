@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useSession } from "next-auth/react";
 import { Loader2 } from "lucide-react";
+import useSWR from "swr";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +28,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { EngagementDirection, EngagementSource } from "@/types";
+import { EngagementDirection, EngagementSource, TodoStatus } from "@/types";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const engagementSchema = z.object({
   direction: z.enum([EngagementDirection.INBOUND, EngagementDirection.OUTBOUND]),
@@ -37,6 +40,7 @@ const engagementSchema = z.object({
     EngagementSource.SMS,
     EngagementSource.MEETING,
     EngagementSource.EVENT,
+    EngagementSource.TODO,
     EngagementSource.OTHER,
   ]),
   subject: z.string().optional(),
@@ -44,6 +48,14 @@ const engagementSchema = z.object({
   engagedAt: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format",
   }),
+  assignedToUserId: z.string().optional(),
+  todoStatus: z.enum([
+    TodoStatus.PENDING,
+    TodoStatus.IN_PROGRESS,
+    TodoStatus.COMPLETED,
+    TodoStatus.CANCELLED,
+  ]).optional(),
+  dueDate: z.string().optional(),
 });
 
 type EngagementFormValues = z.infer<typeof engagementSchema>;
@@ -72,6 +84,9 @@ export default function ContactEngagementForm({
   const { data: session } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const { data: usersData } = useSWR(`/api/teams/${teamId}/users`, fetcher);
+  const teamUsers = usersData?.data || [];
+
   const form = useForm<EngagementFormValues>({
     resolver: zodResolver(engagementSchema),
     defaultValues: {
@@ -80,12 +95,20 @@ export default function ContactEngagementForm({
       subject: "",
       message: "",
       engagedAt: formatDateForInput(),
+      todoStatus: TodoStatus.PENDING,
     },
   });
+
+  const selectedSource = form.watch("source");
+  const isTodo = selectedSource === EngagementSource.TODO;
 
   const onSubmit = async (values: EngagementFormValues) => {
     try {
       setIsSubmitting(true);
+
+      const assignedUser = values.assignedToUserId
+        ? teamUsers.find((u: { id: string }) => u.id === values.assignedToUserId)
+        : null;
 
       const response = await fetch("/api/contact-engagements", {
         method: "POST",
@@ -98,6 +121,7 @@ export default function ContactEngagementForm({
           ...values,
           userId: session?.user?.id,
           userName: session?.user?.name || session?.user?.email,
+          assignedToUserName: assignedUser?.name || assignedUser?.email,
         }),
       });
 
@@ -107,8 +131,10 @@ export default function ContactEngagementForm({
       }
 
       toast({
-        title: "Engagement recorded",
-        description: "Contact engagement has been successfully recorded.",
+        title: isTodo ? "Todo created" : "Engagement recorded",
+        description: isTodo
+          ? "Internal todo has been successfully created."
+          : "Contact engagement has been successfully recorded.",
       });
 
       form.reset({
@@ -117,6 +143,9 @@ export default function ContactEngagementForm({
         subject: "",
         message: "",
         engagedAt: formatDateForInput(),
+        todoStatus: TodoStatus.PENDING,
+        assignedToUserId: undefined,
+        dueDate: undefined,
       });
 
       if (onSuccess) {
@@ -181,6 +210,7 @@ export default function ContactEngagementForm({
                     <SelectItem value={EngagementSource.SMS}>SMS</SelectItem>
                     <SelectItem value={EngagementSource.MEETING}>Meeting</SelectItem>
                     <SelectItem value={EngagementSource.EVENT}>Event</SelectItem>
+                    <SelectItem value={EngagementSource.TODO}>Internal Todo</SelectItem>
                     <SelectItem value={EngagementSource.OTHER}>Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -190,20 +220,97 @@ export default function ContactEngagementForm({
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="engagedAt"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Engagement Date & Time *</FormLabel>
-              <FormControl>
-                <Input type="datetime-local" {...field} />
-              </FormControl>
-              <FormDescription>When did this engagement occur?</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!isTodo && (
+          <FormField
+            control={form.control}
+            name="engagedAt"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Engagement Date & Time *</FormLabel>
+                <FormControl>
+                  <Input type="datetime-local" {...field} />
+                </FormControl>
+                <FormDescription>When did this engagement occur?</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {isTodo && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="todoStatus"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value={TodoStatus.PENDING}>Pending</SelectItem>
+                      <SelectItem value={TodoStatus.IN_PROGRESS}>In Progress</SelectItem>
+                      <SelectItem value={TodoStatus.COMPLETED}>Completed</SelectItem>
+                      <SelectItem value={TodoStatus.CANCELLED}>Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="dueDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Due Date</FormLabel>
+                  <FormControl>
+                    <Input type="datetime-local" {...field} />
+                  </FormControl>
+                  <FormDescription>Optional due date</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+
+        {isTodo && (
+          <FormField
+            control={form.control}
+            name="assignedToUserId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assign To</FormLabel>
+                <Select
+                  onValueChange={(value) => field.onChange(value === "none" ? undefined : value)}
+                  value={field.value || "none"}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select team member (optional)" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {teamUsers.map((user: { id: string; name?: string; email: string }) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name || user.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>Optional team member assignment</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}
@@ -212,9 +319,18 @@ export default function ContactEngagementForm({
             <FormItem>
               <FormLabel>Subject</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Follow-up on funding request" {...field} />
+                <Input
+                  placeholder={
+                    isTodo ? "e.g., Follow up with contact" : "e.g., Follow-up on funding request"
+                  }
+                  {...field}
+                />
               </FormControl>
-              <FormDescription>Optional subject or title for the engagement</FormDescription>
+              <FormDescription>
+                {isTodo
+                  ? "Optional title for the todo"
+                  : "Optional subject or title for the engagement"}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -225,16 +341,22 @@ export default function ContactEngagementForm({
           name="message"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Message *</FormLabel>
+              <FormLabel>{isTodo ? "Description" : "Message"} *</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Enter details about this engagement..."
+                  placeholder={
+                    isTodo
+                      ? "Describe what needs to be done..."
+                      : "Enter details about this engagement..."
+                  }
                   className="min-h-24"
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-                Describe the content or outcome of this engagement
+                {isTodo
+                  ? "Describe the todo task and any relevant details"
+                  : "Describe the content or outcome of this engagement"}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -254,8 +376,10 @@ export default function ContactEngagementForm({
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Recording...
+                {isTodo ? "Creating..." : "Recording..."}
               </>
+            ) : isTodo ? (
+              "Create Todo"
             ) : (
               "Record Engagement"
             )}

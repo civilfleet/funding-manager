@@ -449,7 +449,15 @@ enum EngagementSource {
   SMS
   MEETING
   EVENT
+  TODO
   OTHER
+}
+
+enum TodoStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }
 
 model ContactEngagement {
@@ -463,6 +471,13 @@ model ContactEngagement {
   message     String               @db.Text
   userId      String?              // Team user who sent/received the message
   userName    String?              @db.VarChar(255) // Store name for display even if user deleted
+
+  // Todo-specific fields
+  assignedToUserId String?          // User assigned to complete the todo
+  assignedToUserName String?        @db.VarChar(255)
+  todoStatus      TodoStatus?       // Status of the todo (only for TODO source)
+  dueDate         DateTime?         @db.Timestamptz(6) // Due date for todos
+
   engagedAt   DateTime             @db.Timestamptz(6) // When the engagement occurred
   createdAt   DateTime             @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime             @updatedAt @db.Timestamptz(6)
@@ -470,6 +485,8 @@ model ContactEngagement {
   @@index([contactId])
   @@index([teamId])
   @@index([engagedAt])
+  @@index([assignedToUserId])
+  @@index([todoStatus])
 }
 
 enum ChangeAction {
