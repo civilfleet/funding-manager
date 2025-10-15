@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, X } from "lucide-react";
+import { Check, Loader2, Plus, X } from "lucide-react";
 import useSWR from "swr";
 
 import { createEventSchema, updateEventSchema } from "@/validations/events";
@@ -25,6 +25,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { generateSlug } from "@/lib/slug";
 
 type CreateEventFormValues = z.infer<typeof createEventSchema>;
@@ -45,6 +54,8 @@ interface EventFormProps {
     contacts: Array<{
       id: string;
       name: string;
+      email?: string;
+      phone?: string;
       roles: Array<{
         id: string;
         name: string;
@@ -55,6 +66,13 @@ interface EventFormProps {
 }
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+type ContactSummary = {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+};
 
 const formatDateForInput = (date?: Date) => {
   if (!date) return "";
@@ -79,13 +97,25 @@ export default function EventForm({ teamId, event, publicBaseUrl: initialPublicB
     });
     return roles;
   });
+  const [contactLookup, setContactLookup] = useState<Record<string, ContactSummary>>(() => {
+    const initial: Record<string, ContactSummary> = {};
+    event?.contacts.forEach((c) => {
+      initial[c.id] = {
+        id: c.id,
+        name: c.name,
+        email: c.email ?? undefined,
+        phone: c.phone ?? undefined,
+      };
+    });
+    return initial;
+  });
+  const [contactSearchOpen, setContactSearchOpen] = useState(false);
+  const [contactSearchTerm, setContactSearchTerm] = useState("");
+  const [debouncedContactSearch, setDebouncedContactSearch] = useState("");
 
   const isEditMode = !!event;
 
-  const { data: contactsData } = useSWR(`/api/contacts?teamId=${teamId}`, fetcher);
   const { data: rolesData } = useSWR(`/api/event-roles?teamId=${teamId}`, fetcher);
-
-  const contacts = contactsData?.data || [];
   const availableRoles = rolesData?.data || [];
 
   const form = useForm({
@@ -135,6 +165,77 @@ export default function EventForm({ teamId, event, publicBaseUrl: initialPublicB
     }
   }, [initialPublicBaseUrl]);
 
+  useEffect(() => {
+    if (event?.contacts) {
+      setContactLookup((prev) => {
+        const next = { ...prev };
+        event.contacts.forEach((c) => {
+          next[c.id] = {
+            id: c.id,
+            name: c.name,
+            email: c.email ?? undefined,
+            phone: c.phone ?? undefined,
+          };
+        });
+        return next;
+      });
+    }
+  }, [event?.contacts]);
+
+  useEffect(() => {
+    const handler = window.setTimeout(() => {
+      setDebouncedContactSearch(contactSearchTerm.trim());
+    }, 300);
+
+    return () => window.clearTimeout(handler);
+  }, [contactSearchTerm]);
+
+  useEffect(() => {
+    if (!contactSearchOpen) {
+      setContactSearchTerm("");
+      setDebouncedContactSearch("");
+    }
+  }, [contactSearchOpen]);
+
+  const shouldSearchContacts = contactSearchOpen && debouncedContactSearch.length >= 2;
+
+  const {
+    data: contactSearchData,
+    isLoading: isContactSearchLoading,
+  } = useSWR(
+    shouldSearchContacts
+      ? `/api/contacts?teamId=${teamId}&query=${encodeURIComponent(debouncedContactSearch)}`
+      : null,
+    fetcher
+  );
+
+  const contactSearchResults: ContactSummary[] = useMemo(
+    () =>
+      (contactSearchData?.data ?? []).map(
+        (contact: { id: string; name: string; email?: string | null; phone?: string | null }) => ({
+          id: contact.id,
+          name: contact.name,
+          email: contact.email ?? undefined,
+          phone: contact.phone ?? undefined,
+        })
+      ),
+    [contactSearchData]
+  );
+
+  useEffect(() => {
+    if (contactSearchResults.length === 0) {
+      return;
+    }
+
+    setContactLookup((prev) => {
+      const next = { ...prev };
+      contactSearchResults.forEach((contact) => {
+        next[contact.id] = contact;
+      });
+      return next;
+    });
+  }, [contactSearchResults]);
+
   const { control, watch, setValue, formState } = form;
   const typedControl = control as unknown as import("react-hook-form").Control<CreateEventFormValues>;
   const selectedContacts = watch("contacts") || [];
@@ -174,6 +275,47 @@ export default function EventForm({ teamId, event, publicBaseUrl: initialPublicB
     return selectedContacts.some((c) => c.contactId === contactId);
   };
 
+  const handleAddContact = (contact: ContactSummary) => {
+    if (isContactSelected(contact.id)) {
+      toast({
+        title: "Contact already linked",
+        description: `${contact.name} is already associated with this event.`,
+      });
+      return;
+    }
+
+    const updatedContacts = [
+      ...selectedContacts,
+      { contactId: contact.id, roleIds: contactRoles[contact.id] || [] },
+    ];
+
+    setContactLookup((prev) => ({
+      ...prev,
+      [contact.id]: contact,
+    }));
+
+    setContactRoles((prev) => ({
+      ...prev,
+      [contact.id]: prev[contact.id] || [],
+    }));
+
+    setValue("contacts", updatedContacts, { shouldDirty: true, shouldTouch: true });
+    setContactSearchTerm("");
+    setDebouncedContactSearch("");
+    setContactSearchOpen(false);
+  };
+
+  const handleRemoveContact = (contactId: string) => {
+    const updatedContacts = (selectedContacts || []).filter((c) => c.contactId !== contactId);
+    setValue("contacts", updatedContacts, { shouldDirty: true, shouldTouch: true });
+
+    setContactRoles((prev) => {
+      const next = { ...prev };
+      delete next[contactId];
+      return next;
+    });
+  };
+
   const handleApplySlugSuggestion = () => {
     if (!slugSuggestion) {
       return;
@@ -181,24 +323,6 @@ export default function EventForm({ teamId, event, publicBaseUrl: initialPublicB
 
     form.clearErrors("slug");
     form.setValue("slug", slugSuggestion, { shouldDirty: true, shouldValidate: true });
-  };
-
-  const handleContactToggle = (contactId: string) => {
-    const currentContacts = selectedContacts || [];
-    const isSelected = currentContacts.some((c) => c.contactId === contactId);
-
-    if (isSelected) {
-      // Remove contact
-      const newContacts = currentContacts.filter((c) => c.contactId !== contactId);
-      setValue("contacts", newContacts);
-      // Also clear roles from state
-      const newRoles = { ...contactRoles };
-      delete newRoles[contactId];
-      setContactRoles(newRoles);
-    } else {
-      // Add contact
-      setValue("contacts", [...currentContacts, { contactId, roleIds: contactRoles[contactId] || [] }]);
-    }
   };
 
   const handleRoleToggle = (contactId: string, roleId: string) => {
@@ -214,11 +338,7 @@ export default function EventForm({ teamId, event, publicBaseUrl: initialPublicB
     const newContacts = currentContacts.map((c) =>
       c.contactId === contactId ? { ...c, roleIds: newRoles } : c
     );
-    setValue("contacts", newContacts);
-  };
-
-  const getRoleById = (roleId: string) => {
-    return availableRoles.find((r: { id: string }) => r.id === roleId);
+    setValue("contacts", newContacts, { shouldDirty: true });
   };
 
   const onSubmit = async (values: CreateEventFormValues | UpdateEventFormValues) => {
@@ -460,50 +580,110 @@ export default function EventForm({ teamId, event, publicBaseUrl: initialPublicB
               <div>
                 <h3 className="text-base font-semibold">Linked Contacts</h3>
                 <p className="text-sm text-muted-foreground">
-                  Select contacts and assign roles from the dropdown.
+                  Search for existing contacts and assign event-specific roles.
                 </p>
               </div>
-
-              {availableRoles.length === 0 && (
-                <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-                  No event roles configured. Visit Settings to create event roles like &quot;Partner&quot;, &quot;Musician&quot;, etc.
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Popover open={contactSearchOpen} onOpenChange={setContactSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button type="button" variant="outline" size="sm">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add contact
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[320px] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Search contacts by name or email..."
+                          value={contactSearchTerm}
+                          onValueChange={setContactSearchTerm}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            {debouncedContactSearch.length < 2
+                              ? "Type at least two characters to search."
+                              : isContactSearchLoading
+                              ? "Searching..."
+                              : "No contacts found."}
+                          </CommandEmpty>
+                          <CommandGroup heading="Contacts">
+                            {contactSearchResults.map((contact) => {
+                              const isSelected = isContactSelected(contact.id);
+                              return (
+                                <CommandItem
+                                  key={contact.id}
+                                  disabled={isSelected}
+                                  onSelect={() => handleAddContact(contact)}
+                                >
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{contact.name}</span>
+                                    {contact.email && (
+                                      <span className="text-xs text-muted-foreground break-all">
+                                        {contact.email}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {isSelected && <Check className="ml-auto h-4 w-4 text-green-600" />}
+                                </CommandItem>
+                              );
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-sm text-muted-foreground">
+                    Search your CRM and link contacts to this event.
+                  </p>
                 </div>
-              )}
 
-              <div className="space-y-2">
-                {contacts.length === 0 ? (
+                {availableRoles.length === 0 && (
+                  <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+                    No event roles configured. Visit Settings to create event roles like &quot;Partner&quot;, &quot;Musician&quot;, etc.
+                  </div>
+                )}
+
+                {selectedContacts.length === 0 ? (
                   <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                    No contacts available. Create contacts first to link them to events.
+                    No contacts linked yet. Use &quot;Add contact&quot; to search by name or email.
                   </div>
                 ) : (
-                  <div className="max-h-96 overflow-y-auto rounded-md border p-4 space-y-3">
-                    {contacts.map((contact: { id: string; name: string; email?: string }) => {
-                      const isSelected = isContactSelected(contact.id);
-                      const selectedRoleIds = contactRoles[contact.id] || [];
+                  <div className="space-y-3">
+                    {selectedContacts.map((selected) => {
+                      const contact = contactLookup[selected.contactId];
+                      const selectedRoleIds = contactRoles[selected.contactId] || [];
+
                       return (
                         <div
-                          key={contact.id}
-                          className="flex flex-col gap-2 p-3 rounded-md border bg-muted/30"
+                          key={selected.contactId}
+                          className="space-y-3 rounded-md border bg-muted/30 p-4"
                         >
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`contact-${contact.id}`}
-                              checked={isSelected}
-                              onCheckedChange={() => handleContactToggle(contact.id)}
-                            />
-                            <label
-                              htmlFor={`contact-${contact.id}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-1">
+                              <p className="font-medium">
+                                {contact?.name ?? "Unknown contact"}
+                              </p>
+                              <div className="text-sm text-muted-foreground space-y-0.5">
+                                {contact?.email && <p className="break-all">{contact.email}</p>}
+                                {contact?.phone && <p>{contact.phone}</p>}
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveContact(selected.contactId)}
+                              aria-label="Remove contact"
                             >
-                              {contact.name}
-                              {contact.email && (
-                                <span className="text-muted-foreground ml-2">({contact.email})</span>
-                              )}
-                            </label>
+                              <X className="h-4 w-4" />
+                            </Button>
                           </div>
-                          {isSelected && availableRoles.length > 0 && (
-                            <div className="ml-6 space-y-2">
-                              <div className="text-xs text-muted-foreground">Roles:</div>
+                          {availableRoles.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Roles
+                              </p>
                               <div className="flex flex-wrap gap-2">
                                 {availableRoles.map((role: { id: string; name: string; color?: string }) => {
                                   const isRoleSelected = selectedRoleIds.includes(role.id);
@@ -519,7 +699,7 @@ export default function EventForm({ teamId, event, publicBaseUrl: initialPublicB
                                           ? { borderColor: role.color, color: role.color }
                                           : {}
                                       }
-                                      onClick={() => handleRoleToggle(contact.id, role.id)}
+                                      onClick={() => handleRoleToggle(selected.contactId, role.id)}
                                     >
                                       {role.name}
                                       {isRoleSelected && <X className="ml-1 h-3 w-3" />}
