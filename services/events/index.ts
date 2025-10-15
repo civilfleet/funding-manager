@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { generateSlug } from "@/lib/slug";
+import { logContactCreation, logFieldUpdate } from "@/services/contact-change-logs";
 
 type EventContactInput = {
   contactId: string;
@@ -397,27 +398,116 @@ type CreateEventRegistrationInput = {
 };
 export const createEventRegistration = async (input: CreateEventRegistrationInput) => {
   const { eventId, name, email, phone, notes, customData } = input;
-  // Verify event exists and is public
-  const event = await prisma.event.findFirst({
-    where: {
-      id: eventId,
-      isPublic: true,
-    },
+
+  return prisma.$transaction(async (tx) => {
+    const event = await tx.event.findFirst({
+      where: {
+        id: eventId,
+        isPublic: true,
+      },
+      select: {
+        teamId: true,
+      },
+    });
+
+    if (!event) {
+      throw new Error("Event not found or not accepting registrations");
+    }
+
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPhone = phone?.trim() || undefined;
+
+    let contact = await tx.contact.findFirst({
+      where: {
+        teamId: event.teamId,
+        ...(trimmedEmail
+          ? {
+              email: {
+                equals: trimmedEmail,
+                mode: "insensitive",
+              },
+            }
+          : {}),
+      },
+    });
+
+    if (!contact && trimmedPhone) {
+      contact = await tx.contact.findFirst({
+        where: {
+          teamId: event.teamId,
+          phone: trimmedPhone,
+        },
+      });
+    }
+
+    if (contact) {
+      const contactUpdates: Prisma.ContactUpdateInput = {};
+      const updatedFields: Array<{ field: string; oldValue: unknown; newValue: unknown }> = [];
+
+      if ((!contact.name || contact.name.trim().length === 0) && trimmedName) {
+        contactUpdates.name = trimmedName;
+        updatedFields.push({ field: "name", oldValue: contact.name, newValue: trimmedName });
+      }
+
+      if (!contact.email && trimmedEmail) {
+        contactUpdates.email = trimmedEmail;
+        updatedFields.push({ field: "email", oldValue: contact.email, newValue: trimmedEmail });
+      }
+
+      if (!contact.phone && trimmedPhone) {
+        contactUpdates.phone = trimmedPhone;
+        updatedFields.push({ field: "phone", oldValue: contact.phone, newValue: trimmedPhone });
+      }
+
+      if (Object.keys(contactUpdates).length > 0) {
+        contact = await tx.contact.update({
+          where: { id: contact.id },
+          data: contactUpdates,
+        });
+
+        for (const updatedField of updatedFields) {
+          await logFieldUpdate(
+            contact.id,
+            updatedField.field,
+            updatedField.oldValue,
+            updatedField.newValue,
+            undefined,
+            undefined,
+            tx
+          );
+        }
+      }
+    } else {
+      contact = await tx.contact.create({
+        data: {
+          teamId: event.teamId,
+          name: trimmedName,
+          email: trimmedEmail,
+          phone: trimmedPhone,
+        },
+      });
+
+      await logContactCreation(contact.id, undefined, undefined, tx);
+    }
+
+    const registration = await tx.eventRegistration.create({
+      data: {
+        eventId,
+        contactId: contact.id,
+        name: trimmedName,
+        email: trimmedEmail,
+        phone: trimmedPhone,
+        notes,
+        customData: customData ? JSON.parse(JSON.stringify(customData)) : null,
+      },
+      include: {
+        contact: true,
+      },
+    });
+
+    return registration;
   });
-  if (!event) {
-    throw new Error("Event not found or not accepting registrations");
-  }
-  const registration = await prisma.eventRegistration.create({
-    data: {
-      eventId,
-      name,
-      email,
-      phone,
-      notes,
-      customData: customData ? JSON.parse(JSON.stringify(customData)) : null,
-    },
-  });
-  return registration;
 };
 // Get registrations for an event
 export const getEventRegistrations = async (eventId: string, teamId: string) => {
@@ -431,6 +521,9 @@ export const getEventRegistrations = async (eventId: string, teamId: string) => 
   const registrations = await prisma.eventRegistration.findMany({
     where: { eventId },
     orderBy: { createdAt: "desc" },
+    include: {
+      contact: true,
+    },
   });
   return registrations;
 };

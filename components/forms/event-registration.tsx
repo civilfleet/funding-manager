@@ -41,14 +41,21 @@ export default function EventRegistrationForm({ eventId }: EventRegistrationForm
     setError(null);
 
     try {
+      const payload = {
+        eventId,
+        name: data.name.trim(),
+        email: data.email.trim().toLowerCase(),
+        phone: data.phone?.trim() || undefined,
+        notes: data.notes?.trim() || undefined,
+      };
+
       const response = await fetch("/api/public/events/registrations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          eventId,
-          ...data,
+          ...payload,
         }),
       });
 

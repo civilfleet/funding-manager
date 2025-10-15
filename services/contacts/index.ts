@@ -367,14 +367,30 @@ const getContactById = async (contactId: string, teamId: string) => {
 const createContact = async (input: CreateContactInput, userId?: string, userName?: string) => {
   const { teamId, name, email, phone, groupId, profileAttributes } = input;
   const normalizedAttributes = normalizeAttributes(profileAttributes);
+  const trimmedName = name.trim();
+  const normalizedEmail = email ? email.trim().toLowerCase() : undefined;
+  const normalizedPhone = phone ? phone.trim() : undefined;
+
+  if (normalizedEmail) {
+    const existingContact = await prisma.contact.findFirst({
+      where: {
+        teamId,
+        email: normalizedEmail,
+      },
+    });
+
+    if (existingContact) {
+      throw new Error("A contact with this email already exists for this team.");
+    }
+  }
 
   return prisma.$transaction(async (tx) => {
     const contact = await tx.contact.create({
       data: {
         teamId,
-        name,
-        email,
-        phone,
+        name: trimmedName,
+        email: normalizedEmail,
+        phone: normalizedPhone,
         groupId,
       },
     });
@@ -424,6 +440,9 @@ const createContact = async (input: CreateContactInput, userId?: string, userNam
 
 const updateContact = async (input: UpdateContactInput, userId?: string, userName?: string) => {
   const { contactId, teamId, name, email, phone, groupId, profileAttributes } = input;
+  const normalizedName = typeof name === "string" ? name.trim() : undefined;
+  const normalizedEmail = email === undefined ? undefined : email.trim().toLowerCase();
+  const normalizedPhone = phone === undefined ? undefined : phone.trim();
 
   return prisma.$transaction(async (tx) => {
     // Get the existing contact
@@ -444,19 +463,33 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
     // Track changes to basic fields
     const updates: Prisma.ContactUncheckedUpdateInput = {};
 
-    if (name !== undefined && name !== existing.name) {
-      await logFieldUpdate(contactId, "name", existing.name, name, userId, userName, tx);
-      updates.name = name;
+    if (normalizedName !== undefined && normalizedName !== existing.name) {
+      await logFieldUpdate(contactId, "name", existing.name, normalizedName, userId, userName, tx);
+      updates.name = normalizedName;
     }
 
-    if (email !== undefined && email !== existing.email) {
-      await logFieldUpdate(contactId, "email", existing.email, email, userId, userName, tx);
-      updates.email = email;
+    if (normalizedEmail !== undefined && normalizedEmail !== existing.email) {
+      if (normalizedEmail) {
+        const conflictingContact = await tx.contact.findFirst({
+          where: {
+            teamId,
+            email: normalizedEmail,
+            id: { not: contactId },
+          },
+        });
+
+        if (conflictingContact) {
+          throw new Error("A contact with this email already exists for this team.");
+        }
+      }
+
+      await logFieldUpdate(contactId, "email", existing.email, normalizedEmail, userId, userName, tx);
+      updates.email = normalizedEmail;
     }
 
-    if (phone !== undefined && phone !== existing.phone) {
-      await logFieldUpdate(contactId, "phone", existing.phone, phone, userId, userName, tx);
-      updates.phone = phone;
+    if (normalizedPhone !== undefined && normalizedPhone !== existing.phone) {
+      await logFieldUpdate(contactId, "phone", existing.phone, normalizedPhone, userId, userName, tx);
+      updates.phone = normalizedPhone;
     }
 
     if (groupId !== undefined && groupId !== existing.groupId) {

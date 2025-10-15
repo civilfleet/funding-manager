@@ -239,11 +239,13 @@ model Contact {
   updatedAt         DateTime             @updatedAt @db.Timestamptz(6)
   attributes        ContactAttribute[]
   events            EventContact[]
+  registrations     EventRegistration[]
   engagements       ContactEngagement[]
   changeLogs        ContactChangeLog[]
 
   @@index([groupId])
   @@index([teamId, groupId])
+  @@unique([teamId, email])
 }
 
 model ContactAttribute {
@@ -456,6 +458,8 @@ model EventRegistration {
   id          String   @id @default(uuid()) @unique
   eventId     String
   event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  contactId   String
+  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
   name        String   @db.VarChar(255)
   email       String   @db.VarChar(255)
   phone       String?  @db.VarChar(255)
@@ -466,6 +470,7 @@ model EventRegistration {
 
   @@index([eventId])
   @@index([email])
+  @@index([contactId])
 }
 
 enum EngagementDirection {

@@ -69,8 +69,8 @@ export type DeleteEventsInput = z.infer<typeof deleteEventsSchema>;
 // Event registration validation schemas
 export const createEventRegistrationSchema = z.object({
   eventId: z.string().uuid("Event id must be a valid UUID"),
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Valid email is required"),
+  name: z.string().trim().min(1, "Name is required"),
+  email: z.string().trim().email("Valid email is required"),
   phone: optionalText(z.string()),
   notes: optionalText(z.string()),
   customData: z.record(z.string(), z.unknown()).optional(),
