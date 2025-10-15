@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Loader2, Plus, X } from "lucide-react";
 import useSWR from "swr";
@@ -118,8 +118,15 @@ export default function EventForm({ teamId, event, publicBaseUrl: initialPublicB
   const { data: rolesData } = useSWR(`/api/event-roles?teamId=${teamId}`, fetcher);
   const availableRoles = rolesData?.data || [];
 
-  const form = useForm<CreateEventFormValues | UpdateEventFormValues>({
-    resolver: zodResolver(isEditMode ? updateEventSchema : createEventSchema),
+  type FormValues = CreateEventFormValues | UpdateEventFormValues;
+
+  const formResolver = useMemo<Resolver<FormValues>>(
+    () => zodResolver(isEditMode ? updateEventSchema : createEventSchema) as Resolver<FormValues>,
+    [isEditMode]
+  );
+
+  const form = useForm<FormValues>({
+    resolver: formResolver,
     defaultValues: isEditMode
       ? ({
           id: event.id,
@@ -237,7 +244,7 @@ export default function EventForm({ teamId, event, publicBaseUrl: initialPublicB
   }, [contactSearchResults]);
 
   const { control, watch, setValue, formState } = form;
-  const typedControl = control as unknown as import("react-hook-form").Control<CreateEventFormValues>;
+  const typedControl = control as unknown as import("react-hook-form").Control<FormValues>;
   const selectedContacts = watch("contacts") || [];
   const titleValue = watch("title") || "";
   const slugValue = watch("slug") || "";
