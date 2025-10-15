@@ -8,7 +8,7 @@ interface CreateEventPageProps {
 export default async function CreateEventPage({ params }: CreateEventPageProps) {
   const { teamId } = await params;
 
-  const headerList = headers();
+  const headerList = await headers();
   const protocol = headerList.get("x-forwarded-proto") ?? "http";
   const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
   const fallbackBaseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";

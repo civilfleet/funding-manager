@@ -1,5 +1,14 @@
 import EventForm from "@/components/forms/event";
-import { getEventById } from "@/services/events";
+import EventRegistrationsTable from "@/components/table/event-registrations-table";
+import type { EventRegistrationRow } from "@/components/table/event-registration-columns";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { getEventById, getEventRegistrations } from "@/services/events";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
@@ -22,10 +31,38 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     notFound();
   }
 
+  const registrations = await getEventRegistrations(id, teamId);
+
+  const registrationRows: EventRegistrationRow[] = registrations.map((registration) => ({
+    id: registration.id,
+    name: registration.name,
+    email: registration.email,
+    phone: registration.phone ?? undefined,
+    notes: registration.notes ?? undefined,
+    createdAt: registration.createdAt.toISOString(),
+    contactId: registration.contact.id,
+    contactName: registration.contact.name ?? registration.name,
+    contactEmail: registration.contact.email ?? undefined,
+    contactPhone: registration.contact.phone ?? undefined,
+  }));
+
   return (
     <div className="p-4">
-      <div className="mx-auto w-full max-w-3xl">
-        <EventForm teamId={teamId} event={event} publicBaseUrl={publicBaseUrl} />
+      <div className="mx-auto w-full max-w-5xl space-y-6">
+        <div className="mx-auto w-full max-w-3xl">
+          <EventForm teamId={teamId} event={event} publicBaseUrl={publicBaseUrl} />
+        </div>
+        <Card className="shadow-sm">
+          <CardHeader className="border-b pb-3">
+            <CardTitle>Registrations ({registrationRows.length})</CardTitle>
+            <CardDescription>
+              Track everyone who registered for this event. Each entry links to the CRM contact.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <EventRegistrationsTable registrations={registrationRows} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
