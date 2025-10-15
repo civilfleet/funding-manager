@@ -118,10 +118,10 @@ export default function EventForm({ teamId, event, publicBaseUrl: initialPublicB
   const { data: rolesData } = useSWR(`/api/event-roles?teamId=${teamId}`, fetcher);
   const availableRoles = rolesData?.data || [];
 
-  const form = useForm({
+  const form = useForm<CreateEventFormValues | UpdateEventFormValues>({
     resolver: zodResolver(isEditMode ? updateEventSchema : createEventSchema),
     defaultValues: isEditMode
-      ? {
+      ? ({
           id: event.id,
           teamId,
           title: event?.title || "",
@@ -136,8 +136,8 @@ export default function EventForm({ teamId, event, publicBaseUrl: initialPublicB
               contactId: c.id,
               roleIds: c.roles.map((r) => r.id),
             })) || [],
-        }
-      : {
+        } satisfies UpdateEventFormValues)
+      : ({
           teamId,
           title: "",
           slug: "",
@@ -147,7 +147,7 @@ export default function EventForm({ teamId, event, publicBaseUrl: initialPublicB
           endDate: "",
           isPublic: false,
           contacts: [],
-        },
+        } satisfies CreateEventFormValues),
   });
 
   useEffect(() => {
@@ -412,6 +412,7 @@ export default function EventForm({ teamId, event, publicBaseUrl: initialPublicB
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <input type="hidden" {...form.register("teamId")} value={teamId} />
+          {isEditMode && <input type="hidden" {...form.register("id")} value={(event?.id as string) ?? ""} />}
 
           <CardContent className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
