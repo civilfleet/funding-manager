@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -19,25 +19,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { generateSlug } from "@/lib/slug";
 
 type CreateEventFormValues = z.infer<typeof createEventSchema>;
 type UpdateEventFormValues = z.infer<typeof updateEventSchema>;
 
 interface EventFormProps {
   teamId: string;
+  publicBaseUrl?: string;
   event?: {
     id: string;
     title: string;
+    slug?: string;
     description?: string;
     location?: string;
     startDate: Date;
     endDate?: Date;
+    isPublic: boolean;
     contacts: Array<{
       id: string;
       name: string;
@@ -63,10 +67,11 @@ const formatDateForInput = (date?: Date) => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-export default function EventForm({ teamId, event }: EventFormProps) {
+export default function EventForm({ teamId, event, publicBaseUrl: initialPublicBaseUrl = "" }: EventFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [publicBaseUrl, setPublicBaseUrl] = useState(initialPublicBaseUrl);
   const [contactRoles, setContactRoles] = useState<Record<string, string[]>>(() => {
     const roles: Record<string, string[]> = {};
     event?.contacts.forEach((c) => {
@@ -85,31 +90,97 @@ export default function EventForm({ teamId, event }: EventFormProps) {
 
   const form = useForm({
     resolver: zodResolver(isEditMode ? updateEventSchema : createEventSchema),
-    defaultValues: {
-      teamId,
-      title: event?.title || "",
-      description: event?.description || "",
-      location: event?.location || "",
-      startDate: formatDateForInput(event?.startDate) || "",
-      endDate: formatDateForInput(event?.endDate) || "",
-      contacts:
-        event?.contacts.map((c) => ({
-          contactId: c.id,
-          roleIds: c.roles.map((r) => r.id),
-        })) || [],
-    },
+    defaultValues: isEditMode
+      ? {
+          id: event.id,
+          teamId,
+          title: event?.title || "",
+          slug: event?.slug || "",
+          description: event?.description || "",
+          location: event?.location || "",
+          startDate: formatDateForInput(event?.startDate) || "",
+          endDate: formatDateForInput(event?.endDate) || "",
+          isPublic: event?.isPublic ?? false,
+          contacts:
+            event?.contacts.map((c) => ({
+              contactId: c.id,
+              roleIds: c.roles.map((r) => r.id),
+            })) || [],
+        }
+      : {
+          teamId,
+          title: "",
+          slug: "",
+          description: "",
+          location: "",
+          startDate: "",
+          endDate: "",
+          isPublic: false,
+          contacts: [],
+        },
   });
 
   useEffect(() => {
     form.setValue("teamId", teamId);
   }, [teamId, form]);
 
-  const { control, watch, setValue } = form;
+  useEffect(() => {
+    if (initialPublicBaseUrl) {
+      setPublicBaseUrl(initialPublicBaseUrl);
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      setPublicBaseUrl(window.location.origin);
+    }
+  }, [initialPublicBaseUrl]);
+
+  const { control, watch, setValue, formState } = form;
   const typedControl = control as unknown as import("react-hook-form").Control<CreateEventFormValues>;
   const selectedContacts = watch("contacts") || [];
+  const titleValue = watch("title") || "";
+  const slugValue = watch("slug") || "";
+  const normalizedSlug = useMemo(() => (slugValue ? generateSlug(slugValue) : ""), [slugValue]);
+  const isPublicValue = watch("isPublic");
+
+  const slugSuggestion = useMemo(() => generateSlug(titleValue), [titleValue]);
+  const slugDirty = Boolean(formState.dirtyFields.slug);
+  const publicRegistrationUrl = publicBaseUrl && normalizedSlug
+    ? `${publicBaseUrl}/public/${teamId}/events/${normalizedSlug}`
+    : "";
+
+  // Debug form errors
+  useEffect(() => {
+    if (Object.keys(formState.errors).length > 0) {
+      console.log("Form validation errors:", formState.errors);
+    }
+  }, [formState.errors]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      return;
+    }
+
+    if (slugDirty) {
+      return;
+    }
+
+    if (slugSuggestion && slugSuggestion !== slugValue) {
+      form.setValue("slug", slugSuggestion, { shouldDirty: false });
+    }
+  }, [form, isEditMode, slugDirty, slugSuggestion, slugValue]);
 
   const isContactSelected = (contactId: string) => {
     return selectedContacts.some((c) => c.contactId === contactId);
+  };
+
+  const handleApplySlugSuggestion = () => {
+    if (!slugSuggestion) {
+      return;
+    }
+
+    form.clearErrors("slug");
+    form.setValue("slug", slugSuggestion, { shouldDirty: true, shouldValidate: true });
   };
 
   const handleContactToggle = (contactId: string) => {
@@ -157,7 +228,13 @@ export default function EventForm({ teamId, event }: EventFormProps) {
       const url = isEditMode ? `/api/events/${event.id}` : "/api/events";
       const method = isEditMode ? "PUT" : "POST";
 
-      const payload = isEditMode ? { ...values, id: event.id } : values;
+      const normalizedSlugValue = values.slug ? generateSlug(values.slug) : "";
+      const payload = {
+        ...values,
+        slug: normalizedSlugValue || undefined,
+      };
+
+      console.log("Submitting event:", { url, method, payload });
 
       const response = await fetch(url, {
         method,
@@ -169,8 +246,12 @@ export default function EventForm({ teamId, event }: EventFormProps) {
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
+        console.error("Event submission error:", errorBody);
         throw new Error(errorBody.error || `Failed to ${isEditMode ? "update" : "create"} event`);
       }
+
+      const result = await response.json();
+      console.log("Event submission success:", result);
 
       toast({
         title: isEditMode ? "Event updated" : "Event created",
@@ -180,9 +261,16 @@ export default function EventForm({ teamId, event }: EventFormProps) {
       router.push(`/teams/${teamId}/events`);
       router.refresh();
     } catch (error) {
+      console.error("Event submission catch:", error);
+      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+
+      if (error instanceof Error && error.message.toLowerCase().includes("slug is already in use")) {
+        form.setError("slug", { type: "manual", message: error.message });
+      }
+
       toast({
         title: `Unable to ${isEditMode ? "update" : "create"} event`,
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -281,6 +369,91 @@ export default function EventForm({ teamId, event }: EventFormProps) {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={typedControl}
+                name="isPublic"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="cursor-pointer">Make this event public</FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Allow anyone with the link to view event details and register
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              {(isPublicValue || slugValue) && (
+                <FormField
+                  control={typedControl}
+                  name="slug"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel>Public Slug</FormLabel>
+                      <FormDescription>This text becomes part of the link you share with attendees.</FormDescription>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={(field.value as string | undefined) ?? ""}
+                            placeholder={slugSuggestion || "fundraising-gala"}
+                            onChange={(event) => {
+                              form.clearErrors("slug");
+                              field.onChange(event.target.value);
+                            }}
+                            onBlur={(event) => {
+                              field.onBlur();
+                              const sanitized = generateSlug(event.target.value);
+                              if (sanitized !== field.value) {
+                                form.setValue("slug", sanitized, { shouldDirty: true, shouldValidate: true });
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        {slugSuggestion && slugSuggestion !== normalizedSlug && (
+                          <Button type="button" variant="outline" size="sm" onClick={handleApplySlugSuggestion}>
+                            Use suggestion
+                          </Button>
+                        )}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {isPublicValue && normalizedSlug && (
+                <div className="sm:col-span-2 rounded-md border border-green-200 bg-green-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      <svg
+                        className="h-5 w-5 text-green-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-green-900">Public Registration Link</p>
+                      <p className="mt-1 text-sm text-green-700 break-all">
+                        {publicRegistrationUrl || "Link will be available once the app knows your domain."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -369,7 +542,11 @@ export default function EventForm({ teamId, event }: EventFormProps) {
             <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => router.back()}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              onClick={() => console.log("Submit button clicked", { isSubmitting, errors: formState.errors })}
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

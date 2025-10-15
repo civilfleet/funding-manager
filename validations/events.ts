@@ -13,6 +13,7 @@ const eventContactSchema = z.object({
 export const createEventSchema = z.object({
   teamId: z.string().uuid("Team id must be a valid UUID"),
   title: z.string().min(1, "Title is required"),
+  slug: optionalText(z.string()),
   description: optionalText(z.string()),
   location: optionalText(z.string()),
   startDate: z.string().min(1, "Start date is required").refine((value) => !Number.isNaN(Date.parse(value)), {
@@ -27,6 +28,7 @@ export const createEventSchema = z.object({
       },
       { message: "Invalid end date" }
     ),
+  isPublic: z.preprocess((val) => val === true || val === "true", z.boolean()).default(false),
   contacts: z.array(eventContactSchema).default([]),
 });
 
@@ -36,6 +38,7 @@ export const updateEventSchema = z.object({
   id: z.string().uuid("Event id must be a valid UUID"),
   teamId: z.string().uuid("Team id must be a valid UUID"),
   title: z.string().min(1, "Title is required"),
+  slug: optionalText(z.string()),
   description: optionalText(z.string()),
   location: optionalText(z.string()),
   startDate: z.string().min(1, "Start date is required").refine((value) => !Number.isNaN(Date.parse(value)), {
@@ -50,6 +53,7 @@ export const updateEventSchema = z.object({
       },
       { message: "Invalid end date" }
     ),
+  isPublic: z.preprocess((val) => val === true || val === "true", z.boolean()).default(false),
   contacts: z.array(eventContactSchema).default([]),
 });
 
@@ -61,3 +65,15 @@ export const deleteEventsSchema = z.object({
 });
 
 export type DeleteEventsInput = z.infer<typeof deleteEventsSchema>;
+
+// Event registration validation schemas
+export const createEventRegistrationSchema = z.object({
+  eventId: z.string().uuid("Event id must be a valid UUID"),
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Valid email is required"),
+  phone: optionalText(z.string()),
+  notes: optionalText(z.string()),
+  customData: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type CreateEventRegistrationInput = z.infer<typeof createEventRegistrationSchema>;

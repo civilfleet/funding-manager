@@ -13,10 +13,12 @@ export type EventRow = {
   id: string;
   teamId: string;
   title: string;
+  slug?: string;
   description?: string;
   location?: string;
   startDate: string | Date;
   endDate?: string | Date;
+  isPublic: boolean;
   contacts: Array<{
     id: string;
     name: string;
@@ -106,6 +108,50 @@ const EventTitleCell = ({ event }: { event: EventRow }) => {
   );
 };
 
+const CopyPublicLinkButton = ({ event }: { event: EventRow }) => {
+  const [copied, setCopied] = useState(false);
+
+  const copyPublicLink = () => {
+    if (!event.isPublic || !event.slug) {
+      return;
+    }
+
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const publicUrl = `${baseUrl}/public/${event.teamId}/events/${event.slug}`;
+
+    navigator.clipboard.writeText(publicUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  if (!event.isPublic || !event.slug) {
+    return null;
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={copyPublicLink}
+      className="gap-2"
+      title="Copy public registration link"
+    >
+      {copied ? (
+        <>
+          <Check className="h-4 w-4 text-green-600" />
+          <span className="text-green-600">Copied!</span>
+        </>
+      ) : (
+        <>
+          <Copy className="h-4 w-4" />
+          <span>Copy Link</span>
+        </>
+      )}
+    </Button>
+  );
+};
+
 const CopyContactsButton = ({ event }: { event: EventRow }) => {
   const [copied, setCopied] = useState(false);
 
@@ -138,27 +184,25 @@ const CopyContactsButton = ({ event }: { event: EventRow }) => {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={copyContactsToClipboard}
-        className="gap-2"
-        title="Copy contacts to clipboard"
-      >
-        {copied ? (
-          <>
-            <Check className="h-4 w-4 text-green-600" />
-            <span className="text-green-600">Copied!</span>
-          </>
-        ) : (
-          <>
-            <Copy className="h-4 w-4" />
-            <span>Copy Contacts</span>
-          </>
-        )}
-      </Button>
-    </div>
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={copyContactsToClipboard}
+      className="gap-2"
+      title="Copy contacts to clipboard"
+    >
+      {copied ? (
+        <>
+          <Check className="h-4 w-4 text-green-600" />
+          <span className="text-green-600">Copied!</span>
+        </>
+      ) : (
+        <>
+          <Copy className="h-4 w-4" />
+          <span>Copy Contacts</span>
+        </>
+      )}
+    </Button>
   );
 };
 
@@ -191,7 +235,12 @@ export const eventColumns: ColumnDef<EventRow>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => <CopyContactsButton event={row.original} />,
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <CopyPublicLinkButton event={row.original} />
+        <CopyContactsButton event={row.original} />
+      </div>
+    ),
   },
 ];
 
@@ -199,7 +248,14 @@ export const renderEventCard = (event: EventRow) => {
   return (
     <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-3">
       <div>
-        <h3 className="text-base font-semibold">{event.title}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-base font-semibold">{event.title}</h3>
+          {event.isPublic && (
+            <Badge variant="secondary" className="text-xs">
+              Public
+            </Badge>
+          )}
+        </div>
         {event.description && (
           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{event.description}</p>
         )}
@@ -227,6 +283,11 @@ export const renderEventCard = (event: EventRow) => {
           {renderContacts(event.contacts)}
         </div>
       )}
+
+      <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
+        <CopyPublicLinkButton event={event} />
+        <CopyContactsButton event={event} />
+      </div>
     </div>
   );
 };

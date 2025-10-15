@@ -396,17 +396,24 @@ model VerificationToken {
 }
 
 model Event {
-  id          String         @id @default(uuid()) @unique
-  teamId      String
-  team        Teams          @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  title       String         @db.VarChar(255)
-  description String?        @db.Text
-  location    String?        @db.VarChar(255)
-  startDate   DateTime       @db.Timestamptz(6)
-  endDate     DateTime?      @db.Timestamptz(6)
-  createdAt   DateTime       @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime       @updatedAt @db.Timestamptz(6)
-  contacts    EventContact[]
+  id            String              @id @default(uuid()) @unique
+  teamId        String
+  team          Teams               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  title         String              @db.VarChar(255)
+  slug          String?             @db.VarChar(255)
+  description   String?             @db.Text
+  location      String?             @db.VarChar(255)
+  startDate     DateTime            @db.Timestamptz(6)
+  endDate       DateTime?           @db.Timestamptz(6)
+  isPublic      Boolean             @default(false)
+  createdAt     DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime            @updatedAt @db.Timestamptz(6)
+  contacts      EventContact[]
+  registrations EventRegistration[]
+
+  @@unique([teamId, slug])
+  @@index([teamId])
+  @@index([slug])
 }
 
 model EventContact {
@@ -443,6 +450,22 @@ model EventRole {
 
   @@unique([teamId, name])
   @@index([teamId])
+}
+
+model EventRegistration {
+  id          String   @id @default(uuid()) @unique
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name        String   @db.VarChar(255)
+  email       String   @db.VarChar(255)
+  phone       String?  @db.VarChar(255)
+  notes       String?  @db.Text
+  customData  Json?    // Store additional registration form data as JSON
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([eventId])
+  @@index([email])
 }
 
 enum EngagementDirection {

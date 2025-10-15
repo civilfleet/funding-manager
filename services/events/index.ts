@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { generateSlug } from "@/lib/slug";
 
 type EventContactInput = {
   contactId: string;
@@ -9,10 +10,12 @@ type EventContactInput = {
 type CreateEventInput = {
   teamId: string;
   title: string;
+  slug?: string;
   description?: string;
   location?: string;
   startDate: string;
   endDate?: string;
+  isPublic?: boolean;
   contacts?: EventContactInput[];
 };
 
@@ -20,10 +23,12 @@ type UpdateEventInput = {
   id: string;
   teamId: string;
   title: string;
+  slug?: string;
   description?: string;
   location?: string;
   startDate: string;
   endDate?: string;
+  isPublic?: boolean;
   contacts?: EventContactInput[];
 };
 
@@ -46,10 +51,12 @@ type EventType = {
   id: string;
   teamId: string;
   title: string;
+  slug?: string;
   description?: string;
   location?: string;
   startDate: Date;
   endDate?: Date;
+  isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
   contacts: Array<{
@@ -65,14 +72,27 @@ type EventType = {
   }>;
 };
 
+const ensureSlug = (raw: string, fallback: string) => {
+  const source = raw || fallback;
+  const slug = generateSlug(source);
+
+  if (!slug) {
+    throw new Error("Slug cannot be empty. Provide letters or numbers.");
+  }
+
+  return slug;
+};
+
 const mapEvent = (event: EventWithContacts): EventType => ({
   id: event.id,
   teamId: event.teamId,
   title: event.title,
+  slug: event.slug ?? undefined,
   description: event.description ?? undefined,
   location: event.location ?? undefined,
   startDate: event.startDate,
   endDate: event.endDate ?? undefined,
+  isPublic: event.isPublic,
   createdAt: event.createdAt,
   updatedAt: event.updatedAt,
   contacts: event.contacts.map((ec) => ({
@@ -87,12 +107,10 @@ const mapEvent = (event: EventWithContacts): EventType => ({
     })),
   })),
 });
-
 export const getTeamEvents = async (teamId: string, query?: string) => {
   const where: Prisma.EventWhereInput = {
     teamId,
   };
-
   if (query) {
     where.OR = [
       { title: { contains: query, mode: "insensitive" } },
@@ -109,7 +127,6 @@ export const getTeamEvents = async (teamId: string, query?: string) => {
       },
     ];
   }
-
   const events = await prisma.event.findMany({
     where,
     include: {
@@ -128,10 +145,8 @@ export const getTeamEvents = async (teamId: string, query?: string) => {
       startDate: "desc",
     },
   });
-
   return events.map(mapEvent);
 };
-
 export const getEventById = async (eventId: string, teamId: string) => {
   const event = await prisma.event.findFirst({
     where: {
@@ -151,34 +166,35 @@ export const getEventById = async (eventId: string, teamId: string) => {
       },
     },
   });
-
   if (!event) {
     return null;
   }
-
   return mapEvent(event);
 };
-
 export const createEvent = async (input: CreateEventInput) => {
-  const { teamId, title, description, location, startDate, endDate, contacts = [] } = input;
-
+  const { teamId, title, slug, description, location, startDate, endDate, isPublic = false, contacts = [] } = input;
   return prisma.$transaction(async (tx) => {
+    const eventSlug = ensureSlug(slug ?? "", title);
+    const existingEvent = await tx.event.findFirst({
+      where: { teamId, slug: eventSlug },
+    });
+    if (existingEvent) {
+      throw new Error("Slug is already in use for this team. Choose a different slug.");
+    }
     const event = await tx.event.create({
       data: {
         teamId,
         title,
+        slug: eventSlug,
         description,
         location,
         startDate: new Date(startDate),
         endDate: endDate ? new Date(endDate) : null,
+        isPublic,
       },
     });
-
     if (contacts.length > 0) {
-      // Extract contact IDs
       const contactIds = contacts.map((c) => c.contactId);
-
-      // Verify all contacts belong to the same team
       const validContacts = await tx.contact.findMany({
         where: {
           id: { in: contactIds },
@@ -186,25 +202,17 @@ export const createEvent = async (input: CreateEventInput) => {
         },
         select: { id: true },
       });
-
       const validContactIds = new Set(validContacts.map((c) => c.id));
-
-      // Filter to only valid contacts
       const validContactsWithRoles = contacts.filter((c) => validContactIds.has(c.contactId));
-
       if (validContactsWithRoles.length > 0) {
-        // Create EventContact entries
         await tx.eventContact.createMany({
           data: validContactsWithRoles.map((c) => ({
             eventId: event.id,
             contactId: c.contactId,
           })),
         });
-
-        // Create EventContactRole entries
         for (const contact of validContactsWithRoles) {
           if (contact.roleIds && contact.roleIds.length > 0) {
-            // Verify roles belong to team
             const validRoles = await tx.eventRole.findMany({
               where: {
                 id: { in: contact.roleIds },
@@ -212,9 +220,7 @@ export const createEvent = async (input: CreateEventInput) => {
               },
               select: { id: true },
             });
-
             const validRoleIds = validRoles.map((r) => r.id);
-
             if (validRoleIds.length > 0) {
               await tx.eventContactRole.createMany({
                 data: validRoleIds.map((roleId) => ({
@@ -228,7 +234,6 @@ export const createEvent = async (input: CreateEventInput) => {
         }
       }
     }
-
     const created = await tx.event.findUniqueOrThrow({
       where: { id: event.id },
       include: {
@@ -244,46 +249,47 @@ export const createEvent = async (input: CreateEventInput) => {
         },
       },
     });
-
     return mapEvent(created);
   });
 };
-
 export const updateEvent = async (input: UpdateEventInput) => {
-  const { id, teamId, title, description, location, startDate, endDate, contacts = [] } = input;
-
+  const { id, teamId, title, slug, description, location, startDate, endDate, isPublic, contacts = [] } = input;
   return prisma.$transaction(async (tx) => {
-    // Verify event belongs to team
     const existingEvent = await tx.event.findFirst({
       where: { id, teamId },
     });
-
     if (!existingEvent) {
       throw new Error("Event not found");
     }
-
+    let eventSlug = existingEvent.slug ?? null;
+    if (slug !== undefined) {
+      eventSlug = ensureSlug(slug, title);
+      const conflictingEvent = await tx.event.findFirst({
+        where: { teamId, slug: eventSlug, id: { not: id } },
+      });
+      if (conflictingEvent) {
+        throw new Error("Slug is already in use for this team. Choose a different slug.");
+      }
+    } else if (!eventSlug) {
+      eventSlug = ensureSlug("", title);
+    }
     const event = await tx.event.update({
       where: { id },
       data: {
         title,
+        slug: eventSlug,
         description,
         location,
         startDate: new Date(startDate),
         endDate: endDate ? new Date(endDate) : null,
+        isPublic: isPublic !== undefined ? isPublic : existingEvent.isPublic,
       },
     });
-
-    // Delete existing contact associations (cascades to role associations)
     await tx.eventContact.deleteMany({
       where: { eventId: id },
     });
-
-    // Add new contact associations
     if (contacts.length > 0) {
-      // Extract contact IDs
       const contactIds = contacts.map((c) => c.contactId);
-
-      // Verify all contacts belong to the same team
       const validContacts = await tx.contact.findMany({
         where: {
           id: { in: contactIds },
@@ -291,25 +297,17 @@ export const updateEvent = async (input: UpdateEventInput) => {
         },
         select: { id: true },
       });
-
       const validContactIds = new Set(validContacts.map((c) => c.id));
-
-      // Filter to only valid contacts
       const validContactsWithRoles = contacts.filter((c) => validContactIds.has(c.contactId));
-
       if (validContactsWithRoles.length > 0) {
-        // Create EventContact entries
         await tx.eventContact.createMany({
           data: validContactsWithRoles.map((c) => ({
             eventId: event.id,
             contactId: c.contactId,
           })),
         });
-
-        // Create EventContactRole entries
         for (const contact of validContactsWithRoles) {
           if (contact.roleIds && contact.roleIds.length > 0) {
-            // Verify roles belong to team
             const validRoles = await tx.eventRole.findMany({
               where: {
                 id: { in: contact.roleIds },
@@ -317,9 +315,7 @@ export const updateEvent = async (input: UpdateEventInput) => {
               },
               select: { id: true },
             });
-
             const validRoleIds = validRoles.map((r) => r.id);
-
             if (validRoleIds.length > 0) {
               await tx.eventContactRole.createMany({
                 data: validRoleIds.map((roleId) => ({
@@ -333,7 +329,6 @@ export const updateEvent = async (input: UpdateEventInput) => {
         }
       }
     }
-
     const updated = await tx.event.findUniqueOrThrow({
       where: { id: event.id },
       include: {
@@ -349,20 +344,93 @@ export const updateEvent = async (input: UpdateEventInput) => {
         },
       },
     });
-
     return mapEvent(updated);
   });
 };
-
 export const deleteEvents = async (teamId: string, ids: string[]) => {
   if (!ids.length) {
     return;
   }
-
   await prisma.event.deleteMany({
     where: {
       id: { in: ids },
       teamId,
     },
   });
+};
+// Get a public event by slug (for public registration pages)
+export const getPublicEventBySlug = async (teamId: string, slug: string) => {
+  const event = await prisma.event.findFirst({
+    where: {
+      teamId,
+      slug,
+      isPublic: true,
+    },
+    select: {
+      id: true,
+      teamId: true,
+      title: true,
+      slug: true,
+      description: true,
+      location: true,
+      startDate: true,
+      endDate: true,
+      team: {
+        select: {
+          name: true,
+          email: true,
+          website: true,
+        },
+      },
+    },
+  });
+  return event;
+};
+// Create a new event registration
+type CreateEventRegistrationInput = {
+  eventId: string;
+  name: string;
+  email: string;
+  phone?: string;
+  notes?: string;
+  customData?: Record<string, unknown>;
+};
+export const createEventRegistration = async (input: CreateEventRegistrationInput) => {
+  const { eventId, name, email, phone, notes, customData } = input;
+  // Verify event exists and is public
+  const event = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      isPublic: true,
+    },
+  });
+  if (!event) {
+    throw new Error("Event not found or not accepting registrations");
+  }
+  const registration = await prisma.eventRegistration.create({
+    data: {
+      eventId,
+      name,
+      email,
+      phone,
+      notes,
+      customData: customData ? JSON.parse(JSON.stringify(customData)) : null,
+    },
+  });
+  return registration;
+};
+// Get registrations for an event
+export const getEventRegistrations = async (eventId: string, teamId: string) => {
+  // Verify event belongs to team
+  const event = await prisma.event.findFirst({
+    where: { id: eventId, teamId },
+  });
+  if (!event) {
+    throw new Error("Event not found");
+  }
+  const registrations = await prisma.eventRegistration.findMany({
+    where: { eventId },
+    orderBy: { createdAt: "desc" },
+  });
+  return registrations;
 };
