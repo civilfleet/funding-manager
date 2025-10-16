@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Copy, Loader2, Plus, X } from "lucide-react";
+import { Check, Copy, ExternalLink, Loader2, Plus, X } from "lucide-react";
 import useSWR from "swr";
 
 import { createEventSchema, updateEventSchema } from "@/validations/events";
@@ -626,17 +626,34 @@ export default function EventForm({
                             </p>
                           </div>
                         </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={handleCopyPublicLink}
-                          disabled={!publicRegistrationUrl}
-                          aria-label="Copy public registration link"
-                        >
-                          <Copy className="mr-2 h-4 w-4" />
-                          Copy link
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCopyPublicLink}
+                            disabled={!publicRegistrationUrl}
+                            aria-label="Copy public registration link"
+                          >
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copy link
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (publicRegistrationUrl) {
+                                window.open(publicRegistrationUrl, "_blank", "noopener,noreferrer");
+                              }
+                            }}
+                            disabled={!publicRegistrationUrl}
+                            aria-label="Open public registration link"
+                          >
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            Open link
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}
