@@ -48,21 +48,27 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
   return (
     <div className="p-4">
-      <div className="mx-auto w-full max-w-5xl space-y-6">
-        <div className="mx-auto w-full max-w-3xl">
-          <EventForm teamId={teamId} event={event} publicBaseUrl={publicBaseUrl} />
+      <div className="mx-auto w-full">
+        <div className="grid w-full gap-x-6 gap-y-3 lg:grid-cols-12 lg:items-start">
+          <EventForm
+            teamId={teamId}
+            event={event}
+            publicBaseUrl={publicBaseUrl}
+            rightRailAppend={
+              <Card className="w-full shadow-sm lg:sticky lg:top-6">
+                <CardHeader className="border-b pb-3">
+                  <CardTitle>Registrations ({registrationRows.length})</CardTitle>
+                  <CardDescription>
+                    Track everyone who registered for this event. Each entry links to the CRM contact.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <EventRegistrationsTable registrations={registrationRows} />
+                </CardContent>
+              </Card>
+            }
+          />
         </div>
-        <Card className="shadow-sm">
-          <CardHeader className="border-b pb-3">
-            <CardTitle>Registrations ({registrationRows.length})</CardTitle>
-            <CardDescription>
-              Track everyone who registered for this event. Each entry links to the CRM contact.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <EventRegistrationsTable registrations={registrationRows} />
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
