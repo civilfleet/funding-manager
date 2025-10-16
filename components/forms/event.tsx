@@ -707,6 +707,7 @@ export default function EventForm({
                           return (
                             <CommandItem
                               key={contact.id}
+                              value={[contact.name, contact.email, contact.phone].filter(Boolean).join(" ")}
                               disabled={isSelected}
                               onSelect={() => handleAddContact(contact)}
                             >
