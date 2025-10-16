@@ -92,31 +92,37 @@ const ensureDefaultGroup = async (
     }
   }
 
-  if (!defaultGroup.canAccessAllContacts) {
+  if (!defaultGroup) {
+    throw new Error("Default group could not be ensured");
+  }
+
+  let ensuredDefaultGroup: GroupWithDefaults = defaultGroup;
+
+  if (!ensuredDefaultGroup.canAccessAllContacts) {
     await client.group.update({
-      where: { id: defaultGroup.id },
+      where: { id: ensuredDefaultGroup.id },
       data: { canAccessAllContacts: true },
     });
 
-    defaultGroup = await client.group.findUniqueOrThrow({
-      where: { id: defaultGroup.id },
+    ensuredDefaultGroup = await client.group.findUniqueOrThrow({
+      where: { id: ensuredDefaultGroup.id },
       include: {
         modulePermissions: true,
       },
     });
   }
 
-  if (!defaultGroup.modulePermissions.length) {
+  if (!ensuredDefaultGroup.modulePermissions.length) {
     await client.groupModulePermission.createMany({
       data: APP_MODULES.map((module) => ({
-        groupId: defaultGroup.id,
+        groupId: ensuredDefaultGroup.id,
         module,
       })),
       skipDuplicates: true,
     });
 
-    defaultGroup = await client.group.findUniqueOrThrow({
-      where: { id: defaultGroup.id },
+    ensuredDefaultGroup = await client.group.findUniqueOrThrow({
+      where: { id: ensuredDefaultGroup.id },
       include: {
         modulePermissions: true,
       },
@@ -160,7 +166,7 @@ const ensureDefaultGroup = async (
     if (userIdsNeedingDefault.length) {
       await client.userGroup.createMany({
         data: userIdsNeedingDefault.map((userId) => ({
-          groupId: defaultGroup.id,
+          groupId: ensuredDefaultGroup.id,
           userId,
         })),
         skipDuplicates: true,
@@ -170,14 +176,14 @@ const ensureDefaultGroup = async (
     if (userIdsWithOtherGroups.size) {
       await client.userGroup.deleteMany({
         where: {
-          groupId: defaultGroup.id,
+          groupId: ensuredDefaultGroup.id,
           userId: { in: Array.from(userIdsWithOtherGroups) },
         },
       });
     }
   }
 
-  return defaultGroup;
+  return ensuredDefaultGroup;
 };
 
 const mapGroup = (group: GroupWithDefaults): Group => ({

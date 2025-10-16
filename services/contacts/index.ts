@@ -547,6 +547,11 @@ const createContact = async (input: CreateContactInput, userId?: string, userNam
             },
           },
         },
+        registrations: {
+          include: {
+            event: true,
+          },
+        },
       },
     });
 
@@ -739,6 +744,11 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
                 eventRole: true,
               },
             },
+          },
+        },
+        registrations: {
+          include: {
+            event: true,
           },
         },
       },
