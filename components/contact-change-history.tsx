@@ -59,6 +59,7 @@ const formatFieldName = (fieldName?: string) => {
   if (!fieldName) return "";
   // Convert camelCase to Title Case
   return fieldName
+    .replace(/[_-]+/g, " ")
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, (str) => str.toUpperCase())
     .trim();
@@ -74,6 +75,22 @@ const formatValue = (value?: string) => {
     return String(parsed);
   } catch {
     return value;
+  }
+};
+
+const formatMetadataValue = (value: unknown) => {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
   }
 };
 
@@ -115,6 +132,8 @@ export default function ContactChangeHistory({ contactId }: ContactChangeHistory
           <div className="space-y-4">
             {logs.map((log, index) => {
               const ActionIcon = getActionIcon(log.action);
+              const metadataEntries = log.metadata ? Object.entries(log.metadata) : [];
+              const creationSource = log.metadata ? log.metadata["source"] : undefined;
               return (
                 <div key={log.id}>
                   <div className="flex gap-4">
@@ -150,6 +169,9 @@ export default function ContactChangeHistory({ contactId }: ContactChangeHistory
                       {log.action === ChangeAction.CREATED && (
                         <p className="text-sm text-muted-foreground">
                           Contact record was created
+                          {creationSource
+                            ? ` via ${formatMetadataValue(creationSource)}`
+                            : ""}
                         </p>
                       )}
 
@@ -180,6 +202,26 @@ export default function ContactChangeHistory({ contactId }: ContactChangeHistory
                             ? `${formatFieldName(log.fieldName)} was removed`
                             : "Contact record was deleted"}
                         </p>
+                      )}
+
+                      {metadataEntries.length > 0 && (
+                        <div className="mt-3 rounded-md border bg-muted/30 p-3">
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Metadata
+                          </p>
+                          <dl className="mt-2 space-y-1">
+                            {metadataEntries.map(([key, value]) => (
+                              <div key={key} className="flex items-start justify-between gap-3 text-xs">
+                                <dt className="font-medium text-muted-foreground">
+                                  {formatFieldName(key)}
+                                </dt>
+                                <dd className="max-w-[60%] text-right text-muted-foreground break-words">
+                                  {formatMetadataValue(value)}
+                                </dd>
+                              </div>
+                            ))}
+                          </dl>
+                        </div>
                       )}
 
                       {log.userName && (

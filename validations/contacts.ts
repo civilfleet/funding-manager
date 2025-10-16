@@ -6,7 +6,16 @@ const preprocessEmptyString = (value: unknown) =>
 
 const optionalText = (schema: z.ZodString) => z.preprocess(preprocessEmptyString, schema.optional());
 
-const optionalEmail = z.preprocess(preprocessEmptyString, z.string().email("Invalid email address").optional());
+const requiredEmail = z
+  .string({ required_error: "Email is required" })
+  .trim()
+  .min(1, "Email is required")
+  .email("Invalid email address");
+
+const optionalEmail = z.preprocess(
+  preprocessEmptyString,
+  z.string().trim().email("Invalid email address").optional()
+);
 
 const numberValue = z.preprocess((value) => {
   if (typeof value === "string") {
@@ -71,7 +80,7 @@ const contactAttributeSchema = z.discriminatedUnion("type", [
 export const createContactSchema = z.object({
   teamId: z.string().uuid("Team id must be a valid UUID"),
   name: z.string().min(1, "Name is required"),
-  email: optionalEmail,
+  email: requiredEmail,
   phone: optionalText(z.string()),
   profileAttributes: z.array(contactAttributeSchema).default([]),
   groupId: z.preprocess(preprocessEmptyString, z.string().uuid("Group id must be a valid UUID").optional()),

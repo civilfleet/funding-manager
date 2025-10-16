@@ -538,6 +538,7 @@ model ContactChangeLog {
   fieldName   String?      @db.VarChar(255) // Field that changed (null for CREATE/DELETE)
   oldValue    String?      @db.Text         // Previous value (JSON for complex types)
   newValue    String?      @db.Text         // New value (JSON for complex types)
+  metadata    Json?
   userId      String?      // User who made the change
   userName    String?      @db.VarChar(255) // Store name for display
   createdAt   DateTime     @default(now()) @db.Timestamptz(6)

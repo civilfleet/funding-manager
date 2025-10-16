@@ -2,6 +2,8 @@ import prisma from "@/lib/prisma";
 import { ContactChangeLog, ChangeAction } from "@/types";
 import { Prisma } from "@prisma/client";
 
+type ChangeLogMetadata = Prisma.JsonObject;
+
 type CreateChangeLogInput = {
   contactId: string;
   action: ChangeAction;
@@ -10,9 +12,17 @@ type CreateChangeLogInput = {
   newValue?: string;
   userId?: string;
   userName?: string;
+  metadata?: ChangeLogMetadata;
 };
 
 type ContactChangeLogWithDefaults = Prisma.ContactChangeLogGetPayload<Record<string, never>>;
+
+const normalizeMetadata = (metadata: Prisma.JsonValue | null): Record<string, unknown> | undefined => {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return undefined;
+  }
+  return metadata as Record<string, unknown>;
+};
 
 const mapChangeLog = (log: ContactChangeLogWithDefaults): ContactChangeLog => ({
   id: log.id,
@@ -23,6 +33,7 @@ const mapChangeLog = (log: ContactChangeLogWithDefaults): ContactChangeLog => ({
   newValue: log.newValue ?? undefined,
   userId: log.userId ?? undefined,
   userName: log.userName ?? undefined,
+  metadata: normalizeMetadata(log.metadata),
   createdAt: log.createdAt,
 });
 
@@ -52,6 +63,7 @@ const createChangeLog = async (
       newValue: input.newValue,
       userId: input.userId,
       userName: input.userName,
+      ...(input.metadata !== undefined ? { metadata: input.metadata } : {}),
     },
   });
 
@@ -63,13 +75,15 @@ const logContactCreation = async (
   contactId: string,
   userId?: string,
   userName?: string,
-  tx?: Prisma.TransactionClient
+  tx?: Prisma.TransactionClient,
+  metadata?: ChangeLogMetadata
 ) => {
   return createChangeLog({
     contactId,
     action: ChangeAction.CREATED,
     userId,
     userName,
+    metadata,
   }, tx);
 };
 
@@ -81,7 +95,8 @@ const logFieldUpdate = async (
   newValue: unknown,
   userId?: string,
   userName?: string,
-  tx?: Prisma.TransactionClient
+  tx?: Prisma.TransactionClient,
+  metadata?: ChangeLogMetadata
 ) => {
   // Convert values to strings for storage
   const oldStr = oldValue !== undefined && oldValue !== null ? JSON.stringify(oldValue) : undefined;
@@ -95,6 +110,7 @@ const logFieldUpdate = async (
     newValue: newStr,
     userId,
     userName,
+    metadata,
   }, tx);
 };
 

@@ -471,20 +471,21 @@ const createContact = async (input: CreateContactInput, userId?: string, userNam
   const { teamId, name, email, phone, groupId, profileAttributes } = input;
   const normalizedAttributes = normalizeAttributes(profileAttributes);
   const trimmedName = name.trim();
-  const normalizedEmail = email ? email.trim().toLowerCase() : undefined;
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) {
+    throw new Error("Email is required");
+  }
   const normalizedPhone = phone ? phone.trim() : undefined;
 
-  if (normalizedEmail) {
-    const existingContact = await prisma.contact.findFirst({
-      where: {
-        teamId,
-        email: normalizedEmail,
-      },
-    });
+  const existingContact = await prisma.contact.findFirst({
+    where: {
+      teamId,
+      email: normalizedEmail,
+    },
+  });
 
-    if (existingContact) {
-      throw new Error("A contact with this email already exists for this team.");
-    }
+  if (existingContact) {
+    throw new Error("A contact with this email already exists for this team.");
   }
 
   return prisma.$transaction(async (tx) => {
@@ -517,7 +518,10 @@ const createContact = async (input: CreateContactInput, userId?: string, userNam
     }
 
     // Log contact creation
-    await logContactCreation(contact.id, userId, userName, tx);
+    await logContactCreation(contact.id, userId, userName, tx, {
+      source: "manual",
+      createdVia: "contact-form",
+    });
 
     const created = await tx.contact.findUniqueOrThrow({
       where: { id: contact.id },

@@ -407,6 +407,7 @@ export const createEventRegistration = async (input: CreateEventRegistrationInpu
       },
       select: {
         teamId: true,
+        title: true,
       },
     });
 
@@ -416,6 +417,9 @@ export const createEventRegistration = async (input: CreateEventRegistrationInpu
 
     const trimmedName = name.trim();
     const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) {
+      throw new Error("Email is required");
+    }
     const trimmedPhone = phone?.trim() || undefined;
 
     let contact = await tx.contact.findFirst({
@@ -488,7 +492,11 @@ export const createEventRegistration = async (input: CreateEventRegistrationInpu
         },
       });
 
-      await logContactCreation(contact.id, undefined, undefined, tx);
+      await logContactCreation(contact.id, undefined, undefined, tx, {
+        source: "event-registration",
+        eventId,
+        eventTitle: event.title ?? null,
+      });
     }
 
     const registration = await tx.eventRegistration.create({

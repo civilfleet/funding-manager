@@ -165,6 +165,7 @@ export interface ContactChangeLog {
   newValue?: string;
   userId?: string;
   userName?: string;
+  metadata?: Record<string, unknown>;
   createdAt: Date;
 }
 
