@@ -1,4 +1,6 @@
+import get from "lodash/get";
 import * as React from "react";
+import useSWR from "swr";
 import {
   Select,
   SelectContent,
@@ -8,8 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import get from "lodash/get";
-import useSWR from "swr";
 import { toast } from "@/hooks/use-toast";
 
 type DataSelectBoxProps = {

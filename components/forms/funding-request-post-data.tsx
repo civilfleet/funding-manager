@@ -1,13 +1,13 @@
-import { useForm } from "react-hook-form";
-import { Building } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import FileUpload from "../file-uploader";
-import { FileTypes } from "@/types";
 import { Label } from "@radix-ui/react-label";
+import { Building } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "@/hooks/use-toast";
+import { FileTypes } from "@/types";
+import FileUpload from "../file-uploader";
 import ButtonControl from "../helper/button-control";
 import { Form } from "../ui/form";
-import { toast } from "@/hooks/use-toast";
-import { useState } from "react";
 
 interface ReceiptFormData {
   url: string;
@@ -40,7 +40,7 @@ export default function FundingRequestPostData({
             file: data.url,
             type,
           }),
-        }
+        },
       );
       if (!response.ok) {
         toast({

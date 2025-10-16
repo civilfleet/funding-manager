@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
 import { ChevronsUpDown, GalleryVerticalEnd, Shield } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Roles } from "@/types";
+import * as React from "react";
 
 import {
   DropdownMenu,
@@ -20,7 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useRouter } from "next/navigation";
+import { Roles } from "@/types";
 
 type SwitcherItem = {
   id: string;
@@ -45,13 +45,14 @@ export function TeamSwitcher({
   const { data: session } = useSession();
   const isAdmin = session?.user?.roles?.includes(Roles.Admin);
 
-  const activeItem = activeType === "team" 
-    ? teams.find((item) => item.id === activeId)
-    : activeType === "organization"
-    ? organizations.find((item) => item.id === activeId)
-    : activeType === "admin"
-    ? { name: "Admin Dashboard", id: "admin" }
-    : null;
+  const activeItem =
+    activeType === "team"
+      ? teams.find((item) => item.id === activeId)
+      : activeType === "organization"
+        ? organizations.find((item) => item.id === activeId)
+        : activeType === "admin"
+          ? { name: "Admin Dashboard", id: "admin" }
+          : null;
 
   const setItem = (item: SwitcherItem, subUrl: string, id: string) => {
     if (subUrl === "teams") {
@@ -80,7 +81,13 @@ export function TeamSwitcher({
                   {activeItem?.name || "Select team or organization"}
                 </span>
                 <span className="truncate text-xs">
-                  {activeType === "team" ? "Team" : activeType === "organization" ? "Organization" : activeType === "admin" ? "Admin" : ""}
+                  {activeType === "team"
+                    ? "Team"
+                    : activeType === "organization"
+                      ? "Organization"
+                      : activeType === "admin"
+                        ? "Admin"
+                        : ""}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
@@ -98,7 +105,13 @@ export function TeamSwitcher({
                   Admin
                 </DropdownMenuLabel>
                 <DropdownMenuItem
-                  onClick={() => setItem({ id: "admin", name: "Admin Dashboard", email: "" }, "admin", "admin")}
+                  onClick={() =>
+                    setItem(
+                      { id: "admin", name: "Admin Dashboard", email: "" },
+                      "admin",
+                      "admin",
+                    )
+                  }
                   className="gap-2 p-2"
                 >
                   <div className="flex size-6 items-center justify-center rounded-sm border">

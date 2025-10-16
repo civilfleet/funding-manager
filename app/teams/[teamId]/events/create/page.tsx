@@ -1,14 +1,16 @@
-import EventForm from "@/components/forms/event";
+import { headers } from "next/headers";
 import { auth } from "@/auth";
+import EventForm from "@/components/forms/event";
 import { assertTeamModuleAccess } from "@/lib/permissions";
 import { AppModule } from "@/types";
-import { headers } from "next/headers";
 
 interface CreateEventPageProps {
   params: Promise<{ teamId: string }>;
 }
 
-export default async function CreateEventPage({ params }: CreateEventPageProps) {
+export default async function CreateEventPage({
+  params,
+}: CreateEventPageProps) {
   const { teamId } = await params;
 
   const headerList = await headers();
@@ -24,7 +26,7 @@ export default async function CreateEventPage({ params }: CreateEventPageProps) 
       userId: session?.user?.userId,
       roles: session?.user?.roles,
     },
-    "CRM" satisfies AppModule
+    "CRM" satisfies AppModule,
   );
 
   return (

@@ -1,14 +1,16 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 interface CopyRegistrationLinkButtonProps {
   teamId: string;
 }
 
-export const CopyRegistrationLinkButton = ({ teamId }: CopyRegistrationLinkButtonProps) => {
+export const CopyRegistrationLinkButton = ({
+  teamId,
+}: CopyRegistrationLinkButtonProps) => {
   const { toast } = useToast();
 
   const handleCopyRegistrationLink = () => {
@@ -30,4 +32,4 @@ export const CopyRegistrationLinkButton = ({ teamId }: CopyRegistrationLinkButto
       Copy Public Registration Link
     </Button>
   );
-}; 
+};

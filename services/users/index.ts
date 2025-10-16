@@ -1,7 +1,7 @@
-import prisma from "@/lib/prisma";
-import { Roles, APP_MODULES, AppModule } from "@/types";
-import { ensureDefaultGroup } from "@/services/groups";
 import { omit } from "lodash";
+import prisma from "@/lib/prisma";
+import { ensureDefaultGroup } from "@/services/groups";
+import { APP_MODULES, AppModule, Roles } from "@/types";
 
 export interface User {
   name?: string;
@@ -156,9 +156,11 @@ const getUserCurrent = async (userId: string) => {
       defaultGroups.map((group) => [
         group.teamId,
         group.modulePermissions.length
-          ? group.modulePermissions.map((permission) => permission.module as AppModule)
+          ? group.modulePermissions.map(
+              (permission) => permission.module as AppModule,
+            )
           : [...APP_MODULES],
-      ])
+      ]),
     );
   }
 
@@ -196,7 +198,7 @@ const getUsers = async (
     organizationId?: string;
     fundingRequestId?: string;
   },
-  searchQuery: string
+  searchQuery: string,
 ) => {
   const whereConditions = [];
 
@@ -267,7 +269,13 @@ const getUsers = async (
   });
 };
 
-const getUsersForDonation = async ({ teamId, fundingRequestId }: { teamId: string; fundingRequestId: string }) => {
+const getUsersForDonation = async ({
+  teamId,
+  fundingRequestId,
+}: {
+  teamId: string;
+  fundingRequestId: string;
+}) => {
   const fundingRequest = await prisma.fundingRequest.findUnique({
     where: { id: fundingRequestId },
     select: { organizationId: true },
@@ -275,7 +283,10 @@ const getUsersForDonation = async ({ teamId, fundingRequestId }: { teamId: strin
 
   return await prisma.user.findMany({
     where: {
-      OR: [{ organizations: { some: { id: fundingRequest?.organizationId } } }, { teams: { some: { id: teamId } } }],
+      OR: [
+        { organizations: { some: { id: fundingRequest?.organizationId } } },
+        { teams: { some: { id: teamId } } },
+      ],
     },
     orderBy: { createdAt: "desc" },
   });
@@ -335,7 +346,11 @@ const getTeamsUsers = async (teamId: string) => {
   return users;
 };
 
-const deleteUser = async (userId: string, organizationId?: string, teamId?: string) => {
+const deleteUser = async (
+  userId: string,
+  organizationId?: string,
+  teamId?: string,
+) => {
   try {
     if (organizationId) {
       // Remove user from organization

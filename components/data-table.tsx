@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import {
   ColumnDef,
   flexRender,
@@ -9,7 +8,10 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { LayoutGrid, List } from "lucide-react";
-
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -18,9 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -85,12 +84,12 @@ export function DataTable<TData, TValue>({
             } satisfies ColumnDef<TData>,
           ].map((column) => column as ColumnDef<TData, TValue>)
         : [],
-    [selectable]
+    [selectable],
   );
 
   const enhancedColumns = React.useMemo(
     () => [...selectionColumn, ...columns],
-    [selectionColumn, columns]
+    [selectionColumn, columns],
   );
 
   const table = useReactTable({
@@ -142,13 +141,11 @@ export function DataTable<TData, TValue>({
           </Button>
         </div>
       </div>
-      {selectable &&
-        selectedRows.length > 0 &&
-        renderBatchActions && (
-          <div className="flex items-center justify-between gap-3 px-3 pb-2">
-            {renderBatchActions({ selectedRows, clearSelection })}
-          </div>
-        )}
+      {selectable && selectedRows.length > 0 && renderBatchActions && (
+        <div className="flex items-center justify-between gap-3 px-3 pb-2">
+          {renderBatchActions({ selectedRows, clearSelection })}
+        </div>
+      )}
 
       {view === "table" ? (
         <Table>
@@ -162,7 +159,7 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -181,7 +178,7 @@ export function DataTable<TData, TValue>({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -219,7 +216,7 @@ export function DataTable<TData, TValue>({
                         <div className="font-medium">
                           {flexRender(
                             cell.column.columnDef.cell,
-                            cell.getContext()
+                            cell.getContext(),
                           )}
                         </div>
                       </div>
@@ -231,7 +228,9 @@ export function DataTable<TData, TValue>({
           ))}
         </div>
       ) : (
-        <div className="p-6 text-center text-sm text-muted-foreground">No results.</div>
+        <div className="p-6 text-center text-sm text-muted-foreground">
+          No results.
+        </div>
       )}
     </div>
   );

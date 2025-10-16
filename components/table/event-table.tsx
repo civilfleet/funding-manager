@@ -1,20 +1,23 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-
 import { DataTable } from "@/components/data-table";
-import { eventColumns, renderEventCard, type EventRow } from "@/components/table/event-columns";
-import FormInputControl from "@/components/helper/form-input-control";
 import ButtonControl from "@/components/helper/button-control";
-import { Form } from "@/components/ui/form";
+import FormInputControl from "@/components/helper/form-input-control";
 import { Loader } from "@/components/helper/loader";
-import { useToast } from "@/hooks/use-toast";
+import {
+  type EventRow,
+  eventColumns,
+  renderEventCard,
+} from "@/components/table/event-columns";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Form } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
 
 interface EventTableProps {
   teamId: string;
@@ -39,7 +42,7 @@ export default function EventTable({ teamId }: EventTableProps) {
 
   const { data, error, isLoading, mutate } = useSWR(
     `/api/events?teamId=${teamId}&query=${encodeURIComponent(query)}`,
-    fetcher
+    fetcher,
   );
 
   const events = useMemo<EventRow[]>(() => {
@@ -62,7 +65,10 @@ export default function EventTable({ teamId }: EventTableProps) {
     form.setValue("query", values.query);
   };
 
-  const handleDeleteSelected = async (selectedRows: EventRow[], clearSelection: () => void) => {
+  const handleDeleteSelected = async (
+    selectedRows: EventRow[],
+    clearSelection: () => void,
+  ) => {
     if (selectedRows.length === 0) {
       return;
     }
@@ -99,7 +105,9 @@ export default function EventTable({ teamId }: EventTableProps) {
       toast({
         title: "Unable to delete events",
         description:
-          deleteError instanceof Error ? deleteError.message : "An unexpected error occurred.",
+          deleteError instanceof Error
+            ? deleteError.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {
@@ -110,8 +118,15 @@ export default function EventTable({ teamId }: EventTableProps) {
   return (
     <div className="flex flex-col gap-4 my-4">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="flex w-full max-w-md">
-          <FormInputControl form={form} name="query" placeholder="Search events" />
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="flex w-full max-w-md"
+        >
+          <FormInputControl
+            form={form}
+            name="query"
+            placeholder="Search events"
+          />
           <ButtonControl type="submit" label="Search" className="ml-2" />
         </form>
       </Form>
@@ -130,14 +145,18 @@ export default function EventTable({ teamId }: EventTableProps) {
             selectable
             renderBatchActions={({ selectedRows, clearSelection }) => (
               <div className="flex flex-wrap items-center gap-3">
-                <span className="text-sm text-muted-foreground">{selectedRows.length} selected</span>
+                <span className="text-sm text-muted-foreground">
+                  {selectedRows.length} selected
+                </span>
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     variant="destructive"
                     size="sm"
                     disabled={isDeleting}
-                    onClick={() => handleDeleteSelected(selectedRows, clearSelection)}
+                    onClick={() =>
+                      handleDeleteSelected(selectedRows, clearSelection)
+                    }
                   >
                     {isDeleting ? (
                       <>

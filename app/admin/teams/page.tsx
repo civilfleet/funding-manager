@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import TeamsTable from "@/components/table/teams-table";
+import { Button } from "@/components/ui/button";
 
 export default async function AdminTeamsPage() {
   return (
@@ -14,4 +14,4 @@ export default async function AdminTeamsPage() {
       <TeamsTable />
     </div>
   );
-} 
+}

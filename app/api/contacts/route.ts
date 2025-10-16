@@ -2,8 +2,17 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
-import { createContactSchema, updateContactSchema, deleteContactsSchema } from "@/validations/contacts";
-import { createContact, updateContact, deleteContacts, getTeamContacts } from "@/services/contacts";
+import {
+  createContact,
+  deleteContacts,
+  getTeamContacts,
+  updateContact,
+} from "@/services/contacts";
+import {
+  createContactSchema,
+  deleteContactsSchema,
+  updateContactSchema,
+} from "@/validations/contacts";
 
 export async function GET(req: Request) {
   try {
@@ -12,7 +21,10 @@ export async function GET(req: Request) {
     const query = searchParams.get("query") || "";
 
     if (!teamId) {
-      return NextResponse.json({ error: "teamId is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "teamId is required" },
+        { status: 400 },
+      );
     }
 
     // Get the current user's ID for group filtering
@@ -31,7 +43,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ data: contacts }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
@@ -45,7 +60,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: contact }, { status: 201 });
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
@@ -59,7 +77,10 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ data: contact }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
@@ -73,6 +94,9 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ data: "success" }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }

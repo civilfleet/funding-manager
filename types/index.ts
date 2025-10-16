@@ -382,7 +382,7 @@ export type Transaction = {
 
 export enum FieldType {
   TEXT = "TEXT",
-  TEXTAREA = "TEXTAREA", 
+  TEXTAREA = "TEXTAREA",
   NUMBER = "NUMBER",
   DATE = "DATE",
   EMAIL = "EMAIL",

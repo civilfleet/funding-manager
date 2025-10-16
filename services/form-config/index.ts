@@ -1,7 +1,9 @@
 import prisma from "@/lib/prisma";
-import { FormSection, FormField, FieldType } from "@/types";
+import { FieldType, FormField, FormSection } from "@/types";
 
-export async function getFormConfiguration(teamId: string): Promise<FormSection[]> {
+export async function getFormConfiguration(
+  teamId: string,
+): Promise<FormSection[]> {
   const formSections = await prisma.formSection.findMany({
     where: { teamId },
     include: {
@@ -13,9 +15,9 @@ export async function getFormConfiguration(teamId: string): Promise<FormSection[
   });
 
   // Convert options from JSON to proper format
-  return formSections.map(section => ({
+  return formSections.map((section) => ({
     ...section,
-    fields: section.fields.map(field => ({
+    fields: section.fields.map((field) => ({
       ...field,
       options: field.options ? JSON.parse(field.options as string) : undefined,
       minValue: field.minValue ? Number(field.minValue) : undefined,
@@ -119,7 +121,8 @@ export async function getStaticFieldsConfiguration(): Promise<FormSection[]> {
     {
       id: "static-3",
       name: "Financial Planning",
-      description: "Financial sustainability and planning details (always present)",
+      description:
+        "Financial sustainability and planning details (always present)",
       order: 3,
       teamId: undefined,
       fields: [
@@ -127,7 +130,8 @@ export async function getStaticFieldsConfiguration(): Promise<FormSection[]> {
           id: "static-field-6",
           key: "refinancingConcept",
           label: "Refinancing Concept",
-          description: "Detail how the project will be financially sustainable after initial funding",
+          description:
+            "Detail how the project will be financially sustainable after initial funding",
           type: FieldType.TEXTAREA,
           placeholder: "Explain your refinancing strategy",
           isRequired: true,
@@ -141,9 +145,11 @@ export async function getStaticFieldsConfiguration(): Promise<FormSection[]> {
           id: "static-field-7",
           key: "sustainability",
           label: "Sustainability Plan",
-          description: "Outline the long-term viability and impact of your project",
+          description:
+            "Outline the long-term viability and impact of your project",
           type: FieldType.TEXTAREA,
-          placeholder: "Describe how your project will be sustainable in the long term",
+          placeholder:
+            "Describe how your project will be sustainable in the long term",
           isRequired: true,
           order: 2,
           minLength: 10,
@@ -165,7 +171,8 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
     {
       id: "example-1",
       name: "Additional Project Information",
-      description: "Custom fields for additional project details (example section)",
+      description:
+        "Custom fields for additional project details (example section)",
       order: 1,
       teamId: undefined,
       fields: [
@@ -196,7 +203,7 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
             { label: "Environment", value: "environment" },
             { label: "Community Development", value: "community" },
             { label: "Arts & Culture", value: "arts" },
-            { label: "Other", value: "other" }
+            { label: "Other", value: "other" },
           ],
           sectionId: "example-1",
           createdAt: new Date(),
@@ -224,9 +231,11 @@ export async function getDefaultFormConfiguration(): Promise<FormSection[]> {
   ];
 }
 
-export async function createDefaultFormConfiguration(teamId: string): Promise<void> {
+export async function createDefaultFormConfiguration(
+  teamId: string,
+): Promise<void> {
   const defaultConfig = await getDefaultFormConfiguration();
-  
+
   await prisma.$transaction(async (tx) => {
     for (const sectionData of defaultConfig) {
       const section = await tx.formSection.create({
@@ -254,7 +263,9 @@ export async function createDefaultFormConfiguration(teamId: string): Promise<vo
             minValue: fieldData.minValue,
             maxValue: fieldData.maxValue,
             pattern: fieldData.pattern,
-            options: fieldData.options ? JSON.stringify(fieldData.options) : undefined,
+            options: fieldData.options
+              ? JSON.stringify(fieldData.options)
+              : undefined,
             sectionId: section.id,
           },
         });

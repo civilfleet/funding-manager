@@ -1,23 +1,29 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
-import { Users, Building, DollarSign, FileText, CreditCard } from "lucide-react";
+import {
+  Building,
+  CreditCard,
+  DollarSign,
+  FileText,
+  Users,
+} from "lucide-react";
 import useSWR from "swr";
 import { Loader } from "@/components/helper/loader";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ActivityItem {
   id: string;
-  type: 'user' | 'organization' | 'funding_request' | 'transaction' | 'file';
-  action: 'created' | 'updated';
+  type: "user" | "organization" | "funding_request" | "transaction" | "file";
+  action: "created" | "updated";
   title: string;
   description: string;
   timestamp: string;
   entityId: string;
 }
 
-export type ActivityScope = 'admin' | 'team' | 'organization';
+export type ActivityScope = "admin" | "team" | "organization";
 
 interface RecentActivityProps {
   scope?: ActivityScope;
@@ -43,25 +49,29 @@ const activityColors = {
   file: "bg-gray-500",
 };
 
-export default function RecentActivity({ 
-  scope = 'admin', 
-  scopeId, 
-  title = 'Recent Activity' 
+export default function RecentActivity({
+  scope = "admin",
+  scopeId,
+  title = "Recent Activity",
 }: RecentActivityProps) {
   // Build API URL based on scope
   const getApiUrl = () => {
     switch (scope) {
-      case 'team':
-        return scopeId ? `/api/teams/${scopeId}/recent-activity` : '/api/admin/recent-activity';
-      case 'organization':
-        return scopeId ? `/api/organizations/${scopeId}/recent-activity` : '/api/admin/recent-activity';
+      case "team":
+        return scopeId
+          ? `/api/teams/${scopeId}/recent-activity`
+          : "/api/admin/recent-activity";
+      case "organization":
+        return scopeId
+          ? `/api/organizations/${scopeId}/recent-activity`
+          : "/api/admin/recent-activity";
       default:
-        return '/api/admin/recent-activity';
+        return "/api/admin/recent-activity";
     }
   };
 
   const { data, error, isLoading } = useSWR(getApiUrl(), fetcher);
-  
+
   if (isLoading) {
     return (
       <Card>
@@ -109,7 +119,7 @@ export default function RecentActivity({
             {activities.map((activity) => {
               const Icon = activityIcons[activity.type];
               const colorClass = activityColors[activity.type];
-              
+
               return (
                 <div key={activity.id} className="flex items-start space-x-3">
                   <div className={`p-2 rounded-full ${colorClass} text-white`}>
@@ -120,7 +130,13 @@ export default function RecentActivity({
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {activity.title}
                       </p>
-                      <Badge variant={activity.action === 'created' ? 'default' : 'secondary'}>
+                      <Badge
+                        variant={
+                          activity.action === "created"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
                         {activity.action}
                       </Badge>
                     </div>
@@ -128,7 +144,9 @@ export default function RecentActivity({
                       {activity.description}
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
-                      {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(activity.timestamp), {
+                        addSuffix: true,
+                      })}
                     </p>
                   </div>
                 </div>

@@ -1,20 +1,26 @@
 "use client";
 
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
-import { useState, useEffect } from "react";
-import OrganizationDetails from "@/components/organization-details";
-import { Loader } from "@/components/helper/loader";
 import OrganizationForm from "@/components/forms/organization";
+import { Loader } from "@/components/helper/loader";
+import OrganizationDetails from "@/components/organization-details";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { useSession } from "next-auth/react";
 import { Roles } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export default function OrganizationData({ organizationId }: { organizationId: string }) {
+export default function OrganizationData({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
   const { data: session } = useSession();
-  const isAdminOrTeam = session?.user.roles?.includes(Roles.Admin) || session?.user.roles?.includes(Roles.Team);
+  const isAdminOrTeam =
+    session?.user.roles?.includes(Roles.Admin) ||
+    session?.user.roles?.includes(Roles.Team);
 
   const {
     data: organizationData,
@@ -24,7 +30,7 @@ export default function OrganizationData({ organizationId }: { organizationId: s
 
   const { data: fundingRequestsData, isLoading: fundingLoading } = useSWR(
     `/api/funding-requests/?organizationId=${organizationId}`,
-    fetcher
+    fetcher,
   );
 
   const [isFilledByOrg, setIsFilledByOrg] = useState(false);
@@ -82,7 +88,9 @@ export default function OrganizationData({ organizationId }: { organizationId: s
         {isAdminOrTeam && (
           <div className="flex justify-between items-center mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
             <div className="flex flex-col">
-              <h3 className="text-base font-semibold text-gray-800">Organization Edit Mode</h3>
+              <h3 className="text-base font-semibold text-gray-800">
+                Organization Edit Mode
+              </h3>
               <p className="text-sm text-gray-600 mt-1">
                 {isFilledByOrg
                   ? "Edit mode is locked. Organization details can only be viewed by the organization."
@@ -90,7 +98,9 @@ export default function OrganizationData({ organizationId }: { organizationId: s
               </p>
             </div>
             <div className="flex items-center space-x-3">
-              <span className="text-sm font-medium text-gray-700">{isFilledByOrg ? "Unlock" : "Lock"}</span>
+              <span className="text-sm font-medium text-gray-700">
+                {isFilledByOrg ? "Unlock" : "Lock"}
+              </span>
               <Switch
                 checked={isFilledByOrg}
                 onCheckedChange={allowEditOrganization}
@@ -101,7 +111,10 @@ export default function OrganizationData({ organizationId }: { organizationId: s
         )}
 
         {isFilledByOrg && !isAdminOrTeam ? (
-          <OrganizationDetails organization={organizationData?.data} fundingRequests={fundingRequestsData?.data} />
+          <OrganizationDetails
+            organization={organizationData?.data}
+            fundingRequests={fundingRequestsData?.data}
+          />
         ) : (
           <OrganizationForm data={organizationData?.data} />
         )}

@@ -1,22 +1,34 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { FileList } from "./helper/file-list";
+import OrganizationView from "@/components/funding-request/organization-view";
+import FundingRequestOverview from "@/components/funding-request/overview";
+import TransactionTable from "@/components/table/transaction-table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type FundingRequest, Roles } from "../types";
 import FundingRequestHeader from "./funding-request/header";
-import TransactionTable from "@/components/table/transaction-table";
-import FundingRequestOverview from "@/components/funding-request/overview";
-import OrganizationView from "@/components/funding-request/organization-view";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileList } from "./helper/file-list";
 
-export default function FundingRequestDetail({ data, refreshData }: { data: FundingRequest; refreshData: () => void }) {
+export default function FundingRequestDetail({
+  data,
+  refreshData,
+}: {
+  data: FundingRequest;
+  refreshData: () => void;
+}) {
   const { data: session } = useSession();
-  const isTeam = session?.user?.roles?.includes(Roles.Team) || session?.user?.roles?.includes(Roles.Admin);
+  const isTeam =
+    session?.user?.roles?.includes(Roles.Team) ||
+    session?.user?.roles?.includes(Roles.Admin);
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Status Header */}
-      <FundingRequestHeader data={data} isTeam={isTeam} refreshData={refreshData} />
+      <FundingRequestHeader
+        data={data}
+        isTeam={isTeam}
+        refreshData={refreshData}
+      />
 
       {/* Tab Navigation */}
       <Tabs defaultValue="details" className="w-full">

@@ -1,7 +1,7 @@
-import _ from "lodash";
-import prisma from "@/lib/prisma";
-import { auth } from "@/auth";
 import { Roles } from "@prisma/client";
+import _ from "lodash";
+import { auth } from "@/auth";
+import prisma from "@/lib/prisma";
 
 type Organization = {
   name?: string;
@@ -75,7 +75,9 @@ const createOrUpdateOrganization = async (formData: Organization) => {
         data: {
           ...formData.user,
           roles: {
-            set: Array.from(new Set([...(orgUser.roles ?? []), Roles.Organization])),
+            set: Array.from(
+              new Set([...(orgUser.roles ?? []), Roles.Organization]),
+            ),
           },
         },
       });
@@ -154,8 +156,8 @@ const createOrUpdateOrganization = async (formData: Organization) => {
                 updatedBy: { connect: { id: user.id } },
                 organization: { connect: { id: organization.id } },
               },
-            })
-        )
+            }),
+        ),
       );
     }
 
@@ -254,8 +256,12 @@ const getOrganizationByEmail = async (email: string) => {
     return {
       ...organization,
       user: organization.users[0] || {},
-      taxExemptionCertificate: organization.Files.find((file) => file.type === "TAX_EXEMPTION_CERTIFICATE")?.id,
-      articlesOfAssociation: organization.Files.find((file) => file.type === "ARTICLES_OF_ASSOCIATION")?.id,
+      taxExemptionCertificate: organization.Files.find(
+        (file) => file.type === "TAX_EXEMPTION_CERTIFICATE",
+      )?.id,
+      articlesOfAssociation: organization.Files.find(
+        (file) => file.type === "ARTICLES_OF_ASSOCIATION",
+      )?.id,
       logo: organization.Files.find((file) => file.type === "LOGO")?.id,
     };
   }

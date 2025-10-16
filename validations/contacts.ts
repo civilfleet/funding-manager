@@ -4,13 +4,18 @@ import { ContactAttributeType } from "@/types";
 const preprocessEmptyString = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
 
-const optionalText = (schema: z.ZodString) => z.preprocess(preprocessEmptyString, schema.optional());
+const optionalText = (schema: z.ZodString) =>
+  z.preprocess(preprocessEmptyString, schema.optional());
 
-const requiredEmail = z.string().trim().min(1, "Email is required").email("Invalid email address");
+const requiredEmail = z
+  .string()
+  .trim()
+  .min(1, "Email is required")
+  .email("Invalid email address");
 
 const optionalEmail = z.preprocess(
   preprocessEmptyString,
-  z.string().trim().email("Invalid email address").optional()
+  z.string().trim().email("Invalid email address").optional(),
 );
 
 const numberValue = z.preprocess((value) => {
@@ -59,7 +64,9 @@ const contactAttributeSchema = z.discriminatedUnion("type", [
     value: z
       .string()
       .min(1, "Value is required")
-      .refine((value) => !Number.isNaN(Date.parse(value)), { message: "Invalid date" }),
+      .refine((value) => !Number.isNaN(Date.parse(value)), {
+        message: "Invalid date",
+      }),
   }),
   z.object({
     key: z.string().min(1, "Attribute label is required"),
@@ -79,7 +86,10 @@ export const createContactSchema = z.object({
   email: requiredEmail,
   phone: optionalText(z.string()),
   profileAttributes: z.array(contactAttributeSchema).default([]),
-  groupId: z.preprocess(preprocessEmptyString, z.string().uuid("Group id must be a valid UUID").optional()),
+  groupId: z.preprocess(
+    preprocessEmptyString,
+    z.string().uuid("Group id must be a valid UUID").optional(),
+  ),
 });
 
 export type CreateContactInput = z.infer<typeof createContactSchema>;
@@ -91,7 +101,10 @@ export const updateContactSchema = z.object({
   email: optionalEmail,
   phone: optionalText(z.string()),
   profileAttributes: z.array(contactAttributeSchema).optional(),
-  groupId: z.preprocess(preprocessEmptyString, z.string().uuid("Group id must be a valid UUID").optional()),
+  groupId: z.preprocess(
+    preprocessEmptyString,
+    z.string().uuid("Group id must be a valid UUID").optional(),
+  ),
 });
 
 export type UpdateContactInput = z.infer<typeof updateContactSchema>;

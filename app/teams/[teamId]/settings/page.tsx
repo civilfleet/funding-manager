@@ -19,10 +19,14 @@ export default async function Page({ params }: PageProps) {
         <h1 className="text-3xl font-bold">Team Settings</h1>
         <p className="text-muted-foreground mt-2">{`Manage your team's settings, email templates, and funding request forms`}</p>
       </div>
-      
-      <TeamSettingsTabs 
-        teamId={teamId} 
-        templates={templates.filter(template => template.teamId !== null) as EmailTemplate[]} 
+
+      <TeamSettingsTabs
+        teamId={teamId}
+        templates={
+          templates.filter(
+            (template) => template.teamId !== null,
+          ) as EmailTemplate[]
+        }
       />
     </div>
   );

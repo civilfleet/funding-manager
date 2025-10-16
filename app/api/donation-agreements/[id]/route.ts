@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
-import { getDonationAgreementById, updateDonationAgreement } from "@/services/donation-agreement";
-import { handlePrismaError } from "@/lib/utils";
 import { auth } from "@/auth";
+import { handlePrismaError } from "@/lib/utils";
+import {
+  getDonationAgreementById,
+  updateDonationAgreement,
+} from "@/services/donation-agreement";
 
 export async function GET(
   _req: Request,
@@ -9,7 +12,7 @@ export async function GET(
     params,
   }: {
     params: Promise<{ id: string }>;
-  }
+  },
 ) {
   try {
     const donationAgreementId = (await params).id;
@@ -27,14 +30,20 @@ export async function PUT(
     params,
   }: {
     params: Promise<{ id: string }>;
-  }
+  },
 ) {
   try {
     const donationAgreementId = (await params).id;
     const updatedDonationAgreement = await req.json();
 
-    const response = await updateDonationAgreement(donationAgreementId, updatedDonationAgreement);
-    return NextResponse.json({ data: response, message: "Donation agreement updated successfully" }, { status: 200 });
+    const response = await updateDonationAgreement(
+      donationAgreementId,
+      updatedDonationAgreement,
+    );
+    return NextResponse.json(
+      { data: response, message: "Donation agreement updated successfully" },
+      { status: 200 },
+    );
   } catch (e) {
     const handledError = handlePrismaError(e);
     return NextResponse.json({ error: handledError.message }, { status: 400 });

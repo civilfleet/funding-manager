@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
+import { sendEmail } from "@/lib/nodemailer";
 import {
   getDonationAgreementPastEightWeeks,
   getDonationAgreementPastSevenDays,
 } from "@/services/donation-agreement";
-import { sendEmail } from "@/lib/nodemailer";
 
 export async function GET() {
   try {
@@ -28,7 +28,7 @@ export async function GET() {
           actionButtonText: "Upload Receipt",
           supportEmail: donation?.team?.email,
           teamName: donation?.team?.name,
-        }
+        },
       );
     }
 
@@ -47,7 +47,7 @@ export async function GET() {
           actionButtonText: "Upload Receipt",
           supportEmail: donation?.team?.email,
           teamName: donation?.team?.name,
-        }
+        },
       );
     }
 
@@ -59,7 +59,7 @@ export async function GET() {
     console.error("Error in cron job:", error);
     return NextResponse.json(
       { success: false, message: "Failed to send reminders" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { z } from "zod";
 
 const fieldOptionSchema = z.object({
   label: z.string(),
@@ -13,7 +13,19 @@ const formFieldSchema = z.object({
   key: z.string(),
   label: z.string(),
   description: z.string().nullish(),
-  type: z.enum(["TEXT", "TEXTAREA", "NUMBER", "DATE", "EMAIL", "URL", "SELECT", "MULTISELECT", "CHECKBOX", "RADIO", "FILE"]),
+  type: z.enum([
+    "TEXT",
+    "TEXTAREA",
+    "NUMBER",
+    "DATE",
+    "EMAIL",
+    "URL",
+    "SELECT",
+    "MULTISELECT",
+    "CHECKBOX",
+    "RADIO",
+    "FILE",
+  ]),
   placeholder: z.string().nullish(),
   defaultValue: z.string().nullish(),
   isRequired: z.boolean().default(false),
@@ -40,7 +52,7 @@ const formConfigSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> }
+  { params }: { params: Promise<{ teamId: string }> },
 ) {
   try {
     const session = await auth();
@@ -57,7 +69,7 @@ export async function GET(
     });
 
     const isAdmin = user?.roles.includes("Admin");
-    const hasTeamAccess = user?.teams.some(team => team.id === teamId);
+    const hasTeamAccess = user?.teams.some((team) => team.id === teamId);
 
     if (!user || (!isAdmin && !hasTeamAccess)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -75,11 +87,13 @@ export async function GET(
     });
 
     // Convert options from JSON to proper format
-    const sectionsWithParsedOptions = formSections.map(section => ({
+    const sectionsWithParsedOptions = formSections.map((section) => ({
       ...section,
-      fields: section.fields.map(field => ({
+      fields: section.fields.map((field) => ({
         ...field,
-        options: field.options ? JSON.parse(field.options as string) : undefined,
+        options: field.options
+          ? JSON.parse(field.options as string)
+          : undefined,
       })),
     }));
 
@@ -88,14 +102,14 @@ export async function GET(
     console.error("Error fetching form configuration:", error);
     return NextResponse.json(
       { error: "Failed to fetch form configuration" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> }
+  { params }: { params: Promise<{ teamId: string }> },
 ) {
   try {
     const session = await auth();
@@ -112,7 +126,7 @@ export async function PUT(
     });
 
     const isAdmin = user?.roles.includes("Admin");
-    const hasTeamAccess = user?.teams.some(team => team.id === teamId);
+    const hasTeamAccess = user?.teams.some((team) => team.id === teamId);
 
     if (!user || (!isAdmin && !hasTeamAccess)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -155,8 +169,10 @@ export async function PUT(
               minValue: fieldData.minValue,
               maxValue: fieldData.maxValue,
               pattern: fieldData.pattern,
-              options: fieldData.options ? JSON.stringify(fieldData.options) : undefined,
-              sectionId: section.id
+              options: fieldData.options
+                ? JSON.stringify(fieldData.options)
+                : undefined,
+              sectionId: section.id,
             },
           });
         }
@@ -166,17 +182,17 @@ export async function PUT(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error updating form configuration:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid form configuration data", details: error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
       { error: "Failed to update form configuration" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

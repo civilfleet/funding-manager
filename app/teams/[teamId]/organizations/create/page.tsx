@@ -1,9 +1,13 @@
-import OrganizationForm from "@/components/forms/organization";
 import { auth } from "@/auth";
+import OrganizationForm from "@/components/forms/organization";
 import { assertTeamModuleAccess } from "@/lib/permissions";
 import { AppModule } from "@/types";
 
-export default async function Page({ params }: { params: Promise<{ teamId: string }> }) {
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ teamId: string }>;
+}) {
   const { teamId } = await params;
 
   const session = await auth();
@@ -13,7 +17,7 @@ export default async function Page({ params }: { params: Promise<{ teamId: strin
       userId: session?.user?.userId,
       roles: session?.user?.roles,
     },
-    "FUNDING" satisfies AppModule
+    "FUNDING" satisfies AppModule,
   );
 
   return (

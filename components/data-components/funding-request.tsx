@@ -14,7 +14,10 @@ export default function FundingRequestData({
   organizationId?: string;
 }) {
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
-  const { data, isLoading, mutate } = useSWR(`/api/funding-requests/${fundingRequestId}`, fetcher);
+  const { data, isLoading, mutate } = useSWR(
+    `/api/funding-requests/${fundingRequestId}`,
+    fetcher,
+  );
   const fundingRequest = data?.data;
 
   const refreshData = () => {

@@ -1,4 +1,5 @@
 import FileTable from "@/components/table/file-table";
+
 interface PageProps {
   params: Promise<{
     organizationId: string;
@@ -15,4 +16,3 @@ export default async function Page({ params }: PageProps) {
     </div>
   );
 }
-

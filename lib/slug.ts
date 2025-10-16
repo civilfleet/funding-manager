@@ -6,4 +6,3 @@ export const generateSlug = (value: string): string => {
     .replace(/[\s_-]+/g, "-") // Collapse whitespace/underscores to hyphen
     .replace(/^-+|-+$/g, ""); // Trim leading/trailing hyphens
 };
-

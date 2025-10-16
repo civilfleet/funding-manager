@@ -1,20 +1,39 @@
 "use client";
-import * as z from "zod";
-import { useForm } from "react-hook-form";
-import { useToast } from "@/hooks/use-toast";
-import { FileText } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { EmailEditor } from "../email-editor";
-import { Button } from "@/components/ui/button";
-import { EMAIL_TEMPLATES_TYPES } from "@/constants";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createEmailTemplateSchema } from "@/validations/email-templates";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { FileText } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { EMAIL_TEMPLATES_TYPES } from "@/constants";
+import { useToast } from "@/hooks/use-toast";
 import { EmailTemplate } from "@/types";
-import { useEffect, useState, useRef } from "react";
+import { createEmailTemplateSchema } from "@/validations/email-templates";
+import { EmailEditor } from "../email-editor";
 
-const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates: EmailTemplate[] }) => {
+const CreateEmailTemplate = ({
+  teamId,
+  templates,
+}: {
+  teamId: string;
+  templates: EmailTemplate[];
+}) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [template, setTemplate] = useState<EmailTemplate | null>(null);
@@ -34,7 +53,10 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
   const variables = [
     { name: "organizationName", description: "Name of the organization" },
     { name: "requestName", description: "Name of the request" },
-    { name: "submittedDate", description: "Date when the request was submitted" },
+    {
+      name: "submittedDate",
+      description: "Date when the request was submitted",
+    },
     { name: "status", description: "Current status of the request" },
     { name: "requestLink", description: "Link to the request details" },
     { name: "supportEmail", description: "Support email address" },
@@ -58,7 +80,9 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
   };
 
   useEffect(() => {
-    const template = templates.find((template) => template.type === templateType);
+    const template = templates.find(
+      (template) => template.type === templateType,
+    );
     setTemplate(template || null);
 
     form.setValue("name", template?.name || "");
@@ -68,7 +92,11 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (tooltipVisible && editorRef.current && !editorRef.current.contains(event.target as Node)) {
+      if (
+        tooltipVisible &&
+        editorRef.current &&
+        !editorRef.current.contains(event.target as Node)
+      ) {
         setTooltipVisible(false);
       }
     };
@@ -79,7 +107,9 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
     };
   }, [tooltipVisible]);
 
-  const onSubmit = async (values: z.infer<typeof createEmailTemplateSchema>) => {
+  const onSubmit = async (
+    values: z.infer<typeof createEmailTemplateSchema>,
+  ) => {
     setIsLoading(true);
     console.log({ ...values, id: template?.id });
     const response = await fetch(`/api/teams/${teamId}/email-templates`, {
@@ -98,8 +128,12 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Create Email Templates</h1>
-          <p className="mt-1 text-gray-500">Design your new email template with full HTML support</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Create Email Templates
+          </h1>
+          <p className="mt-1 text-gray-500">
+            Design your new email template with full HTML support
+          </p>
         </div>
 
         <div className="rounded-lg border bg-white p-6 shadow-xs">
@@ -113,7 +147,11 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
                     <FormItem>
                       <FormLabel>Template name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter template name" {...field} value={field.value || ""} />
+                        <Input
+                          placeholder="Enter template name"
+                          {...field}
+                          value={field.value || ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -126,7 +164,10 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Template Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select template type" />
@@ -153,7 +194,11 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
                   <FormItem>
                     <FormLabel>Email Subject</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter email subject" {...field} value={field.value || ""} />
+                      <Input
+                        placeholder="Enter email subject"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -171,8 +216,8 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
                         <div className="flex items-center">
                           <p className="text-sm text-gray-500">
                             Please use{" "}
-                            <code className="font-bold bg-gray-100 px-1 py-0.5 rounded">{`{{ variableName }}`}</code> to
-                            insert variables
+                            <code className="font-bold bg-gray-100 px-1 py-0.5 rounded">{`{{ variableName }}`}</code>{" "}
+                            to insert variables
                           </p>
                           <button
                             type="button"
@@ -186,19 +231,31 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
                         {tooltipVisible && (
                           <div
                             className="absolute bg-white border border-gray-200 rounded-md shadow-lg p-3 z-10"
-                            style={{ top: `${tooltipPosition.top}px`, left: `${tooltipPosition.left}px` }}
+                            style={{
+                              top: `${tooltipPosition.top}px`,
+                              left: `${tooltipPosition.left}px`,
+                            }}
                           >
-                            <h3 className="font-medium text-sm border-b pb-1 mb-2">Available Variables</h3>
+                            <h3 className="font-medium text-sm border-b pb-1 mb-2">
+                              Available Variables
+                            </h3>
                             <ul className="space-y-1">
                               {variables.map((variable) => (
-                                <li key={variable.name} className="flex flex-col">
+                                <li
+                                  key={variable.name}
+                                  className="flex flex-col"
+                                >
                                   <button
                                     type="button"
                                     className="text-left hover:bg-gray-100 px-2 py-1 rounded-md text-sm flex items-center"
-                                    onClick={() => insertVariable(variable.name)}
+                                    onClick={() =>
+                                      insertVariable(variable.name)
+                                    }
                                   >
                                     <code className="font-bold">{`{{ ${variable.name} }}`}</code>
-                                    <span className="ml-2 text-xs text-gray-500">{variable.description}</span>
+                                    <span className="ml-2 text-xs text-gray-500">
+                                      {variable.description}
+                                    </span>
                                   </button>
                                 </li>
                               ))}
@@ -214,7 +271,10 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
                             </div>
                           </div>
                         )}
-                        <EmailEditor value={field.value} onChange={field.onChange} />
+                        <EmailEditor
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -223,7 +283,11 @@ const CreateEmailTemplate = ({ teamId, templates }: { teamId: string; templates:
               />
 
               <div className="flex justify-end gap-4">
-                <Button variant="outline" type="button" onClick={() => form.reset()}>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => form.reset()}
+                >
                   Reset
                 </Button>
                 <Button type="submit" disabled={isLoading}>

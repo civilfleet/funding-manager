@@ -1,13 +1,15 @@
-import { notFound } from "next/navigation";
-import { getPublicEventBySlug } from "@/services/events";
-import EventRegistrationForm from "@/components/forms/event-registration";
 import { format } from "date-fns";
+import { notFound } from "next/navigation";
+import EventRegistrationForm from "@/components/forms/event-registration";
+import { getPublicEventBySlug } from "@/services/events";
 
 interface PublicEventPageProps {
   params: Promise<{ teamId: string; eventSlug: string }>;
 }
 
-export default async function PublicEventPage({ params }: PublicEventPageProps) {
+export default async function PublicEventPage({
+  params,
+}: PublicEventPageProps) {
   const { teamId, eventSlug } = await params;
 
   const event = await getPublicEventBySlug(teamId, eventSlug);
@@ -52,7 +54,8 @@ export default async function PublicEventPage({ params }: PublicEventPageProps) 
                 </p>
                 <p className="text-sm text-gray-600">
                   {format(new Date(event.startDate), "h:mm a")}
-                  {event.endDate && ` - ${format(new Date(event.endDate), "h:mm a")}`}
+                  {event.endDate &&
+                    ` - ${format(new Date(event.endDate), "h:mm a")}`}
                 </p>
               </div>
             </div>
@@ -85,15 +88,21 @@ export default async function PublicEventPage({ params }: PublicEventPageProps) 
 
           {event.description && (
             <div className="mt-6 border-t border-gray-200 pt-6">
-              <h2 className="mb-2 text-lg font-semibold text-gray-900">About this event</h2>
-              <p className="whitespace-pre-wrap text-gray-700">{event.description}</p>
+              <h2 className="mb-2 text-lg font-semibold text-gray-900">
+                About this event
+              </h2>
+              <p className="whitespace-pre-wrap text-gray-700">
+                {event.description}
+              </p>
             </div>
           )}
         </div>
 
         {/* Registration Form */}
         <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-semibold text-gray-900">Register for this event</h2>
+          <h2 className="mb-4 text-xl font-semibold text-gray-900">
+            Register for this event
+          </h2>
           <EventRegistrationForm eventId={event.id} />
         </div>
 
@@ -102,7 +111,10 @@ export default async function PublicEventPage({ params }: PublicEventPageProps) 
           <div className="mt-8 text-center text-sm text-gray-600">
             <p>
               Questions? Contact us at{" "}
-              <a href={`mailto:${event.team.email}`} className="text-blue-600 hover:underline">
+              <a
+                href={`mailto:${event.team.email}`}
+                className="text-blue-600 hover:underline"
+              >
                 {event.team.email}
               </a>
             </p>

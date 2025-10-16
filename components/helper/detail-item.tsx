@@ -22,7 +22,7 @@ function DetailItem({
             className="text-blue-600 hover:text-blue-800 font-medium underline hover:no-underline"
             target="_blank"
             rel="noopener noreferrer"
-            >
+          >
             {value}
           </Link>
         ) : (

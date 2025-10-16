@@ -1,6 +1,6 @@
-import prisma from "@/lib/prisma";
-import { ContactChangeLog, ChangeAction } from "@/types";
 import { Prisma } from "@prisma/client";
+import prisma from "@/lib/prisma";
+import { ChangeAction, ContactChangeLog } from "@/types";
 
 type ChangeLogMetadata = Prisma.JsonObject;
 
@@ -15,9 +15,13 @@ type CreateChangeLogInput = {
   metadata?: ChangeLogMetadata;
 };
 
-type ContactChangeLogWithDefaults = Prisma.ContactChangeLogGetPayload<Record<string, never>>;
+type ContactChangeLogWithDefaults = Prisma.ContactChangeLogGetPayload<
+  Record<string, never>
+>;
 
-const normalizeMetadata = (metadata: Prisma.JsonValue | null): Record<string, unknown> | undefined => {
+const normalizeMetadata = (
+  metadata: Prisma.JsonValue | null,
+): Record<string, unknown> | undefined => {
   if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
     return undefined;
   }
@@ -52,7 +56,7 @@ const getContactChangeLogs = async (contactId: string) => {
 
 const createChangeLog = async (
   input: CreateChangeLogInput,
-  tx?: Prisma.TransactionClient
+  tx?: Prisma.TransactionClient,
 ) => {
   const log = await (tx ?? prisma).contactChangeLog.create({
     data: {
@@ -76,15 +80,18 @@ const logContactCreation = async (
   userId?: string,
   userName?: string,
   tx?: Prisma.TransactionClient,
-  metadata?: ChangeLogMetadata
+  metadata?: ChangeLogMetadata,
 ) => {
-  return createChangeLog({
-    contactId,
-    action: ChangeAction.CREATED,
-    userId,
-    userName,
-    metadata,
-  }, tx);
+  return createChangeLog(
+    {
+      contactId,
+      action: ChangeAction.CREATED,
+      userId,
+      userName,
+      metadata,
+    },
+    tx,
+  );
 };
 
 // Helper function to log field updates
@@ -96,22 +103,36 @@ const logFieldUpdate = async (
   userId?: string,
   userName?: string,
   tx?: Prisma.TransactionClient,
-  metadata?: ChangeLogMetadata
+  metadata?: ChangeLogMetadata,
 ) => {
   // Convert values to strings for storage
-  const oldStr = oldValue !== undefined && oldValue !== null ? JSON.stringify(oldValue) : undefined;
-  const newStr = newValue !== undefined && newValue !== null ? JSON.stringify(newValue) : undefined;
+  const oldStr =
+    oldValue !== undefined && oldValue !== null
+      ? JSON.stringify(oldValue)
+      : undefined;
+  const newStr =
+    newValue !== undefined && newValue !== null
+      ? JSON.stringify(newValue)
+      : undefined;
 
-  return createChangeLog({
-    contactId,
-    action: ChangeAction.UPDATED,
-    fieldName,
-    oldValue: oldStr,
-    newValue: newStr,
-    userId,
-    userName,
-    metadata,
-  }, tx);
+  return createChangeLog(
+    {
+      contactId,
+      action: ChangeAction.UPDATED,
+      fieldName,
+      oldValue: oldStr,
+      newValue: newStr,
+      userId,
+      userName,
+      metadata,
+    },
+    tx,
+  );
 };
 
-export { getContactChangeLogs, createChangeLog, logContactCreation, logFieldUpdate };
+export {
+  getContactChangeLogs,
+  createChangeLog,
+  logContactCreation,
+  logFieldUpdate,
+};

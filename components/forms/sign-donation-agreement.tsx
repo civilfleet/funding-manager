@@ -1,25 +1,35 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckCircle, CreditCard, Download, Upload } from "lucide-react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import type React from "react";
 import { useState } from "react";
-
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
-import Link from "next/link";
-import { CheckCircle, CreditCard, Download, Upload } from "lucide-react";
-import { useSession } from "next-auth/react";
-import { Roles } from "@/types";
-
-import { Form } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
-import { updateDonationAgreementSchema as schema } from "@/validations/donation-agreement";
-import { FundingStatus, type DonationAgreement } from "@/types";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import FileUpload from "@/components/file-uploader";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { type DonationAgreement, FundingStatus, Roles } from "@/types";
+import { updateDonationAgreementSchema as schema } from "@/validations/donation-agreement";
 import DetailItem from "../helper/detail-item";
 
 export default function SignDonationAgreement({
@@ -40,7 +50,9 @@ export default function SignDonationAgreement({
   const approved =
     data.fundingRequest?.status === FundingStatus.FundsDisbursing ||
     data.fundingRequest?.status === FundingStatus.Completed;
-  const signaturesCompleted = data.userSignatures.every((signature) => signature?.signedAt);
+  const signaturesCompleted = data.userSignatures.every(
+    (signature) => signature?.signedAt,
+  );
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -101,17 +113,20 @@ export default function SignDonationAgreement({
   async function changeFundingRequestStatus() {
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/funding-requests/${data.fundingRequestId}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `/api/funding-requests/${data.fundingRequestId}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: FundingStatus.FundsDisbursing,
+            donationId: data.id,
+            teamId,
+          }),
         },
-        body: JSON.stringify({
-          status: FundingStatus.FundsDisbursing,
-          donationId: data.id,
-          teamId,
-        }),
-      });
+      );
       if (!response.ok) {
         throw new Error("Failed to update funding request status");
       }
@@ -138,30 +153,54 @@ export default function SignDonationAgreement({
     <Card className="w-full max-w-3xl ">
       <CardHeader>
         <CardTitle className="text-3xl">Sign Donation Agreement</CardTitle>
-        <CardDescription>Review and sign the donation agreement</CardDescription>
+        <CardDescription>
+          Review and sign the donation agreement
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8" id="organization-form">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-8"
+            id="organization-form"
+          >
             <div className="space-y-6">
               <div>
-                <h2 className="text-lg font-semibold mb-2">Funding Request Details</h2>
+                <h2 className="text-lg font-semibold mb-2">
+                  Funding Request Details
+                </h2>
                 <div className="grid grid-cols-2 gap-4">
-                  <DetailItem label="Funding Request Name" value={data.fundingRequest?.name} />
-                  <DetailItem label="Purpose" value={data.fundingRequest?.purpose} />
+                  <DetailItem
+                    label="Funding Request Name"
+                    value={data.fundingRequest?.name}
+                  />
+                  <DetailItem
+                    label="Purpose"
+                    value={data.fundingRequest?.purpose}
+                  />
                 </div>
               </div>
 
               <Separator />
 
               <div>
-                <h2 className="text-lg font-semibold mb-2">Agreement Details</h2>
+                <h2 className="text-lg font-semibold mb-2">
+                  Agreement Details
+                </h2>
                 <div className="bg-muted p-4 rounded-md">
-                  <p className="text-sm whitespace-pre-wrap">{data.agreement}</p>
+                  <p className="text-sm whitespace-pre-wrap">
+                    {data.agreement}
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-4">
-                  <DetailItem label="Created At" value={new Date(data.createdAt).toLocaleString()} />
-                  <DetailItem label="Updated At" value={new Date(data.updatedAt).toLocaleString()} />
+                  <DetailItem
+                    label="Created At"
+                    value={new Date(data.createdAt).toLocaleString()}
+                  />
+                  <DetailItem
+                    label="Updated At"
+                    value={new Date(data.updatedAt).toLocaleString()}
+                  />
                 </div>
               </div>
 
@@ -171,7 +210,11 @@ export default function SignDonationAgreement({
                 <h2 className="text-lg font-semibold mb-2">Created By</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <DetailItem label="Name" value={data.createdBy?.name} />
-                  <DetailItem label="Email" value={data.createdBy?.email} type="email" />
+                  <DetailItem
+                    label="Email"
+                    value={data.createdBy?.email}
+                    type="email"
+                  />
                 </div>
               </div>
 
@@ -186,7 +229,7 @@ export default function SignDonationAgreement({
                   <Button asChild variant="outline" size="sm">
                     <Link
                       href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${data.file?.id}`}
-                      >
+                    >
                       <Download className="mr-2 h-4 w-4" />
                       Download Agreement
                     </Link>
@@ -201,30 +244,46 @@ export default function SignDonationAgreement({
                 {data.userSignatures.length > 0 ? (
                   <div className="space-y-2">
                     {data.userSignatures.map((signature, index) => (
-                      <div key={index} className="flex items-center justify-between bg-muted p-2 rounded-md">
-                        <span className="text-sm font-medium">{signature.user?.email}</span>
+                      <div
+                        key={index}
+                        className="flex items-center justify-between bg-muted p-2 rounded-md"
+                      >
+                        <span className="text-sm font-medium">
+                          {signature.user?.email}
+                        </span>
                         {signature.signedAt && (
                           <div className="flex items-center text-green-600">
                             <CheckCircle className="w-4 h-4 mr-1" />
-                            <span className="text-xs">{new Date(signature.signedAt).toLocaleString()}</span>
+                            <span className="text-xs">
+                              {new Date(signature.signedAt).toLocaleString()}
+                            </span>
                           </div>
                         )}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No signatures yet.</p>
+                  <p className="text-sm text-muted-foreground">
+                    No signatures yet.
+                  </p>
                 )}
               </div>
 
               <Separator />
               {!signaturesCompleted && (
                 <div>
-                  <h2 className="text-lg font-semibold mb-2">Upload Signed Agreement</h2>
+                  <h2 className="text-lg font-semibold mb-2">
+                    Upload Signed Agreement
+                  </h2>
                   {isAdmin && (
                     <div className="mb-4">
-                      <label className="text-sm font-medium mb-2 block">Sign on behalf of:</label>
-                      <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                      <label className="text-sm font-medium mb-2 block">
+                        Sign on behalf of:
+                      </label>
+                      <Select
+                        value={selectedUserId}
+                        onValueChange={setSelectedUserId}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select user to sign for" />
                         </SelectTrigger>
@@ -257,14 +316,25 @@ export default function SignDonationAgreement({
       </CardContent>
       <CardFooter>
         {!signaturesCompleted && (
-          <Button type="submit" form="organization-form" disabled={isSubmitting || (isAdmin && !selectedUserId)}>
+          <Button
+            type="submit"
+            form="organization-form"
+            disabled={isSubmitting || (isAdmin && !selectedUserId)}
+          >
             <Upload className="mr-2 h-4 w-4" />
-            {isAdmin ? "Submit Signed Agreement on Behalf of User" : "Submit Signed Agreement"}
+            {isAdmin
+              ? "Submit Signed Agreement on Behalf of User"
+              : "Submit Signed Agreement"}
           </Button>
         )}
 
         {signaturesCompleted && teamId && (
-          <Button type="button" className="m-2" disabled={approved} onClick={changeFundingRequestStatus}>
+          <Button
+            type="button"
+            className="m-2"
+            disabled={approved}
+            onClick={changeFundingRequestStatus}
+          >
             <CreditCard className="mr-2 h-5 w-5" />
             {!approved ? "Disburse Funds" : "Funds Disbursed"}
           </Button>

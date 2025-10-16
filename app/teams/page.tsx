@@ -1,7 +1,7 @@
-import {auth} from "auth";
-import {Roles} from "@/types";
-import {getAdminUser, getUserCurrent} from "@/services/users";
-import {redirect} from "next/navigation";
+import { auth } from "auth";
+import { redirect } from "next/navigation";
+import { getAdminUser, getUserCurrent } from "@/services/users";
+import { Roles } from "@/types";
 
 export default async function TeamsPage() {
   let data;
@@ -12,7 +12,7 @@ export default async function TeamsPage() {
     data = await getUserCurrent(session?.user?.userId as string);
   }
 
-  const {teams = []} = data || {};
+  const { teams = [] } = data || {};
 
   if (teams?.length > 0) {
     return redirect(`/teams/${teams?.[0]?.id}`);
@@ -21,7 +21,9 @@ export default async function TeamsPage() {
   return (
     <div className="p-4 w-full">
       <div className="flex justify-between">
-        <h1 className="text-2xl  my-2">Welcome to your Teams Page, please select a menu entry.</h1>
+        <h1 className="text-2xl  my-2">
+          Welcome to your Teams Page, please select a menu entry.
+        </h1>
       </div>
     </div>
   );

@@ -1,5 +1,8 @@
 import { ColumnDef } from "@tanstack/react-table";
+import { truncate } from "lodash";
 import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
+import { DonationAgreementStatusBadge } from "@/components/helper/status-badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,9 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DonationAgreement } from "@/types";
-import { truncate } from "lodash";
-import Link from "next/link";
-import { DonationAgreementStatusBadge } from "@/components/helper/status-badge";
 
 export const columns: ColumnDef<DonationAgreement>[] = [
   {
@@ -58,7 +58,9 @@ export const columns: ColumnDef<DonationAgreement>[] = [
 
       return (
         <div className="text-left">
-          <DonationAgreementStatusBadge status={signed ? "completed" : "pending"} />
+          <DonationAgreementStatusBadge
+            status={signed ? "completed" : "pending"}
+          />
         </div>
       );
     },
@@ -66,14 +68,18 @@ export const columns: ColumnDef<DonationAgreement>[] = [
   {
     accessorKey: "createdBy",
     header: () => <div className="text-left w-36">Created By</div>,
-    cell: ({ row }) => <div className="text-left">{row.original?.createdBy.email || "N/A"}</div>,
+    cell: ({ row }) => (
+      <div className="text-left">{row.original?.createdBy.email || "N/A"}</div>
+    ),
   },
   {
     accessorKey: "createdAt",
     header: () => <div className="text-left w-36">Created At</div>,
     cell: ({ row }) => (
       <div className="text-left">
-        {row.original?.createdAt ? new Date(row.original.createdAt).toLocaleString() : "N/A"}
+        {row.original?.createdAt
+          ? new Date(row.original.createdAt).toLocaleString()
+          : "N/A"}
       </div>
     ),
   },

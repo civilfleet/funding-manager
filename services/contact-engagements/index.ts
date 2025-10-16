@@ -1,6 +1,11 @@
-import prisma from "@/lib/prisma";
-import { ContactEngagement, EngagementDirection, EngagementSource, TodoStatus } from "@/types";
 import { Prisma } from "@prisma/client";
+import prisma from "@/lib/prisma";
+import {
+  ContactEngagement,
+  EngagementDirection,
+  EngagementSource,
+  TodoStatus,
+} from "@/types";
 
 type CreateEngagementInput = {
   contactId: string;
@@ -29,9 +34,13 @@ type UpdateEngagementInput = {
   dueDate?: Date;
 };
 
-type ContactEngagementWithDefaults = Prisma.ContactEngagementGetPayload<Record<string, never>>;
+type ContactEngagementWithDefaults = Prisma.ContactEngagementGetPayload<
+  Record<string, never>
+>;
 
-const mapEngagement = (engagement: ContactEngagementWithDefaults): ContactEngagement => ({
+const mapEngagement = (
+  engagement: ContactEngagementWithDefaults,
+): ContactEngagement => ({
   id: engagement.id,
   contactId: engagement.contactId,
   teamId: engagement.teamId,
@@ -43,7 +52,9 @@ const mapEngagement = (engagement: ContactEngagementWithDefaults): ContactEngage
   userName: engagement.userName ?? undefined,
   assignedToUserId: engagement.assignedToUserId ?? undefined,
   assignedToUserName: engagement.assignedToUserName ?? undefined,
-  todoStatus: engagement.todoStatus ? (engagement.todoStatus as TodoStatus) : undefined,
+  todoStatus: engagement.todoStatus
+    ? (engagement.todoStatus as TodoStatus)
+    : undefined,
   dueDate: engagement.dueDate ?? undefined,
   engagedAt: engagement.engagedAt,
   createdAt: engagement.createdAt,
@@ -109,4 +120,9 @@ const deleteEngagement = async (id: string, teamId: string) => {
   });
 };
 
-export { getContactEngagements, createEngagement, updateEngagement, deleteEngagement };
+export {
+  getContactEngagements,
+  createEngagement,
+  updateEngagement,
+  deleteEngagement,
+};

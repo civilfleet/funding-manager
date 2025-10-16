@@ -1,19 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
-
-import { Button } from "@/components/ui/button";
-import { Clock, AlertTriangle, CheckCircle2, FileText } from "lucide-react";
-
-import { StatusBadge } from "@/components/helper/status-badge";
+import { AlertTriangle, CheckCircle2, Clock, FileText } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import FundingRequestDetailsForm from "@/components/forms/funding-request-detail-form";
-import formatCurrency from "@/components/helper/format-currency";
-
-import { FundingStatus, type FundingRequest } from "@/types";
 import CreateTransaction from "@/components/forms/modal/create-transaction";
+import formatCurrency from "@/components/helper/format-currency";
+import { StatusBadge } from "@/components/helper/status-badge";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { type FundingRequest, FundingStatus } from "@/types";
 
 interface FundingRequestHeaderProps {
   data: FundingRequest;
@@ -23,17 +20,28 @@ interface FundingRequestHeaderProps {
   refreshData: () => void;
 }
 
-export default function FundingRequestHeader({ data, isTeam, refreshData }: FundingRequestHeaderProps) {
+export default function FundingRequestHeader({
+  data,
+  isTeam,
+  refreshData,
+}: FundingRequestHeaderProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isRejecting, setIsRejecting] = useState(false);
   const [isTransferring, setIsTransferring] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState<FundingStatus>(data?.status);
+  const [currentStatus, setCurrentStatus] = useState<FundingStatus>(
+    data?.status,
+  );
 
   const teamId = data?.organization?.teamId;
   const organizationId = data?.organization?.id;
   const showRejectButton =
-    isTeam && ![FundingStatus.Completed, FundingStatus.Rejected, FundingStatus.Approved].includes(currentStatus);
+    isTeam &&
+    ![
+      FundingStatus.Completed,
+      FundingStatus.Rejected,
+      FundingStatus.Approved,
+    ].includes(currentStatus);
 
   const statusColors = {
     Submitted: "bg-amber-50 border-amber-200",
@@ -46,7 +54,8 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
     default: "bg-gray-50 border-gray-200",
   };
 
-  const getStatusColor = () => statusColors[currentStatus] || statusColors.default;
+  const getStatusColor = () =>
+    statusColors[currentStatus] || statusColors.default;
 
   async function updateStatus(newStatus: FundingStatus) {
     const isRejecting = newStatus === FundingStatus.Rejected;
@@ -65,7 +74,8 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
         }),
       });
 
-      if (!response.ok) throw new Error(`Failed to update status to ${newStatus}`);
+      if (!response.ok)
+        throw new Error(`Failed to update status to ${newStatus}`);
 
       const { data: updatedData } = await response.json();
       setCurrentStatus(updatedData.status);
@@ -79,7 +89,10 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
     } catch (e) {
       toast({
         title: "Error",
-        description: e instanceof Error ? e.message : "An error occurred while updating the status",
+        description:
+          e instanceof Error
+            ? e.message
+            : "An error occurred while updating the status",
         variant: "destructive",
       });
     } finally {
@@ -89,12 +102,16 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
   }
 
   return (
-    <div className={`shadow-lg ${getStatusColor()} rounded-xl p-8 mb-8 dark:bg-gray-900`}>
+    <div
+      className={`shadow-lg ${getStatusColor()} rounded-xl p-8 mb-8 dark:bg-gray-900`}
+    >
       <div className="space-y-8">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight">Funding Request</h1>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Funding Request
+              </h1>
               <StatusBadge status={currentStatus} />
             </div>
             <p className="text-muted-foreground flex items-center gap-2">
@@ -105,9 +122,13 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
 
           {currentStatus !== "Submitted" && currentStatus !== "Rejected" && (
             <div className="w-full lg:w-auto p-4 bg-muted/10 rounded-lg border border-muted/20">
-              <p className="text-sm font-medium text-muted-foreground">Agreed Amount</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                Agreed Amount
+              </p>
               <p className="text-2xl font-bold text-primary mt-1">
-                {data.amountAgreed ? formatCurrency(data.amountAgreed) : "Not Set"}
+                {data.amountAgreed
+                  ? formatCurrency(data.amountAgreed)
+                  : "Not Set"}
               </p>
             </div>
           )}
@@ -116,7 +137,11 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
         <div className="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
           {currentStatus === "Submitted" && (
             <div className="w-full lg:w-1/2">
-              <FundingRequestDetailsForm fundingRequest={data} isTeam={isTeam} refreshData={refreshData} />
+              <FundingRequestDetailsForm
+                fundingRequest={data}
+                isTeam={isTeam}
+                refreshData={refreshData}
+              />
             </div>
           )}
 
@@ -163,29 +188,38 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
               </Button>
             )}
 
-            {currentStatus === FundingStatus.Accepted && !data?.donationAgreement?.[0]?.id && isTeam && (
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/teams/${teamId}/donation-agreements/create?fundingRequestId=${data.id}`)}
-                className="w-full sm:w-auto"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Create Donation Agreement
-              </Button>
-            )}
+            {currentStatus === FundingStatus.Accepted &&
+              !data?.donationAgreement?.[0]?.id &&
+              isTeam && (
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    router.push(
+                      `/teams/${teamId}/donation-agreements/create?fundingRequestId=${data.id}`,
+                    )
+                  }
+                  className="w-full sm:w-auto"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Create Donation Agreement
+                </Button>
+              )}
 
             {data?.donationAgreement?.[0]?.id && (
               <Button
                 variant="default"
                 className="w-full sm:w-auto"
                 onClick={() => {
-                  const isOrgPath = window.location.pathname.includes("/organizations/");
+                  const isOrgPath =
+                    window.location.pathname.includes("/organizations/");
                   if (isOrgPath) {
                     router.push(
-                      `/organizations/${organizationId}/donation-agreements/${data?.donationAgreement?.[0]?.id}`
+                      `/organizations/${organizationId}/donation-agreements/${data?.donationAgreement?.[0]?.id}`,
                     );
                   } else {
-                    router.push(`/teams/${teamId}/donation-agreements/${data?.donationAgreement?.[0]?.id}`);
+                    router.push(
+                      `/teams/${teamId}/donation-agreements/${data?.donationAgreement?.[0]?.id}`,
+                    );
                   }
                 }}
               >
@@ -194,7 +228,10 @@ export default function FundingRequestHeader({ data, isTeam, refreshData }: Fund
               </Button>
             )}
             {currentStatus === FundingStatus.FundsDisbursing && isTeam && (
-              <CreateTransaction fundingRequest={data} refreshData={refreshData} />
+              <CreateTransaction
+                fundingRequest={data}
+                refreshData={refreshData}
+              />
             )}
           </div>
         </div>

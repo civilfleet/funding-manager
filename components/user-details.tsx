@@ -52,16 +52,28 @@ export default function UserDetails({ userId }: { userId: string }) {
       {user && (
         <div className="p-8">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">User Profile</h2>
-            <p className="text-gray-500">View and manage the details of this user.</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              User Profile
+            </h2>
+            <p className="text-gray-500">
+              View and manage the details of this user.
+            </p>
           </div>
           <div className="space-y-6">
             {/* Main Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <DetailItem label="User" value={user.name} />
-                <DetailItem label="Email Address" value={user.email} type="email" />
-                <DetailItem label="Phone Number" value={user.phone} type="phone" />
+                <DetailItem
+                  label="Email Address"
+                  value={user.email}
+                  type="email"
+                />
+                <DetailItem
+                  label="Phone Number"
+                  value={user.phone}
+                  type="phone"
+                />
               </div>
 
               <div className="space-y-4">

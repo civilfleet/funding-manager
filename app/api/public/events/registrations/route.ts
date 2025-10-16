@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
+import { handlePrismaError } from "@/lib/utils";
 import { createEventRegistration } from "@/services/events";
 import { createEventRegistrationSchema } from "@/validations/events";
-import { handlePrismaError } from "@/lib/utils";
 
 export async function POST(req: Request) {
   try {
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const { message } = handlePrismaError(e);
     return NextResponse.json(
       { error: message },
-      { status: 400, statusText: message }
+      { status: 400, statusText: message },
     );
   }
 }

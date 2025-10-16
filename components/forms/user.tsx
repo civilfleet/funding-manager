@@ -1,21 +1,41 @@
 "use client";
 
-import { z } from "zod";
-import { toast } from "@/hooks/use-toast";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createUserSchema } from "@/validations/organizations";
-import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-export default function UserForm({ teamId, organizationId }: { teamId: string; organizationId: string }) {
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "@/hooks/use-toast";
+import { createUserSchema } from "@/validations/organizations";
+
+export default function UserForm({
+  teamId,
+  organizationId,
+}: {
+  teamId: string;
+  organizationId: string;
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const form = useForm<z.infer<typeof createUserSchema>>({
@@ -61,7 +81,10 @@ export default function UserForm({ teamId, organizationId }: { teamId: string; o
     } catch (error) {
       toast({
         title: "Error creating user",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
@@ -73,7 +96,10 @@ export default function UserForm({ teamId, organizationId }: { teamId: string; o
     <Card className="w-full shadow-xs">
       <CardHeader className="border-b pb-3">
         <CardTitle className="text-xl font-semibold">Add Team Member</CardTitle>
-        <CardDescription>Enter the details of the new team member you want to add to your organization</CardDescription>
+        <CardDescription>
+          Enter the details of the new team member you want to add to your
+          organization
+        </CardDescription>
       </CardHeader>
 
       <Form {...form}>
@@ -81,7 +107,9 @@ export default function UserForm({ teamId, organizationId }: { teamId: string; o
           <CardContent className="pt-6">
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">Personal Information</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                  Personal Information
+                </h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -90,7 +118,11 @@ export default function UserForm({ teamId, organizationId }: { teamId: string; o
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="John Doe" {...field} value={field.value || ""} />
+                          <Input
+                            placeholder="John Doe"
+                            {...field}
+                            value={field.value || ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -104,7 +136,12 @@ export default function UserForm({ teamId, organizationId }: { teamId: string; o
                       <FormItem>
                         <FormLabel>Email Address</FormLabel>
                         <FormControl>
-                          <Input placeholder="john.doe@example.com" type="email" {...field} value={field.value || ""} />
+                          <Input
+                            placeholder="john.doe@example.com"
+                            type="email"
+                            {...field}
+                            value={field.value || ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -118,7 +155,11 @@ export default function UserForm({ teamId, organizationId }: { teamId: string; o
                       <FormItem>
                         <FormLabel>Phone Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="+1 (555) 123-4567" {...field} value={field.value || ""} />
+                          <Input
+                            placeholder="+1 (555) 123-4567"
+                            {...field}
+                            value={field.value || ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

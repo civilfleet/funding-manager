@@ -1,4 +1,16 @@
-import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users, Settings, UserCircle2, Calendar, UsersRound, type LucideIcon } from "lucide-react";
+import {
+  BookOpen,
+  BookUser,
+  Building,
+  Calendar,
+  FolderOpen,
+  type LucideIcon,
+  Scroll,
+  Settings,
+  UserCircle2,
+  Users,
+  UsersRound,
+} from "lucide-react";
 import { AppModule } from "@/types";
 
 type NavItemBase = {

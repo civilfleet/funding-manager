@@ -1,9 +1,9 @@
 import { GalleryVerticalEnd } from "lucide-react";
-import { LoginForm } from "@/components/login-form";
-import { auth } from "@/auth";
-import { Roles } from "@/types";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { LoginForm } from "@/components/login-form";
 import { getUserCurrent } from "@/services/users";
+import { Roles } from "@/types";
 
 export default async function LoginPage() {
   const session = await auth();
@@ -14,7 +14,9 @@ export default async function LoginPage() {
     } else if (session.user.roles?.includes(Roles.Organization)) {
       const userData = await getUserCurrent(session.user.userId);
       if (userData?.organizations && userData.organizations.length > 0) {
-        return redirect(`/organizations/${userData.organizations[0].id}/profile`);
+        return redirect(
+          `/organizations/${userData.organizations[0].id}/profile`,
+        );
       }
       return redirect("/organizations");
     } else if (session.user.roles?.includes(Roles.Team)) {

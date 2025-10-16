@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
-
-import { getFileById } from "@/services/file";
-import s3Client from "@/lib/s3-client";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { NextResponse } from "next/server";
+import s3Client from "@/lib/s3-client";
 import { handlePrismaError } from "@/lib/utils";
+import { getFileById } from "@/services/file";
 
 export async function GET(
   _req: Request,
@@ -11,7 +10,7 @@ export async function GET(
     params,
   }: {
     params: Promise<{ id: string }>;
-  }
+  },
 ) {
   try {
     const fileId = (await params).id;

@@ -2,12 +2,12 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Check, Copy } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Copy, Check } from "lucide-react";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export type EventRow = {
   id: string;
@@ -79,7 +79,11 @@ const renderContacts = (contacts: EventRow["contacts"] = []) => {
                   key={role.id}
                   variant="outline"
                   className="text-[10px] px-1 py-0"
-                  style={role.color ? { borderColor: role.color, color: role.color } : {}}
+                  style={
+                    role.color
+                      ? { borderColor: role.color, color: role.color }
+                      : {}
+                  }
                 >
                   {role.name}
                 </Badge>
@@ -102,7 +106,10 @@ const EventTitleCell = ({ event }: { event: EventRow }) => {
   const teamId = params.teamId as string;
 
   return (
-    <Link href={`/teams/${teamId}/events/${event.id}`} className="font-medium hover:underline">
+    <Link
+      href={`/teams/${teamId}/events/${event.id}`}
+      className="font-medium hover:underline"
+    >
       {event.title}
     </Link>
   );
@@ -257,7 +264,9 @@ export const renderEventCard = (event: EventRow) => {
           )}
         </div>
         {event.description && (
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{event.description}</p>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+            {event.description}
+          </p>
         )}
       </div>
 
@@ -268,18 +277,22 @@ export const renderEventCard = (event: EventRow) => {
           </p>
         )}
         <p className="text-muted-foreground">
-          <span className="font-medium">Start:</span> {formatDateTime(event.startDate)}
+          <span className="font-medium">Start:</span>{" "}
+          {formatDateTime(event.startDate)}
         </p>
         {event.endDate && (
           <p className="text-muted-foreground">
-            <span className="font-medium">End:</span> {formatDateTime(event.endDate)}
+            <span className="font-medium">End:</span>{" "}
+            {formatDateTime(event.endDate)}
           </p>
         )}
       </div>
 
       {event.contacts.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">Contacts</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wide">
+            Contacts
+          </p>
           {renderContacts(event.contacts)}
         </div>
       )}

@@ -1,6 +1,10 @@
 import UserForm from "@/components/forms/user";
 
-export default async function Page({ params }: { params: Promise<{ organizationId: string }> }) {
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ organizationId: string }>;
+}) {
   const organizationId = (await params).organizationId;
 
   return (

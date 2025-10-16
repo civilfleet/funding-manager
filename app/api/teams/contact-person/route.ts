@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getTeamsUsers } from "@/services/users";
 import { auth } from "@/auth";
 import { handlePrismaError } from "@/lib/utils";
+import { getTeamsUsers } from "@/services/users";
 
 export async function GET() {
   try {
@@ -12,13 +12,13 @@ export async function GET() {
       {
         data: response,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const { message } = handlePrismaError(e);
     return NextResponse.json(
       { error: message },
-      { status: 400, statusText: message }
+      { status: 400, statusText: message },
     );
   }
 }

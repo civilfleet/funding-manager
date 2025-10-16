@@ -40,7 +40,8 @@ async function populateDefaultFormConfiguration() {
             {
               key: "name",
               label: "Project Name",
-              description: "Provide a clear, concise name for your funding request",
+              description:
+                "Provide a clear, concise name for your funding request",
               type: "TEXT",
               placeholder: "Enter the name of your project",
               isRequired: true,
@@ -84,7 +85,8 @@ async function populateDefaultFormConfiguration() {
             {
               key: "description",
               label: "Project Description",
-              description: "Explain what your project is about and why it matters",
+              description:
+                "Explain what your project is about and why it matters",
               type: "TEXTAREA",
               placeholder: "Provide a detailed description of your project",
               isRequired: true,
@@ -121,7 +123,8 @@ async function populateDefaultFormConfiguration() {
             {
               key: "refinancingConcept",
               label: "Refinancing Concept",
-              description: "Detail how the project will be financially sustainable after initial funding",
+              description:
+                "Detail how the project will be financially sustainable after initial funding",
               type: "TEXTAREA",
               placeholder: "Explain your refinancing strategy",
               isRequired: true,
@@ -132,9 +135,11 @@ async function populateDefaultFormConfiguration() {
             {
               key: "sustainability",
               label: "Sustainability Plan",
-              description: "Outline the long-term viability and impact of your project",
+              description:
+                "Outline the long-term viability and impact of your project",
               type: "TEXTAREA",
-              placeholder: "Describe how your project will be sustainable in the long term",
+              placeholder:
+                "Describe how your project will be sustainable in the long term",
               isRequired: true,
               order: 2,
               minLength: 10,

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
+import { handlePrismaError } from "@/lib/utils";
 import {
+  deleteOrganization,
   getOrganizationById,
   updateOrganization,
-  deleteOrganization,
 } from "@/services/organizations";
-import { handlePrismaError } from "@/lib/utils";
 
 export async function GET(
   req: Request,
@@ -12,7 +12,7 @@ export async function GET(
     params,
   }: {
     params: Promise<{ id: string }>;
-  }
+  },
 ) {
   try {
     const organizationId = (await params).id;
@@ -34,7 +34,7 @@ export async function PUT(
     params,
   }: {
     params: Promise<{ id: string }>;
-  }
+  },
 ) {
   try {
     const organizationId = (await params).id;
@@ -45,7 +45,7 @@ export async function PUT(
     const organizationData = await req.json();
     const updatedOrganization = await updateOrganization(
       organizationData,
-      organizationId
+      organizationId,
     );
 
     return NextResponse.json({ data: updatedOrganization }, { status: 200 });
@@ -61,7 +61,7 @@ export async function DELETE(
     params,
   }: {
     params: Promise<{ id: string }>;
-  }
+  },
 ) {
   try {
     const organizationId = (await params).id;
@@ -70,7 +70,10 @@ export async function DELETE(
     }
 
     await deleteOrganization(organizationId);
-    return NextResponse.json({ message: "Organization deleted successfully" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Organization deleted successfully" },
+      { status: 200 },
+    );
   } catch (e) {
     const { message } = handlePrismaError(e);
     return NextResponse.json({ error: message }, { status: 400 });

@@ -1,8 +1,7 @@
 import Link from "next/link";
-
+import { auth } from "@/auth";
 import EventTable from "@/components/table/event-table";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/auth";
 import { assertTeamModuleAccess } from "@/lib/permissions";
 import { AppModule } from "@/types";
 
@@ -20,7 +19,7 @@ export default async function EventsPage({ params }: EventsPageProps) {
       userId: session?.user?.userId,
       roles: session?.user?.roles,
     },
-    "CRM" satisfies AppModule
+    "CRM" satisfies AppModule,
   );
 
   return (

@@ -1,8 +1,8 @@
-import prisma from "@/lib/prisma";
-import { Roles } from "@/types";
-import { ensureDefaultGroup } from "@/services/groups";
-import { CreateTeamInput } from "@/validations/team";
 import _, { update } from "lodash";
+import prisma from "@/lib/prisma";
+import { ensureDefaultGroup } from "@/services/groups";
+import { Roles } from "@/types";
+import { CreateTeamInput } from "@/validations/team";
 
 const getTeamsByRoles = async (roles: string[] | null) => {
   return prisma.teams.findMany({

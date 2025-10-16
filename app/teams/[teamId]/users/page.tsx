@@ -1,6 +1,6 @@
+import Link from "next/link";
 import UserTable from "@/components/table/user-table";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 interface PageProps {
   params: Promise<{

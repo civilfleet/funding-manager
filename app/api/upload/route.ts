@@ -1,6 +1,6 @@
+import { NextResponse } from "next/server";
 import { handlePrismaError } from "@/lib/utils";
 import { uploadFile } from "@/services/file/s3-service";
-import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   const values = await req.json();
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       },
       {
         status: 200,
-      }
+      },
     );
   } catch (error) {
     const { message } = handlePrismaError(error);

@@ -1,15 +1,14 @@
 "use client";
 
-import { ReactNode, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { z } from "zod";
-import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Copy, ExternalLink, Loader2, Plus, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ReactNode, useEffect, useMemo, useState } from "react";
+import { type Resolver, useForm } from "react-hook-form";
 import useSWR from "swr";
-
-import { createEventSchema, updateEventSchema } from "@/validations/events";
-import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 import {
   Card,
@@ -19,13 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -34,7 +27,25 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import { generateSlug } from "@/lib/slug";
+import { createEventSchema, updateEventSchema } from "@/validations/events";
 
 type CreateEventFormValues = z.infer<typeof createEventSchema>;
 type UpdateEventFormValues = z.infer<typeof updateEventSchema>;
@@ -96,14 +107,18 @@ export default function EventForm({
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [publicBaseUrl, setPublicBaseUrl] = useState(initialPublicBaseUrl);
-  const [contactRoles, setContactRoles] = useState<Record<string, string[]>>(() => {
-    const roles: Record<string, string[]> = {};
-    event?.contacts.forEach((c) => {
-      roles[c.id] = c.roles.map((r) => r.id);
-    });
-    return roles;
-  });
-  const [contactLookup, setContactLookup] = useState<Record<string, ContactSummary>>(() => {
+  const [contactRoles, setContactRoles] = useState<Record<string, string[]>>(
+    () => {
+      const roles: Record<string, string[]> = {};
+      event?.contacts.forEach((c) => {
+        roles[c.id] = c.roles.map((r) => r.id);
+      });
+      return roles;
+    },
+  );
+  const [contactLookup, setContactLookup] = useState<
+    Record<string, ContactSummary>
+  >(() => {
     const initial: Record<string, ContactSummary> = {};
     event?.contacts.forEach((c) => {
       initial[c.id] = {
@@ -121,14 +136,20 @@ export default function EventForm({
 
   const isEditMode = !!event;
 
-  const { data: rolesData } = useSWR(`/api/event-roles?teamId=${teamId}`, fetcher);
+  const { data: rolesData } = useSWR(
+    `/api/event-roles?teamId=${teamId}`,
+    fetcher,
+  );
   const availableRoles = rolesData?.data || [];
 
   type FormValues = CreateEventFormValues | UpdateEventFormValues;
 
   const formResolver = useMemo<Resolver<FormValues>>(
-    () => zodResolver(isEditMode ? updateEventSchema : createEventSchema) as Resolver<FormValues>,
-    [isEditMode]
+    () =>
+      zodResolver(
+        isEditMode ? updateEventSchema : createEventSchema,
+      ) as Resolver<FormValues>,
+    [isEditMode],
   );
 
   const form = useForm<FormValues>({
@@ -210,29 +231,32 @@ export default function EventForm({
     }
   }, [contactSearchOpen]);
 
-  const shouldSearchContacts = contactSearchOpen && debouncedContactSearch.length >= 2;
+  const shouldSearchContacts =
+    contactSearchOpen && debouncedContactSearch.length >= 2;
 
-  const {
-    data: contactSearchData,
-    isLoading: isContactSearchLoading,
-  } = useSWR(
+  const { data: contactSearchData, isLoading: isContactSearchLoading } = useSWR(
     shouldSearchContacts
       ? `/api/contacts?teamId=${teamId}&query=${encodeURIComponent(debouncedContactSearch)}`
       : null,
-    fetcher
+    fetcher,
   );
 
   const contactSearchResults: ContactSummary[] = useMemo(
     () =>
       (contactSearchData?.data ?? []).map(
-        (contact: { id: string; name: string; email?: string | null; phone?: string | null }) => ({
+        (contact: {
+          id: string;
+          name: string;
+          email?: string | null;
+          phone?: string | null;
+        }) => ({
           id: contact.id,
           name: contact.name,
           email: contact.email ?? undefined,
           phone: contact.phone ?? undefined,
-        })
+        }),
       ),
-    [contactSearchData]
+    [contactSearchData],
   );
 
   useEffect(() => {
@@ -250,18 +274,23 @@ export default function EventForm({
   }, [contactSearchResults]);
 
   const { control, watch, setValue, formState } = form;
-  const typedControl = control as unknown as import("react-hook-form").Control<FormValues>;
+  const typedControl =
+    control as unknown as import("react-hook-form").Control<FormValues>;
   const selectedContacts = watch("contacts") || [];
   const titleValue = watch("title") || "";
   const slugValue = watch("slug") || "";
-  const normalizedSlug = useMemo(() => (slugValue ? generateSlug(slugValue) : ""), [slugValue]);
+  const normalizedSlug = useMemo(
+    () => (slugValue ? generateSlug(slugValue) : ""),
+    [slugValue],
+  );
   const isPublicValue = watch("isPublic");
 
   const slugSuggestion = useMemo(() => generateSlug(titleValue), [titleValue]);
   const slugDirty = Boolean(formState.dirtyFields.slug);
-  const publicRegistrationUrl = publicBaseUrl && normalizedSlug
-    ? `${publicBaseUrl}/public/${teamId}/events/${normalizedSlug}`
-    : "";
+  const publicRegistrationUrl =
+    publicBaseUrl && normalizedSlug
+      ? `${publicBaseUrl}/public/${teamId}/events/${normalizedSlug}`
+      : "";
 
   // Debug form errors
   useEffect(() => {
@@ -312,15 +341,23 @@ export default function EventForm({
       [contact.id]: prev[contact.id] || [],
     }));
 
-    setValue("contacts", updatedContacts, { shouldDirty: true, shouldTouch: true });
+    setValue("contacts", updatedContacts, {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
     setContactSearchTerm("");
     setDebouncedContactSearch("");
     setContactSearchOpen(false);
   };
 
   const handleRemoveContact = (contactId: string) => {
-    const updatedContacts = (selectedContacts || []).filter((c) => c.contactId !== contactId);
-    setValue("contacts", updatedContacts, { shouldDirty: true, shouldTouch: true });
+    const updatedContacts = (selectedContacts || []).filter(
+      (c) => c.contactId !== contactId,
+    );
+    setValue("contacts", updatedContacts, {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
 
     setContactRoles((prev) => {
       const next = { ...prev };
@@ -335,7 +372,10 @@ export default function EventForm({
     }
 
     form.clearErrors("slug");
-    form.setValue("slug", slugSuggestion, { shouldDirty: true, shouldValidate: true });
+    form.setValue("slug", slugSuggestion, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
 
   const handleCopyPublicLink = async () => {
@@ -346,7 +386,8 @@ export default function EventForm({
     if (typeof navigator === "undefined" || !navigator.clipboard) {
       toast({
         title: "Clipboard unavailable",
-        description: "Your browser does not allow copying automatically. Copy the link manually.",
+        description:
+          "Your browser does not allow copying automatically. Copy the link manually.",
         variant: "destructive",
       });
       return;
@@ -379,12 +420,14 @@ export default function EventForm({
     // Update the form value
     const currentContacts = selectedContacts || [];
     const newContacts = currentContacts.map((c) =>
-      c.contactId === contactId ? { ...c, roleIds: newRoles } : c
+      c.contactId === contactId ? { ...c, roleIds: newRoles } : c,
     );
     setValue("contacts", newContacts, { shouldDirty: true });
   };
 
-  const onSubmit = async (values: CreateEventFormValues | UpdateEventFormValues) => {
+  const onSubmit = async (
+    values: CreateEventFormValues | UpdateEventFormValues,
+  ) => {
     setIsSubmitting(true);
 
     try {
@@ -410,7 +453,10 @@ export default function EventForm({
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
         console.error("Event submission error:", errorBody);
-        throw new Error(errorBody.error || `Failed to ${isEditMode ? "update" : "create"} event`);
+        throw new Error(
+          errorBody.error ||
+            `Failed to ${isEditMode ? "update" : "create"} event`,
+        );
       }
 
       const result = await response.json();
@@ -425,9 +471,15 @@ export default function EventForm({
       router.refresh();
     } catch (error) {
       console.error("Event submission catch:", error);
-      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred.";
 
-      if (error instanceof Error && error.message.toLowerCase().includes("slug is already in use")) {
+      if (
+        error instanceof Error &&
+        error.message.toLowerCase().includes("slug is already in use")
+      ) {
         form.setError("slug", { type: "manual", message: error.message });
       }
 
@@ -450,14 +502,26 @@ export default function EventForm({
               {isEditMode ? "Edit Event" : "Add Event"}
             </CardTitle>
             <CardDescription>
-              {isEditMode ? "Update event details and linked contacts." : "Create a new event and link contacts."}
+              {isEditMode
+                ? "Update event details and linked contacts."
+                : "Create a new event and link contacts."}
             </CardDescription>
           </CardHeader>
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <input type="hidden" {...form.register("teamId")} value={teamId} />
-              {isEditMode && <input type="hidden" {...form.register("id")} value={(event?.id as string) ?? ""} />}
+              <input
+                type="hidden"
+                {...form.register("teamId")}
+                value={teamId}
+              />
+              {isEditMode && (
+                <input
+                  type="hidden"
+                  {...form.register("id")}
+                  value={(event?.id as string) ?? ""}
+                />
+              )}
 
               <CardContent className="space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -468,7 +532,11 @@ export default function EventForm({
                       <FormItem className="sm:col-span-2">
                         <FormLabel>Title *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Annual Fundraising Gala" {...field} value={field.value} />
+                          <Input
+                            placeholder="Annual Fundraising Gala"
+                            {...field}
+                            value={field.value}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -482,7 +550,11 @@ export default function EventForm({
                       <FormItem className="sm:col-span-2">
                         <FormLabel>Location</FormLabel>
                         <FormControl>
-                          <Input placeholder="Convention Center, Main Hall" {...field} value={field.value ?? ""} />
+                          <Input
+                            placeholder="Convention Center, Main Hall"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -496,7 +568,11 @@ export default function EventForm({
                       <FormItem>
                         <FormLabel>Start Date & Time *</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" {...field} value={field.value} />
+                          <Input
+                            type="datetime-local"
+                            {...field}
+                            value={field.value}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -510,7 +586,11 @@ export default function EventForm({
                       <FormItem>
                         <FormLabel>End Date & Time</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" {...field} value={field.value ?? ""} />
+                          <Input
+                            type="datetime-local"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -542,12 +622,18 @@ export default function EventForm({
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                         <FormControl>
-                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel className="cursor-pointer">Make this event public</FormLabel>
+                          <FormLabel className="cursor-pointer">
+                            Make this event public
+                          </FormLabel>
                           <p className="text-sm text-muted-foreground">
-                            Allow anyone with the link to view event details and register
+                            Allow anyone with the link to view event details and
+                            register
                           </p>
                         </div>
                       </FormItem>
@@ -560,35 +646,52 @@ export default function EventForm({
                       name="slug"
                       render={({ field }) => {
                         const showSuggestionButton = Boolean(
-                          slugSuggestion && slugSuggestion !== normalizedSlug
+                          slugSuggestion && slugSuggestion !== normalizedSlug,
                         );
 
                         return (
                           <FormItem className="sm:col-span-2">
                             <FormLabel>Public Slug</FormLabel>
-                            <FormDescription>This text becomes part of the link you share with attendees.</FormDescription>
+                            <FormDescription>
+                              This text becomes part of the link you share with
+                              attendees.
+                            </FormDescription>
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                               <FormControl>
                                 <Input
                                   {...field}
                                   className="w-full"
-                                  value={(field.value as string | undefined) ?? ""}
-                                  placeholder={slugSuggestion || "fundraising-gala"}
+                                  value={
+                                    (field.value as string | undefined) ?? ""
+                                  }
+                                  placeholder={
+                                    slugSuggestion || "fundraising-gala"
+                                  }
                                   onChange={(event) => {
                                     form.clearErrors("slug");
                                     field.onChange(event.target.value);
                                   }}
                                   onBlur={(event) => {
                                     field.onBlur();
-                                    const sanitized = generateSlug(event.target.value);
+                                    const sanitized = generateSlug(
+                                      event.target.value,
+                                    );
                                     if (sanitized !== field.value) {
-                                      form.setValue("slug", sanitized, { shouldDirty: true, shouldValidate: true });
+                                      form.setValue("slug", sanitized, {
+                                        shouldDirty: true,
+                                        shouldValidate: true,
+                                      });
                                     }
                                   }}
                                 />
                               </FormControl>
                               {showSuggestionButton && (
-                                <Button type="button" variant="outline" size="sm" onClick={handleApplySlugSuggestion}>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleApplySlugSuggestion}
+                                >
                                   Use suggestion
                                 </Button>
                               )}
@@ -620,9 +723,12 @@ export default function EventForm({
                             </svg>
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-green-900">Public Registration Link</p>
+                            <p className="text-sm font-medium text-green-900">
+                              Public Registration Link
+                            </p>
                             <p className="mt-1 break-all text-sm text-green-700">
-                              {publicRegistrationUrl || "Link will be available once the app knows your domain."}
+                              {publicRegistrationUrl ||
+                                "Link will be available once the app knows your domain."}
                             </p>
                           </div>
                         </div>
@@ -644,7 +750,11 @@ export default function EventForm({
                             size="sm"
                             onClick={() => {
                               if (publicRegistrationUrl) {
-                                window.open(publicRegistrationUrl, "_blank", "noopener,noreferrer");
+                                window.open(
+                                  publicRegistrationUrl,
+                                  "_blank",
+                                  "noopener,noreferrer",
+                                );
                               }
                             }}
                             disabled={!publicRegistrationUrl}
@@ -661,13 +771,23 @@ export default function EventForm({
               </CardContent>
 
               <CardFooter className="flex justify-end gap-2 border-t pt-4">
-                <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => router.back()}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isSubmitting}
+                  onClick={() => router.back()}
+                >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  onClick={() => console.log("Submit button clicked", { isSubmitting, errors: formState.errors })}
+                  onClick={() =>
+                    console.log("Submit button clicked", {
+                      isSubmitting,
+                      errors: formState.errors,
+                    })
+                  }
                 >
                   {isSubmitting ? (
                     <>
@@ -696,7 +816,10 @@ export default function EventForm({
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
             <div className="flex flex-wrap items-center gap-2">
-              <Popover open={contactSearchOpen} onOpenChange={setContactSearchOpen}>
+              <Popover
+                open={contactSearchOpen}
+                onOpenChange={setContactSearchOpen}
+              >
                 <PopoverTrigger asChild>
                   <Button type="button" variant="outline" size="sm">
                     <Plus className="mr-2 h-4 w-4" />
@@ -715,8 +838,8 @@ export default function EventForm({
                         {debouncedContactSearch.length < 2
                           ? "Type at least two characters to search."
                           : isContactSearchLoading
-                          ? "Searching..."
-                          : "No contacts found."}
+                            ? "Searching..."
+                            : "No contacts found."}
                       </CommandEmpty>
                       <CommandGroup heading="Contacts">
                         {contactSearchResults.map((contact) => {
@@ -724,19 +847,29 @@ export default function EventForm({
                           return (
                             <CommandItem
                               key={contact.id}
-                              value={[contact.name, contact.email, contact.phone].filter(Boolean).join(" ")}
+                              value={[
+                                contact.name,
+                                contact.email,
+                                contact.phone,
+                              ]
+                                .filter(Boolean)
+                                .join(" ")}
                               disabled={isSelected}
                               onSelect={() => handleAddContact(contact)}
                             >
                               <div className="flex flex-col">
-                                <span className="font-medium">{contact.name}</span>
+                                <span className="font-medium">
+                                  {contact.name}
+                                </span>
                                 {contact.email && (
                                   <span className="text-xs text-muted-foreground break-all">
                                     {contact.email}
                                   </span>
                                 )}
                               </div>
-                              {isSelected && <Check className="ml-auto h-4 w-4 text-green-600" />}
+                              {isSelected && (
+                                <Check className="ml-auto h-4 w-4 text-green-600" />
+                              )}
                             </CommandItem>
                           );
                         })}
@@ -752,19 +885,22 @@ export default function EventForm({
 
             {availableRoles.length === 0 && (
               <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-                No event roles configured. Visit Settings to create event roles like &quot;Partner&quot;, &quot;Musician&quot;, etc.
+                No event roles configured. Visit Settings to create event roles
+                like &quot;Partner&quot;, &quot;Musician&quot;, etc.
               </div>
             )}
 
             {selectedContacts.length === 0 ? (
               <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                No contacts linked yet. Use &quot;Add contact&quot; to search by name or email.
+                No contacts linked yet. Use &quot;Add contact&quot; to search by
+                name or email.
               </div>
             ) : (
               <div className="space-y-3">
                 {selectedContacts.map((selected) => {
                   const contact = contactLookup[selected.contactId];
-                  const selectedRoleIds = contactRoles[selected.contactId] || [];
+                  const selectedRoleIds =
+                    contactRoles[selected.contactId] || [];
 
                   return (
                     <div
@@ -777,7 +913,9 @@ export default function EventForm({
                             {contact?.name ?? "Unknown contact"}
                           </p>
                           <div className="text-sm text-muted-foreground space-y-0.5">
-                            {contact?.email && <p className="break-all">{contact.email}</p>}
+                            {contact?.email && (
+                              <p className="break-all">{contact.email}</p>
+                            )}
                             {contact?.phone && <p>{contact.phone}</p>}
                           </div>
                         </div>
@@ -785,7 +923,9 @@ export default function EventForm({
                           type="button"
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleRemoveContact(selected.contactId)}
+                          onClick={() =>
+                            handleRemoveContact(selected.contactId)
+                          }
                           aria-label="Remove contact"
                         >
                           <X className="h-4 w-4" />
@@ -797,27 +937,50 @@ export default function EventForm({
                             Roles
                           </p>
                           <div className="flex flex-wrap gap-2">
-                            {availableRoles.map((role: { id: string; name: string; color?: string }) => {
-                              const isRoleSelected = selectedRoleIds.includes(role.id);
-                              return (
-                                <Badge
-                                  key={role.id}
-                                  variant={isRoleSelected ? "default" : "outline"}
-                                  className="cursor-pointer"
-                                  style={
-                                    isRoleSelected && role.color
-                                      ? { backgroundColor: role.color, borderColor: role.color }
-                                      : role.color
-                                      ? { borderColor: role.color, color: role.color }
-                                      : {}
-                                  }
-                                  onClick={() => handleRoleToggle(selected.contactId, role.id)}
-                                >
-                                  {role.name}
-                                  {isRoleSelected && <X className="ml-1 h-3 w-3" />}
-                                </Badge>
-                              );
-                            })}
+                            {availableRoles.map(
+                              (role: {
+                                id: string;
+                                name: string;
+                                color?: string;
+                              }) => {
+                                const isRoleSelected = selectedRoleIds.includes(
+                                  role.id,
+                                );
+                                return (
+                                  <Badge
+                                    key={role.id}
+                                    variant={
+                                      isRoleSelected ? "default" : "outline"
+                                    }
+                                    className="cursor-pointer"
+                                    style={
+                                      isRoleSelected && role.color
+                                        ? {
+                                            backgroundColor: role.color,
+                                            borderColor: role.color,
+                                          }
+                                        : role.color
+                                          ? {
+                                              borderColor: role.color,
+                                              color: role.color,
+                                            }
+                                          : {}
+                                    }
+                                    onClick={() =>
+                                      handleRoleToggle(
+                                        selected.contactId,
+                                        role.id,
+                                      )
+                                    }
+                                  >
+                                    {role.name}
+                                    {isRoleSelected && (
+                                      <X className="ml-1 h-3 w-3" />
+                                    )}
+                                  </Badge>
+                                );
+                              },
+                            )}
                           </div>
                         </div>
                       )}

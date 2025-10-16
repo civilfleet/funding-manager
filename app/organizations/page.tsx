@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { Roles } from "@/types";
-import { getUserCurrent } from "@/services/users";
 import { auth } from "@/auth";
+import { getUserCurrent } from "@/services/users";
+import { Roles } from "@/types";
 
 export default async function Page() {
   const session = await auth();

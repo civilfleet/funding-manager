@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { handlePrismaError } from "@/lib/utils";
 import { z } from "zod";
-import { manageGroupUsersSchema } from "@/validations/groups";
+import { handlePrismaError } from "@/lib/utils";
 import { addUsersToGroup, removeUsersFromGroup } from "@/services/groups";
+import { manageGroupUsersSchema } from "@/validations/groups";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -20,18 +20,21 @@ export async function POST(
     if (e instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: e.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -45,11 +48,14 @@ export async function DELETE(
     if (e instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: e.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }

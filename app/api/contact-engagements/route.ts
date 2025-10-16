@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getContactEngagements, createEngagement, updateEngagement } from "@/services/contact-engagements";
-import { handlePrismaError } from "@/lib/utils";
 import { z } from "zod";
+import { handlePrismaError } from "@/lib/utils";
+import {
+  createEngagement,
+  getContactEngagements,
+  updateEngagement,
+} from "@/services/contact-engagements";
 import { EngagementDirection, EngagementSource, TodoStatus } from "@/types";
 
 const createEngagementSchema = z.object({
   contactId: z.string().uuid(),
   teamId: z.string().uuid(),
-  direction: z.enum([EngagementDirection.INBOUND, EngagementDirection.OUTBOUND]),
+  direction: z.enum([
+    EngagementDirection.INBOUND,
+    EngagementDirection.OUTBOUND,
+  ]),
   source: z.enum([
     EngagementSource.EMAIL,
     EngagementSource.PHONE,
@@ -23,15 +30,20 @@ const createEngagementSchema = z.object({
   userName: z.string().optional(),
   assignedToUserId: z.string().optional(),
   assignedToUserName: z.string().optional(),
-  todoStatus: z.enum([
-    TodoStatus.PENDING,
-    TodoStatus.IN_PROGRESS,
-    TodoStatus.COMPLETED,
-    TodoStatus.CANCELLED,
-  ]).optional(),
-  dueDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: "Invalid date format",
-  }).optional(),
+  todoStatus: z
+    .enum([
+      TodoStatus.PENDING,
+      TodoStatus.IN_PROGRESS,
+      TodoStatus.COMPLETED,
+      TodoStatus.CANCELLED,
+    ])
+    .optional(),
+  dueDate: z
+    .string()
+    .refine((date) => !isNaN(Date.parse(date)), {
+      message: "Invalid date format",
+    })
+    .optional(),
   engagedAt: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format",
   }),
@@ -44,15 +56,21 @@ const updateEngagementSchema = z.object({
   message: z.string().min(1).optional(),
   assignedToUserId: z.string().optional(),
   assignedToUserName: z.string().optional(),
-  todoStatus: z.enum([
-    TodoStatus.PENDING,
-    TodoStatus.IN_PROGRESS,
-    TodoStatus.COMPLETED,
-    TodoStatus.CANCELLED,
-  ]).optional(),
-  dueDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: "Invalid date format",
-  }).optional().nullable(),
+  todoStatus: z
+    .enum([
+      TodoStatus.PENDING,
+      TodoStatus.IN_PROGRESS,
+      TodoStatus.COMPLETED,
+      TodoStatus.CANCELLED,
+    ])
+    .optional(),
+  dueDate: z
+    .string()
+    .refine((date) => !isNaN(Date.parse(date)), {
+      message: "Invalid date format",
+    })
+    .optional()
+    .nullable(),
 });
 
 export async function GET(request: NextRequest) {
@@ -64,7 +82,7 @@ export async function GET(request: NextRequest) {
     if (!contactId || !teamId) {
       return NextResponse.json(
         { error: "contactId and teamId are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -73,7 +91,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: engagements }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
@@ -85,7 +106,9 @@ export async function POST(request: NextRequest) {
     const engagement = await createEngagement({
       ...validatedData,
       engagedAt: new Date(validatedData.engagedAt),
-      dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
+      dueDate: validatedData.dueDate
+        ? new Date(validatedData.dueDate)
+        : undefined,
     });
 
     return NextResponse.json({ data: engagement }, { status: 201 });
@@ -93,12 +116,15 @@ export async function POST(request: NextRequest) {
     if (e instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: e.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
@@ -109,7 +135,9 @@ export async function PATCH(request: NextRequest) {
 
     const engagement = await updateEngagement({
       ...validatedData,
-      dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
+      dueDate: validatedData.dueDate
+        ? new Date(validatedData.dueDate)
+        : undefined,
     });
 
     return NextResponse.json({ data: engagement }, { status: 200 });
@@ -117,11 +145,14 @@ export async function PATCH(request: NextRequest) {
     if (e instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: e.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }

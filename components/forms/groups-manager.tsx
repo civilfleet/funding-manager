@@ -1,17 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus, Pencil, Trash2, Users } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import useSWR from "swr";
-
-import { createGroupSchema } from "@/validations/groups";
-import { APP_MODULES, AppModule } from "@/types";
-import { useToast } from "@/hooks/use-toast";
-
+import { z } from "zod";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -19,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -30,17 +28,17 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import { APP_MODULES, AppModule } from "@/types";
+import { createGroupSchema } from "@/validations/groups";
 
 type Group = {
   id: string;
@@ -92,13 +90,10 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
 
   const { data: groupsData, mutate } = useSWR(
     `/api/groups?teamId=${teamId}`,
-    fetcher
+    fetcher,
   );
 
-  const { data: usersData } = useSWR(
-    `/api/teams/${teamId}/users`,
-    fetcher
-  );
+  const { data: usersData } = useSWR(`/api/teams/${teamId}/users`, fetcher);
 
   const groups: Group[] = useMemo(() => {
     const rawGroups: Group[] = (groupsData?.data || []).map((group: Group) => ({
@@ -130,7 +125,8 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
     },
   });
 
-  const typedControl = form.control as unknown as import("react-hook-form").Control<FormValues>;
+  const typedControl =
+    form.control as unknown as import("react-hook-form").Control<FormValues>;
   const isEditingDefaultGroup = editingGroup?.isDefaultGroup ?? false;
 
   const handleOpenDialog = (group?: Group) => {
@@ -141,7 +137,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
         name: group.name,
         description: group.description || "",
         canAccessAllContacts: group.canAccessAllContacts,
-        userIds: group.users?.map(u => u.userId) || [],
+        userIds: group.users?.map((u) => u.userId) || [],
         modules: group.modules ?? [...APP_MODULES],
       });
     } else {
@@ -190,24 +186,31 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
         }
 
         // Update group users
-        const existingUserIds = editingGroup.users?.map(u => u.userId) || [];
+        const existingUserIds = editingGroup.users?.map((u) => u.userId) || [];
         const newUserIds = values.userIds || [];
 
-        const usersToAdd = newUserIds.filter(id => !existingUserIds.includes(id));
-        const usersToRemove = existingUserIds.filter(id => !newUserIds.includes(id));
+        const usersToAdd = newUserIds.filter(
+          (id) => !existingUserIds.includes(id),
+        );
+        const usersToRemove = existingUserIds.filter(
+          (id) => !newUserIds.includes(id),
+        );
 
         // Add new users
         if (usersToAdd.length > 0) {
-          const addResponse = await fetch(`/api/groups/${editingGroup.id}/users`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
+          const addResponse = await fetch(
+            `/api/groups/${editingGroup.id}/users`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                teamId: values.teamId,
+                userIds: usersToAdd,
+              }),
             },
-            body: JSON.stringify({
-              teamId: values.teamId,
-              userIds: usersToAdd,
-            }),
-          });
+          );
 
           if (!addResponse.ok) {
             const errorBody = await addResponse.json().catch(() => ({}));
@@ -217,20 +220,25 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
 
         // Remove users
         if (usersToRemove.length > 0) {
-          const removeResponse = await fetch(`/api/groups/${editingGroup.id}/users`, {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
+          const removeResponse = await fetch(
+            `/api/groups/${editingGroup.id}/users`,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                teamId: values.teamId,
+                userIds: usersToRemove,
+              }),
             },
-            body: JSON.stringify({
-              teamId: values.teamId,
-              userIds: usersToRemove,
-            }),
-          });
+          );
 
           if (!removeResponse.ok) {
             const errorBody = await removeResponse.json().catch(() => ({}));
-            throw new Error(errorBody.error || "Failed to remove users from group");
+            throw new Error(
+              errorBody.error || "Failed to remove users from group",
+            );
           }
         }
       } else {
@@ -263,7 +271,9 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
       toast({
         title: `Unable to ${editingGroup ? "update" : "create"} group`,
         description:
-          error instanceof Error ? error.message : "An unexpected error occurred.",
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {
@@ -304,7 +314,9 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
       toast({
         title: "Unable to delete group",
         description:
-          error instanceof Error ? error.message : "An unexpected error occurred.",
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
     }
@@ -318,7 +330,8 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
             <div>
               <CardTitle>Groups</CardTitle>
               <CardDescription>
-                Manage groups to control which users can access specific contacts
+                Manage groups to control which users can access specific
+                contacts
               </CardDescription>
             </div>
             <Button onClick={() => handleOpenDialog()}>
@@ -332,7 +345,8 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
           {groups.length === 0 ? (
             <div className="rounded-md border border-dashed p-8 text-center">
               <p className="text-sm text-muted-foreground">
-                No groups configured yet. Create your first group to get started.
+                No groups configured yet. Create your first group to get
+                started.
               </p>
             </div>
           ) : (
@@ -346,9 +360,13 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                     <div className="flex items-center gap-3">
                       <h3 className="font-medium">{group.name}</h3>
                       {group.users && group.users.length > 0 && (
-                        <Badge variant="secondary" className="flex items-center gap-1">
+                        <Badge
+                          variant="secondary"
+                          className="flex items-center gap-1"
+                        >
                           <Users className="h-3 w-3" />
-                          {group.users.length} {group.users.length === 1 ? "user" : "users"}
+                          {group.users.length}{" "}
+                          {group.users.length === 1 ? "user" : "users"}
                         </Badge>
                       )}
                     </div>
@@ -446,13 +464,18 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                 render={({ field }) => {
                   const value = field.value ?? [];
 
-                  const toggleModule = (module: AppModule, checked: boolean) => {
+                  const toggleModule = (
+                    module: AppModule,
+                    checked: boolean,
+                  ) => {
                     if (checked) {
                       const next = Array.from(new Set([...value, module]));
                       field.onChange(next);
                       form.clearErrors("modules");
                     } else {
-                      const next = value.filter((current) => current !== module);
+                      const next = value.filter(
+                        (current) => current !== module,
+                      );
                       if (next.length === 0) {
                         form.setError("modules", {
                           type: "manual",
@@ -468,7 +491,8 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                     <FormItem>
                       <FormLabel>Enabled Modules</FormLabel>
                       <FormDescription>
-                        Choose which application modules members of this group can access.
+                        Choose which application modules members of this group
+                        can access.
                       </FormDescription>
                       <div className="grid gap-3 sm:grid-cols-2">
                         {APP_MODULES.map((module) => (
@@ -513,11 +537,10 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        Can access all contacts
-                      </FormLabel>
+                      <FormLabel>Can access all contacts</FormLabel>
                       <FormDescription>
-                        Users in this group will be able to see all contacts, regardless of their group assignment
+                        Users in this group will be able to see all contacts,
+                        regardless of their group assignment
                       </FormDescription>
                     </div>
                   </FormItem>
@@ -533,11 +556,13 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                       <FormItem>
                         <FormLabel>Group Members</FormLabel>
                         <FormDescription>
-                          Membership in the default group is managed automatically. Users without
-                          another group assignment belong here by default.
+                          Membership in the default group is managed
+                          automatically. Users without another group assignment
+                          belong here by default.
                         </FormDescription>
                         <p className="text-sm text-muted-foreground">
-                          Add someone to another group to remove them from the default group.
+                          Add someone to another group to remove them from the
+                          default group.
                         </p>
                       </FormItem>
                     );
@@ -551,7 +576,9 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                       </FormDescription>
                       <div className="space-y-2 max-h-60 overflow-y-auto border rounded-md p-3">
                         {users.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">No users available</p>
+                          <p className="text-sm text-muted-foreground">
+                            No users available
+                          </p>
                         ) : (
                           users.map((user) => (
                             <FormField
@@ -568,12 +595,17 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                                       checked={field.value?.includes(user.id)}
                                       onCheckedChange={(checked) => {
                                         if (checked) {
-                                          field.onChange([...(field.value || []), user.id]);
+                                          field.onChange([
+                                            ...(field.value || []),
+                                            user.id,
+                                          ]);
                                           return;
                                         }
 
                                         field.onChange(
-                                          (field.value || []).filter((value) => value !== user.id)
+                                          (field.value || []).filter(
+                                            (value) => value !== user.id,
+                                          ),
                                         );
                                       }}
                                     />

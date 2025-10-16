@@ -1,7 +1,10 @@
-import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import { generateSlug } from "@/lib/slug";
-import { logContactCreation, logFieldUpdate } from "@/services/contact-change-logs";
+import {
+  logContactCreation,
+  logFieldUpdate,
+} from "@/services/contact-change-logs";
 
 type EventContactInput = {
   contactId: string;
@@ -173,14 +176,26 @@ export const getEventById = async (eventId: string, teamId: string) => {
   return mapEvent(event);
 };
 export const createEvent = async (input: CreateEventInput) => {
-  const { teamId, title, slug, description, location, startDate, endDate, isPublic = false, contacts = [] } = input;
+  const {
+    teamId,
+    title,
+    slug,
+    description,
+    location,
+    startDate,
+    endDate,
+    isPublic = false,
+    contacts = [],
+  } = input;
   return prisma.$transaction(async (tx) => {
     const eventSlug = ensureSlug(slug ?? "", title);
     const existingEvent = await tx.event.findFirst({
       where: { teamId, slug: eventSlug },
     });
     if (existingEvent) {
-      throw new Error("Slug is already in use for this team. Choose a different slug.");
+      throw new Error(
+        "Slug is already in use for this team. Choose a different slug.",
+      );
     }
     const event = await tx.event.create({
       data: {
@@ -204,7 +219,9 @@ export const createEvent = async (input: CreateEventInput) => {
         select: { id: true },
       });
       const validContactIds = new Set(validContacts.map((c) => c.id));
-      const validContactsWithRoles = contacts.filter((c) => validContactIds.has(c.contactId));
+      const validContactsWithRoles = contacts.filter((c) =>
+        validContactIds.has(c.contactId),
+      );
       if (validContactsWithRoles.length > 0) {
         await tx.eventContact.createMany({
           data: validContactsWithRoles.map((c) => ({
@@ -254,7 +271,18 @@ export const createEvent = async (input: CreateEventInput) => {
   });
 };
 export const updateEvent = async (input: UpdateEventInput) => {
-  const { id, teamId, title, slug, description, location, startDate, endDate, isPublic, contacts = [] } = input;
+  const {
+    id,
+    teamId,
+    title,
+    slug,
+    description,
+    location,
+    startDate,
+    endDate,
+    isPublic,
+    contacts = [],
+  } = input;
   return prisma.$transaction(async (tx) => {
     const existingEvent = await tx.event.findFirst({
       where: { id, teamId },
@@ -269,7 +297,9 @@ export const updateEvent = async (input: UpdateEventInput) => {
         where: { teamId, slug: eventSlug, id: { not: id } },
       });
       if (conflictingEvent) {
-        throw new Error("Slug is already in use for this team. Choose a different slug.");
+        throw new Error(
+          "Slug is already in use for this team. Choose a different slug.",
+        );
       }
     } else if (!eventSlug) {
       eventSlug = ensureSlug("", title);
@@ -299,7 +329,9 @@ export const updateEvent = async (input: UpdateEventInput) => {
         select: { id: true },
       });
       const validContactIds = new Set(validContacts.map((c) => c.id));
-      const validContactsWithRoles = contacts.filter((c) => validContactIds.has(c.contactId));
+      const validContactsWithRoles = contacts.filter((c) =>
+        validContactIds.has(c.contactId),
+      );
       if (validContactsWithRoles.length > 0) {
         await tx.eventContact.createMany({
           data: validContactsWithRoles.map((c) => ({
@@ -396,7 +428,9 @@ type CreateEventRegistrationInput = {
   notes?: string;
   customData?: Record<string, unknown>;
 };
-export const createEventRegistration = async (input: CreateEventRegistrationInput) => {
+export const createEventRegistration = async (
+  input: CreateEventRegistrationInput,
+) => {
   const { eventId, name, email, phone, notes, customData } = input;
 
   return prisma.$transaction(async (tx) => {
@@ -447,21 +481,37 @@ export const createEventRegistration = async (input: CreateEventRegistrationInpu
 
     if (contact) {
       const contactUpdates: Prisma.ContactUpdateInput = {};
-      const updatedFields: Array<{ field: string; oldValue: unknown; newValue: unknown }> = [];
+      const updatedFields: Array<{
+        field: string;
+        oldValue: unknown;
+        newValue: unknown;
+      }> = [];
 
       if ((!contact.name || contact.name.trim().length === 0) && trimmedName) {
         contactUpdates.name = trimmedName;
-        updatedFields.push({ field: "name", oldValue: contact.name, newValue: trimmedName });
+        updatedFields.push({
+          field: "name",
+          oldValue: contact.name,
+          newValue: trimmedName,
+        });
       }
 
       if (!contact.email && trimmedEmail) {
         contactUpdates.email = trimmedEmail;
-        updatedFields.push({ field: "email", oldValue: contact.email, newValue: trimmedEmail });
+        updatedFields.push({
+          field: "email",
+          oldValue: contact.email,
+          newValue: trimmedEmail,
+        });
       }
 
       if (!contact.phone && trimmedPhone) {
         contactUpdates.phone = trimmedPhone;
-        updatedFields.push({ field: "phone", oldValue: contact.phone, newValue: trimmedPhone });
+        updatedFields.push({
+          field: "phone",
+          oldValue: contact.phone,
+          newValue: trimmedPhone,
+        });
       }
 
       if (Object.keys(contactUpdates).length > 0) {
@@ -478,7 +528,7 @@ export const createEventRegistration = async (input: CreateEventRegistrationInpu
             updatedField.newValue,
             undefined,
             undefined,
-            tx
+            tx,
           );
         }
       }
@@ -518,7 +568,10 @@ export const createEventRegistration = async (input: CreateEventRegistrationInpu
   });
 };
 // Get registrations for an event
-export const getEventRegistrations = async (eventId: string, teamId: string) => {
+export const getEventRegistrations = async (
+  eventId: string,
+  teamId: string,
+) => {
   // Verify event belongs to team
   const event = await prisma.event.findFirst({
     where: { id: eventId, teamId },

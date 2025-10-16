@@ -1,7 +1,9 @@
 import { ColumnDef, Row } from "@tanstack/react-table";
-import { Transaction } from "@/types";
-import { Badge } from "@/components/ui/badge";
+import { MoreHorizontal } from "lucide-react";
+import { useState } from "react";
 import formatCurrency from "@/components/helper/format-currency";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,9 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { Transaction } from "@/types";
 import { UploadReceiptModal } from "../upload-receipt-modal";
 
 const ActionsCell = ({ row }: { row: Row<Transaction> }) => {
@@ -28,7 +28,9 @@ const ActionsCell = ({ row }: { row: Row<Transaction> }) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => setIsUploadModalOpen(true)}>Upload Receipt</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setIsUploadModalOpen(true)}>
+            Upload Receipt
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
         </DropdownMenuContent>
       </DropdownMenu>
@@ -53,34 +55,59 @@ export const columns: ColumnDef<Transaction>[] = [
   {
     accessorKey: "fundingRequest.name",
     header: () => <div className="text-left w-36">Funding Request</div>,
-    cell: ({ row }) => <div className="text-left">{row.original?.fundingRequest?.name || "N/A"}</div>,
+    cell: ({ row }) => (
+      <div className="text-left">
+        {row.original?.fundingRequest?.name || "N/A"}
+      </div>
+    ),
   },
   {
     accessorKey: "organization.name",
     header: () => <div className="text-left w-36">Organization</div>,
-    cell: ({ row }) => <div className="text-left">{row.original?.organization?.name || "N/A"}</div>,
+    cell: ({ row }) => (
+      <div className="text-left">
+        {row.original?.organization?.name || "N/A"}
+      </div>
+    ),
   },
   {
     accessorKey: "amount",
     header: () => <div className="text-left w-36">Amount</div>,
-    cell: ({ row }) => <div className="text-left font-medium">{formatCurrency(row.getValue("amount"))}</div>,
+    cell: ({ row }) => (
+      <div className="text-left font-medium">
+        {formatCurrency(row.getValue("amount"))}
+      </div>
+    ),
   },
   {
     accessorKey: "totalAmount",
     header: () => <div className="text-left w-36">Total Amount</div>,
-    cell: ({ row }) => <div className="text-left font-medium">{formatCurrency(row.getValue("totalAmount"))}</div>,
+    cell: ({ row }) => (
+      <div className="text-left font-medium">
+        {formatCurrency(row.getValue("totalAmount"))}
+      </div>
+    ),
   },
   {
     accessorKey: "remainingAmount",
     header: () => <div className="text-left w-36">Remaining Amount</div>,
-    cell: ({ row }) => <div className="text-left font-medium">{formatCurrency(row.getValue("remainingAmount"))}</div>,
+    cell: ({ row }) => (
+      <div className="text-left font-medium">
+        {formatCurrency(row.getValue("remainingAmount"))}
+      </div>
+    ),
   },
   {
     accessorKey: "transactionReciept",
     header: () => <div className="text-left w-36">Receipt</div>,
     cell: ({ row }) => (
       <div className="text-left">
-        <Badge variant="secondary" className={row.getValue("transactionReciept") ? "bg-green-300" : "bg-red-300"}>
+        <Badge
+          variant="secondary"
+          className={
+            row.getValue("transactionReciept") ? "bg-green-300" : "bg-red-300"
+          }
+        >
           {row.getValue("transactionReciept") ? (
             <a
               href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${row.getValue("transactionReciept")}`}
@@ -98,6 +125,10 @@ export const columns: ColumnDef<Transaction>[] = [
   {
     accessorKey: "createdAt",
     header: () => <div className="text-left w-36">Created At</div>,
-    cell: ({ row }) => <div className="text-left">{new Date(row.getValue("createdAt")).toLocaleString()}</div>,
+    cell: ({ row }) => (
+      <div className="text-left">
+        {new Date(row.getValue("createdAt")).toLocaleString()}
+      </div>
+    ),
   },
 ];

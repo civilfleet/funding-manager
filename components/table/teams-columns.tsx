@@ -1,10 +1,9 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +15,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export type Team = {
   id: string;
@@ -32,13 +32,7 @@ export type Team = {
   updatedAt: string;
 };
 
-const ActionsCell = ({ 
-  team,
-  mutate
-}: { 
-  team: Team;
-  mutate: () => void;
-}) => {
+const ActionsCell = ({ team, mutate }: { team: Team; mutate: () => void }) => {
   const { toast } = useToast();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -87,12 +81,16 @@ const ActionsCell = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the team &#34;{team.name}&#34; and all associated data.
+              This action cannot be undone. This will permanently delete the
+              team &#34;{team.name}&#34; and all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete Team
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -134,4 +132,4 @@ export const columns = (mutate: () => void): ColumnDef<Team>[] => [
     id: "actions",
     cell: ({ row }) => <ActionsCell team={row.original} mutate={mutate} />,
   },
-]; 
+];

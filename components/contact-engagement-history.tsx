@@ -1,14 +1,28 @@
 "use client";
 
+import { format } from "date-fns";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  CheckCircle2,
+  Circle,
+  Clock,
+  MessageSquare,
+  Plus,
+} from "lucide-react";
 import { useState } from "react";
 import useSWR from "swr";
-import { format } from "date-fns";
-import { Plus, MessageSquare, ArrowDownLeft, ArrowUpRight, CheckCircle2, Circle, Clock } from "lucide-react";
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import ContactEngagementForm from "@/components/forms/contact-engagement";
+import { Loader } from "@/components/helper/loader";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -17,9 +31,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Loader } from "@/components/helper/loader";
-import ContactEngagementForm from "@/components/forms/contact-engagement";
-import { ContactEngagement, EngagementDirection, EngagementSource, TodoStatus } from "@/types";
+import { Separator } from "@/components/ui/separator";
+import {
+  ContactEngagement,
+  EngagementDirection,
+  EngagementSource,
+  TodoStatus,
+} from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -117,7 +135,7 @@ export default function ContactEngagementHistory({
 
   const { data, error, isLoading, mutate } = useSWR(
     `/api/contact-engagements?contactId=${contactId}&teamId=${teamId}`,
-    fetcher
+    fetcher,
   );
 
   const engagements = (data?.data || []) as ContactEngagement[];
@@ -132,8 +150,12 @@ export default function ContactEngagementHistory({
       <CardHeader className="border-b pb-3">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl font-semibold">Engagement History</CardTitle>
-            <CardDescription>Track all interactions with this contact</CardDescription>
+            <CardTitle className="text-xl font-semibold">
+              Engagement History
+            </CardTitle>
+            <CardDescription>
+              Track all interactions with this contact
+            </CardDescription>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -171,7 +193,9 @@ export default function ContactEngagementHistory({
         ) : engagements.length === 0 ? (
           <div className="text-center py-8 rounded-md border border-dashed">
             <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">No engagements recorded yet</p>
+            <p className="text-sm text-muted-foreground">
+              No engagements recorded yet
+            </p>
             <p className="text-xs text-muted-foreground mt-1">
               Click &quot;Record Engagement&quot; to add your first interaction
             </p>
@@ -189,20 +213,23 @@ export default function ContactEngagementHistory({
                             engagement.todoStatus === TodoStatus.COMPLETED
                               ? "bg-green-100"
                               : engagement.todoStatus === TodoStatus.IN_PROGRESS
-                              ? "bg-blue-100"
-                              : "bg-amber-100"
+                                ? "bg-blue-100"
+                                : "bg-amber-100"
                           }`}
                         >
                           {(() => {
-                            const Icon = getTodoStatusIcon(engagement.todoStatus);
+                            const Icon = getTodoStatusIcon(
+                              engagement.todoStatus,
+                            );
                             return (
                               <Icon
                                 className={`h-4 w-4 ${
                                   engagement.todoStatus === TodoStatus.COMPLETED
                                     ? "text-green-600"
-                                    : engagement.todoStatus === TodoStatus.IN_PROGRESS
-                                    ? "text-blue-600"
-                                    : "text-amber-600"
+                                    : engagement.todoStatus ===
+                                        TodoStatus.IN_PROGRESS
+                                      ? "text-blue-600"
+                                      : "text-amber-600"
                                 }`}
                               />
                             );
@@ -217,7 +244,8 @@ export default function ContactEngagementHistory({
                             : "bg-green-100"
                         }`}
                       >
-                        {engagement.direction === EngagementDirection.OUTBOUND ? (
+                        {engagement.direction ===
+                        EngagementDirection.OUTBOUND ? (
                           <ArrowUpRight className="h-4 w-4 text-blue-600" />
                         ) : (
                           <ArrowDownLeft className="h-4 w-4 text-green-600" />
@@ -238,24 +266,27 @@ export default function ContactEngagementHistory({
                         >
                           {getSourceLabel(engagement.source)}
                         </Badge>
-                        {engagement.source === EngagementSource.TODO && engagement.todoStatus && (
-                          <Badge
-                            variant="outline"
-                            className={`text-xs ${getTodoStatusColor(engagement.todoStatus)}`}
-                          >
-                            {getTodoStatusLabel(engagement.todoStatus)}
-                          </Badge>
-                        )}
+                        {engagement.source === EngagementSource.TODO &&
+                          engagement.todoStatus && (
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${getTodoStatusColor(engagement.todoStatus)}`}
+                            >
+                              {getTodoStatusLabel(engagement.todoStatus)}
+                            </Badge>
+                          )}
                         {engagement.source !== EngagementSource.TODO && (
                           <Badge
                             variant={
-                              engagement.direction === EngagementDirection.OUTBOUND
+                              engagement.direction ===
+                              EngagementDirection.OUTBOUND
                                 ? "default"
                                 : "secondary"
                             }
                             className="text-xs"
                           >
-                            {engagement.direction === EngagementDirection.OUTBOUND
+                            {engagement.direction ===
+                            EngagementDirection.OUTBOUND
                               ? "Outbound"
                               : "Inbound"}
                           </Badge>
@@ -267,7 +298,9 @@ export default function ContactEngagementHistory({
                     </div>
 
                     {engagement.subject && (
-                      <h4 className="font-medium text-sm mb-1">{engagement.subject}</h4>
+                      <h4 className="font-medium text-sm mb-1">
+                        {engagement.subject}
+                      </h4>
                     )}
 
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">
@@ -291,8 +324,10 @@ export default function ContactEngagementHistory({
 
                     {engagement.userName && (
                       <p className="text-xs text-muted-foreground mt-2">
-                        {engagement.source === EngagementSource.TODO ? "Created by" : "By"}:{" "}
-                        {engagement.userName}
+                        {engagement.source === EngagementSource.TODO
+                          ? "Created by"
+                          : "By"}
+                        : {engagement.userName}
                       </p>
                     )}
                   </div>

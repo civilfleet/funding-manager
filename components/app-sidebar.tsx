@@ -1,8 +1,8 @@
 "use client";
-import * as React from "react";
-import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-
+import { useSession } from "next-auth/react";
+import * as React from "react";
+import { useEffect, useState } from "react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
@@ -13,9 +13,8 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { useEffect, useState } from "react";
-import navigationItems from "./nav-items";
 import { APP_MODULES, AppModule } from "@/types";
+import navigationItems from "./nav-items";
 
 type NavigationKey = keyof typeof navigationItems;
 type NavigationItem = (typeof navigationItems)[NavigationKey][number];
@@ -28,15 +27,23 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
   const { data: session } = useSession();
   const [organizations, setOrganizations] = useState([]);
-  const [teams, setTeams] = useState<Array<{ id: string; name: string; email: string; modules?: AppModule[] }>>([]);
+  const [teams, setTeams] = useState<
+    Array<{ id: string; name: string; email: string; modules?: AppModule[] }>
+  >([]);
   const pathname = usePathname();
-  
+
   // Extract the active ID and type from the URL
   const pathSegments = pathname.split("/").filter(Boolean);
-  const activeType = pathSegments[0] === "teams" ? "team" : 
-                    pathSegments[0] === "organizations" ? "organization" :
-                    pathSegments[0] === "admin" ? "admin" : null;
-  const activeId = pathSegments[0] === "admin" ? "admin" : pathSegments[1] ?? null;
+  const activeType =
+    pathSegments[0] === "teams"
+      ? "team"
+      : pathSegments[0] === "organizations"
+        ? "organization"
+        : pathSegments[0] === "admin"
+          ? "admin"
+          : null;
+  const activeId =
+    pathSegments[0] === "admin" ? "admin" : (pathSegments[1] ?? null);
 
   useEffect(() => {
     const getItems = async () => {
@@ -46,10 +53,20 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
           data: { teams, organizations },
         } = await response.json();
         setTeams(
-          teams.map((team: { id: string; name: string; email: string; modules?: AppModule[] }) => ({
-            ...team,
-            modules: team.modules && team.modules.length ? team.modules : [...APP_MODULES],
-          }))
+          teams.map(
+            (team: {
+              id: string;
+              name: string;
+              email: string;
+              modules?: AppModule[];
+            }) => ({
+              ...team,
+              modules:
+                team.modules && team.modules.length
+                  ? team.modules
+                  : [...APP_MODULES],
+            }),
+          ),
         );
         setOrganizations(organizations);
       } catch (error) {
@@ -61,7 +78,8 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
     getItems();
   }, [session?.user?.roles]);
 
-  const activeTeam = activeType === "team" ? teams.find((item) => item.id === activeId) : null;
+  const activeTeam =
+    activeType === "team" ? teams.find((item) => item.id === activeId) : null;
 
   const allowedModules = React.useMemo(() => {
     if (activeTeam?.modules && activeTeam.modules.length > 0) {
@@ -93,7 +111,7 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
       const cleaned: NavigationItem[] = [];
 
       const isSeparatorItem = (
-        candidate: NavigationItem
+        candidate: NavigationItem,
       ): candidate is Extract<NavigationItem, { type: "separator" }> =>
         "type" in candidate && candidate.type === "separator";
 
@@ -123,7 +141,7 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
 
       return cleaned;
     },
-    [allowedModules, navItems]
+    [allowedModules, navItems],
   );
 
   const navItemsToRender = React.useMemo(() => {
@@ -134,9 +152,9 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher 
-          organizations={organizations} 
-          teams={teams} 
+        <TeamSwitcher
+          organizations={organizations}
+          teams={teams}
           activeId={activeId}
           activeType={activeType}
         />

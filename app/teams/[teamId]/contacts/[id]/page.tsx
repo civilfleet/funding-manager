@@ -1,16 +1,31 @@
+import { format } from "date-fns";
+import {
+  Calendar,
+  CalendarDays,
+  Hash,
+  Mail,
+  MapPin,
+  Phone,
+  Type,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getContactById } from "@/services/contacts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { auth } from "@/auth";
+import ContactChangeHistory from "@/components/contact-change-history";
+import ContactEngagementHistory from "@/components/contact-engagement-history";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, Calendar, MapPin, Hash, Type, CalendarDays, Users } from "lucide-react";
-import Link from "next/link";
-import { format } from "date-fns";
-import { ContactAttributeType, AppModule } from "@/types";
-import ContactEngagementHistory from "@/components/contact-engagement-history";
-import ContactChangeHistory from "@/components/contact-change-history";
-import { auth } from "@/auth";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { assertTeamModuleAccess } from "@/lib/permissions";
+import { getContactById } from "@/services/contacts";
+import { AppModule, ContactAttributeType } from "@/types";
 
 interface ContactDetailPageProps {
   params: Promise<{
@@ -36,11 +51,17 @@ const formatAttributeValue = (type: ContactAttributeType, value: unknown) => {
       return value as string;
     case ContactAttributeType.LOCATION:
       if (typeof value === "object" && value !== null) {
-        const loc = value as { label?: string; latitude?: number; longitude?: number };
+        const loc = value as {
+          label?: string;
+          latitude?: number;
+          longitude?: number;
+        };
         const parts = [];
         if (loc.label) parts.push(loc.label);
         if (loc.latitude !== undefined && loc.longitude !== undefined) {
-          parts.push(`(${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)})`);
+          parts.push(
+            `(${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)})`,
+          );
         }
         return parts.join(" ");
       }
@@ -65,7 +86,9 @@ const getAttributeIcon = (type: ContactAttributeType) => {
   }
 };
 
-export default async function ContactDetailPage({ params }: ContactDetailPageProps) {
+export default async function ContactDetailPage({
+  params,
+}: ContactDetailPageProps) {
   const { teamId, id } = await params;
   const session = await auth();
   await assertTeamModuleAccess(
@@ -74,7 +97,7 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
       userId: session?.user?.userId,
       roles: session?.user?.roles,
     },
-    "CRM" satisfies AppModule
+    "CRM" satisfies AppModule,
   );
   const contact = await getContactById(id, teamId);
 
@@ -91,11 +114,15 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
               <CardHeader className="border-b pb-3">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <CardTitle className="text-xl font-semibold">{contact.name}</CardTitle>
+                    <CardTitle className="text-xl font-semibold">
+                      {contact.name}
+                    </CardTitle>
                     <CardDescription>Contact Details</CardDescription>
                   </div>
                   <Button asChild>
-                    <Link href={`/teams/${teamId}/contacts/${id}/edit`}>Edit Contact</Link>
+                    <Link href={`/teams/${teamId}/contacts/${id}/edit`}>
+                      Edit Contact
+                    </Link>
                   </Button>
                 </div>
               </CardHeader>
@@ -104,8 +131,12 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                 <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
                   <section className="space-y-4">
                     <div>
-                      <h3 className="text-base font-semibold">Basic Information</h3>
-                      <p className="text-sm text-muted-foreground">Core contact details</p>
+                      <h3 className="text-base font-semibold">
+                        Basic Information
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Core contact details
+                      </p>
                     </div>
 
                     {contact.email || contact.phone ? (
@@ -114,8 +145,13 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                           <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-3">
                             <Mail className="h-5 w-5 text-muted-foreground" />
                             <div>
-                              <p className="text-sm font-medium text-muted-foreground">Email</p>
-                              <a href={`mailto:${contact.email}`} className="text-base hover:underline">
+                              <p className="text-sm font-medium text-muted-foreground">
+                                Email
+                              </p>
+                              <a
+                                href={`mailto:${contact.email}`}
+                                className="text-base hover:underline"
+                              >
                                 {contact.email}
                               </a>
                             </div>
@@ -125,8 +161,13 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                           <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-3">
                             <Phone className="h-5 w-5 text-muted-foreground" />
                             <div>
-                              <p className="text-sm font-medium text-muted-foreground">Phone</p>
-                              <a href={`tel:${contact.phone}`} className="text-base hover:underline">
+                              <p className="text-sm font-medium text-muted-foreground">
+                                Phone
+                              </p>
+                              <a
+                                href={`tel:${contact.phone}`}
+                                className="text-base hover:underline"
+                              >
                                 {contact.phone}
                               </a>
                             </div>
@@ -143,7 +184,9 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                   <section className="space-y-4">
                     <div>
                       <h3 className="text-base font-semibold">Metadata</h3>
-                      <p className="text-sm text-muted-foreground">Contact lifecycle details</p>
+                      <p className="text-sm text-muted-foreground">
+                        Contact lifecycle details
+                      </p>
                     </div>
 
                     <div className="grid gap-3">
@@ -151,7 +194,9 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                         <div className="rounded-md border bg-muted/30 p-3">
                           <div className="mb-1 flex items-center gap-2">
                             <Users className="h-4 w-4 text-muted-foreground" />
-                            <p className="text-sm font-medium text-muted-foreground">Group</p>
+                            <p className="text-sm font-medium text-muted-foreground">
+                              Group
+                            </p>
                           </div>
                           <p className="text-base">{contact.group.name}</p>
                           {contact.group.description && (
@@ -162,12 +207,20 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                         </div>
                       )}
                       <div className="rounded-md border bg-muted/30 p-3">
-                        <p className="text-sm font-medium text-muted-foreground">Created At</p>
-                        <p className="text-base">{format(new Date(contact.createdAt), "PPpp")}</p>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          Created At
+                        </p>
+                        <p className="text-base">
+                          {format(new Date(contact.createdAt), "PPpp")}
+                        </p>
                       </div>
                       <div className="rounded-md border bg-muted/30 p-3">
-                        <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
-                        <p className="text-base">{format(new Date(contact.updatedAt), "PPpp")}</p>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          Last Updated
+                        </p>
+                        <p className="text-base">
+                          {format(new Date(contact.updatedAt), "PPpp")}
+                        </p>
                       </div>
                     </div>
                   </section>
@@ -179,8 +232,12 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
               <Card className="w-full shadow-sm">
                 <CardHeader className="border-b pb-3">
                   <div>
-                    <CardTitle className="text-xl font-semibold">Profile Attributes</CardTitle>
-                    <CardDescription>Additional information about this contact</CardDescription>
+                    <CardTitle className="text-xl font-semibold">
+                      Profile Attributes
+                    </CardTitle>
+                    <CardDescription>
+                      Additional information about this contact
+                    </CardDescription>
                   </div>
                 </CardHeader>
 
@@ -196,13 +253,18 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                           <Icon className="mt-0.5 h-5 w-5 text-muted-foreground" />
                           <div className="flex-1">
                             <div className="mb-1 flex items-center gap-2">
-                              <p className="text-sm font-medium">{attribute.key}</p>
+                              <p className="text-sm font-medium">
+                                {attribute.key}
+                              </p>
                               <Badge variant="outline" className="text-xs">
                                 {attribute.type}
                               </Badge>
                             </div>
                             <p className="text-base">
-                              {formatAttributeValue(attribute.type, attribute.value)}
+                              {formatAttributeValue(
+                                attribute.type,
+                                attribute.value,
+                              )}
                             </p>
                           </div>
                         </div>
@@ -222,9 +284,13 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
               <CardHeader className="border-b pb-3">
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-5 w-5" />
-                  <CardTitle className="text-xl font-semibold">Associated Events</CardTitle>
+                  <CardTitle className="text-xl font-semibold">
+                    Associated Events
+                  </CardTitle>
                 </div>
-                <CardDescription>Events this contact is participating in</CardDescription>
+                <CardDescription>
+                  Events this contact is participating in
+                </CardDescription>
               </CardHeader>
 
               <CardContent className="pt-6">
@@ -238,7 +304,9 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                       >
                         <div className="space-y-3">
                           <div className="space-y-1">
-                            <h4 className="text-base font-semibold">{contactEvent.event.title}</h4>
+                            <h4 className="text-base font-semibold">
+                              {contactEvent.event.title}
+                            </h4>
                             {contactEvent.event.description && (
                               <p className="text-sm text-muted-foreground">
                                 {contactEvent.event.description}
@@ -248,11 +316,17 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
 
                           {contactEvent.participationTypes?.length ? (
                             <div className="flex flex-wrap gap-2">
-                              {contactEvent.participationTypes.includes("linked") && (
+                              {contactEvent.participationTypes.includes(
+                                "linked",
+                              ) && (
                                 <Badge variant="outline">Linked contact</Badge>
                               )}
-                              {contactEvent.participationTypes.includes("registered") && (
-                                <Badge variant="outline">Registered attendee</Badge>
+                              {contactEvent.participationTypes.includes(
+                                "registered",
+                              ) && (
+                                <Badge variant="outline">
+                                  Registered attendee
+                                </Badge>
                               )}
                             </div>
                           ) : null}
@@ -260,7 +334,12 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                           <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1.5">
                               <Calendar className="h-4 w-4" />
-                              <span>{format(new Date(contactEvent.event.startDate), "PPP")}</span>
+                              <span>
+                                {format(
+                                  new Date(contactEvent.event.startDate),
+                                  "PPP",
+                                )}
+                              </span>
                             </div>
                             {contactEvent.event.location && (
                               <div className="flex items-center gap-1.5">
@@ -270,31 +349,36 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                             )}
                           </div>
 
-                          {contactEvent.roles && contactEvent.roles.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {contactEvent.roles.map((role, idx) => (
-                                <Badge
-                                  key={idx}
-                                  variant="secondary"
-                                  style={
-                                    role.eventRole.color
-                                      ? {
-                                          backgroundColor: `${role.eventRole.color}20`,
-                                          color: role.eventRole.color,
-                                          borderColor: role.eventRole.color,
-                                        }
-                                      : undefined
-                                  }
-                                >
-                                  {role.eventRole.name}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
+                          {contactEvent.roles &&
+                            contactEvent.roles.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {contactEvent.roles.map((role, idx) => (
+                                  <Badge
+                                    key={idx}
+                                    variant="secondary"
+                                    style={
+                                      role.eventRole.color
+                                        ? {
+                                            backgroundColor: `${role.eventRole.color}20`,
+                                            color: role.eventRole.color,
+                                            borderColor: role.eventRole.color,
+                                          }
+                                        : undefined
+                                    }
+                                  >
+                                    {role.eventRole.name}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
 
                           {contactEvent.registration && (
                             <p className="text-xs text-muted-foreground">
-                              Registered on {format(new Date(contactEvent.registration.createdAt), "PPpp")}
+                              Registered on{" "}
+                              {format(
+                                new Date(contactEvent.registration.createdAt),
+                                "PPpp",
+                              )}
                             </p>
                           )}
                         </div>
@@ -302,7 +386,9 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No associated events yet.</p>
+                  <p className="text-sm text-muted-foreground">
+                    No associated events yet.
+                  </p>
                 )}
               </CardContent>
             </Card>

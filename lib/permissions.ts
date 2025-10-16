@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { Roles, AppModule } from "@/types";
 import { getUserModuleAccess } from "@/services/groups";
+import { AppModule, Roles } from "@/types";
 
 interface TeamModuleAccessArgs {
   teamId: string;
@@ -10,7 +10,7 @@ interface TeamModuleAccessArgs {
 
 export const assertTeamModuleAccess = async (
   { teamId, userId, roles }: TeamModuleAccessArgs,
-  module: AppModule
+  module: AppModule,
 ) => {
   if (!userId) {
     notFound();
@@ -29,7 +29,7 @@ export const assertTeamModuleAccess = async (
 
 export const hasModuleAccess = async (
   { teamId, userId, roles }: TeamModuleAccessArgs,
-  module: AppModule
+  module: AppModule,
 ): Promise<boolean> => {
   if (!userId) {
     return false;

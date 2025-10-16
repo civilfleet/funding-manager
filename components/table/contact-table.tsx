@@ -1,21 +1,24 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Filter, Loader2, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-
 import { DataTable } from "@/components/data-table";
-import { contactColumns, renderContactCard, type ContactRow } from "@/components/table/contact-columns";
-import FormInputControl from "@/components/helper/form-input-control";
 import ButtonControl from "@/components/helper/button-control";
-import { Form } from "@/components/ui/form";
+import FormInputControl from "@/components/helper/form-input-control";
 import { Loader } from "@/components/helper/loader";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Loader2, Filter, X } from "lucide-react";
+import {
+  type ContactRow,
+  contactColumns,
+  renderContactCard,
+} from "@/components/table/contact-columns";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
 
 interface ContactTableProps {
   teamId: string;
@@ -30,7 +33,9 @@ const querySchema = z.object({
 export default function ContactTable({ teamId }: ContactTableProps) {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState<string | null>(null);
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<string | null>(
+    null,
+  );
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
@@ -40,23 +45,28 @@ export default function ContactTable({ teamId }: ContactTableProps) {
   const query = form.watch("query");
 
   // Wrap renderContactCard with teamId
-  const renderCard = (contact: ContactRow) => renderContactCard(contact, teamId);
+  const renderCard = (contact: ContactRow) =>
+    renderContactCard(contact, teamId);
 
   const { data, error, isLoading, mutate } = useSWR(
     `/api/contacts?teamId=${teamId}&query=${encodeURIComponent(query)}`,
-    fetcher
+    fetcher,
   );
 
   const { data: rolesData, isLoading: rolesLoading } = useSWR(
     `/api/event-roles?teamId=${teamId}`,
-    fetcher
+    fetcher,
   );
 
   const eventRoles = useMemo(() => {
     if (!rolesData?.data) {
       return [];
     }
-    return rolesData.data as Array<{ id: string; name: string; color?: string }>;
+    return rolesData.data as Array<{
+      id: string;
+      name: string;
+      color?: string;
+    }>;
   }, [rolesData]);
 
   const allContacts = useMemo<ContactRow[]>(() => {
@@ -78,7 +88,9 @@ export default function ContactTable({ teamId }: ContactTableProps) {
       }
 
       return contact.events.some((eventContact) =>
-        eventContact.roles.some((role) => role.eventRole.id === selectedRoleFilter)
+        eventContact.roles.some(
+          (role) => role.eventRole.id === selectedRoleFilter,
+        ),
       );
     });
   }, [allContacts, selectedRoleFilter]);
@@ -97,7 +109,7 @@ export default function ContactTable({ teamId }: ContactTableProps) {
 
   const handleDeleteSelected = async (
     selectedRows: ContactRow[],
-    clearSelection: () => void
+    clearSelection: () => void,
   ) => {
     if (selectedRows.length === 0) {
       return;
@@ -152,8 +164,15 @@ export default function ContactTable({ teamId }: ContactTableProps) {
   return (
     <div className="flex flex-col gap-4 my-4">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="flex w-full max-w-md">
-          <FormInputControl form={form} name="query" placeholder="Search contacts" />
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="flex w-full max-w-md"
+        >
+          <FormInputControl
+            form={form}
+            name="query"
+            placeholder="Search contacts"
+          />
           <ButtonControl type="submit" label="Search" className="ml-2" />
         </form>
       </Form>
@@ -182,7 +201,9 @@ export default function ContactTable({ teamId }: ContactTableProps) {
                 onClick={() => handleRoleFilterToggle(role.id)}
               >
                 {role.name}
-                {selectedRoleFilter === role.id && <X className="ml-1 h-3 w-3" />}
+                {selectedRoleFilter === role.id && (
+                  <X className="ml-1 h-3 w-3" />
+                )}
               </Badge>
             ))}
           </div>
@@ -212,7 +233,9 @@ export default function ContactTable({ teamId }: ContactTableProps) {
                     variant="destructive"
                     size="sm"
                     disabled={isDeleting}
-                    onClick={() => handleDeleteSelected(selectedRows, clearSelection)}
+                    onClick={() =>
+                      handleDeleteSelected(selectedRows, clearSelection)
+                    }
                   >
                     {isDeleting ? (
                       <>

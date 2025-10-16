@@ -15,19 +15,19 @@ export async function GET(req: Request) {
           organizationId,
           teamId,
         },
-        searchQuery
+        searchQuery,
       );
       return NextResponse.json(
         { data },
 
-        { status: 201 }
+        { status: 201 },
       );
     }
 
     return NextResponse.json(
       { data: [] },
 
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const message = handlePrismaError(e);

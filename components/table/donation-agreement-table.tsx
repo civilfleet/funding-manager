@@ -1,17 +1,16 @@
 "use client";
-import { z } from "zod";
-
-import { useForm } from "react-hook-form";
-import { DataTable } from "@/components/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import useSWR from "swr";
+import { z } from "zod";
+import { DataTable } from "@/components/data-table";
 import { columns } from "@/components/table/donation-agreement-columns";
 import { useToast } from "@/hooks/use-toast";
-import { Form } from "../ui/form";
-import FormInputControl from "../helper/form-input-control";
 import ButtonControl from "../helper/button-control";
-import useSWR from "swr";
+import FormInputControl from "../helper/form-input-control";
 import { Loader } from "../helper/loader";
-import { useParams } from "next/navigation";
+import { Form } from "../ui/form";
 
 const querySchema = z.object({
   query: z.string(),
@@ -21,7 +20,10 @@ interface IDonationAgreementsProps {
   organizationId: string;
 }
 
-export default function DonationAgreementTable({ teamId, organizationId }: IDonationAgreementsProps) {
+export default function DonationAgreementTable({
+  teamId,
+  organizationId,
+}: IDonationAgreementsProps) {
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof querySchema>>({
@@ -36,7 +38,7 @@ export default function DonationAgreementTable({ teamId, organizationId }: IDona
 
   const { data, error, isLoading } = useSWR(
     `/api/donation-agreements/?query=${query}&teamId=${teamId}&organizationId=${organizationId}`,
-    fetcher
+    fetcher,
   );
   const loading = isLoading || !data;
   async function onSubmit(values: z.infer<typeof querySchema>) {
@@ -54,7 +56,11 @@ export default function DonationAgreementTable({ teamId, organizationId }: IDona
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-1/2">
           <div className="flex-1">
-            <FormInputControl form={form} name="query" placeholder="Search..." />
+            <FormInputControl
+              form={form}
+              name="query"
+              placeholder="Search..."
+            />
           </div>
 
           <ButtonControl type="submit" label="Submit" className="mx-2" />

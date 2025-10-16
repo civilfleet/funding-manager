@@ -1,19 +1,41 @@
 "use client";
 
+import {
+  Calendar,
+  Euro,
+  FileText,
+  Recycle,
+  Target,
+  TrendingUp,
+} from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { Calendar, Euro, FileText, Target, Recycle, TrendingUp } from "lucide-react";
-
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 
 interface StaticFundingRequestFormProps {
   form: UseFormReturn<Record<string, unknown>>;
 }
 
-export default function StaticFundingRequestForm({ form }: StaticFundingRequestFormProps) {
+export default function StaticFundingRequestForm({
+  form,
+}: StaticFundingRequestFormProps) {
   return (
     <div className="space-y-6">
       {/* Basic Information Section */}
@@ -75,7 +97,11 @@ export default function StaticFundingRequestForm({ form }: StaticFundingRequestF
                     min="0"
                     {...field}
                     value={String(field.value || "")}
-                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : "")}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? parseFloat(e.target.value) : "",
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -93,7 +119,8 @@ export default function StaticFundingRequestForm({ form }: StaticFundingRequestF
               <FormItem>
                 <FormLabel className="flex items-center gap-2 text-base font-medium">
                   <Calendar className="h-4 w-4" />
-                  Expected Completion Date <span className="text-destructive">*</span>
+                  Expected Completion Date{" "}
+                  <span className="text-destructive">*</span>
                 </FormLabel>
                 <FormDescription>
                   When do you expect to complete this project?
@@ -120,7 +147,8 @@ export default function StaticFundingRequestForm({ form }: StaticFundingRequestF
             Project Details
           </CardTitle>
           <CardDescription>
-            Detailed information about your project objectives and implementation
+            Detailed information about your project objectives and
+            implementation
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -131,7 +159,8 @@ export default function StaticFundingRequestForm({ form }: StaticFundingRequestF
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-base font-medium">
-                  Project Description <span className="text-destructive">*</span>
+                  Project Description{" "}
+                  <span className="text-destructive">*</span>
                 </FormLabel>
                 <FormDescription>
                   Explain what your project is about and why it matters
@@ -197,10 +226,12 @@ export default function StaticFundingRequestForm({ form }: StaticFundingRequestF
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-base font-medium">
-                  Refinancing Concept <span className="text-destructive">*</span>
+                  Refinancing Concept{" "}
+                  <span className="text-destructive">*</span>
                 </FormLabel>
                 <FormDescription>
-                  Detail how the project will be financially sustainable after initial funding
+                  Detail how the project will be financially sustainable after
+                  initial funding
                 </FormDescription>
                 <FormControl>
                   <Textarea
@@ -225,7 +256,8 @@ export default function StaticFundingRequestForm({ form }: StaticFundingRequestF
               <FormItem>
                 <FormLabel className="flex items-center gap-2 text-base font-medium">
                   <Recycle className="h-4 w-4" />
-                  Sustainability Plan <span className="text-destructive">*</span>
+                  Sustainability Plan{" "}
+                  <span className="text-destructive">*</span>
                 </FormLabel>
                 <FormDescription>
                   Outline the long-term viability and impact of your project

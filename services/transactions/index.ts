@@ -47,7 +47,9 @@ const createTransaction = async (transaction: CreateTransaction) => {
     },
     data: {
       remainingAmount: transaction.remainingAmount,
-      ...(transaction.remainingAmount === 0 && { status: FundingStatus.Completed }),
+      ...(transaction.remainingAmount === 0 && {
+        status: FundingStatus.Completed,
+      }),
     },
   });
 
@@ -109,7 +111,11 @@ const getTransactionById = async (id: string) => {
   return response;
 };
 
-const updateTransactionReceipt = async (id: string, transactionReciept: string, userId: string) => {
+const updateTransactionReceipt = async (
+  id: string,
+  transactionReciept: string,
+  userId: string,
+) => {
   const file = await prisma.file.create({
     data: {
       url: transactionReciept,
@@ -137,4 +143,9 @@ const updateTransactionReceipt = async (id: string, transactionReciept: string, 
   });
   return response;
 };
-export { createTransaction, getTransactions, getTransactionById, updateTransactionReceipt };
+export {
+  createTransaction,
+  getTransactions,
+  getTransactionById,
+  updateTransactionReceipt,
+};

@@ -16,7 +16,7 @@ export default async function Page({ params }: PageProps) {
       userId: session?.user?.userId,
       roles: session?.user?.roles,
     },
-    "FUNDING" satisfies AppModule
+    "FUNDING" satisfies AppModule,
   );
   return (
     <div className="p-4">

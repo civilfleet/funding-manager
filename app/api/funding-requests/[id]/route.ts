@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
-import { getFundingRequestById, updateFundingRequest } from "@/services/funding-request";
-import { updateFundingRequestSchema } from "@/validations/funding-request";
-import { handlePrismaError } from "@/lib/utils";
-import { sendEmail } from "@/lib/nodemailer";
-import { getEmailTemplateByType } from "@/services/email-templates";
 import { EMAIL_TEMPLATES_TYPES } from "@/constants";
+import { sendEmail } from "@/lib/nodemailer";
+import { handlePrismaError } from "@/lib/utils";
+import { getEmailTemplateByType } from "@/services/email-templates";
+import {
+  getFundingRequestById,
+  updateFundingRequest,
+} from "@/services/funding-request";
 import { FundingStatus } from "@/types";
+import { updateFundingRequestSchema } from "@/validations/funding-request";
 
 export async function GET(
   _req: Request,
@@ -13,7 +16,7 @@ export async function GET(
     params,
   }: {
     params: Promise<{ id: string }>;
-  }
+  },
 ) {
   try {
     const fundingRequestId = (await params).id;
@@ -34,7 +37,7 @@ export async function PUT(
     params,
   }: {
     params: Promise<{ id: string }>;
-  }
+  },
 ) {
   try {
     const fundingRequestId = (await params).id;
@@ -45,18 +48,22 @@ export async function PUT(
       ...fundingRequest,
     });
 
-    const response = await updateFundingRequest(fundingRequestId, validatedData, fundingRequest.teamId as string);
+    const response = await updateFundingRequest(
+      fundingRequestId,
+      validatedData,
+      fundingRequest.teamId as string,
+    );
     const status = response.status;
     let emailTemplate;
     if (status === FundingStatus.Accepted) {
       emailTemplate = await getEmailTemplateByType(
         fundingRequest.teamId as string,
-        EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_ACCEPTED
+        EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_ACCEPTED,
       );
     } else if (status === FundingStatus.Rejected) {
       emailTemplate = await getEmailTemplateByType(
         fundingRequest.teamId as string,
-        EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_REJECTED
+        EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_REJECTED,
       );
     }
 
@@ -75,14 +82,14 @@ export async function PUT(
         requestLink: `${process.env.NEXT_PUBLIC_BASE_URL}/organizations/funding-requests/${response?.id}`,
         supportEmail: response?.organization?.team?.email,
         teamName: response?.organization?.team?.name,
-      }
+      },
     );
     return NextResponse.json(
       {
         message: "success",
         data: response,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const handledError = handlePrismaError(e);

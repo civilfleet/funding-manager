@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { handlePrismaError } from "@/lib/utils";
 import { getAdminUser, getUserCurrent } from "@/services/users";
-import { auth } from "@/auth";
 import { Roles } from "@/types";
 
 export async function GET() {
@@ -18,13 +18,13 @@ export async function GET() {
       {
         data,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const errorMessage = handlePrismaError(e);
     return NextResponse.json(
       { error: errorMessage?.message },
-      { status: 400, statusText: errorMessage?.message }
+      { status: 400, statusText: errorMessage?.message },
     );
   }
 }

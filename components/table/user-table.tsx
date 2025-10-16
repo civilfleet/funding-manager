@@ -1,17 +1,16 @@
 "use client";
-import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useForm } from "react-hook-form";
+import useSWR from "swr";
+import { z } from "zod";
 import { DataTable } from "@/components/data-table";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { columns } from "@/components/table/user-columns";
 import { useToast } from "@/hooks/use-toast";
-import { Form } from "../ui/form";
-import FormInputControl from "../helper/form-input-control";
 import ButtonControl from "../helper/button-control";
-
-import useSWR from "swr";
+import FormInputControl from "../helper/form-input-control";
 import { Loader } from "../helper/loader";
+import { Form } from "../ui/form";
 
 interface UserTableProps {
   teamId: string;
@@ -34,7 +33,7 @@ export default function UserTable({ teamId, organizationId }: UserTableProps) {
 
   const { data, error, isLoading } = useSWR(
     `/api/users?teamId=${teamId}&query=${query}&organizationId=${organizationId}`,
-    fetcher
+    fetcher,
   );
   const loading = isLoading || !data;
 
@@ -55,7 +54,11 @@ export default function UserTable({ teamId, organizationId }: UserTableProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-1/2">
           <div className="flex-1">
-            <FormInputControl form={form} name="query" placeholder="Search..." />
+            <FormInputControl
+              form={form}
+              name="query"
+              placeholder="Search..."
+            />
           </div>
 
           <ButtonControl type="submit" label="Submit" className="mx-2" />

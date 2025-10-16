@@ -1,7 +1,11 @@
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { handlePrismaError } from "@/lib/utils";
-import { NextResponse } from "next/server";
-import { createEmailTemplate, getEmailTemplates, updateEmailTemplate } from "@/services/email-templates";
+import {
+  createEmailTemplate,
+  getEmailTemplates,
+  updateEmailTemplate,
+} from "@/services/email-templates";
 
 const emailTemplateSchema = z.object({
   name: z.string(),
@@ -11,7 +15,10 @@ const emailTemplateSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export async function GET(_req: Request, { params }: { params: Promise<{ teamId: string }> }) {
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ teamId: string }> },
+) {
   try {
     const { teamId } = await params;
     const templates = await getEmailTemplates(teamId);
@@ -22,12 +29,18 @@ export async function GET(_req: Request, { params }: { params: Promise<{ teamId:
   }
 }
 
-export async function POST(req: Request, { params }: { params: Promise<{ teamId: string }> }) {
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ teamId: string }> },
+) {
   try {
     const { teamId } = await params;
     const data = await req.json();
     const validatedData = emailTemplateSchema.parse(data);
-    const template = await createEmailTemplate(teamId, { ...validatedData, teamId });
+    const template = await createEmailTemplate(teamId, {
+      ...validatedData,
+      teamId,
+    });
     return NextResponse.json(template, { status: 201 });
   } catch (e) {
     const { message } = handlePrismaError(e);
@@ -35,13 +48,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ teamId:
   }
 }
 
-export async function PUT(req: Request, { params }: { params: Promise<{ teamId: string }> }) {
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ teamId: string }> },
+) {
   try {
     const { teamId } = await params;
     const data = await req.json();
     const validatedData = emailTemplateSchema.parse(data);
 
-    const template = await updateEmailTemplate(teamId, { ...validatedData, id: data.id, teamId });
+    const template = await updateEmailTemplate(teamId, {
+      ...validatedData,
+      id: data.id,
+      teamId,
+    });
 
     return NextResponse.json(template);
   } catch (e) {

@@ -9,11 +9,11 @@ type RouteContext = {
 };
 
 export async function GET(
-    request: Request,
-  { params }: { params: Promise<{ teamId: string }> }
+  request: Request,
+  { params }: { params: Promise<{ teamId: string }> },
 ) {
   const { teamId } = await params;
-  
+
   try {
     const team = await prisma.teams.findUnique({
       where: {
@@ -26,10 +26,7 @@ export async function GET(
     });
 
     if (!team) {
-      return NextResponse.json(
-        { error: "Team not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Team not found" }, { status: 404 });
     }
 
     return NextResponse.json(team);
@@ -37,7 +34,7 @@ export async function GET(
     const { message } = handlePrismaError(e);
     return NextResponse.json(
       { error: message },
-      { status: 400, statusText: message }
+      { status: 400, statusText: message },
     );
   }
-} 
+}

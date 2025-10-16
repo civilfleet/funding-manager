@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { deleteFile } from "../file/s3-service";
 import { FundingStatus } from "@/types";
+import { deleteFile } from "../file/s3-service";
 
 type DonationAgreement = {
   agreement: string;
@@ -10,7 +10,11 @@ type DonationAgreement = {
   users: string[];
 };
 
-const createDonationAgreement = async (donation: DonationAgreement, createdByUserId: string, teamId: string) => {
+const createDonationAgreement = async (
+  donation: DonationAgreement,
+  createdByUserId: string,
+  teamId: string,
+) => {
   const agreementData = await prisma.$transaction(async (prisma) => {
     const users = await prisma.user.findMany({
       where: {
@@ -113,7 +117,10 @@ const createDonationAgreement = async (donation: DonationAgreement, createdByUse
   };
 };
 
-const getDonationAgreements = async ({ teamId, orgId }: { teamId: string; orgId: string }, searchQuery: string) => {
+const getDonationAgreements = async (
+  { teamId, orgId }: { teamId: string; orgId: string },
+  searchQuery: string,
+) => {
   const where: Record<string, unknown> = {};
   if (orgId) {
     where["organizationId"] = orgId;
@@ -220,7 +227,7 @@ const getDonationAgreementById = async (id: string) => {
 
 const updateDonationAgreement = async (
   id: string,
-  updatedDonationAgreement: DonationAgreement & { userId?: string }
+  updatedDonationAgreement: DonationAgreement & { userId?: string },
 ) => {
   const donation = await prisma.donationAgreement.findUnique({
     where: {
@@ -249,7 +256,9 @@ const updateDonationAgreement = async (
       },
       data: {
         url: updatedDonationAgreement.file as string,
-        updatedBy: { connect: { id: updatedDonationAgreement.userId as string } },
+        updatedBy: {
+          connect: { id: updatedDonationAgreement.userId as string },
+        },
       },
     });
 
@@ -268,7 +277,10 @@ const updateDonationAgreement = async (
       },
     });
 
-    return { data: donation, message: "Donation agreement updated successfully" };
+    return {
+      data: donation,
+      message: "Donation agreement updated successfully",
+    };
   });
 };
 

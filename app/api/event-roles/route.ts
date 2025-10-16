@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { handlePrismaError } from "@/lib/utils";
-import { createEventRoleSchema, deleteEventRolesSchema } from "@/validations/eventRoles";
-import { createEventRole, deleteEventRoles, getTeamEventRoles } from "@/services/event-roles";
+import {
+  createEventRole,
+  deleteEventRoles,
+  getTeamEventRoles,
+} from "@/services/event-roles";
+import {
+  createEventRoleSchema,
+  deleteEventRolesSchema,
+} from "@/validations/eventRoles";
 
 export async function GET(req: Request) {
   try {
@@ -9,14 +16,20 @@ export async function GET(req: Request) {
     const teamId = searchParams.get("teamId");
 
     if (!teamId) {
-      return NextResponse.json({ error: "teamId is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "teamId is required" },
+        { status: 400 },
+      );
     }
 
     const roles = await getTeamEventRoles(teamId);
     return NextResponse.json({ data: roles }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
@@ -30,7 +43,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: role }, { status: 201 });
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
@@ -44,6 +60,9 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ data: "success" }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }

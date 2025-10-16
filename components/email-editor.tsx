@@ -1,6 +1,6 @@
+import { Eye, EyeOff, Info } from "lucide-react";
 import React, { useState } from "react";
 import { Button } from "./ui/button";
-import { Info, Eye, EyeOff } from "lucide-react";
 
 interface EmailEditorProps {
   value: string;

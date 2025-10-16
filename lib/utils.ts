@@ -1,6 +1,6 @@
 // lib/error-handlers.ts
 import { Prisma } from "@prisma/client";
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -45,6 +45,12 @@ export function cleanFileName(fileName: string): string {
     .toLowerCase(); // Convert to lowercase (optional)
 }
 
-export function calculateMonthsDuration(endDate: Date, startDate: Date): number {
-  return Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24 * 30));
+export function calculateMonthsDuration(
+  endDate: Date,
+  startDate: Date,
+): number {
+  return Math.ceil(
+    (new Date(endDate).getTime() - new Date(startDate).getTime()) /
+      (1000 * 60 * 60 * 24 * 30),
+  );
 }

@@ -1,4 +1,4 @@
-import { FileText, Download } from "lucide-react"; // Icons for files
+import { Download, FileText } from "lucide-react"; // Icons for files
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { File } from "@/types";

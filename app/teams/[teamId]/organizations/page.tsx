@@ -1,12 +1,16 @@
-import OrganizationTable from "@/components/table/organization-table";
-import { Button } from "@/components/ui/button";
-import { CopyRegistrationLinkButton } from "@/components/buttons/copy-registration-link-button";
 import Link from "next/link";
 import { auth } from "@/auth";
+import { CopyRegistrationLinkButton } from "@/components/buttons/copy-registration-link-button";
+import OrganizationTable from "@/components/table/organization-table";
+import { Button } from "@/components/ui/button";
 import { assertTeamModuleAccess } from "@/lib/permissions";
 import { AppModule } from "@/types";
 
-export default async function Organization({ params }: { params: Promise<{ teamId: string }> }) {
+export default async function Organization({
+  params,
+}: {
+  params: Promise<{ teamId: string }>;
+}) {
   const { teamId } = await params;
 
   const session = await auth();
@@ -16,7 +20,7 @@ export default async function Organization({ params }: { params: Promise<{ teamI
       userId: session?.user?.userId,
       roles: session?.user?.roles,
     },
-    "FUNDING" satisfies AppModule
+    "FUNDING" satisfies AppModule,
   );
 
   return (
@@ -34,4 +38,3 @@ export default async function Organization({ params }: { params: Promise<{ teamI
     </div>
   );
 }
-

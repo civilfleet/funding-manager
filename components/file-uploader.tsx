@@ -1,8 +1,8 @@
 "use client";
-import { useState, useId } from "react";
-import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { SquareArrowOutUpRight } from "lucide-react";
+import { useId, useState } from "react";
 import { Loader } from "@/components/helper/loader";
+import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 
 interface FileUploadProps {
   onFileUpload: (fileUrl: string) => void;
@@ -27,7 +27,9 @@ const FileUpload = ({
   const [loading, setLoading] = useState(false);
   const inputId = useId();
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setLoading(true);
     const file = event.target.files && event.target.files[0];
     if (!file) return;

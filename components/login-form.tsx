@@ -1,11 +1,14 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { sendLoginLink } from "@/app/actions/auth";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<"form">) {
+export function LoginForm({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"form">) {
   const [isLoading, setIsLoading] = useState(false);
   const [isLinkSent, setIsLinkSent] = useState(false);
   const [error, setError] = useState("");
@@ -54,26 +57,39 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               aria-describedby={error ? "email-error" : undefined}
               className={cn(
                 "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-                className
+                className,
               )}
             />
             {error && (
-              <div id="email-error" className="text-red-600 text-sm mt-1 text-left" role="alert">
+              <div
+                id="email-error"
+                className="text-red-600 text-sm mt-1 text-left"
+                role="alert"
+              >
                 {error}
               </div>
             )}
-            <Button variant="outline" className="w-44 mx-auto" disabled={isLoading}>
+            <Button
+              variant="outline"
+              className="w-44 mx-auto"
+              disabled={isLoading}
+            >
               {isLoading ? "Sending..." : "Login"}
             </Button>
           </>
         ) : (
-          <div className="text-green-600 font-medium">Login link has been sent to your email!</div>
+          <div className="text-green-600 font-medium">
+            Login link has been sent to your email!
+          </div>
         )}
       </form>
 
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}
-        <a href="mailto:support@lnob.net" className="underline underline-offset-4">
+        <a
+          href="mailto:support@lnob.net"
+          className="underline underline-offset-4"
+        >
           Please contact us to create one
         </a>
       </div>

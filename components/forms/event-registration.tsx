@@ -1,13 +1,13 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 const registrationSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -22,7 +22,9 @@ interface EventRegistrationFormProps {
   eventId: string;
 }
 
-export default function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
+export default function EventRegistrationForm({
+  eventId,
+}: EventRegistrationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +97,8 @@ export default function EventRegistrationForm({ eventId }: EventRegistrationForm
           Registration Successful!
         </h3>
         <p className="text-green-700">
-          Thank you for registering. You will receive a confirmation email shortly.
+          Thank you for registering. You will receive a confirmation email
+          shortly.
         </p>
         <Button
           onClick={() => setIsSubmitted(false)}

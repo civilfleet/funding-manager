@@ -1,7 +1,7 @@
-import prisma from "@/lib/prisma";
-import { handlePrismaError } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
+import prisma from "@/lib/prisma";
+import { handlePrismaError } from "@/lib/utils";
 import { FileTypes, FundingStatus } from "@/types";
 
 type FundingRequestData = {
@@ -74,13 +74,13 @@ const createFundingRequest = async (data: FundingRequestData) => {
   // Extract dynamic fields (everything not in staticFields, status, files, organizationId, submittedBy)
   const excludedKeys = new Set([
     ...Object.keys(staticFields),
-    'status',
-    'files',
-    'organizationId',
-    'submittedBy',
-    'id',
+    "status",
+    "files",
+    "organizationId",
+    "submittedBy",
+    "id",
   ]);
-  
+
   const customFields: Record<string, unknown> = {};
   Object.entries(data).forEach(([key, value]) => {
     if (!excludedKeys.has(key)) {
@@ -93,7 +93,10 @@ const createFundingRequest = async (data: FundingRequestData) => {
     data: {
       ...staticFields,
       status: data.status || FundingStatus.Submitted, // Default to Submitted if not provided
-      customFields: Object.keys(customFields).length > 0 ? (customFields as Prisma.InputJsonValue) : undefined,
+      customFields:
+        Object.keys(customFields).length > 0
+          ? (customFields as Prisma.InputJsonValue)
+          : undefined,
       organization: {
         connect: {
           id: data.organizationId,
@@ -134,7 +137,11 @@ const createFundingRequest = async (data: FundingRequestData) => {
   return { fundingRequest, user, organization };
 };
 
-const updateFundingRequest = async (id: string, data: Partial<FundingRequestData>, teamId: string) => {
+const updateFundingRequest = async (
+  id: string,
+  data: Partial<FundingRequestData>,
+  teamId: string,
+) => {
   try {
     const team = await prisma.teams.findFirst({
       where: {
@@ -195,7 +202,11 @@ const updateFundingRequest = async (id: string, data: Partial<FundingRequestData
   }
 };
 
-const updateFundingRequestStatus = async (id: string, status: FundingStatus, donationId?: string | null) => {
+const updateFundingRequestStatus = async (
+  id: string,
+  status: FundingStatus,
+  donationId?: string | null,
+) => {
   const selectedFields = {
     id: true,
     name: true,
@@ -237,12 +248,14 @@ const updateFundingRequestStatus = async (id: string, status: FundingStatus, don
   };
   try {
     if (donationId) {
-      const signedAgreements = await prisma.donationAgreementSignature.findMany({
-        where: {
-          donationAgreementId: donationId as string,
-          signedAt: null,
+      const signedAgreements = await prisma.donationAgreementSignature.findMany(
+        {
+          where: {
+            donationAgreementId: donationId as string,
+            signedAt: null,
+          },
         },
-      });
+      );
 
       if (!signedAgreements?.length) {
         return await prisma.fundingRequest.update({
@@ -267,7 +280,12 @@ const updateFundingRequestStatus = async (id: string, status: FundingStatus, don
   }
 };
 
-const uploadFundingRequestFile = async (fundingRequestId: string, file: string, type: FileTypes, userId: string) => {
+const uploadFundingRequestFile = async (
+  fundingRequestId: string,
+  file: string,
+  type: FileTypes,
+  userId: string,
+) => {
   return await prisma.file.create({
     data: {
       url: file,
@@ -307,7 +325,7 @@ const getFundingRequests = async (
     orgId: string;
   },
   searchQuery: string,
-  status?: FundingStatus[] | null
+  status?: FundingStatus[] | null,
 ) => {
   const where: Prisma.FundingRequestWhereInput = {};
   if (orgId) {

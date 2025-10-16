@@ -1,10 +1,14 @@
-import { auth } from "@/auth";
-import { Roles } from "@/types";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import TeamForm from "@/components/forms/team";
 import prisma from "@/lib/prisma";
+import { Roles } from "@/types";
 
-export default async function EditTeamPage({ params }: { params: Promise<{ teamId: string }> }) {
+export default async function EditTeamPage({
+  params,
+}: {
+  params: Promise<{ teamId: string }>;
+}) {
   const session = await auth();
   const { teamId } = await params;
 

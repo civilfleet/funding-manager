@@ -1,9 +1,9 @@
+import { NextResponse } from "next/server";
+import { EMAIL_TEMPLATES_TYPES } from "@/constants";
 import { sendEmail } from "@/lib/nodemailer";
 import { handlePrismaError } from "@/lib/utils";
-import { updateFundingRequestStatus } from "@/services/funding-request";
-import { NextResponse } from "next/server";
 import { getEmailTemplateByType } from "@/services/email-templates";
-import { EMAIL_TEMPLATES_TYPES } from "@/constants";
+import { updateFundingRequestStatus } from "@/services/funding-request";
 import { FundingStatus } from "@/types";
 
 export async function PUT(
@@ -12,7 +12,7 @@ export async function PUT(
     params,
   }: {
     params: Promise<{ id: string }>;
-  }
+  },
 ) {
   try {
     const fundingRequestId = (await params).id;
@@ -28,15 +28,21 @@ export async function PUT(
       const fundingRequest = await updateFundingRequestStatus(
         fundingRequestId,
         fundingRequestData.status,
-        fundingRequestData?.donationId
+        fundingRequestData?.donationId,
       );
 
       const status = fundingRequest?.status;
       let emailTemplate;
       if (status === FundingStatus.Accepted) {
-        emailTemplate = await getEmailTemplateByType(teamId as string, EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_ACCEPTED);
+        emailTemplate = await getEmailTemplateByType(
+          teamId as string,
+          EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_ACCEPTED,
+        );
       } else if (status === FundingStatus.Rejected) {
-        emailTemplate = await getEmailTemplateByType(teamId as string, EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_REJECTED);
+        emailTemplate = await getEmailTemplateByType(
+          teamId as string,
+          EMAIL_TEMPLATES_TYPES.FUNDING_REQUEST_REJECTED,
+        );
       }
 
       sendEmail(
@@ -56,7 +62,7 @@ export async function PUT(
           requestLink: `${process.env.NEXT_PUBLIC_BASE_URL}/organization/funding-requests/${fundingRequest?.id}`,
           supportEmail: "support@partnerapp.com",
           teamName: fundingRequest?.organization?.team?.name,
-        }
+        },
       );
 
       return NextResponse.json(
@@ -64,7 +70,7 @@ export async function PUT(
           message: "success",
           data: fundingRequest,
         },
-        { status: 201 }
+        { status: 201 },
       );
     }
   } catch (e) {

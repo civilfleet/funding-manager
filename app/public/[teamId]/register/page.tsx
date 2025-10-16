@@ -1,29 +1,27 @@
 "use client";
 
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { redirect, useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import FileUpload from "@/components/file-uploader";
+import ButtonControl from "@/components/helper/button-control";
 import FormInputControl from "@/components/helper/form-input-control";
-import { createOrganizationSchema } from "@/validations/organizations";
-import { useToast } from "@/hooks/use-toast";
 import {
   Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from "@/components/ui/card";
-import ButtonControl from "@/components/helper/button-control";
-import FileUpload from "@/components/file-uploader";
-import Link from "next/link";
-import { redirect, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useRouter } from 'next/navigation'
-
+import { Form } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { createOrganizationSchema } from "@/validations/organizations";
 
 export default function RegisterPage() {
-  const router = useRouter()
+  const router = useRouter();
 
   const { toast } = useToast();
   const params = useParams();
@@ -36,7 +34,7 @@ export default function RegisterPage() {
       try {
         const response = await fetch(`/api/public/teams/${params.teamId}`);
         if (!response.ok) {
-          router.replace('/')
+          router.replace("/");
           throw new Error("Team not found");
         }
         const data = await response.json();
@@ -108,7 +106,8 @@ export default function RegisterPage() {
       await response.json();
       toast({
         title: "Success",
-        description: "Your organization registration request has been submitted. We will review it and get back to you soon.",
+        description:
+          "Your organization registration request has been submitted. We will review it and get back to you soon.",
         variant: "default",
       });
 
@@ -141,7 +140,9 @@ export default function RegisterPage() {
         <CardHeader>
           <CardTitle>Register Your Organization with {teamName}</CardTitle>
           <CardDescription>
-            Please fill out the form below to request an organization account with {teamName}. We will review your application and get back to you soon.
+            Please fill out the form below to request an organization account
+            with {teamName}. We will review your application and get back to you
+            soon.
           </CardDescription>
           {strategicPriorities && (
             <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
@@ -208,7 +209,8 @@ export default function RegisterPage() {
                 <div>
                   <h4 className="text-lg font-semibold">Tax Details</h4>
                   <CardDescription>
-                    Please attach your tax exemption certificate and articles of association
+                    Please attach your tax exemption certificate and articles of
+                    association
                   </CardDescription>
                   <hr className="my-4" />
                 </div>
@@ -229,14 +231,16 @@ export default function RegisterPage() {
                     error={
                       form?.formState?.errors?.taxExemptionCertificate
                         ? (form.formState.errors?.taxExemptionCertificate
-                          ?.message as string)
+                            ?.message as string)
                         : ""
                     }
                   />
                 </div>
 
                 <div>
-                  <h4 className="text-lg font-semibold">Contact Person Details</h4>
+                  <h4 className="text-lg font-semibold">
+                    Contact Person Details
+                  </h4>
                   <hr className="my-4" />
                 </div>
 
@@ -258,9 +262,9 @@ export default function RegisterPage() {
                   />
                 </div>
 
-
                 <div>
-                  <h4 className="text-lg font-semibold">Article of Association & Logo
+                  <h4 className="text-lg font-semibold">
+                    Article of Association & Logo
                   </h4>
                   <hr className="my-4" />
                 </div>
@@ -276,7 +280,7 @@ export default function RegisterPage() {
                     error={
                       form?.formState?.errors?.articlesOfAssociation
                         ? (form.formState.errors?.articlesOfAssociation
-                          ?.message as string)
+                            ?.message as string)
                         : ""
                     }
                   />
@@ -302,4 +306,4 @@ export default function RegisterPage() {
       </Card>
     </div>
   );
-} 
+}

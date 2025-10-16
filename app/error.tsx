@@ -12,7 +12,9 @@ export default function Error() {
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold">Error</h1>
-            <p className="text-sm text-muted-foreground">An error occurred while logging in. Please try again.</p>
+            <p className="text-sm text-muted-foreground">
+              An error occurred while logging in. Please try again.
+            </p>
           </div>
         </div>
       </div>

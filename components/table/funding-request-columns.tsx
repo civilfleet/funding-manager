@@ -1,4 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link"; // Import Link
 // import { MoreHorizontal } from "lucide-react"; // No longer needed
 import { Button } from "@/components/ui/button";
 // import {
@@ -10,7 +11,6 @@ import { Button } from "@/components/ui/button";
 // } from "@/components/ui/dropdown-menu"; // No longer needed
 import { FundingRequest } from "@/types";
 import { StatusBadge } from "../helper/status-badge";
-import Link from "next/link"; // Import Link
 
 export const columns: ColumnDef<FundingRequest>[] = [
   {
@@ -21,7 +21,7 @@ export const columns: ColumnDef<FundingRequest>[] = [
       return (
         <div className="text-left">
           <Button asChild variant="outline" size="sm">
-            <Link href={`funding-requests/${request.id}`} passHref >
+            <Link href={`funding-requests/${request.id}`} passHref>
               View
             </Link>
           </Button>
@@ -32,12 +32,18 @@ export const columns: ColumnDef<FundingRequest>[] = [
   {
     accessorKey: "name",
     header: () => <div className="text-left w-36">Funding Request</div>,
-    cell: ({ row }) => <div className="text-left">{row.original?.name || "N/A"}</div>,
+    cell: ({ row }) => (
+      <div className="text-left">{row.original?.name || "N/A"}</div>
+    ),
   },
   {
     accessorKey: "organization.name",
     header: () => <div className="text-left w-36">Organization</div>,
-    cell: ({ row }) => <div className="text-left">{row.original?.organization?.name || "N/A"}</div>,
+    cell: ({ row }) => (
+      <div className="text-left">
+        {row.original?.organization?.name || "N/A"}
+      </div>
+    ),
   },
 
   {
@@ -45,7 +51,11 @@ export const columns: ColumnDef<FundingRequest>[] = [
     header: () => <div className="text-left w-32">Amount Agreed</div>,
     cell: ({ row }) => {
       const amount = row.getValue("amountAgreed");
-      return <div className="text-left">{amount ? `€ ${amount.toLocaleString()}` : "€ 0"}</div>;
+      return (
+        <div className="text-left">
+          {amount ? `€ ${amount.toLocaleString()}` : "€ 0"}
+        </div>
+      );
     },
   },
   {
@@ -53,14 +63,20 @@ export const columns: ColumnDef<FundingRequest>[] = [
     header: () => <div className="text-left w-32">Remaining Amount</div>,
     cell: ({ row }) => {
       const remainingAmount = row.getValue("remainingAmount");
-      return <div className="text-left">{remainingAmount ? `€ ${remainingAmount.toLocaleString()}` : "€ 0"}</div>;
+      return (
+        <div className="text-left">
+          {remainingAmount ? `€ ${remainingAmount.toLocaleString()}` : "€ 0"}
+        </div>
+      );
     },
   },
   {
     accessorKey: "expectedCompletionDate",
     header: () => <div className="text-left w-36">Completion Date</div>,
     cell: ({ row }) => (
-      <div className="text-left">{new Date(row.getValue("expectedCompletionDate")).toLocaleDateString()}</div>
+      <div className="text-left">
+        {new Date(row.getValue("expectedCompletionDate")).toLocaleDateString()}
+      </div>
     ),
   },
   {
@@ -75,6 +91,10 @@ export const columns: ColumnDef<FundingRequest>[] = [
   {
     accessorKey: "createdAt",
     header: () => <div className="text-left w-32">Created At</div>,
-    cell: ({ row }) => <div className="text-left">{new Date(row.getValue("createdAt"))?.toLocaleDateString()}</div>,
+    cell: ({ row }) => (
+      <div className="text-left">
+        {new Date(row.getValue("createdAt"))?.toLocaleDateString()}
+      </div>
+    ),
   },
 ];

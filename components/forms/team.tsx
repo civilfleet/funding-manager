@@ -1,16 +1,22 @@
 "use client";
 
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import FormInputControl from "../helper/form-input-control";
-import { useToast } from "@/hooks/use-toast";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
-import ButtonControl from "../helper/button-control";
-import { createTeamSchema } from "@/validations/team";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Form } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { createTeamSchema } from "@/validations/team";
+import ButtonControl from "../helper/button-control";
+import FormInputControl from "../helper/form-input-control";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
 
 interface TeamFormProps {
   team?: {
@@ -109,7 +115,9 @@ export default function TeamForm({ team }: TeamFormProps) {
 
       toast({
         title: "Success",
-        description: team ? "Team information updated" : "Team information created",
+        description: team
+          ? "Team information updated"
+          : "Team information created",
         variant: "default",
       });
 
@@ -132,21 +140,57 @@ export default function TeamForm({ team }: TeamFormProps) {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>{team ? "Edit Team" : "Create New Team"}</CardTitle>
-        <CardDescription>{team ? "Update team information below" : "Please create a new team below"}</CardDescription>
+        <CardDescription>
+          {team
+            ? "Update team information below"
+            : "Please create a new team below"}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8" id="Team-form">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-8"
+            id="Team-form"
+          >
             <div className="grid grid-cols-2 gap-4">
-              <FormInputControl form={form} name="name" placeholder="Team name" />
-              <FormInputControl form={form} name="email" placeholder="Email address" />
-              <FormInputControl form={form} name="phone" placeholder="Phone number" />
-              <FormInputControl form={form} name="address" placeholder="Street address" />
+              <FormInputControl
+                form={form}
+                name="name"
+                placeholder="Team name"
+              />
+              <FormInputControl
+                form={form}
+                name="email"
+                placeholder="Email address"
+              />
+              <FormInputControl
+                form={form}
+                name="phone"
+                placeholder="Phone number"
+              />
+              <FormInputControl
+                form={form}
+                name="address"
+                placeholder="Street address"
+              />
 
               <FormInputControl form={form} name="city" placeholder="City" />
-              <FormInputControl form={form} name="country" placeholder="Country" />
-              <FormInputControl form={form} name="postalCode" placeholder="Postal code" />
-              <FormInputControl form={form} name="website" placeholder="Website" />
+              <FormInputControl
+                form={form}
+                name="country"
+                placeholder="Country"
+              />
+              <FormInputControl
+                form={form}
+                name="postalCode"
+                placeholder="Postal code"
+              />
+              <FormInputControl
+                form={form}
+                name="website"
+                placeholder="Website"
+              />
             </div>
 
             <h4 className="text-lg font-semibold">
@@ -154,13 +198,33 @@ export default function TeamForm({ team }: TeamFormProps) {
               <hr />
             </h4>
             <div className="grid grid-cols-2 gap-4">
-              <FormInputControl form={form} name="user.name" placeholder="User person name" />
-              <FormInputControl form={form} name="user.email" placeholder="User person email" />
-              <FormInputControl form={form} name="user.phone" placeholder="User person phone" />
-              <FormInputControl form={form} name="user.address" placeholder="User person address" />
+              <FormInputControl
+                form={form}
+                name="user.name"
+                placeholder="User person name"
+              />
+              <FormInputControl
+                form={form}
+                name="user.email"
+                placeholder="User person email"
+              />
+              <FormInputControl
+                form={form}
+                name="user.phone"
+                placeholder="User person phone"
+              />
+              <FormInputControl
+                form={form}
+                name="user.address"
+                placeholder="User person address"
+              />
             </div>
 
-            <ButtonControl className="w-24" type="submit" disabled={form.formState.isSubmitting} />
+            <ButtonControl
+              className="w-24"
+              type="submit"
+              disabled={form.formState.isSubmitting}
+            />
           </form>
         </Form>
       </CardContent>

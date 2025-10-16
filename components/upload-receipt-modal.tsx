@@ -1,8 +1,13 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import FileUpload from "./file-uploader";
+import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import FileUpload from "./file-uploader";
 
 interface UploadReceiptModalProps {
   isOpen: boolean;
@@ -11,7 +16,12 @@ interface UploadReceiptModalProps {
   transactionId: string;
 }
 
-export function UploadReceiptModal({ isOpen, onClose, onUpload, transactionId }: UploadReceiptModalProps) {
+export function UploadReceiptModal({
+  isOpen,
+  onClose,
+  onUpload,
+  transactionId,
+}: UploadReceiptModalProps) {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,24 +32,33 @@ export function UploadReceiptModal({ isOpen, onClose, onUpload, transactionId }:
     setFileUrl(url);
 
     try {
-      const response = await fetch(`/api/transactions/${transactionId}/receipt`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `/api/transactions/${transactionId}/receipt`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ transactionReciept: url }),
         },
-        body: JSON.stringify({ transactionReciept: url }),
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update transaction receipt");
+        throw new Error(
+          errorData.message || "Failed to update transaction receipt",
+        );
       }
 
       onUpload(url);
       onClose();
     } catch (error) {
       console.error("Failed to update transaction receipt:", error);
-      setError(error instanceof Error ? error.message : "Failed to upload receipt. Please try again.");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to upload receipt. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +83,11 @@ export function UploadReceiptModal({ isOpen, onClose, onUpload, transactionId }:
             name="receipt"
             disabled={isLoading}
           />
-          {isLoading && <p className="text-sm text-muted-foreground mt-2">Uploading receipt...</p>}
+          {isLoading && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Uploading receipt...
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>

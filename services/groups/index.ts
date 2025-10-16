@@ -1,6 +1,6 @@
-import prisma from "@/lib/prisma";
-import { Group, AppModule, APP_MODULES } from "@/types";
 import { Prisma } from "@prisma/client";
+import prisma from "@/lib/prisma";
+import { APP_MODULES, AppModule, Group } from "@/types";
 
 type CreateGroupInput = {
   teamId: string;
@@ -42,7 +42,7 @@ const DEFAULT_GROUP_NAME = "Default Access";
 
 const ensureDefaultGroup = async (
   teamId: string,
-  client: Prisma.TransactionClient | typeof prisma = prisma
+  client: Prisma.TransactionClient | typeof prisma = prisma,
 ) => {
   let defaultGroup = await client.group.findFirst({
     where: {
@@ -157,10 +157,12 @@ const ensureDefaultGroup = async (
       distinct: ["userId"],
     });
 
-    const userIdsWithOtherGroups = new Set(usersWithOtherGroups.map((entry) => entry.userId));
+    const userIdsWithOtherGroups = new Set(
+      usersWithOtherGroups.map((entry) => entry.userId),
+    );
 
     const userIdsNeedingDefault = teamUserIds.filter(
-      (userId) => !userIdsWithOtherGroups.has(userId)
+      (userId) => !userIdsWithOtherGroups.has(userId),
     );
 
     if (userIdsNeedingDefault.length) {
@@ -194,7 +196,9 @@ const mapGroup = (group: GroupWithDefaults): Group => ({
   canAccessAllContacts: group.canAccessAllContacts,
   isDefaultGroup: group.isDefaultGroup,
   modules: group.modulePermissions.length
-    ? group.modulePermissions.map((permission) => permission.module as AppModule)
+    ? group.modulePermissions.map(
+        (permission) => permission.module as AppModule,
+      )
     : [...APP_MODULES],
   createdAt: group.createdAt,
   updatedAt: group.updatedAt,
@@ -273,11 +277,16 @@ const getGroupWithUsers = async (groupId: string, teamId: string) => {
 };
 
 const createGroup = async (input: CreateGroupInput) => {
-  const { teamId, name, description, canAccessAllContacts, userIds, modules } = input;
+  const { teamId, name, description, canAccessAllContacts, userIds, modules } =
+    input;
 
   const baseModules = modules && modules.length ? modules : [...APP_MODULES];
   const modulesToAssign: AppModule[] = Array.from(
-    new Set(baseModules.filter((module): module is AppModule => APP_MODULES.includes(module)))
+    new Set(
+      baseModules.filter((module): module is AppModule =>
+        APP_MODULES.includes(module),
+      ),
+    ),
   );
 
   const group = await prisma.$transaction(async (tx) => {
@@ -290,13 +299,14 @@ const createGroup = async (input: CreateGroupInput) => {
         modulePermissions: {
           create: modulesToAssign.map((module) => ({ module })),
         },
-        users: userIds && userIds.length > 0
-          ? {
-              create: userIds.map((userId) => ({
-                userId,
-              })),
-            }
-          : undefined,
+        users:
+          userIds && userIds.length > 0
+            ? {
+                create: userIds.map((userId) => ({
+                  userId,
+                })),
+              }
+            : undefined,
       },
       include: {
         modulePermissions: true,
@@ -312,7 +322,8 @@ const createGroup = async (input: CreateGroupInput) => {
 };
 
 const updateGroup = async (input: UpdateGroupInput) => {
-  const { id, teamId, name, description, canAccessAllContacts, modules } = input;
+  const { id, teamId, name, description, canAccessAllContacts, modules } =
+    input;
 
   const result = await prisma.$transaction(async (tx) => {
     await tx.group.update({
@@ -330,7 +341,11 @@ const updateGroup = async (input: UpdateGroupInput) => {
     if (modules !== undefined) {
       const baseModules = modules.length ? modules : [...APP_MODULES];
       const modulesToAssign: AppModule[] = Array.from(
-        new Set(baseModules.filter((module): module is AppModule => APP_MODULES.includes(module)))
+        new Set(
+          baseModules.filter((module): module is AppModule =>
+            APP_MODULES.includes(module),
+          ),
+        ),
       );
 
       await tx.groupModulePermission.deleteMany({
@@ -477,13 +492,18 @@ const getUserGroups = async (userId: string, teamId: string) => {
   return userGroups.map((ug) => mapGroup(ug.group));
 };
 
-const getUserModuleAccess = async (userId: string, teamId: string): Promise<AppModule[]> => {
+const getUserModuleAccess = async (
+  userId: string,
+  teamId: string,
+): Promise<AppModule[]> => {
   const groups = await getUserGroups(userId, teamId);
 
   if (!groups.length) {
     const defaultGroup = await ensureDefaultGroup(teamId);
     return defaultGroup.modulePermissions.length
-      ? defaultGroup.modulePermissions.map((permission) => permission.module as AppModule)
+      ? defaultGroup.modulePermissions.map(
+          (permission) => permission.module as AppModule,
+        )
       : [...APP_MODULES];
   }
 
@@ -502,7 +522,9 @@ const getUserModuleAccess = async (userId: string, teamId: string): Promise<AppM
   const defaultGroup = await ensureDefaultGroup(teamId);
 
   return defaultGroup.modulePermissions.length
-    ? defaultGroup.modulePermissions.map((permission) => permission.module as AppModule)
+    ? defaultGroup.modulePermissions.map(
+        (permission) => permission.module as AppModule,
+      )
     : [...APP_MODULES];
 };
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { handlePrismaError } from "@/lib/utils";
-import { updateEventSchema } from "@/validations/events";
 import { getEventById, updateEvent } from "@/services/events";
+import { updateEventSchema } from "@/validations/events";
 
 interface RouteParams {
   params: Promise<{
@@ -16,7 +16,10 @@ export async function GET(req: Request, { params }: RouteParams) {
     const teamId = searchParams.get("teamId");
 
     if (!teamId) {
-      return NextResponse.json({ error: "teamId is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "teamId is required" },
+        { status: 400 },
+      );
     }
 
     const event = await getEventById(id, teamId);
@@ -28,7 +31,10 @@ export async function GET(req: Request, { params }: RouteParams) {
     return NextResponse.json({ data: event }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
@@ -43,6 +49,9 @@ export async function PUT(req: Request, { params }: RouteParams) {
     return NextResponse.json({ data: event }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }

@@ -1,10 +1,9 @@
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth, { DefaultSession } from "next-auth";
+import Nodemailer from "next-auth/providers/nodemailer";
 import authConfig from "./config/auth";
-
 import prisma from "./lib/prisma";
 import { Roles } from "./types";
-import Nodemailer from "next-auth/providers/nodemailer";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 
 declare module "next-auth" {
   interface Session {
@@ -75,7 +74,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.accessToken = accessToken;
         session.user.userId = token.userId as string | undefined;
         session.user.roles = token.roles as Roles[] | undefined;
-        session.user.organizationId = token.organizationId as string | undefined;
+        session.user.organizationId = token.organizationId as
+          | string
+          | undefined;
         session.user.teamId = token.teamId as string | undefined;
       }
 

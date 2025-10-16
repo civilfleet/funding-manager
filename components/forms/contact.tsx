@@ -1,17 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { z } from "zod";
-import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import useSWR from "swr";
-
-import { createContactSchema, updateContactSchema } from "@/validations/contacts";
-import { ContactAttributeType, Contact } from "@/types";
-import { useToast } from "@/hooks/use-toast";
-
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -20,10 +16,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -31,6 +32,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { Contact, ContactAttributeType } from "@/types";
+import {
+  createContactSchema,
+  updateContactSchema,
+} from "@/validations/contacts";
 
 type CreateContactFormValues = z.infer<typeof createContactSchema>;
 type UpdateContactFormValues = z.infer<typeof updateContactSchema>;
@@ -54,16 +62,15 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = Boolean(contact);
 
-  const { data: groupsData } = useSWR(
-    `/api/groups?teamId=${teamId}`,
-    fetcher
-  );
+  const { data: groupsData } = useSWR(`/api/groups?teamId=${teamId}`, fetcher);
 
   const groups: Group[] = groupsData?.data || [];
 
   const form = useForm<ContactFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(isEditMode ? updateContactSchema : createContactSchema) as any,
+    resolver: zodResolver(
+      isEditMode ? updateContactSchema : createContactSchema,
+    ) as any,
     defaultValues: isEditMode
       ? {
           teamId,
@@ -72,7 +79,8 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           email: contact?.email ?? "",
           phone: contact?.phone ?? "",
           groupId: contact?.groupId ?? undefined,
-          profileAttributes: (contact?.profileAttributes ?? []) as CreateContactFormValues["profileAttributes"],
+          profileAttributes: (contact?.profileAttributes ??
+            []) as CreateContactFormValues["profileAttributes"],
         }
       : {
           teamId,
@@ -89,7 +97,8 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
   }, [teamId, form]);
 
   const { control, watch, setValue } = form;
-  const typedControl = control as unknown as import("react-hook-form").Control<CreateContactFormValues>;
+  const typedControl =
+    control as unknown as import("react-hook-form").Control<CreateContactFormValues>;
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -103,7 +112,7 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
       { label: "Number", value: ContactAttributeType.NUMBER },
       { label: "Location", value: ContactAttributeType.LOCATION },
     ],
-    []
+    [],
   );
 
   const attributes = watch("profileAttributes");
@@ -113,10 +122,15 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
 
     switch (type) {
       case ContactAttributeType.LOCATION:
-        initialValue = { label: "", latitude: undefined, longitude: undefined } as CreateContactFormValues["profileAttributes"][number]["value"];
+        initialValue = {
+          label: "",
+          latitude: undefined,
+          longitude: undefined,
+        } as CreateContactFormValues["profileAttributes"][number]["value"];
         break;
       default:
-        initialValue = "" as CreateContactFormValues["profileAttributes"][number]["value"];
+        initialValue =
+          "" as CreateContactFormValues["profileAttributes"][number]["value"];
         break;
     }
 
@@ -135,7 +149,10 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
     } as CreateContactFormValues["profileAttributes"][number]);
   };
 
-  const onSubmit = async (values: ContactFormValues, shouldExit: boolean = true) => {
+  const onSubmit = async (
+    values: ContactFormValues,
+    shouldExit: boolean = true,
+  ) => {
     setIsSubmitting(true);
 
     try {
@@ -149,7 +166,10 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody.error || `Failed to ${isEditMode ? "update" : "create"} contact`);
+        throw new Error(
+          errorBody.error ||
+            `Failed to ${isEditMode ? "update" : "create"} contact`,
+        );
       }
 
       toast({
@@ -169,8 +189,13 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
       router.refresh();
     } catch (error) {
       toast({
-        title: isEditMode ? "Unable to update contact" : "Unable to create contact",
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        title: isEditMode
+          ? "Unable to update contact"
+          : "Unable to create contact",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {
@@ -193,7 +218,8 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                     type="date"
                     {...field}
                     value={
-                      typeof field.value === "string" || typeof field.value === "number"
+                      typeof field.value === "string" ||
+                      typeof field.value === "number"
                         ? field.value
                         : ""
                     }
@@ -217,7 +243,8 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                     type="number"
                     {...field}
                     value={
-                      typeof field.value === "number" || typeof field.value === "string"
+                      typeof field.value === "number" ||
+                      typeof field.value === "string"
                         ? field.value
                         : ""
                     }
@@ -242,7 +269,8 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                       placeholder="Office"
                       {...field}
                       value={
-                        typeof field.value === "string" || typeof field.value === "number"
+                        typeof field.value === "string" ||
+                        typeof field.value === "number"
                           ? field.value
                           : ""
                       }
@@ -264,7 +292,8 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                       step="any"
                       {...field}
                       value={
-                        typeof field.value === "number" || typeof field.value === "string"
+                        typeof field.value === "number" ||
+                        typeof field.value === "string"
                           ? field.value
                           : ""
                       }
@@ -286,7 +315,8 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                       step="any"
                       {...field}
                       value={
-                        typeof field.value === "number" || typeof field.value === "string"
+                        typeof field.value === "number" ||
+                        typeof field.value === "string"
                           ? field.value
                           : ""
                       }
@@ -311,7 +341,8 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                     placeholder="Enter value"
                     {...field}
                     value={
-                      typeof field.value === "string" || typeof field.value === "number"
+                      typeof field.value === "string" ||
+                      typeof field.value === "number"
                         ? field.value
                         : ""
                     }
@@ -341,7 +372,13 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
       <Form {...form}>
         <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
           <input type="hidden" {...form.register("teamId")} value={teamId} />
-          {isEditMode && <input type="hidden" {...form.register("contactId")} value={contact?.id} />}
+          {isEditMode && (
+            <input
+              type="hidden"
+              {...form.register("contactId")}
+              value={contact?.id}
+            />
+          )}
           <CardContent className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
@@ -351,7 +388,11 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                   <FormItem className="sm:col-span-2">
                     <FormLabel>Full name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Alex Johnson" {...field} value={field.value} />
+                      <Input
+                        placeholder="Alex Johnson"
+                        {...field}
+                        value={field.value}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -364,7 +405,12 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="alex@example.com" {...field} value={field.value ?? ""} />
+                      <Input
+                        type="email"
+                        placeholder="alex@example.com"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -377,7 +423,11 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="+1 (555) 123-4567" {...field} value={field.value ?? ""} />
+                      <Input
+                        placeholder="+1 (555) 123-4567"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -390,7 +440,9 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                   <FormItem className="sm:col-span-2">
                     <FormLabel>Group (optional)</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value === "none" ? undefined : value)}
+                      onValueChange={(value) =>
+                        field.onChange(value === "none" ? undefined : value)
+                      }
                       value={field.value || "none"}
                     >
                       <FormControl>
@@ -418,10 +470,20 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="text-base font-semibold">Profile attributes</h3>
-                  <p className="text-sm text-muted-foreground">Capture structured CRM data such as roles, regions, or lifecycle dates.</p>
+                  <h3 className="text-base font-semibold">
+                    Profile attributes
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Capture structured CRM data such as roles, regions, or
+                    lifecycle dates.
+                  </p>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={addAttribute}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addAttribute}
+                >
                   <PlusCircle className="mr-2 h-4 w-4" /> Add attribute
                 </Button>
               </div>
@@ -434,9 +496,13 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                 )}
 
                 {fields.map((field, index) => {
-                  const currentType = attributes?.[index]?.type ?? ContactAttributeType.STRING;
+                  const currentType =
+                    attributes?.[index]?.type ?? ContactAttributeType.STRING;
                   return (
-                    <div key={field.id} className="rounded-md border p-4 space-y-4">
+                    <div
+                      key={field.id}
+                      className="rounded-md border p-4 space-y-4"
+                    >
                       <div className="grid gap-3 sm:grid-cols-5">
                         <FormField
                           control={typedControl}
@@ -445,7 +511,11 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                             <FormItem className="sm:col-span-2">
                               <FormLabel>Label *</FormLabel>
                               <FormControl>
-                                <Input placeholder="e.g. Relationship" {...field} value={field.value ?? ""} />
+                                <Input
+                                  placeholder="e.g. Relationship"
+                                  {...field}
+                                  value={field.value ?? ""}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -460,7 +530,9 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                               <FormLabel>Type</FormLabel>
                               <Select
                                 value={field.value}
-                                onValueChange={(value: ContactAttributeType) => {
+                                onValueChange={(
+                                  value: ContactAttributeType,
+                                ) => {
                                   field.onChange(value);
                                   handleTypeChange(index, value);
                                 }}
@@ -472,7 +544,10 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                                 </FormControl>
                                 <SelectContent>
                                   {attributeTypes.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                    >
                                       {option.label}
                                     </SelectItem>
                                   ))}
@@ -506,7 +581,12 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           </CardContent>
 
           <CardFooter className="flex justify-end gap-2 border-t pt-4">
-            <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => router.back()}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={() => router.back()}
+            >
               Cancel
             </Button>
             {isEditMode && (

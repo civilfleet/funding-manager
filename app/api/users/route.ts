@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { createUserSchema } from "@/validations/organizations";
-import { createUser, getUsers, getUsersForDonation } from "@/services/users";
-import { handlePrismaError } from "@/lib/utils";
 import { sendEmail } from "@/lib/nodemailer";
+import { handlePrismaError } from "@/lib/utils";
+import { createUser, getUsers, getUsersForDonation } from "@/services/users";
 import { Roles } from "@/types";
+import { createUserSchema } from "@/validations/organizations";
 
 export async function GET(req: Request) {
   try {
@@ -25,20 +25,20 @@ export async function GET(req: Request) {
           teamId: teamId || undefined,
           organizationId: organizationId || undefined,
         },
-        searchQuery
+        searchQuery,
       );
     }
 
     return NextResponse.json(
       { data },
 
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const handledError = handlePrismaError(e);
     return NextResponse.json(
       { error: handledError?.message },
-      { status: 400, statusText: handledError?.message }
+      { status: 400, statusText: handledError?.message },
     );
   }
 }
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
       {
         name: validatedData.name,
         email: validatedData.email,
-      }
+      },
     );
 
     return NextResponse.json(
@@ -83,13 +83,13 @@ export async function POST(req: Request) {
         data: "success",
       },
 
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const { message } = handlePrismaError(e);
     return NextResponse.json(
       { error: message },
-      { status: 400, statusText: message }
+      { status: 400, statusText: message },
     );
   }
 }

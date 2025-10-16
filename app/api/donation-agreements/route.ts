@@ -1,11 +1,13 @@
-import { NextResponse } from "next/server";
-
-import { handlePrismaError } from "@/lib/utils";
-import { createDonationAgreementSchema } from "@/validations/donation-agreement";
-import { createDonationAgreement, getDonationAgreements } from "@/services/donation-agreement";
 import { omit } from "lodash";
+import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { sendEmail } from "@/lib/nodemailer";
+import { handlePrismaError } from "@/lib/utils";
+import {
+  createDonationAgreement,
+  getDonationAgreements,
+} from "@/services/donation-agreement";
+import { createDonationAgreementSchema } from "@/validations/donation-agreement";
 
 export async function GET(req: Request) {
   try {
@@ -21,7 +23,7 @@ export async function GET(req: Request) {
       {
         data,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const handledError = handlePrismaError(e);
@@ -34,14 +36,15 @@ export async function POST(req: Request) {
     const session = await auth();
     const donationAgreement = await req.json();
 
-    const validatedData = createDonationAgreementSchema.parse(donationAgreement);
+    const validatedData =
+      createDonationAgreementSchema.parse(donationAgreement);
     const { agreement, users } = await createDonationAgreement(
       {
         ...omit(validatedData, "user", "teamId"),
         users: validatedData.users ?? [],
       },
       session?.user.userId as string,
-      donationAgreement?.teamId
+      donationAgreement?.teamId,
     );
 
     users?.forEach(async (user) => {
@@ -58,7 +61,7 @@ export async function POST(req: Request) {
           agreementLink: `${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${agreement.file.id}`,
           supportEmail: agreement?.team?.email,
           teamName: agreement?.team?.name,
-        }
+        },
       );
     });
 
@@ -67,7 +70,7 @@ export async function POST(req: Request) {
         message: "Donation agreement created successfully",
         data: agreement,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const handledError = handlePrismaError(e);

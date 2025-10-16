@@ -23,7 +23,7 @@ const getFiles = async (
     organizationId: string | undefined;
     teamId: string | undefined;
   },
-  searchQuery: string
+  searchQuery: string,
 ) => {
   const whereConditions = [];
 

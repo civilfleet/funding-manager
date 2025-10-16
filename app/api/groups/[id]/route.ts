@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { handlePrismaError } from "@/lib/utils";
 import { z } from "zod";
+import { handlePrismaError } from "@/lib/utils";
+import {
+  getGroupById,
+  getGroupWithUsers,
+  updateGroup,
+} from "@/services/groups";
 import { updateGroupSchema } from "@/validations/groups";
-import { getGroupById, getGroupWithUsers, updateGroup } from "@/services/groups";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -15,7 +19,10 @@ export async function GET(
     const includeUsers = searchParams.get("includeUsers") === "true";
 
     if (!teamId) {
-      return NextResponse.json({ error: "teamId is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "teamId is required" },
+        { status: 400 },
+      );
     }
 
     const group = includeUsers
@@ -29,13 +36,16 @@ export async function GET(
     return NextResponse.json({ data: group }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -49,11 +59,14 @@ export async function PATCH(
     if (e instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: e.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }

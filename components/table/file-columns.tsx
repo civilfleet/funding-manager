@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { File } from "@/types";
 import Link from "next/link";
+import { File } from "@/types";
 export const columns: ColumnDef<File>[] = [
   {
     accessorKey: "organization",
@@ -47,7 +47,7 @@ export const columns: ColumnDef<File>[] = [
       <div className="text-left  text-blue-500">
         <Link
           href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${row.original?.id}`}
-          >
+        >
           {row.original?.url || "N/A"}
         </Link>
       </div>

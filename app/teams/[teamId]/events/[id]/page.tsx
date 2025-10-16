@@ -1,6 +1,9 @@
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
+import { auth } from "@/auth";
 import EventForm from "@/components/forms/event";
-import EventRegistrationsTable from "@/components/table/event-registrations-table";
 import type { EventRegistrationRow } from "@/components/table/event-registration-columns";
+import EventRegistrationsTable from "@/components/table/event-registrations-table";
 import {
   Card,
   CardContent,
@@ -8,18 +11,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getEventById, getEventRegistrations } from "@/services/events";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
-import { auth } from "@/auth";
 import { assertTeamModuleAccess } from "@/lib/permissions";
+import { getEventById, getEventRegistrations } from "@/services/events";
 import { AppModule } from "@/types";
 
 interface EventDetailPageProps {
   params: Promise<{ teamId: string; id: string }>;
 }
 
-export default async function EventDetailPage({ params }: EventDetailPageProps) {
+export default async function EventDetailPage({
+  params,
+}: EventDetailPageProps) {
   const { teamId, id } = await params;
 
   const session = await auth();
@@ -29,7 +31,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
       userId: session?.user?.userId,
       roles: session?.user?.roles,
     },
-    "CRM" satisfies AppModule
+    "CRM" satisfies AppModule,
   );
 
   const event = await getEventById(id, teamId);
@@ -46,18 +48,20 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
   const registrations = await getEventRegistrations(id, teamId);
 
-  const registrationRows: EventRegistrationRow[] = registrations.map((registration) => ({
-    id: registration.id,
-    name: registration.name,
-    email: registration.email,
-    phone: registration.phone ?? undefined,
-    notes: registration.notes ?? undefined,
-    createdAt: registration.createdAt.toISOString(),
-    contactId: registration.contact.id,
-    contactName: registration.contact.name ?? registration.name,
-    contactEmail: registration.contact.email ?? undefined,
-    contactPhone: registration.contact.phone ?? undefined,
-  }));
+  const registrationRows: EventRegistrationRow[] = registrations.map(
+    (registration) => ({
+      id: registration.id,
+      name: registration.name,
+      email: registration.email,
+      phone: registration.phone ?? undefined,
+      notes: registration.notes ?? undefined,
+      createdAt: registration.createdAt.toISOString(),
+      contactId: registration.contact.id,
+      contactName: registration.contact.name ?? registration.name,
+      contactEmail: registration.contact.email ?? undefined,
+      contactPhone: registration.contact.phone ?? undefined,
+    }),
+  );
 
   return (
     <div className="p-4">
@@ -70,9 +74,12 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             rightRailAppend={
               <Card className="w-full shadow-sm lg:sticky lg:top-6">
                 <CardHeader className="border-b pb-3">
-                  <CardTitle>Registrations ({registrationRows.length})</CardTitle>
+                  <CardTitle>
+                    Registrations ({registrationRows.length})
+                  </CardTitle>
                   <CardDescription>
-                    Track everyone who registered for this event. Each entry links to the CRM contact.
+                    Track everyone who registered for this event. Each entry
+                    links to the CRM contact.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-4">

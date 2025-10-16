@@ -1,28 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertCircle, CheckCircle2, Loader2, X } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, AlertCircle, CheckCircle2, X } from "lucide-react";
-import { useSearchParams, useRouter } from "next/navigation";
-
-import { Form } from "@/components/ui/form";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-
-import { createDonationAgreementSchema as schema } from "@/validations/donation-agreement";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { DataSelectBox } from "../helper/data-select-box";
+import { type FundingRequest, FundingStatus } from "@/types";
+import { createDonationAgreementSchema as schema } from "@/validations/donation-agreement";
 import FileUpload from "../file-uploader";
 import FundingRequestDetail from "../funding-request-details";
-import { FundingStatus, type FundingRequest } from "@/types";
+import { DataSelectBox } from "../helper/data-select-box";
 
 export default function DonationAgreement({ teamId }: { teamId: string }) {
   const { toast } = useToast();
@@ -33,7 +38,8 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fundingRequestDetail, setFundingRequestDetail] = useState<FundingRequest | null>(null);
+  const [fundingRequestDetail, setFundingRequestDetail] =
+    useState<FundingRequest | null>(null);
   const [users, setUsers] = useState<string[]>([]);
 
   const form = useForm<z.infer<typeof schema>>({
@@ -83,10 +89,14 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
       setError(null);
 
       try {
-        const response = await fetch(`/api/funding-requests/${fundingRequestId}`);
+        const response = await fetch(
+          `/api/funding-requests/${fundingRequestId}`,
+        );
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch funding request: ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch funding request: ${response.statusText}`,
+          );
         }
 
         const { data } = await response.json();
@@ -94,7 +104,11 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
         form.setValue("fundingRequestId", fundingRequestId);
       } catch (error) {
         console.error("Error fetching funding request detail:", error);
-        setError(error instanceof Error ? error.message : "Failed to load funding request details");
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load funding request details",
+        );
         setFundingRequestDetail(null);
       } finally {
         setIsLoading(false);
@@ -132,7 +146,10 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || `Failed to create donation agreement: ${response.statusText}`);
+        throw new Error(
+          errorData?.message ||
+            `Failed to create donation agreement: ${response.statusText}`,
+        );
       }
 
       const { data: createdAgreement } = await response.json();
@@ -144,12 +161,19 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
       });
 
       // Redirect to view page
-      router.push(`/teams/${teamId}/donation-agreements/${createdAgreement?.id}`);
+      router.push(
+        `/teams/${teamId}/donation-agreements/${createdAgreement?.id}`,
+      );
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An unexpected error occurred");
+      setError(
+        error instanceof Error ? error.message : "An unexpected error occurred",
+      );
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create donation agreement",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to create donation agreement",
         variant: "destructive",
       });
     } finally {
@@ -161,15 +185,21 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
     <Card className="w-full shadow-xs">
       <CardHeader className="border-b pb-4">
         <CardTitle>
-          <h1 className="text-2xl font-semibold tracking-tight">Donation Agreement</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Donation Agreement
+          </h1>
         </CardTitle>
         <CardDescription>
-          Create a new donation agreement by selecting a funding request and adding user persons
+          Create a new donation agreement by selecting a funding request and
+          adding user persons
         </CardDescription>
       </CardHeader>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} id="donation-agreement-form">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          id="donation-agreement-form"
+        >
           <CardContent className="space-y-6 pt-6">
             {error && (
               <Alert variant="destructive">
@@ -180,7 +210,9 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
             )}
 
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground">Funding Request Information</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Funding Request Information
+              </h3>
 
               <Controller
                 control={form.control}
@@ -196,7 +228,11 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
                       onChange={field.onChange}
                       disabled={isLoading}
                     />
-                    {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
+                    {fieldState.error && (
+                      <p className="text-sm text-destructive">
+                        {fieldState.error.message}
+                      </p>
+                    )}
                   </div>
                 )}
               />
@@ -205,7 +241,9 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
             <Separator />
 
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground">User Persons</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">
+                User Persons
+              </h3>
 
               <Controller
                 control={form.control}
@@ -226,19 +264,31 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
                       disabled={!fundingRequestIdForm}
                     />
                     {!fundingRequestIdForm && (
-                      <p className="text-sm text-muted-foreground">Please select a funding request first</p>
+                      <p className="text-sm text-muted-foreground">
+                        Please select a funding request first
+                      </p>
                     )}
-                    {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
+                    {fieldState.error && (
+                      <p className="text-sm text-destructive">
+                        {fieldState.error.message}
+                      </p>
+                    )}
                   </div>
                 )}
               />
 
               {users.length > 0 && (
                 <div className="rounded-md border p-4">
-                  <h4 className="text-sm font-medium mb-2">Selected User Persons</h4>
+                  <h4 className="text-sm font-medium mb-2">
+                    Selected User Persons
+                  </h4>
                   <div className="flex flex-wrap gap-2">
                     {users.map((person, index) => (
-                      <Badge key={index} variant="secondary" className="py-1 px-2">
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="py-1 px-2"
+                      >
                         {person}
                         <Button
                           variant="ghost"
@@ -259,7 +309,9 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
             <Separator />
 
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground">Agreement Details</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Agreement Details
+              </h3>
 
               <div className="space-y-2">
                 <Label htmlFor="agreement">Agreement Text *</Label>
@@ -270,7 +322,9 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
                   className="min-h-[120px] resize-y"
                 />
                 {form.formState.errors.agreement && (
-                  <p className="text-sm text-destructive">{form.formState.errors.agreement.message}</p>
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.agreement.message}
+                  </p>
                 )}
               </div>
 
@@ -283,7 +337,9 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
                   onFileUpload={(url) => form.setValue("file", url)}
                 />
                 {form.formState.errors.file && (
-                  <p className="text-sm text-destructive">{form.formState.errors.file.message}</p>
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.file.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -304,7 +360,11 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
               Cancel
             </Button>
 
-            <Button type="submit" disabled={isSubmitting || users.length === 0} className="min-w-[120px]">
+            <Button
+              type="submit"
+              disabled={isSubmitting || users.length === 0}
+              className="min-w-[120px]"
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -1,7 +1,7 @@
-import DonationAgreementTable from "@/components/table/donation-agreement-table";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { auth } from "@/auth";
+import DonationAgreementTable from "@/components/table/donation-agreement-table";
+import { Button } from "@/components/ui/button";
 import { assertTeamModuleAccess } from "@/lib/permissions";
 import { AppModule } from "@/types";
 
@@ -21,7 +21,7 @@ export default async function Organization({ params }: PageProps) {
       userId: session?.user?.userId,
       roles: session?.user?.roles,
     },
-    "FUNDING" satisfies AppModule
+    "FUNDING" satisfies AppModule,
   );
 
   return (

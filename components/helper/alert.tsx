@@ -1,3 +1,4 @@
+import { UseFormReturn } from "react-hook-form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,7 +10,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { UseFormReturn } from "react-hook-form";
 import { buttonVariants } from "../ui/button";
 export default function Alert({
   title = "Are you absolutely sure?",

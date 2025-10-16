@@ -1,6 +1,6 @@
+import Link from "next/link";
 import UserTable from "@/components/table/user-table";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 interface PageProps {
   params: Promise<{
@@ -10,7 +10,7 @@ interface PageProps {
 
 export default async function Organization({ params }: PageProps) {
   const { organizationId } = await params;
-  
+
   return (
     <div className="p-4 w-full">
       <div className="flex justify-between">

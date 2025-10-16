@@ -1,28 +1,53 @@
 "use client";
 
-import { useState } from "react";
-import type { z } from "zod";
-import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSession } from "next-auth/react";
-import { Loader2, FileText, Plus, Trash2, AlertCircle, Calendar, Euro } from "lucide-react";
-
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-
-import { legacyCreateFundingRequestSchema } from "@/validations/funding-request";
-import { useToast } from "@/hooks/use-toast";
-import FileUpload from "../file-uploader";
+import {
+  AlertCircle,
+  Calendar,
+  Euro,
+  FileText,
+  Loader2,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import type { z } from "zod";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import { FundingStatus } from "@/types";
+import { legacyCreateFundingRequestSchema } from "@/validations/funding-request";
+import FileUpload from "../file-uploader";
 
-export default function FundingRequest({ organizationId }: { organizationId: string }) {
+export default function FundingRequest({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const { data: session } = useSession();
@@ -58,7 +83,9 @@ export default function FundingRequest({ organizationId }: { organizationId: str
     name: "files",
   });
 
-  async function onSubmit(values: z.infer<typeof legacyCreateFundingRequestSchema>) {
+  async function onSubmit(
+    values: z.infer<typeof legacyCreateFundingRequestSchema>,
+  ) {
     if (!session?.user?.email) {
       toast({
         title: "Authentication Error",
@@ -86,24 +113,35 @@ export default function FundingRequest({ organizationId }: { organizationId: str
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || `Error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          errorData?.message ||
+            `Error: ${response.status} ${response.statusText}`,
+        );
       }
 
       const { data } = await response.json();
 
       toast({
         title: "Request Submitted",
-        description: "Your funding request has been successfully submitted for review.",
+        description:
+          "Your funding request has been successfully submitted for review.",
         variant: "default",
       });
-      router.push(`/organizations/${organizationId}/funding-requests/${data?.id}`);
+      router.push(
+        `/organizations/${organizationId}/funding-requests/${data?.id}`,
+      );
 
       form.reset();
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An unexpected error occurred");
+      setError(
+        error instanceof Error ? error.message : "An unexpected error occurred",
+      );
       toast({
         title: "Submission Failed",
-        description: error instanceof Error ? error.message : "Failed to submit funding request",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to submit funding request",
         variant: "destructive",
       });
     } finally {
@@ -114,8 +152,13 @@ export default function FundingRequest({ organizationId }: { organizationId: str
   return (
     <Card className="w-full shadow-xs">
       <CardHeader className="border-b pb-4">
-        <CardTitle className="text-2xl font-semibold">Funding Request</CardTitle>
-        <CardDescription>Complete the form below to submit a new funding request for your organization</CardDescription>
+        <CardTitle className="text-2xl font-semibold">
+          Funding Request
+        </CardTitle>
+        <CardDescription>
+          Complete the form below to submit a new funding request for your
+          organization
+        </CardDescription>
       </CardHeader>
 
       <Form {...form}>
@@ -130,7 +173,9 @@ export default function FundingRequest({ organizationId }: { organizationId: str
             )}
 
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Basic Information
+              </h3>
 
               <FormField
                 control={form.control}
@@ -139,9 +184,15 @@ export default function FundingRequest({ organizationId }: { organizationId: str
                   <FormItem>
                     <FormLabel>Project Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter the name of your project" {...field} value={field.value || ""} />
+                      <Input
+                        placeholder="Enter the name of your project"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
-                    <FormDescription>Provide a clear, concise name for your funding request</FormDescription>
+                    <FormDescription>
+                      Provide a clear, concise name for your funding request
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -163,7 +214,9 @@ export default function FundingRequest({ organizationId }: { organizationId: str
                             className="pl-8"
                             {...field}
                             value={field.value as number}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
                           />
                         </div>
                       </FormControl>
@@ -181,7 +234,12 @@ export default function FundingRequest({ organizationId }: { organizationId: str
                       <FormControl>
                         <div className="relative">
                           <Calendar className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input type="datetime-local" className="pl-8" {...field} value={field.value || ""} />
+                          <Input
+                            type="datetime-local"
+                            className="pl-8"
+                            {...field}
+                            value={field.value || ""}
+                          />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -194,7 +252,9 @@ export default function FundingRequest({ organizationId }: { organizationId: str
             <Separator />
 
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground">Project Details</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Project Details
+              </h3>
 
               <FormField
                 control={form.control}
@@ -209,7 +269,9 @@ export default function FundingRequest({ organizationId }: { organizationId: str
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>Explain what your project is about and why it matters</FormDescription>
+                    <FormDescription>
+                      Explain what your project is about and why it matters
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -228,7 +290,9 @@ export default function FundingRequest({ organizationId }: { organizationId: str
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>Clearly state the objectives and intended outcomes</FormDescription>
+                    <FormDescription>
+                      Clearly state the objectives and intended outcomes
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -238,7 +302,9 @@ export default function FundingRequest({ organizationId }: { organizationId: str
             <Separator />
 
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground">Financial Planning</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Financial Planning
+              </h3>
 
               <FormField
                 control={form.control}
@@ -254,7 +320,8 @@ export default function FundingRequest({ organizationId }: { organizationId: str
                       />
                     </FormControl>
                     <FormDescription>
-                      Detail how the project will be financially sustainable after initial funding
+                      Detail how the project will be financially sustainable
+                      after initial funding
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -274,7 +341,9 @@ export default function FundingRequest({ organizationId }: { organizationId: str
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>Outline the long-term viability and impact of your project</FormDescription>
+                    <FormDescription>
+                      Outline the long-term viability and impact of your project
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -285,7 +354,9 @@ export default function FundingRequest({ organizationId }: { organizationId: str
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-muted-foreground">Supporting Documents</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Supporting Documents
+                </h3>
                 <Badge variant="outline" className="text-xs">
                   {files.length} {files.length === 1 ? "file" : "files"}
                 </Badge>
@@ -302,11 +373,20 @@ export default function FundingRequest({ organizationId }: { organizationId: str
                       name={`files.${index}.name`}
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <FormLabel className={index !== 0 ? "sr-only" : undefined}>File Name</FormLabel>
+                          <FormLabel
+                            className={index !== 0 ? "sr-only" : undefined}
+                          >
+                            File Name
+                          </FormLabel>
                           <FormControl>
                             <div className="relative">
                               <FileText className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                              <Input placeholder="Document name" className="pl-8" {...field} value={field.value || ""} />
+                              <Input
+                                placeholder="Document name"
+                                className="pl-8"
+                                {...field}
+                                value={field.value || ""}
+                              />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -319,13 +399,19 @@ export default function FundingRequest({ organizationId }: { organizationId: str
                       name={`files.${index}.url`}
                       render={({}) => (
                         <FormItem className="flex-1">
-                          <FormLabel className={index !== 0 ? "sr-only" : undefined}>File Upload</FormLabel>
+                          <FormLabel
+                            className={index !== 0 ? "sr-only" : undefined}
+                          >
+                            File Upload
+                          </FormLabel>
                           <FormControl>
                             <FileUpload
                               placeholder="Upload document"
                               name={`file-${index}`}
                               data=""
-                              onFileUpload={(url) => form.setValue(`files.${index}.url`, url)}
+                              onFileUpload={(url) =>
+                                form.setValue(`files.${index}.url`, url)
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -362,11 +448,20 @@ export default function FundingRequest({ organizationId }: { organizationId: str
           </CardContent>
 
           <CardFooter className="flex justify-end gap-2 border-t pt-4">
-            <Button type="button" variant="outline" onClick={() => form.reset()} disabled={isSubmitting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => form.reset()}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
 
-            <Button type="submit" disabled={isSubmitting} className="min-w-[120px]">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="min-w-[120px]"
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

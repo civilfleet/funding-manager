@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createTransaction, getTransactions } from "@/services/transactions";
 import { handlePrismaError } from "@/lib/utils";
+import { createTransaction, getTransactions } from "@/services/transactions";
 
 export async function GET(request: Request) {
   try {
@@ -27,7 +27,15 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { amount, transactionReciept, fundingRequestId, organizationId, teamId, totalAmount, remainingAmount } = body;
+    const {
+      amount,
+      transactionReciept,
+      fundingRequestId,
+      organizationId,
+      teamId,
+      totalAmount,
+      remainingAmount,
+    } = body;
     const transaction = await createTransaction({
       amount,
       fundingRequestId,

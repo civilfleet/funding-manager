@@ -1,11 +1,9 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-
-import { useToast } from "@/hooks/use-toast";
-
 import { useParams, useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 import { User } from "@/types";
 
@@ -102,11 +100,20 @@ export const columns: ColumnDef<User>[] = [
           className="flex flex-wrap gap-1 cursor-pointer"
           onClick={() => (window.location.href = `users/${row.original.id}`)}
         >
-          {groups.map((userGroup: { groupId: string; group: { id: string; name: string } }) => (
-            <Badge key={userGroup.groupId} variant="secondary" className="text-xs">
-              {userGroup.group.name}
-            </Badge>
-          ))}
+          {groups.map(
+            (userGroup: {
+              groupId: string;
+              group: { id: string; name: string };
+            }) => (
+              <Badge
+                key={userGroup.groupId}
+                variant="secondary"
+                className="text-xs"
+              >
+                {userGroup.group.name}
+              </Badge>
+            ),
+          )}
         </div>
       );
     },
@@ -119,7 +126,9 @@ export const columns: ColumnDef<User>[] = [
         className="text-left cursor-pointer hover:text-primary"
         onClick={() => (window.location.href = `users/${row.original.id}`)}
       >
-        {row.original?.createdAt ? new Date(row.original.createdAt).toLocaleDateString() : "N/A"}
+        {row.original?.createdAt
+          ? new Date(row.original.createdAt).toLocaleDateString()
+          : "N/A"}
       </div>
     ),
   },
@@ -131,7 +140,9 @@ export const columns: ColumnDef<User>[] = [
         className="text-left cursor-pointer hover:text-primary"
         onClick={() => (window.location.href = `users/${row.original.id}`)}
       >
-        {row.original?.updatedAt ? new Date(row.original.updatedAt).toLocaleDateString() : "N/A"}
+        {row.original?.updatedAt
+          ? new Date(row.original.updatedAt).toLocaleDateString()
+          : "N/A"}
       </div>
     ),
   },

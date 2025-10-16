@@ -1,13 +1,14 @@
-import { toast } from "@/hooks/use-toast";
-import { FileTypes, FundingRequest, FundingStatus } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import FundingRequestPostData from "@/components/forms/funding-request-post-data";
 import FormInputControl from "@/components/helper/form-input-control";
 import { Button } from "@/components/ui/button";
-import FundingRequestPostData from "@/components/forms/funding-request-post-data";
 import { Form } from "@/components/ui/form";
-import { useEffect, useState } from "react";
+import { toast } from "@/hooks/use-toast";
+import { FileTypes, FundingRequest, FundingStatus } from "@/types";
+
 const amountOfferSchema = z.object({
   amountAgreed: z.coerce.number(),
 });
@@ -30,7 +31,9 @@ export default function FundingRequestDetailsForm({
   const isFundsTransferred = data.status === FundingStatus.Completed;
 
   const isFileMissing = (fileType: string) =>
-    !isTeam && isFundsTransferred && data.files.filter((file) => file.type === fileType).length === 0;
+    !isTeam &&
+    isFundsTransferred &&
+    data.files.filter((file) => file.type === fileType).length === 0;
 
   const showStatementForm = isFileMissing("STATEMENT");
   const showReportForm = isFileMissing("REPORT");
@@ -50,7 +53,11 @@ export default function FundingRequestDetailsForm({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ...values, status: "Accepted", remainingAmount: values.amountAgreed }),
+        body: JSON.stringify({
+          ...values,
+          status: "Accepted",
+          remainingAmount: values.amountAgreed,
+        }),
       });
 
       if (!response.ok) {
@@ -71,40 +78,49 @@ export default function FundingRequestDetailsForm({
     } catch (e) {
       toast({
         title: "Error",
-        description: e instanceof Error ? e.message : "An error occurred while updating the request",
+        description:
+          e instanceof Error
+            ? e.message
+            : "An error occurred while updating the request",
         variant: "destructive",
       });
     }
   }
   return (
     <>
-      {isTeam && ![FundingStatus.Completed, FundingStatus.Rejected].includes(data.status) && (
-        (<div className="flex flex-col items-start gap-2 ">
-          {/* <h3 className="text-lg font-semibold">Funding Amount</h3> */}
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <div className="flex items-center  align-middle ">
-                <FormInputControl
-                  name="amountAgreed"
-                  placeholder="Amount to Offer"
-                  type="number"
-                  form={form}
-                  className="bg-white"
-                />
-                <Button
-                  type="submit"
-                  className="btn btn-primary align-bottom ml-2"
-                  disabled={form.formState.isSubmitting}
-                >
-                  Accept Request
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </div>)
+      {isTeam &&
+        ![FundingStatus.Completed, FundingStatus.Rejected].includes(
+          data.status,
+        ) && (
+          <div className="flex flex-col items-start gap-2 ">
+            {/* <h3 className="text-lg font-semibold">Funding Amount</h3> */}
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
+                <div className="flex items-center  align-middle ">
+                  <FormInputControl
+                    name="amountAgreed"
+                    placeholder="Amount to Offer"
+                    type="number"
+                    form={form}
+                    className="bg-white"
+                  />
+                  <Button
+                    type="submit"
+                    className="btn btn-primary align-bottom ml-2"
+                    disabled={form.formState.isSubmitting}
+                  >
+                    Accept Request
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
 
-        // add button for uploading the donation agreement.
-      )}
+          // add button for uploading the donation agreement.
+        )}
       {showReceiptForm && (
         <div className="mt-6 p-4 border rounded-lg bg-blue-50">
           <FundingRequestPostData

@@ -1,17 +1,16 @@
 "use client";
 
+import { type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type LucideIcon } from "lucide-react";
-
+import { useSession } from "next-auth/react";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarGroup,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import { useSession } from "next-auth/react";
 import { Roles } from "@/types";
 
 interface NavItem {
@@ -30,14 +29,16 @@ interface NavItem {
 export function NavMain({ items = [] }: { items?: NavItem[] }) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  
+
   // Extract the subUrl and id from the pathname
   const pathSegments = pathname.split("/").filter(Boolean);
   const subUrl = pathSegments[0] ?? null;
   const id = pathSegments[1] ?? null;
 
   // Determine if we have an active context based on the URL
-  const hasActiveContext = Boolean(id && (subUrl === "organizations" || subUrl === "teams"));
+  const hasActiveContext = Boolean(
+    id && (subUrl === "organizations" || subUrl === "teams"),
+  );
   const isAdminSection = pathname.startsWith("/admin");
 
   return (

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getPublicEventBySlug } from "@/services/events";
 import { handlePrismaError } from "@/lib/utils";
+import { getPublicEventBySlug } from "@/services/events";
 
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ teamId: string; slug: string }> }
+  { params }: { params: Promise<{ teamId: string; slug: string }> },
 ) {
   try {
     const { teamId, slug } = await params;
@@ -12,10 +12,7 @@ export async function GET(
     const event = await getPublicEventBySlug(teamId, slug);
 
     if (!event) {
-      return NextResponse.json(
-        { error: "Event not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
     return NextResponse.json({ data: event }, { status: 200 });
@@ -23,7 +20,7 @@ export async function GET(
     const { message } = handlePrismaError(e);
     return NextResponse.json(
       { error: message },
-      { status: 400, statusText: message }
+      { status: 400, statusText: message },
     );
   }
 }

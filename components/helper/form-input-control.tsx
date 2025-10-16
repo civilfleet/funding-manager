@@ -1,9 +1,14 @@
-import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { UseFormReturn } from "react-hook-form";
 import { CheckCircle2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import React from "react";
+import { UseFormReturn } from "react-hook-form";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { cn } from "@/lib/utils";
 
 export default function FormInputControl({
   form,
@@ -43,7 +48,7 @@ export default function FormInputControl({
                 disabled={disabled}
                 className={cn(
                   isFilled && "border-green-500 !bg-green-50",
-                  className
+                  className,
                 )}
                 {...field}
               />

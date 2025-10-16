@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { deleteUser, getUserById } from "@/services/users";
 import { handlePrismaError } from "@/lib/utils";
+import { deleteUser, getUserById } from "@/services/users";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ userId: string }> }) {
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ userId: string }> },
+) {
   try {
     const { userId } = await params;
     const data = await getUserById(userId);
@@ -13,7 +16,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ userId:
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ userId: string }> }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ userId: string }> },
+) {
   try {
     const { userId } = await params;
     const { organizationId, teamId } = await request.json();
@@ -21,6 +27,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ u
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting user:", error);
-    return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete user" },
+      { status: 500 },
+    );
   }
 }

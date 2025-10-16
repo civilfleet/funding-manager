@@ -1,9 +1,9 @@
 import fs from "fs";
-import path from "path";
 import handlebars from "handlebars";
 import nodemailer from "nodemailer";
-import config from "../config/mail";
+import path from "path";
 import { EMAIL_CONTENT } from "@/types";
+import config from "../config/mail";
 
 const transporter = nodemailer.createTransport({
   ...config,
@@ -11,7 +11,11 @@ const transporter = nodemailer.createTransport({
 
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 const compileTemplate = (templateName: string, data: any) => {
-  const filePath = path.join(process.cwd(), "templates", `${templateName}.handlebars`);
+  const filePath = path.join(
+    process.cwd(),
+    "templates",
+    `${templateName}.handlebars`,
+  );
   const source = fs.readFileSync(filePath, "utf-8");
   return handlebars.compile(source)(data);
 };

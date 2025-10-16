@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ teamId: string }> }
+  { params }: { params: Promise<{ teamId: string }> },
 ) {
   try {
     const { teamId } = await params;
@@ -29,6 +29,9 @@ export async function GET(
     return NextResponse.json({ data: users }, { status: 200 });
   } catch (error) {
     console.error("Error fetching team users:", error);
-    return NextResponse.json({ error: "Failed to fetch team users" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch team users" },
+      { status: 500 },
+    );
   }
 }

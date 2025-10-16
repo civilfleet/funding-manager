@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
-import { createFundingRequest, getFundingRequests } from "@/services/funding-request";
-import { createFundingRequestSchema } from "@/validations/funding-request";
 import { z } from "zod";
-import { handlePrismaError } from "@/lib/utils";
 import { sendEmail } from "@/lib/nodemailer";
+import { handlePrismaError } from "@/lib/utils";
+import {
+  createFundingRequest,
+  getFundingRequests,
+} from "@/services/funding-request";
 import { FundingStatus } from "@/types";
+import { createFundingRequestSchema } from "@/validations/funding-request";
 
 export async function GET(req: Request) {
   try {
@@ -18,17 +21,24 @@ export async function GET(req: Request) {
       return NextResponse.json({ data: [] });
     }
 
-    const data = await getFundingRequests({ teamId, orgId }, searchQuery, status as FundingStatus[]);
+    const data = await getFundingRequests(
+      { teamId, orgId },
+      searchQuery,
+      status as FundingStatus[],
+    );
 
     return NextResponse.json(
       {
         data,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
@@ -40,11 +50,12 @@ export async function POST(req: Request) {
         z.object({
           organizationId: z.string().uuid(),
           submittedBy: z.string().email().optional().or(z.literal("")),
-        })
+        }),
       )
       .parse(fundingRequestData);
 
-    const { fundingRequest, user, organization } = await createFundingRequest(validatedData);
+    const { fundingRequest, user, organization } =
+      await createFundingRequest(validatedData);
 
     sendEmail(
       {
@@ -60,7 +71,7 @@ export async function POST(req: Request) {
         fundingAmount: fundingRequest.amountRequested,
         fundingPurpose: fundingRequest.purpose,
         fundingRequestLink: `${process.env.NEXT_PUBLIC_BASE_URL}/team/funding-request/${fundingRequest.id}`,
-      }
+      },
     );
 
     return NextResponse.json(
@@ -68,11 +79,14 @@ export async function POST(req: Request) {
         message: "success",
         data: fundingRequest,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const { message } = handlePrismaError(e);
 
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }

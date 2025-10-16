@@ -1,25 +1,41 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, GripVertical, Plus, Save, Settings, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
-import { Plus, Trash2, GripVertical, Save, Eye, Settings } from "lucide-react";
-
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-
-import { FieldType, FormSection, FormField as FormFieldType } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { FieldType, FormField as FormFieldType, FormSection } from "@/types";
 
 const fieldOptionSchema = z.object({
   label: z.string().min(1, "Label is required"),
@@ -28,19 +44,31 @@ const fieldOptionSchema = z.object({
 
 // Reserved field keys that cannot be used (static fields)
 const RESERVED_FIELD_KEYS = [
-  'name', 'description', 'purpose', 'amountRequested', 'refinancingConcept', 
-  'sustainability', 'expectedCompletionDate', 'organizationId', 'submittedBy', 
-  'files', 'status', 'id', 'createdAt', 'updatedAt'
+  "name",
+  "description",
+  "purpose",
+  "amountRequested",
+  "refinancingConcept",
+  "sustainability",
+  "expectedCompletionDate",
+  "organizationId",
+  "submittedBy",
+  "files",
+  "status",
+  "id",
+  "createdAt",
+  "updatedAt",
 ];
 
 const formFieldSchema = z.object({
   id: z.string().optional(),
-  key: z.string()
+  key: z
+    .string()
     .min(1, "Key is required")
     .regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, "Key must be a valid identifier")
     .refine(
-      (key) => !RESERVED_FIELD_KEYS.includes(key), 
-      "This field key is reserved and cannot be used. Please choose a different key."
+      (key) => !RESERVED_FIELD_KEYS.includes(key),
+      "This field key is reserved and cannot be used. Please choose a different key.",
     ),
   label: z.string().min(1, "Label is required"),
   description: z.string().nullish(),
@@ -75,7 +103,9 @@ interface FormConfigurationManagerProps {
   teamId: string;
 }
 
-export default function FormConfigurationManager({ teamId }: FormConfigurationManagerProps) {
+export default function FormConfigurationManager({
+  teamId,
+}: FormConfigurationManagerProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -88,7 +118,12 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
     },
   });
 
-  const { fields: sections, append: appendSection, remove: removeSection, move: moveSection } = useFieldArray({
+  const {
+    fields: sections,
+    append: appendSection,
+    remove: removeSection,
+    move: moveSection,
+  } = useFieldArray({
     control: form.control,
     name: "sections",
   });
@@ -106,10 +141,17 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
         if (data.sections && data.sections.length > 0) {
           form.reset({ sections: data.sections });
           // Open all sections by default
-          const openState = data.sections.reduce((acc: Record<string, boolean>, section: FormSection, index: number) => {
-            acc[`section-${index}`] = true;
-            return acc;
-          }, {});
+          const openState = data.sections.reduce(
+            (
+              acc: Record<string, boolean>,
+              section: FormSection,
+              index: number,
+            ) => {
+              acc[`section-${index}`] = true;
+              return acc;
+            },
+            {},
+          );
           setOpenSections(openState);
         } else {
           // No configuration exists - show empty state
@@ -137,7 +179,8 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
     const defaultSections = [
       {
         name: "Additional Project Information",
-        description: "Configure additional fields for your funding requests (examples shown)",
+        description:
+          "Configure additional fields for your funding requests (examples shown)",
         order: 1,
         fields: [
           {
@@ -162,7 +205,7 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
               { label: "Environment", value: "environment" },
               { label: "Community Development", value: "community" },
               { label: "Arts & Culture", value: "arts" },
-              { label: "Other", value: "other" }
+              { label: "Other", value: "other" },
             ],
           },
           {
@@ -181,10 +224,13 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
     ];
 
     form.reset({ sections: defaultSections });
-    const openState = defaultSections.reduce((acc: Record<string, boolean>, _, index) => {
-      acc[`section-${index}`] = true;
-      return acc;
-    }, {});
+    const openState = defaultSections.reduce(
+      (acc: Record<string, boolean>, _, index) => {
+        acc[`section-${index}`] = true;
+        return acc;
+      },
+      {},
+    );
     setOpenSections(openState);
   };
 
@@ -198,7 +244,8 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
   };
 
   const addField = (sectionIndex: number) => {
-    const currentFields = form.getValues(`sections.${sectionIndex}.fields`) || [];
+    const currentFields =
+      form.getValues(`sections.${sectionIndex}.fields`) || [];
     const newField = {
       key: `field_${currentFields.length + 1}`,
       label: "New Field",
@@ -206,18 +253,24 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
       isRequired: false,
       order: currentFields.length + 1,
     };
-    
-    form.setValue(`sections.${sectionIndex}.fields`, [...currentFields, newField]);
+
+    form.setValue(`sections.${sectionIndex}.fields`, [
+      ...currentFields,
+      newField,
+    ]);
   };
 
   const removeField = (sectionIndex: number, fieldIndex: number) => {
-    const currentFields = form.getValues(`sections.${sectionIndex}.fields`) || [];
-    const updatedFields = currentFields.filter((_, index) => index !== fieldIndex);
+    const currentFields =
+      form.getValues(`sections.${sectionIndex}.fields`) || [];
+    const updatedFields = currentFields.filter(
+      (_, index) => index !== fieldIndex,
+    );
     form.setValue(`sections.${sectionIndex}.fields`, updatedFields);
   };
 
   const toggleSection = (sectionKey: string) => {
-    setOpenSections(prev => ({
+    setOpenSections((prev) => ({
       ...prev,
       [sectionKey]: !prev[sectionKey],
     }));
@@ -271,7 +324,8 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
           Funding Request Form Configuration
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Customize the fields and sections that appear in your funding request forms
+          Customize the fields and sections that appear in your funding request
+          forms
         </p>
       </CardHeader>
       <CardContent>
@@ -281,7 +335,8 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
             <div className="space-y-2">
               <h4 className="font-medium">Always Present Fields</h4>
               <p className="text-sm text-muted-foreground">
-                The following fields are always included in funding request forms and cannot be modified:
+                The following fields are always included in funding request
+                forms and cannot be modified:
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
                 <div className="flex items-center gap-2">
@@ -314,7 +369,8 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mt-3">
-                Configure additional fields below to collect extra information specific to your team&apos;s requirements.
+                Configure additional fields below to collect extra information
+                specific to your team&apos;s requirements.
               </p>
             </div>
           </AlertDescription>
@@ -332,9 +388,13 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                         <Settings className="h-8 w-8 text-muted-foreground" />
                       </div>
                       <div className="space-y-2">
-                        <h3 className="text-lg font-medium">No Additional Fields Configured</h3>
+                        <h3 className="text-lg font-medium">
+                          No Additional Fields Configured
+                        </h3>
                         <p className="text-sm text-muted-foreground max-w-md">
-                          You haven&apos;t configured any additional fields yet. The static fields shown above will always be present in funding requests.
+                          You haven&apos;t configured any additional fields yet.
+                          The static fields shown above will always be present
+                          in funding requests.
                         </p>
                       </div>
                       <div className="flex flex-col gap-3">
@@ -383,492 +443,706 @@ export default function FormConfigurationManager({ teamId }: FormConfigurationMa
                 </Card>
               ) : (
                 sections.map((section, sectionIndex) => {
-                const sectionKey = `section-${sectionIndex}`;
-                const isOpen = openSections[sectionKey];
-                
-                return (
-                  <Card key={section.id || sectionIndex} className="border-dashed">
-                    <Collapsible open={isOpen} onOpenChange={() => toggleSection(sectionKey)}>
-                      <CollapsibleTrigger asChild>
-                        <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <GripVertical className="h-4 w-4 text-muted-foreground" />
-                              <div>
-                                <h3 className="font-medium">
-                                  {form.watch(`sections.${sectionIndex}.name`) || "Unnamed Section"}
-                                </h3>
-                                <p className="text-sm text-muted-foreground">
-                                  {form.watch(`sections.${sectionIndex}.fields`)?.length || 0} fields
-                                </p>
+                  const sectionKey = `section-${sectionIndex}`;
+                  const isOpen = openSections[sectionKey];
+
+                  return (
+                    <Card
+                      key={section.id || sectionIndex}
+                      className="border-dashed"
+                    >
+                      <Collapsible
+                        open={isOpen}
+                        onOpenChange={() => toggleSection(sectionKey)}
+                      >
+                        <CollapsibleTrigger asChild>
+                          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                <div>
+                                  <h3 className="font-medium">
+                                    {form.watch(
+                                      `sections.${sectionIndex}.name`,
+                                    ) || "Unnamed Section"}
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    {form.watch(
+                                      `sections.${sectionIndex}.fields`,
+                                    )?.length || 0}{" "}
+                                    fields
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline">
+                                  Section {sectionIndex + 1}
+                                </Badge>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeSection(sectionIndex);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline">Section {sectionIndex + 1}</Badge>
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeSection(sectionIndex);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                          </CardHeader>
+                        </CollapsibleTrigger>
+
+                        <CollapsibleContent>
+                          <CardContent className="pt-0 space-y-4">
+                            <div className="grid gap-4 md:grid-cols-2">
+                              <FormField
+                                control={form.control}
+                                name={`sections.${sectionIndex}.name`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Section Name</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder="e.g., Basic Information"
+                                        {...field}
+                                        value={field.value ?? ""}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name={`sections.${sectionIndex}.order`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Order</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        {...field}
+                                        value={field.value ?? ""}
+                                        onChange={(e) =>
+                                          field.onChange(Number(e.target.value))
+                                        }
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
                             </div>
-                          </div>
-                        </CardHeader>
-                      </CollapsibleTrigger>
-                      
-                      <CollapsibleContent>
-                        <CardContent className="pt-0 space-y-4">
-                          <div className="grid gap-4 md:grid-cols-2">
+
                             <FormField
                               control={form.control}
-                              name={`sections.${sectionIndex}.name`}
+                              name={`sections.${sectionIndex}.description`}
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Section Name</FormLabel>
+                                  <FormLabel>Description (Optional)</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="e.g., Basic Information" {...field} value={field.value ?? ""} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name={`sections.${sectionIndex}.order`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Order</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      type="number" 
-                                      {...field} 
+                                    <Textarea
+                                      placeholder="Brief description of this section"
+                                      className="resize-none"
+                                      {...field}
                                       value={field.value ?? ""}
-                                      onChange={(e) => field.onChange(Number(e.target.value))}
                                     />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
                               )}
                             />
-                          </div>
-                          
-                          <FormField
-                            control={form.control}
-                            name={`sections.${sectionIndex}.description`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Description (Optional)</FormLabel>
-                                <FormControl>
-                                  <Textarea 
-                                    placeholder="Brief description of this section"
-                                    className="resize-none"
-                                    {...field}
-                                    value={field.value ?? ""}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <Separator />
-                          
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                              <h4 className="font-medium">Fields</h4>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => addField(sectionIndex)}
-                              >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Field
-                              </Button>
-                            </div>
-                            
-                            {form.watch(`sections.${sectionIndex}.fields`)?.map((field, fieldIndex) => (
-                              <Card key={fieldIndex} className="border border-border">
-                                <CardContent className="pt-4 space-y-4">
-                                  <div className="flex items-center justify-between">
-                                    <Badge variant="secondary">Field {fieldIndex + 1}</Badge>
-                                    <Button
-                                      type="button"
-                                      variant="destructive"
-                                      size="sm"
-                                      onClick={() => removeField(sectionIndex, fieldIndex)}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                  
-                                  <div className="grid gap-4 md:grid-cols-2">
-                                    <FormField
-                                      control={form.control}
-                                      name={`sections.${sectionIndex}.fields.${fieldIndex}.key`}
-                                      render={({ field }) => (
-                                        <FormItem>
-                                          <FormLabel>Field Key</FormLabel>
-                                          <FormControl>
-                                            <Input placeholder="field_name" {...field} value={field.value ?? ""} />
-                                          </FormControl>
-                                          <FormDescription>
-                                            Unique identifier (no spaces, underscore allowed)
-                                          </FormDescription>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
-                                    
-                                    <FormField
-                                      control={form.control}
-                                      name={`sections.${sectionIndex}.fields.${fieldIndex}.label`}
-                                      render={({ field }) => (
-                                        <FormItem>
-                                          <FormLabel>Label</FormLabel>
-                                          <FormControl>
-                                            <Input placeholder="Field Label" {...field} value={field.value ?? ""} />
-                                          </FormControl>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
-                                    
-                                    <FormField
-                                      control={form.control}
-                                      name={`sections.${sectionIndex}.fields.${fieldIndex}.type`}
-                                      render={({ field }) => (
-                                        <FormItem>
-                                          <FormLabel>Field Type</FormLabel>
-                                          <Select onValueChange={field.onChange} value={field.value}>
+
+                            <Separator />
+
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-medium">Fields</h4>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => addField(sectionIndex)}
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add Field
+                                </Button>
+                              </div>
+
+                              {form
+                                .watch(`sections.${sectionIndex}.fields`)
+                                ?.map((field, fieldIndex) => (
+                                  <Card
+                                    key={fieldIndex}
+                                    className="border border-border"
+                                  >
+                                    <CardContent className="pt-4 space-y-4">
+                                      <div className="flex items-center justify-between">
+                                        <Badge variant="secondary">
+                                          Field {fieldIndex + 1}
+                                        </Badge>
+                                        <Button
+                                          type="button"
+                                          variant="destructive"
+                                          size="sm"
+                                          onClick={() =>
+                                            removeField(
+                                              sectionIndex,
+                                              fieldIndex,
+                                            )
+                                          }
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+
+                                      <div className="grid gap-4 md:grid-cols-2">
+                                        <FormField
+                                          control={form.control}
+                                          name={`sections.${sectionIndex}.fields.${fieldIndex}.key`}
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel>Field Key</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  placeholder="field_name"
+                                                  {...field}
+                                                  value={field.value ?? ""}
+                                                />
+                                              </FormControl>
+                                              <FormDescription>
+                                                Unique identifier (no spaces,
+                                                underscore allowed)
+                                              </FormDescription>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+
+                                        <FormField
+                                          control={form.control}
+                                          name={`sections.${sectionIndex}.fields.${fieldIndex}.label`}
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel>Label</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  placeholder="Field Label"
+                                                  {...field}
+                                                  value={field.value ?? ""}
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+
+                                        <FormField
+                                          control={form.control}
+                                          name={`sections.${sectionIndex}.fields.${fieldIndex}.type`}
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel>Field Type</FormLabel>
+                                              <Select
+                                                onValueChange={field.onChange}
+                                                value={field.value}
+                                              >
+                                                <FormControl>
+                                                  <SelectTrigger>
+                                                    <SelectValue placeholder="Select field type" />
+                                                  </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                  {Object.values(FieldType).map(
+                                                    (type) => (
+                                                      <SelectItem
+                                                        key={type}
+                                                        value={type}
+                                                      >
+                                                        {type.replace("_", " ")}
+                                                      </SelectItem>
+                                                    ),
+                                                  )}
+                                                </SelectContent>
+                                              </Select>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+
+                                        <FormField
+                                          control={form.control}
+                                          name={`sections.${sectionIndex}.fields.${fieldIndex}.isRequired`}
+                                          render={({ field }) => (
+                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                              <div className="space-y-0.5">
+                                                <FormLabel>
+                                                  Required Field
+                                                </FormLabel>
+                                                <FormDescription>
+                                                  Must be filled by users
+                                                </FormDescription>
+                                              </div>
+                                              <FormControl>
+                                                <Switch
+                                                  checked={field.value}
+                                                  onCheckedChange={
+                                                    field.onChange
+                                                  }
+                                                />
+                                              </FormControl>
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+
+                                      <FormField
+                                        control={form.control}
+                                        name={`sections.${sectionIndex}.fields.${fieldIndex}.description`}
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel>
+                                              Description (Optional)
+                                            </FormLabel>
                                             <FormControl>
-                                              <SelectTrigger>
-                                                <SelectValue placeholder="Select field type" />
-                                              </SelectTrigger>
+                                              <Textarea
+                                                placeholder="Help text for this field"
+                                                className="resize-none"
+                                                {...field}
+                                                value={field.value ?? ""}
+                                              />
                                             </FormControl>
-                                            <SelectContent>
-                                              {Object.values(FieldType).map((type) => (
-                                                <SelectItem key={type} value={type}>
-                                                  {type.replace("_", " ")}
-                                                </SelectItem>
-                                              ))}
-                                            </SelectContent>
-                                          </Select>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
-                                    
-                                    <FormField
-                                      control={form.control}
-                                      name={`sections.${sectionIndex}.fields.${fieldIndex}.isRequired`}
-                                      render={({ field }) => (
-                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                          <div className="space-y-0.5">
-                                            <FormLabel>Required Field</FormLabel>
-                                            <FormDescription>
-                                              Must be filled by users
-                                            </FormDescription>
-                                          </div>
-                                          <FormControl>
-                                            <Switch
-                                              checked={field.value}
-                                              onCheckedChange={field.onChange}
-                                            />
-                                          </FormControl>
-                                        </FormItem>
-                                      )}
-                                    />
-                                  </div>
-                                  
-                                  <FormField
-                                    control={form.control}
-                                    name={`sections.${sectionIndex}.fields.${fieldIndex}.description`}
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel>Description (Optional)</FormLabel>
-                                        <FormControl>
-                                          <Textarea 
-                                            placeholder="Help text for this field"
-                                            className="resize-none"
-                                            {...field}
-                                            value={field.value ?? ""}
-                                          />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                  
-                                  <FormField
-                                    control={form.control}
-                                    name={`sections.${sectionIndex}.fields.${fieldIndex}.placeholder`}
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel>Placeholder (Optional)</FormLabel>
-                                        <FormControl>
-                                          <Input placeholder="Enter placeholder text" {...field} value={field.value ?? ""} />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                  
-                                  {/* Field-specific configuration options */}
-                                  {(() => {
-                                    const fieldType = form.watch(`sections.${sectionIndex}.fields.${fieldIndex}.type`);
-                                    
-                                    return (
-                                      <div className="space-y-4">
-                                        {/* Text validation options */}
-                                        {(fieldType === FieldType.TEXT || fieldType === FieldType.TEXTAREA || fieldType === FieldType.EMAIL || fieldType === FieldType.URL) && (
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+
+                                      <FormField
+                                        control={form.control}
+                                        name={`sections.${sectionIndex}.fields.${fieldIndex}.placeholder`}
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel>
+                                              Placeholder (Optional)
+                                            </FormLabel>
+                                            <FormControl>
+                                              <Input
+                                                placeholder="Enter placeholder text"
+                                                {...field}
+                                                value={field.value ?? ""}
+                                              />
+                                            </FormControl>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+
+                                      {/* Field-specific configuration options */}
+                                      {(() => {
+                                        const fieldType = form.watch(
+                                          `sections.${sectionIndex}.fields.${fieldIndex}.type`,
+                                        );
+
+                                        return (
                                           <div className="space-y-4">
-                                            <h5 className="font-medium text-sm">Text Validation</h5>
-                                            <div className="grid gap-4 md:grid-cols-2">
-                                              <FormField
-                                                control={form.control}
-                                                name={`sections.${sectionIndex}.fields.${fieldIndex}.minLength`}
-                                                render={({ field }) => (
-                                                  <FormItem>
-                                                    <FormLabel>Minimum Length</FormLabel>
-                                                    <FormControl>
-                                                      <Input 
-                                                        type="number" 
-                                                        placeholder="0"
-                                                        {...field} 
-                                                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                                        value={field.value ?? ""}
-                                                      />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                  </FormItem>
+                                            {/* Text validation options */}
+                                            {(fieldType === FieldType.TEXT ||
+                                              fieldType ===
+                                                FieldType.TEXTAREA ||
+                                              fieldType === FieldType.EMAIL ||
+                                              fieldType === FieldType.URL) && (
+                                              <div className="space-y-4">
+                                                <h5 className="font-medium text-sm">
+                                                  Text Validation
+                                                </h5>
+                                                <div className="grid gap-4 md:grid-cols-2">
+                                                  <FormField
+                                                    control={form.control}
+                                                    name={`sections.${sectionIndex}.fields.${fieldIndex}.minLength`}
+                                                    render={({ field }) => (
+                                                      <FormItem>
+                                                        <FormLabel>
+                                                          Minimum Length
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                          <Input
+                                                            type="number"
+                                                            placeholder="0"
+                                                            {...field}
+                                                            onChange={(e) =>
+                                                              field.onChange(
+                                                                e.target.value
+                                                                  ? Number(
+                                                                      e.target
+                                                                        .value,
+                                                                    )
+                                                                  : undefined,
+                                                              )
+                                                            }
+                                                            value={
+                                                              field.value ?? ""
+                                                            }
+                                                          />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                      </FormItem>
+                                                    )}
+                                                  />
+
+                                                  <FormField
+                                                    control={form.control}
+                                                    name={`sections.${sectionIndex}.fields.${fieldIndex}.maxLength`}
+                                                    render={({ field }) => (
+                                                      <FormItem>
+                                                        <FormLabel>
+                                                          Maximum Length
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                          <Input
+                                                            type="number"
+                                                            placeholder="255"
+                                                            {...field}
+                                                            onChange={(e) =>
+                                                              field.onChange(
+                                                                e.target.value
+                                                                  ? Number(
+                                                                      e.target
+                                                                        .value,
+                                                                    )
+                                                                  : undefined,
+                                                              )
+                                                            }
+                                                            value={
+                                                              field.value ?? ""
+                                                            }
+                                                          />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                      </FormItem>
+                                                    )}
+                                                  />
+                                                </div>
+
+                                                <FormField
+                                                  control={form.control}
+                                                  name={`sections.${sectionIndex}.fields.${fieldIndex}.pattern`}
+                                                  render={({ field }) => (
+                                                    <FormItem>
+                                                      <FormLabel>
+                                                        Validation Pattern
+                                                        (Regex)
+                                                      </FormLabel>
+                                                      <FormControl>
+                                                        <Input
+                                                          placeholder="^[A-Za-z0-9]+$"
+                                                          {...field}
+                                                          value={
+                                                            field.value ?? ""
+                                                          }
+                                                        />
+                                                      </FormControl>
+                                                      <FormDescription>
+                                                        Optional regular
+                                                        expression for
+                                                        validation
+                                                      </FormDescription>
+                                                      <FormMessage />
+                                                    </FormItem>
+                                                  )}
+                                                />
+                                              </div>
+                                            )}
+
+                                            {/* Number validation options */}
+                                            {fieldType === FieldType.NUMBER && (
+                                              <div className="space-y-4">
+                                                <h5 className="font-medium text-sm">
+                                                  Number Validation
+                                                </h5>
+                                                <div className="grid gap-4 md:grid-cols-2">
+                                                  <FormField
+                                                    control={form.control}
+                                                    name={`sections.${sectionIndex}.fields.${fieldIndex}.minValue`}
+                                                    render={({ field }) => (
+                                                      <FormItem>
+                                                        <FormLabel>
+                                                          Minimum Value
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                          <Input
+                                                            type="number"
+                                                            placeholder="0"
+                                                            {...field}
+                                                            onChange={(e) =>
+                                                              field.onChange(
+                                                                e.target.value
+                                                                  ? Number(
+                                                                      e.target
+                                                                        .value,
+                                                                    )
+                                                                  : undefined,
+                                                              )
+                                                            }
+                                                            value={
+                                                              field.value ?? ""
+                                                            }
+                                                          />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                      </FormItem>
+                                                    )}
+                                                  />
+
+                                                  <FormField
+                                                    control={form.control}
+                                                    name={`sections.${sectionIndex}.fields.${fieldIndex}.maxValue`}
+                                                    render={({ field }) => (
+                                                      <FormItem>
+                                                        <FormLabel>
+                                                          Maximum Value
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                          <Input
+                                                            type="number"
+                                                            placeholder="999999"
+                                                            {...field}
+                                                            onChange={(e) =>
+                                                              field.onChange(
+                                                                e.target.value
+                                                                  ? Number(
+                                                                      e.target
+                                                                        .value,
+                                                                    )
+                                                                  : undefined,
+                                                              )
+                                                            }
+                                                            value={
+                                                              field.value ?? ""
+                                                            }
+                                                          />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                      </FormItem>
+                                                    )}
+                                                  />
+                                                </div>
+                                              </div>
+                                            )}
+
+                                            {/* Options for SELECT and RADIO fields */}
+                                            {(fieldType === FieldType.SELECT ||
+                                              fieldType ===
+                                                FieldType.RADIO) && (
+                                              <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                  <h5 className="font-medium text-sm">
+                                                    Field Options
+                                                  </h5>
+                                                  <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                      const currentOptions =
+                                                        form.getValues(
+                                                          `sections.${sectionIndex}.fields.${fieldIndex}.options`,
+                                                        ) || [];
+                                                      form.setValue(
+                                                        `sections.${sectionIndex}.fields.${fieldIndex}.options`,
+                                                        [
+                                                          ...currentOptions,
+                                                          {
+                                                            label: "New Option",
+                                                            value: `option_${currentOptions.length + 1}`,
+                                                          },
+                                                        ],
+                                                      );
+                                                    }}
+                                                  >
+                                                    <Plus className="h-4 w-4 mr-2" />
+                                                    Add Option
+                                                  </Button>
+                                                </div>
+
+                                                {form
+                                                  .watch(
+                                                    `sections.${sectionIndex}.fields.${fieldIndex}.options`,
+                                                  )
+                                                  ?.map(
+                                                    (option, optionIndex) => (
+                                                      <Card
+                                                        key={optionIndex}
+                                                        className="border border-muted"
+                                                      >
+                                                        <CardContent className="pt-4 space-y-4">
+                                                          <div className="flex items-center justify-between">
+                                                            <Badge variant="outline">
+                                                              Option{" "}
+                                                              {optionIndex + 1}
+                                                            </Badge>
+                                                            <Button
+                                                              type="button"
+                                                              variant="destructive"
+                                                              size="sm"
+                                                              onClick={() => {
+                                                                const currentOptions =
+                                                                  form.getValues(
+                                                                    `sections.${sectionIndex}.fields.${fieldIndex}.options`,
+                                                                  ) || [];
+                                                                const updatedOptions =
+                                                                  currentOptions.filter(
+                                                                    (_, idx) =>
+                                                                      idx !==
+                                                                      optionIndex,
+                                                                  );
+                                                                form.setValue(
+                                                                  `sections.${sectionIndex}.fields.${fieldIndex}.options`,
+                                                                  updatedOptions,
+                                                                );
+                                                              }}
+                                                            >
+                                                              <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                          </div>
+
+                                                          <div className="grid gap-4 md:grid-cols-2">
+                                                            <FormField
+                                                              control={
+                                                                form.control
+                                                              }
+                                                              name={`sections.${sectionIndex}.fields.${fieldIndex}.options.${optionIndex}.label`}
+                                                              render={({
+                                                                field,
+                                                              }) => (
+                                                                <FormItem>
+                                                                  <FormLabel>
+                                                                    Display
+                                                                    Label
+                                                                  </FormLabel>
+                                                                  <FormControl>
+                                                                    <Input
+                                                                      placeholder="Option label"
+                                                                      {...field}
+                                                                      value={
+                                                                        field.value ??
+                                                                        ""
+                                                                      }
+                                                                    />
+                                                                  </FormControl>
+                                                                  <FormMessage />
+                                                                </FormItem>
+                                                              )}
+                                                            />
+
+                                                            <FormField
+                                                              control={
+                                                                form.control
+                                                              }
+                                                              name={`sections.${sectionIndex}.fields.${fieldIndex}.options.${optionIndex}.value`}
+                                                              render={({
+                                                                field,
+                                                              }) => (
+                                                                <FormItem>
+                                                                  <FormLabel>
+                                                                    Value
+                                                                  </FormLabel>
+                                                                  <FormControl>
+                                                                    <Input
+                                                                      placeholder="option_value"
+                                                                      {...field}
+                                                                      value={
+                                                                        field.value ??
+                                                                        ""
+                                                                      }
+                                                                    />
+                                                                  </FormControl>
+                                                                  <FormDescription>
+                                                                    Internal
+                                                                    value (no
+                                                                    spaces)
+                                                                  </FormDescription>
+                                                                  <FormMessage />
+                                                                </FormItem>
+                                                              )}
+                                                            />
+                                                          </div>
+                                                        </CardContent>
+                                                      </Card>
+                                                    ),
+                                                  )}
+
+                                                {(!form.watch(
+                                                  `sections.${sectionIndex}.fields.${fieldIndex}.options`,
+                                                ) ||
+                                                  form.watch(
+                                                    `sections.${sectionIndex}.fields.${fieldIndex}.options`,
+                                                  )?.length === 0) && (
+                                                  <div className="text-center py-4 text-muted-foreground">
+                                                    No options added yet. Click
+                                                    &quot;Add Option&quot; to
+                                                    create choices for this
+                                                    field.
+                                                  </div>
                                                 )}
-                                              />
-                                              
-                                              <FormField
-                                                control={form.control}
-                                                name={`sections.${sectionIndex}.fields.${fieldIndex}.maxLength`}
-                                                render={({ field }) => (
-                                                  <FormItem>
-                                                    <FormLabel>Maximum Length</FormLabel>
-                                                    <FormControl>
-                                                      <Input 
-                                                        type="number" 
-                                                        placeholder="255"
-                                                        {...field} 
-                                                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                                        value={field.value ?? ""}
-                                                      />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                  </FormItem>
-                                                )}
-                                              />
-                                            </div>
-                                            
+                                              </div>
+                                            )}
+
+                                            {/* Default value field */}
                                             <FormField
                                               control={form.control}
-                                              name={`sections.${sectionIndex}.fields.${fieldIndex}.pattern`}
+                                              name={`sections.${sectionIndex}.fields.${fieldIndex}.defaultValue`}
                                               render={({ field }) => (
                                                 <FormItem>
-                                                  <FormLabel>Validation Pattern (Regex)</FormLabel>
+                                                  <FormLabel>
+                                                    Default Value (Optional)
+                                                  </FormLabel>
                                                   <FormControl>
-                                                    <Input 
-                                                      placeholder="^[A-Za-z0-9]+$"
+                                                    <Input
+                                                      placeholder="Default value for this field"
                                                       {...field}
                                                       value={field.value ?? ""}
                                                     />
                                                   </FormControl>
                                                   <FormDescription>
-                                                    Optional regular expression for validation
+                                                    Pre-filled value when the
+                                                    form loads
                                                   </FormDescription>
                                                   <FormMessage />
                                                 </FormItem>
                                               )}
                                             />
                                           </div>
-                                        )}
-                                        
-                                        {/* Number validation options */}
-                                        {fieldType === FieldType.NUMBER && (
-                                          <div className="space-y-4">
-                                            <h5 className="font-medium text-sm">Number Validation</h5>
-                                            <div className="grid gap-4 md:grid-cols-2">
-                                              <FormField
-                                                control={form.control}
-                                                name={`sections.${sectionIndex}.fields.${fieldIndex}.minValue`}
-                                                render={({ field }) => (
-                                                  <FormItem>
-                                                    <FormLabel>Minimum Value</FormLabel>
-                                                    <FormControl>
-                                                      <Input 
-                                                        type="number" 
-                                                        placeholder="0"
-                                                        {...field} 
-                                                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                                        value={field.value ?? ""}
-                                                      />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                  </FormItem>
-                                                )}
-                                              />
-                                              
-                                              <FormField
-                                                control={form.control}
-                                                name={`sections.${sectionIndex}.fields.${fieldIndex}.maxValue`}
-                                                render={({ field }) => (
-                                                  <FormItem>
-                                                    <FormLabel>Maximum Value</FormLabel>
-                                                    <FormControl>
-                                                      <Input 
-                                                        type="number" 
-                                                        placeholder="999999"
-                                                        {...field} 
-                                                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                                        value={field.value ?? ""}
-                                                      />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                  </FormItem>
-                                                )}
-                                              />
-                                            </div>
-                                          </div>
-                                        )}
-                                        
-                                        {/* Options for SELECT and RADIO fields */}
-                                        {(fieldType === FieldType.SELECT || fieldType === FieldType.RADIO) && (
-                                          <div className="space-y-4">
-                                            <div className="flex items-center justify-between">
-                                              <h5 className="font-medium text-sm">Field Options</h5>
-                                              <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => {
-                                                  const currentOptions = form.getValues(`sections.${sectionIndex}.fields.${fieldIndex}.options`) || [];
-                                                  form.setValue(`sections.${sectionIndex}.fields.${fieldIndex}.options`, [
-                                                    ...currentOptions,
-                                                    { label: "New Option", value: `option_${currentOptions.length + 1}` }
-                                                  ]);
-                                                }}
-                                              >
-                                                <Plus className="h-4 w-4 mr-2" />
-                                                Add Option
-                                              </Button>
-                                            </div>
-                                            
-                                            {form.watch(`sections.${sectionIndex}.fields.${fieldIndex}.options`)?.map((option, optionIndex) => (
-                                              <Card key={optionIndex} className="border border-muted">
-                                                <CardContent className="pt-4 space-y-4">
-                                                  <div className="flex items-center justify-between">
-                                                    <Badge variant="outline">Option {optionIndex + 1}</Badge>
-                                                    <Button
-                                                      type="button"
-                                                      variant="destructive"
-                                                      size="sm"
-                                                      onClick={() => {
-                                                        const currentOptions = form.getValues(`sections.${sectionIndex}.fields.${fieldIndex}.options`) || [];
-                                                        const updatedOptions = currentOptions.filter((_, idx) => idx !== optionIndex);
-                                                        form.setValue(`sections.${sectionIndex}.fields.${fieldIndex}.options`, updatedOptions);
-                                                      }}
-                                                    >
-                                                      <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                  </div>
-                                                  
-                                                  <div className="grid gap-4 md:grid-cols-2">
-                                                    <FormField
-                                                      control={form.control}
-                                                      name={`sections.${sectionIndex}.fields.${fieldIndex}.options.${optionIndex}.label`}
-                                                      render={({ field }) => (
-                                                        <FormItem>
-                                                          <FormLabel>Display Label</FormLabel>
-                                                          <FormControl>
-                                                            <Input placeholder="Option label" {...field} value={field.value ?? ""} />
-                                                          </FormControl>
-                                                          <FormMessage />
-                                                        </FormItem>
-                                                      )}
-                                                    />
-                                                    
-                                                    <FormField
-                                                      control={form.control}
-                                                      name={`sections.${sectionIndex}.fields.${fieldIndex}.options.${optionIndex}.value`}
-                                                      render={({ field }) => (
-                                                        <FormItem>
-                                                          <FormLabel>Value</FormLabel>
-                                                          <FormControl>
-                                                            <Input placeholder="option_value" {...field} value={field.value ?? ""} />
-                                                          </FormControl>
-                                                          <FormDescription>
-                                                            Internal value (no spaces)
-                                                          </FormDescription>
-                                                          <FormMessage />
-                                                        </FormItem>
-                                                      )}
-                                                    />
-                                                  </div>
-                                                </CardContent>
-                                              </Card>
-                                            ))}
-                                            
-                                            {(!form.watch(`sections.${sectionIndex}.fields.${fieldIndex}.options`) || form.watch(`sections.${sectionIndex}.fields.${fieldIndex}.options`)?.length === 0) && (
-                                              <div className="text-center py-4 text-muted-foreground">
-                                                No options added yet. Click &quot;Add Option&quot; to create choices for this field.
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-                                        
-                                        {/* Default value field */}
-                                        <FormField
-                                          control={form.control}
-                                          name={`sections.${sectionIndex}.fields.${fieldIndex}.defaultValue`}
-                                          render={({ field }) => (
-                                            <FormItem>
-                                              <FormLabel>Default Value (Optional)</FormLabel>
-                                              <FormControl>
-                                                <Input placeholder="Default value for this field" {...field} value={field.value ?? ""} />
-                                              </FormControl>
-                                              <FormDescription>
-                                                Pre-filled value when the form loads
-                                              </FormDescription>
-                                              <FormMessage />
-                                            </FormItem>
-                                          )}
-                                        />
-                                      </div>
-                                    );
-                                  })()}
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </Card>
-                );
-              }))}
+                                        );
+                                      })()}
+                                    </CardContent>
+                                  </Card>
+                                ))}
+                            </div>
+                          </CardContent>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </Card>
+                  );
+                })
+              )}
             </div>
-            
+
             {sections.length > 0 && (
               <div className="flex justify-between">
                 <Button type="button" variant="outline" onClick={addSection}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Section
                 </Button>
-                
+
                 <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={loadDefaultConfiguration}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={loadDefaultConfiguration}
+                  >
                     <Eye className="h-4 w-4 mr-2" />
                     Load Example Fields
                   </Button>

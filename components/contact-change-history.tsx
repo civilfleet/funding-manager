@@ -1,14 +1,19 @@
 "use client";
 
-import useSWR from "swr";
 import { format } from "date-fns";
-import { History, Plus, Edit, Trash } from "lucide-react";
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Edit, History, Plus, Trash } from "lucide-react";
+import useSWR from "swr";
 import { Loader } from "@/components/helper/loader";
-import { ContactChangeLog, ChangeAction } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { ChangeAction, ContactChangeLog } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -83,7 +88,11 @@ const formatMetadataValue = (value: unknown) => {
     return "—";
   }
 
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
     return String(value);
   }
 
@@ -94,10 +103,12 @@ const formatMetadataValue = (value: unknown) => {
   }
 };
 
-export default function ContactChangeHistory({ contactId }: ContactChangeHistoryProps) {
+export default function ContactChangeHistory({
+  contactId,
+}: ContactChangeHistoryProps) {
   const { data, error, isLoading } = useSWR(
     `/api/contact-change-logs?contactId=${contactId}`,
-    fetcher
+    fetcher,
   );
 
   const logs = (data?.data || []) as ContactChangeLog[];
@@ -108,8 +119,12 @@ export default function ContactChangeHistory({ contactId }: ContactChangeHistory
         <div className="flex items-center gap-2">
           <History className="h-5 w-5 text-muted-foreground" />
           <div>
-            <CardTitle className="text-xl font-semibold">Change History</CardTitle>
-            <CardDescription>Track all modifications made to this contact</CardDescription>
+            <CardTitle className="text-xl font-semibold">
+              Change History
+            </CardTitle>
+            <CardDescription>
+              Track all modifications made to this contact
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -126,19 +141,27 @@ export default function ContactChangeHistory({ contactId }: ContactChangeHistory
         ) : logs.length === 0 ? (
           <div className="text-center py-8 rounded-md border border-dashed">
             <History className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">No changes recorded yet</p>
+            <p className="text-sm text-muted-foreground">
+              No changes recorded yet
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
             {logs.map((log, index) => {
               const ActionIcon = getActionIcon(log.action);
-              const metadataEntries = log.metadata ? Object.entries(log.metadata) : [];
-              const creationSource = log.metadata ? log.metadata["source"] : undefined;
+              const metadataEntries = log.metadata
+                ? Object.entries(log.metadata)
+                : [];
+              const creationSource = log.metadata
+                ? log.metadata["source"]
+                : undefined;
               return (
                 <div key={log.id}>
                   <div className="flex gap-4">
                     <div className="flex flex-col items-center">
-                      <div className={`rounded-full p-2 ${getActionColor(log.action)}`}>
+                      <div
+                        className={`rounded-full p-2 ${getActionColor(log.action)}`}
+                      >
                         <ActionIcon className="h-4 w-4" />
                       </div>
                       {index < logs.length - 1 && (
@@ -179,7 +202,9 @@ export default function ContactChangeHistory({ contactId }: ContactChangeHistory
                         <div className="space-y-1 text-sm">
                           {log.oldValue && (
                             <div className="p-2 rounded bg-red-50 border border-red-200">
-                              <span className="text-xs font-medium text-red-800">Old:</span>
+                              <span className="text-xs font-medium text-red-800">
+                                Old:
+                              </span>
                               <pre className="text-xs text-red-700 mt-1 whitespace-pre-wrap">
                                 {formatValue(log.oldValue)}
                               </pre>
@@ -187,7 +212,9 @@ export default function ContactChangeHistory({ contactId }: ContactChangeHistory
                           )}
                           {log.newValue && (
                             <div className="p-2 rounded bg-green-50 border border-green-200">
-                              <span className="text-xs font-medium text-green-800">New:</span>
+                              <span className="text-xs font-medium text-green-800">
+                                New:
+                              </span>
                               <pre className="text-xs text-green-700 mt-1 whitespace-pre-wrap">
                                 {formatValue(log.newValue)}
                               </pre>
@@ -211,7 +238,10 @@ export default function ContactChangeHistory({ contactId }: ContactChangeHistory
                           </p>
                           <dl className="mt-2 space-y-1">
                             {metadataEntries.map(([key, value]) => (
-                              <div key={key} className="flex items-start justify-between gap-3 text-xs">
+                              <div
+                                key={key}
+                                className="flex items-start justify-between gap-3 text-xs"
+                              >
                                 <dt className="font-medium text-muted-foreground">
                                   {formatFieldName(key)}
                                 </dt>

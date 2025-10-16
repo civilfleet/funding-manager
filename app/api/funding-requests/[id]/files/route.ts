@@ -1,9 +1,9 @@
+import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { sendEmail } from "@/lib/nodemailer";
 import { handlePrismaError } from "@/lib/utils";
 import { uploadFundingRequestFile } from "@/services/funding-request";
 import { FileTypes } from "@/types";
-import { NextResponse } from "next/server";
 
 export async function PUT(
   req: Request,
@@ -11,7 +11,7 @@ export async function PUT(
     params,
   }: {
     params: Promise<{ id: string }>;
-  }
+  },
 ) {
   try {
     const fundingRequestId = (await params).id;
@@ -26,7 +26,7 @@ export async function PUT(
       fundingRequestId,
       data.file,
       data?.type as FileTypes,
-      session?.user?.userId as string
+      session?.user?.userId as string,
     );
 
     sendEmail(
@@ -40,14 +40,14 @@ export async function PUT(
         documentType: data?.type,
         requestName: response?.FundingRequest?.name,
         fundingRequestLink: `${process.env.NEXT_PUBLIC_BASE_URL}/team/funding-requests/${fundingRequestId}`,
-      }
+      },
     );
 
     return NextResponse.json(
       {
         message: "success",
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const { message } = handlePrismaError(e);

@@ -1,5 +1,5 @@
-import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import prisma from "@/lib/prisma";
 
 type CreateEventRoleInput = {
   teamId: string;
@@ -23,7 +23,9 @@ type EventRoleType = {
   updatedAt: Date;
 };
 
-const mapEventRole = (role: Prisma.EventRoleGetPayload<Record<string, never>>): EventRoleType => ({
+const mapEventRole = (
+  role: Prisma.EventRoleGetPayload<Record<string, never>>,
+): EventRoleType => ({
   id: role.id,
   teamId: role.teamId,
   name: role.name,

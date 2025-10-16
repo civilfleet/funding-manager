@@ -2,10 +2,14 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
-import { ContactAttributeType, ContactProfileAttribute, ContactEvent } from "@/types";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import {
+  ContactAttributeType,
+  ContactEvent,
+  ContactProfileAttribute,
+} from "@/types";
 
 export type ContactRow = {
   id: string;
@@ -43,10 +47,16 @@ const formatAttributeValue = (attribute: ContactProfileAttribute) => {
       if ("label" in attribute.value && attribute.value.label) {
         parts.push(attribute.value.label);
       }
-      if ("latitude" in attribute.value && typeof attribute.value.latitude === "number") {
+      if (
+        "latitude" in attribute.value &&
+        typeof attribute.value.latitude === "number"
+      ) {
         parts.push(`Lat: ${attribute.value.latitude}`);
       }
-      if ("longitude" in attribute.value && typeof attribute.value.longitude === "number") {
+      if (
+        "longitude" in attribute.value &&
+        typeof attribute.value.longitude === "number"
+      ) {
         parts.push(`Lng: ${attribute.value.longitude}`);
       }
 
@@ -65,7 +75,11 @@ const renderAttributes = (attributes: ContactProfileAttribute[] = []) => {
   return (
     <div className="flex flex-wrap gap-2">
       {attributes.slice(0, 4).map((attribute) => (
-        <Badge key={`${attribute.key}-${attribute.type}`} variant="secondary" className="text-xs font-normal">
+        <Badge
+          key={`${attribute.key}-${attribute.type}`}
+          variant="secondary"
+          className="text-xs font-normal"
+        >
           <span className="font-medium">{attribute.key}:</span>{" "}
           <span className="ml-1">{formatAttributeValue(attribute)}</span>
         </Badge>
@@ -79,7 +93,10 @@ const ContactNameCell = ({ contact }: { contact: ContactRow }) => {
   const teamId = params.teamId as string;
 
   return (
-    <Link href={`/teams/${teamId}/contacts/${contact.id}`} className="font-medium hover:underline">
+    <Link
+      href={`/teams/${teamId}/contacts/${contact.id}`}
+      className="font-medium hover:underline"
+    >
       {contact.name}
     </Link>
   );
@@ -126,10 +143,14 @@ export const renderContactCard = (contact: ContactRow, teamId: string) => {
           )}
         </div>
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">Attributes</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wide">
+            Attributes
+          </p>
           {renderAttributes(contact.profileAttributes)}
         </div>
-        <p className="text-xs text-muted-foreground">Added {formatDate(contact.createdAt)}</p>
+        <p className="text-xs text-muted-foreground">
+          Added {formatDate(contact.createdAt)}
+        </p>
       </div>
     </Link>
   );

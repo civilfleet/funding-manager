@@ -1,25 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useSession } from "next-auth/react";
 import { Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import useSWR from "swr";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -27,13 +26,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { EngagementDirection, EngagementSource, TodoStatus } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const engagementSchema = z.object({
-  direction: z.enum([EngagementDirection.INBOUND, EngagementDirection.OUTBOUND]),
+  direction: z.enum([
+    EngagementDirection.INBOUND,
+    EngagementDirection.OUTBOUND,
+  ]),
   source: z.enum([
     EngagementSource.EMAIL,
     EngagementSource.PHONE,
@@ -49,12 +52,14 @@ const engagementSchema = z.object({
     message: "Invalid date format",
   }),
   assignedToUserId: z.string().optional(),
-  todoStatus: z.enum([
-    TodoStatus.PENDING,
-    TodoStatus.IN_PROGRESS,
-    TodoStatus.COMPLETED,
-    TodoStatus.CANCELLED,
-  ]).optional(),
+  todoStatus: z
+    .enum([
+      TodoStatus.PENDING,
+      TodoStatus.IN_PROGRESS,
+      TodoStatus.COMPLETED,
+      TodoStatus.CANCELLED,
+    ])
+    .optional(),
   dueDate: z.string().optional(),
 });
 
@@ -107,7 +112,9 @@ export default function ContactEngagementForm({
       setIsSubmitting(true);
 
       const assignedUser = values.assignedToUserId
-        ? teamUsers.find((u: { id: string }) => u.id === values.assignedToUserId)
+        ? teamUsers.find(
+            (u: { id: string }) => u.id === values.assignedToUserId,
+          )
         : null;
 
       const response = await fetch("/api/contact-engagements", {
@@ -154,7 +161,10 @@ export default function ContactEngagementForm({
     } catch (error) {
       toast({
         title: "Unable to record engagement",
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {
@@ -205,13 +215,25 @@ export default function ContactEngagementForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value={EngagementSource.EMAIL}>Email</SelectItem>
-                    <SelectItem value={EngagementSource.PHONE}>Phone Call</SelectItem>
+                    <SelectItem value={EngagementSource.EMAIL}>
+                      Email
+                    </SelectItem>
+                    <SelectItem value={EngagementSource.PHONE}>
+                      Phone Call
+                    </SelectItem>
                     <SelectItem value={EngagementSource.SMS}>SMS</SelectItem>
-                    <SelectItem value={EngagementSource.MEETING}>Meeting</SelectItem>
-                    <SelectItem value={EngagementSource.EVENT}>Event</SelectItem>
-                    <SelectItem value={EngagementSource.TODO}>Internal Todo</SelectItem>
-                    <SelectItem value={EngagementSource.OTHER}>Other</SelectItem>
+                    <SelectItem value={EngagementSource.MEETING}>
+                      Meeting
+                    </SelectItem>
+                    <SelectItem value={EngagementSource.EVENT}>
+                      Event
+                    </SelectItem>
+                    <SelectItem value={EngagementSource.TODO}>
+                      Internal Todo
+                    </SelectItem>
+                    <SelectItem value={EngagementSource.OTHER}>
+                      Other
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -230,7 +252,9 @@ export default function ContactEngagementForm({
                 <FormControl>
                   <Input type="datetime-local" {...field} />
                 </FormControl>
-                <FormDescription>When did this engagement occur?</FormDescription>
+                <FormDescription>
+                  When did this engagement occur?
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -252,10 +276,18 @@ export default function ContactEngagementForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value={TodoStatus.PENDING}>Pending</SelectItem>
-                      <SelectItem value={TodoStatus.IN_PROGRESS}>In Progress</SelectItem>
-                      <SelectItem value={TodoStatus.COMPLETED}>Completed</SelectItem>
-                      <SelectItem value={TodoStatus.CANCELLED}>Cancelled</SelectItem>
+                      <SelectItem value={TodoStatus.PENDING}>
+                        Pending
+                      </SelectItem>
+                      <SelectItem value={TodoStatus.IN_PROGRESS}>
+                        In Progress
+                      </SelectItem>
+                      <SelectItem value={TodoStatus.COMPLETED}>
+                        Completed
+                      </SelectItem>
+                      <SelectItem value={TodoStatus.CANCELLED}>
+                        Cancelled
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -288,7 +320,9 @@ export default function ContactEngagementForm({
               <FormItem>
                 <FormLabel>Assign To</FormLabel>
                 <Select
-                  onValueChange={(value) => field.onChange(value === "none" ? undefined : value)}
+                  onValueChange={(value) =>
+                    field.onChange(value === "none" ? undefined : value)
+                  }
                   value={field.value || "none"}
                 >
                   <FormControl>
@@ -298,14 +332,18 @@ export default function ContactEngagementForm({
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {teamUsers.map((user: { id: string; name?: string; email: string }) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name || user.email}
-                      </SelectItem>
-                    ))}
+                    {teamUsers.map(
+                      (user: { id: string; name?: string; email: string }) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name || user.email}
+                        </SelectItem>
+                      ),
+                    )}
                   </SelectContent>
                 </Select>
-                <FormDescription>Optional team member assignment</FormDescription>
+                <FormDescription>
+                  Optional team member assignment
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -321,7 +359,9 @@ export default function ContactEngagementForm({
               <FormControl>
                 <Input
                   placeholder={
-                    isTodo ? "e.g., Follow up with contact" : "e.g., Follow-up on funding request"
+                    isTodo
+                      ? "e.g., Follow up with contact"
+                      : "e.g., Follow-up on funding request"
                   }
                   {...field}
                 />

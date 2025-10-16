@@ -1,11 +1,11 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "../ui/button";
 import Link from "next/link";
-import { Badge } from "../ui/badge";
-import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 
 export type OrganizationColumns = {
   id: string;
@@ -34,7 +34,13 @@ export type OrganizationColumns = {
   updatedAt: string;
 };
 
-function OrganizationActions({ organization, mutate }: { organization: OrganizationColumns; mutate: () => void }) {
+function OrganizationActions({
+  organization,
+  mutate,
+}: {
+  organization: OrganizationColumns;
+  mutate: () => void;
+}) {
   const { toast } = useToast();
   const router = useRouter();
 
@@ -60,7 +66,10 @@ function OrganizationActions({ organization, mutate }: { organization: Organizat
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete organization",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete organization",
         variant: "destructive",
       });
     }
@@ -80,33 +89,51 @@ function OrganizationActions({ organization, mutate }: { organization: Organizat
   );
 }
 
-export const columns = (mutate: () => void): ColumnDef<OrganizationColumns>[] => [
+export const columns = (
+  mutate: () => void,
+): ColumnDef<OrganizationColumns>[] => [
   {
     accessorKey: "name",
     header: () => <div className="text-left w-24">Name</div>,
     cell: ({ row }) => {
-      return <div className="text-left font-medium">{row.getValue("name") || "N/A"}</div>;
+      return (
+        <div className="text-left font-medium">
+          {row.getValue("name") || "N/A"}
+        </div>
+      );
     },
   },
   {
     accessorKey: "email",
     header: () => <div className="text-left w-24">Email</div>,
     cell: ({ row }) => {
-      return <div className="text-left font-medium">{row.getValue("email") || "N/A"}</div>;
+      return (
+        <div className="text-left font-medium">
+          {row.getValue("email") || "N/A"}
+        </div>
+      );
     },
   },
   {
     accessorKey: "team.name",
     header: () => <div className="text-left w-24">Team</div>,
     cell: ({ row }) => {
-      return <div className="text-left font-medium">{row.original.team?.name || "N/A"}</div>;
+      return (
+        <div className="text-left font-medium">
+          {row.original.team?.name || "N/A"}
+        </div>
+      );
     },
   },
   {
     accessorKey: "phone",
     header: () => <div className="text-left max-w-24">Phone</div>,
     cell: ({ row }) => {
-      return <div className="text-left font-medium">{row.getValue("phone") || "N/A"}</div>;
+      return (
+        <div className="text-left font-medium">
+          {row.getValue("phone") || "N/A"}
+        </div>
+      );
     },
   },
   {
@@ -127,7 +154,11 @@ export const columns = (mutate: () => void): ColumnDef<OrganizationColumns>[] =>
     accessorKey: "country",
     header: () => <div className="text-left w-24">Country</div>,
     cell: ({ row }) => {
-      return <div className="text-left font-medium">{row.getValue("country") || "N/A"}</div>;
+      return (
+        <div className="text-left font-medium">
+          {row.getValue("country") || "N/A"}
+        </div>
+      );
     },
   },
   {
@@ -135,12 +166,18 @@ export const columns = (mutate: () => void): ColumnDef<OrganizationColumns>[] =>
     header: () => <div className="text-left w-24">Website</div>,
     cell: ({ row }) => {
       const website = row.getValue("website") as string;
-      const websiteUrl = website && !website.startsWith("http") ? `https://${website}` : website;
-      
+      const websiteUrl =
+        website && !website.startsWith("http") ? `https://${website}` : website;
+
       return (
         <div className="text-left text-blue-500">
           {website ? (
-            <Link href={websiteUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+            <Link
+              href={websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
               {website}
             </Link>
           ) : (
@@ -154,14 +191,22 @@ export const columns = (mutate: () => void): ColumnDef<OrganizationColumns>[] =>
     accessorKey: "taxID",
     header: () => <div className="text-left w-24">Tax ID</div>,
     cell: ({ row }) => {
-      return <div className="text-left font-medium">{row.getValue("taxID") || "N/A"}</div>;
+      return (
+        <div className="text-left font-medium">
+          {row.getValue("taxID") || "N/A"}
+        </div>
+      );
     },
   },
   {
     accessorKey: "bankDetails.bankName",
     header: () => <div className="text-left w-24">Bank Name</div>,
     cell: ({ row }) => {
-      return <div className="text-left font-medium">{row.original.bankDetails?.bankName || "N/A"}</div>;
+      return (
+        <div className="text-left font-medium">
+          {row.original.bankDetails?.bankName || "N/A"}
+        </div>
+      );
     },
   },
   {
@@ -169,14 +214,18 @@ export const columns = (mutate: () => void): ColumnDef<OrganizationColumns>[] =>
     header: () => <div className="text-left w-24">Created At</div>,
     cell: ({ row }) => {
       return (
-        <div className="text-left font-medium">{new Date(row.getValue("createdAt")).toLocaleDateString() || "N/A"}</div>
+        <div className="text-left font-medium">
+          {new Date(row.getValue("createdAt")).toLocaleDateString() || "N/A"}
+        </div>
       );
     },
   },
   {
     id: "actions",
     cell: ({ row }) => {
-      return <OrganizationActions organization={row.original} mutate={mutate} />;
+      return (
+        <OrganizationActions organization={row.original} mutate={mutate} />
+      );
     },
   },
 ];

@@ -3,7 +3,8 @@ import { z } from "zod";
 const preprocessEmptyString = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
 
-const optionalText = (schema: z.ZodString) => z.preprocess(preprocessEmptyString, schema.optional());
+const optionalText = (schema: z.ZodString) =>
+  z.preprocess(preprocessEmptyString, schema.optional());
 
 const eventContactSchema = z.object({
   contactId: z.string().uuid("Contact id must be a valid UUID"),
@@ -16,19 +17,22 @@ export const createEventSchema = z.object({
   slug: optionalText(z.string()),
   description: optionalText(z.string()),
   location: optionalText(z.string()),
-  startDate: z.string().min(1, "Start date is required").refine((value) => !Number.isNaN(Date.parse(value)), {
-    message: "Invalid start date",
-  }),
-  endDate: z
-    .preprocess(preprocessEmptyString, z.string().optional())
-    .refine(
-      (value) => {
-        if (!value) return true;
-        return !Number.isNaN(Date.parse(value));
-      },
-      { message: "Invalid end date" }
-    ),
-  isPublic: z.preprocess((val) => val === true || val === "true", z.boolean()).default(false),
+  startDate: z
+    .string()
+    .min(1, "Start date is required")
+    .refine((value) => !Number.isNaN(Date.parse(value)), {
+      message: "Invalid start date",
+    }),
+  endDate: z.preprocess(preprocessEmptyString, z.string().optional()).refine(
+    (value) => {
+      if (!value) return true;
+      return !Number.isNaN(Date.parse(value));
+    },
+    { message: "Invalid end date" },
+  ),
+  isPublic: z
+    .preprocess((val) => val === true || val === "true", z.boolean())
+    .default(false),
   contacts: z.array(eventContactSchema).default([]),
 });
 
@@ -41,19 +45,22 @@ export const updateEventSchema = z.object({
   slug: optionalText(z.string()),
   description: optionalText(z.string()),
   location: optionalText(z.string()),
-  startDate: z.string().min(1, "Start date is required").refine((value) => !Number.isNaN(Date.parse(value)), {
-    message: "Invalid start date",
-  }),
-  endDate: z
-    .preprocess(preprocessEmptyString, z.string().optional())
-    .refine(
-      (value) => {
-        if (!value) return true;
-        return !Number.isNaN(Date.parse(value));
-      },
-      { message: "Invalid end date" }
-    ),
-  isPublic: z.preprocess((val) => val === true || val === "true", z.boolean()).default(false),
+  startDate: z
+    .string()
+    .min(1, "Start date is required")
+    .refine((value) => !Number.isNaN(Date.parse(value)), {
+      message: "Invalid start date",
+    }),
+  endDate: z.preprocess(preprocessEmptyString, z.string().optional()).refine(
+    (value) => {
+      if (!value) return true;
+      return !Number.isNaN(Date.parse(value));
+    },
+    { message: "Invalid end date" },
+  ),
+  isPublic: z
+    .preprocess((val) => val === true || val === "true", z.boolean())
+    .default(false),
   contacts: z.array(eventContactSchema).default([]),
 });
 
@@ -61,7 +68,9 @@ export type UpdateEventInput = z.infer<typeof updateEventSchema>;
 
 export const deleteEventsSchema = z.object({
   teamId: z.string().uuid("Team id must be a valid UUID"),
-  ids: z.array(z.string().uuid("Event id must be a valid UUID")).min(1, "Select at least one event"),
+  ids: z
+    .array(z.string().uuid("Event id must be a valid UUID"))
+    .min(1, "Select at least one event"),
 });
 
 export type DeleteEventsInput = z.infer<typeof deleteEventsSchema>;
@@ -76,4 +85,6 @@ export const createEventRegistrationSchema = z.object({
   customData: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type CreateEventRegistrationInput = z.infer<typeof createEventRegistrationSchema>;
+export type CreateEventRegistrationInput = z.infer<
+  typeof createEventRegistrationSchema
+>;

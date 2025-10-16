@@ -1,9 +1,9 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { format } from "date-fns";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -28,7 +28,11 @@ const formatDateTime = (value: string) => {
   return format(parsed, "PPP p");
 };
 
-const RegistrantCell = ({ registration }: { registration: EventRegistrationRow }) => {
+const RegistrantCell = ({
+  registration,
+}: {
+  registration: EventRegistrationRow;
+}) => {
   const params = useParams();
   const teamId = params.teamId as string;
   const displayName = registration.contactName || registration.name;
@@ -42,7 +46,9 @@ const RegistrantCell = ({ registration }: { registration: EventRegistrationRow }
         {displayName}
       </Link>
       {registration.name && registration.name !== displayName && (
-        <span className="text-xs text-muted-foreground">Registered as {registration.name}</span>
+        <span className="text-xs text-muted-foreground">
+          Registered as {registration.name}
+        </span>
       )}
     </div>
   );
@@ -54,7 +60,10 @@ const EmailCell = ({ email }: { email: string }) => {
   }
 
   return (
-    <a href={`mailto:${email}`} className="text-sm text-primary hover:underline break-all">
+    <a
+      href={`mailto:${email}`}
+      className="text-sm text-primary hover:underline break-all"
+    >
       {email}
     </a>
   );
@@ -81,7 +90,9 @@ const NotesCell = ({ notes }: { notes?: string }) => {
 };
 
 const RegisteredAtCell = ({ createdAt }: { createdAt: string }) => (
-  <span className="text-sm text-muted-foreground">{formatDateTime(createdAt)}</span>
+  <span className="text-sm text-muted-foreground">
+    {formatDateTime(createdAt)}
+  </span>
 );
 
 export const eventRegistrationColumns: ColumnDef<EventRegistrationRow>[] = [
@@ -112,19 +123,26 @@ export const eventRegistrationColumns: ColumnDef<EventRegistrationRow>[] = [
   },
 ];
 
-export const renderEventRegistrationCard = (registration: EventRegistrationRow) => (
+export const renderEventRegistrationCard = (
+  registration: EventRegistrationRow,
+) => (
   <Card key={registration.id} className="shadow-sm">
     <CardHeader className="pb-2">
       <CardTitle className="text-base">
         {registration.contactName || registration.name}
       </CardTitle>
-      <p className="text-xs text-muted-foreground">{formatDateTime(registration.createdAt)}</p>
+      <p className="text-xs text-muted-foreground">
+        {formatDateTime(registration.createdAt)}
+      </p>
     </CardHeader>
     <CardContent className="space-y-2">
       <div className="text-sm">
         <span className="font-medium">Email: </span>
         {registration.email ? (
-          <a href={`mailto:${registration.email}`} className="hover:underline break-all">
+          <a
+            href={`mailto:${registration.email}`}
+            className="hover:underline break-all"
+          >
             {registration.email}
           </a>
         ) : (

@@ -14,8 +14,8 @@ export const useTeamStore = create<TeamState>()(
     }),
     {
       name: "team-store", // Local storage key
-    }
-  )
+    },
+  ),
 );
 type OrganizationState = {
   organizationId: string;
@@ -30,6 +30,6 @@ export const useOrganizationStore = create<OrganizationState>()(
     }),
     {
       name: "organization-store", // Local storage key
-    }
-  )
+    },
+  ),
 );

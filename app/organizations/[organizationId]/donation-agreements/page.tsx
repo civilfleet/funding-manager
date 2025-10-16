@@ -17,4 +17,3 @@ export default async function Organization({ params }: PageProps) {
     </div>
   );
 }
-

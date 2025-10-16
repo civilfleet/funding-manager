@@ -1,8 +1,7 @@
 import Link from "next/link";
-
+import { auth } from "@/auth";
 import ContactTable from "@/components/table/contact-table";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/auth";
 import { assertTeamModuleAccess } from "@/lib/permissions";
 import { AppModule } from "@/types";
 
@@ -20,7 +19,7 @@ export default async function ContactsPage({ params }: ContactsPageProps) {
       userId: session?.user?.userId,
       roles: session?.user?.roles,
     },
-    "CRM" satisfies AppModule
+    "CRM" satisfies AppModule,
   );
 
   return (
@@ -29,7 +28,8 @@ export default async function ContactsPage({ params }: ContactsPageProps) {
         <div>
           <h1 className="text-2xl font-semibold">Contacts</h1>
           <p className="text-sm text-muted-foreground">
-            Manage the relationships and key stakeholders associated with your team.
+            Manage the relationships and key stakeholders associated with your
+            team.
           </p>
         </div>
         <Link href="contacts/create">

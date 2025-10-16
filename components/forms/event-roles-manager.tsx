@@ -1,15 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import useSWR from "swr";
-
-import { createEventRoleSchema } from "@/validations/eventRoles";
-import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 import {
   Card,
@@ -35,8 +34,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { createEventRoleSchema } from "@/validations/eventRoles";
 
 type EventRole = {
   id: string;
@@ -61,7 +60,7 @@ export default function EventRolesManager({ teamId }: EventRolesManagerProps) {
 
   const { data: rolesData, mutate } = useSWR(
     `/api/event-roles?teamId=${teamId}`,
-    fetcher
+    fetcher,
   );
 
   const roles: EventRole[] = rolesData?.data || [];
@@ -75,7 +74,8 @@ export default function EventRolesManager({ teamId }: EventRolesManagerProps) {
     },
   });
 
-  const typedControl = form.control as unknown as import("react-hook-form").Control<FormValues>;
+  const typedControl =
+    form.control as unknown as import("react-hook-form").Control<FormValues>;
 
   const handleOpenDialog = (role?: EventRole) => {
     if (role) {
@@ -123,7 +123,7 @@ export default function EventRolesManager({ teamId }: EventRolesManagerProps) {
         const errorBody = await response.json().catch(() => ({}));
         throw new Error(
           errorBody.error ||
-            `Failed to ${editingRole ? "update" : "create"} event role`
+            `Failed to ${editingRole ? "update" : "create"} event role`,
         );
       }
 
@@ -141,7 +141,9 @@ export default function EventRolesManager({ teamId }: EventRolesManagerProps) {
       toast({
         title: `Unable to ${editingRole ? "update" : "create"} event role`,
         description:
-          error instanceof Error ? error.message : "An unexpected error occurred.",
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {
@@ -182,7 +184,9 @@ export default function EventRolesManager({ teamId }: EventRolesManagerProps) {
       toast({
         title: "Unable to delete event role",
         description:
-          error instanceof Error ? error.message : "An unexpected error occurred.",
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
     }
@@ -196,8 +200,8 @@ export default function EventRolesManager({ teamId }: EventRolesManagerProps) {
             <div>
               <CardTitle>Event Roles</CardTitle>
               <CardDescription>
-                Configure roles that can be assigned to contacts at events (e.g.,
-                Partner, Musician, Volunteer)
+                Configure roles that can be assigned to contacts at events
+                (e.g., Partner, Musician, Volunteer)
               </CardDescription>
             </div>
             <Button onClick={() => handleOpenDialog()}>

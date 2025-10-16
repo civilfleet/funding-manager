@@ -14,7 +14,7 @@ export async function GET() {
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch teams" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -22,7 +22,17 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, phone, address, postalCode, city, country, website, user } = body;
+    const {
+      name,
+      email,
+      phone,
+      address,
+      postalCode,
+      city,
+      country,
+      website,
+      user,
+    } = body;
 
     // Use transaction to handle team creation with user
     const team = await prisma.$transaction(async (tx) => {
@@ -52,7 +62,9 @@ export async function POST(request: Request) {
 
         if (existingUser) {
           // Connect existing user to team and add Team role if not already present
-          const updatedRoles = Array.from(new Set([...existingUser.roles, Roles.Team]));
+          const updatedRoles = Array.from(
+            new Set([...existingUser.roles, Roles.Team]),
+          );
           await tx.user.update({
             where: { id: existingUser.id },
             data: {
@@ -87,7 +99,7 @@ export async function POST(request: Request) {
     console.error("Error creating team:", error);
     return NextResponse.json(
       { error: "Failed to create team" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

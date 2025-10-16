@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { handlePrismaError } from "@/lib/utils";
 import { z } from "zod";
+import { handlePrismaError } from "@/lib/utils";
+import { createGroup, deleteGroups, getTeamGroups } from "@/services/groups";
 import { createGroupSchema, deleteGroupsSchema } from "@/validations/groups";
-import { getTeamGroups, createGroup, deleteGroups } from "@/services/groups";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +10,10 @@ export async function GET(request: NextRequest) {
     const teamId = searchParams.get("teamId");
 
     if (!teamId) {
-      return NextResponse.json({ error: "teamId is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "teamId is required" },
+        { status: 400 },
+      );
     }
 
     const groups = await getTeamGroups(teamId);
@@ -18,7 +21,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: groups }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
@@ -34,12 +40,15 @@ export async function POST(request: NextRequest) {
     if (e instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: e.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
@@ -55,11 +64,14 @@ export async function DELETE(request: NextRequest) {
     if (e instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: e.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }

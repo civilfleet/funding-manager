@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function GET(request: Request, { params }: { params: Promise<{ teamId: string }> }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ teamId: string }> },
+) {
   try {
     const { teamId } = await params;
     const team = await prisma.teams.findUnique({
@@ -16,15 +19,33 @@ export async function GET(request: Request, { params }: { params: Promise<{ team
 
     return NextResponse.json(team);
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch team" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch team" },
+      { status: 500 },
+    );
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ teamId: string }> }) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ teamId: string }> },
+) {
   try {
     const { teamId } = await params;
     const body = await request.json();
-    const { name, email, phone, address, postalCode, city, country, website, strategicPriorities, bankDetails, user } = body;
+    const {
+      name,
+      email,
+      phone,
+      address,
+      postalCode,
+      city,
+      country,
+      website,
+      strategicPriorities,
+      bankDetails,
+      user,
+    } = body;
 
     // Start a transaction to handle all updates
     const team = await prisma.$transaction(async (tx) => {
@@ -131,11 +152,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ te
     return NextResponse.json(team);
   } catch (error) {
     console.error("Error updating team:", error);
-    return NextResponse.json({ error: "Failed to update team" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update team" },
+      { status: 500 },
+    );
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ teamId: string }> }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ teamId: string }> },
+) {
   try {
     const { teamId } = await params;
     await prisma.teams.delete({
@@ -146,6 +173,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ t
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to delete team" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete team" },
+      { status: 500 },
+    );
   }
 }

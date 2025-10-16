@@ -1,13 +1,16 @@
-import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import prisma from "@/lib/prisma";
+import {
+  logContactCreation,
+  logFieldUpdate,
+} from "@/services/contact-change-logs";
 import { ensureDefaultGroup, mapGroup } from "@/services/groups";
 import {
-  Contact as ContactType,
   ContactAttributeType,
   ContactLocationValue,
   ContactProfileAttribute,
+  Contact as ContactType,
 } from "@/types";
-import { logContactCreation, logFieldUpdate } from "@/services/contact-change-logs";
 
 type CreateContactInput = {
   teamId: string;
@@ -66,7 +69,7 @@ type ContactWithAttributes = Prisma.ContactGetPayload<{
 }>;
 
 const normalizeAttributes = (
-  attributes: ContactProfileAttribute[] = []
+  attributes: ContactProfileAttribute[] = [],
 ): NormalizedAttribute[] => {
   const seenKeys = new Set<string>();
   const normalized: NormalizedAttribute[] = [];
@@ -106,7 +109,10 @@ const normalizeAttributes = (
         break;
       }
       case ContactAttributeType.NUMBER: {
-        if (typeof attribute.value === "number" && Number.isFinite(attribute.value)) {
+        if (
+          typeof attribute.value === "number" &&
+          Number.isFinite(attribute.value)
+        ) {
           normalized.push({
             key,
             type: ContactAttributeType.NUMBER,
@@ -132,11 +138,17 @@ const normalizeAttributes = (
           location.locationLabel = value.label.trim();
         }
 
-        if (typeof value.latitude === "number" && Number.isFinite(value.latitude)) {
+        if (
+          typeof value.latitude === "number" &&
+          Number.isFinite(value.latitude)
+        ) {
           location.latitude = new Prisma.Decimal(value.latitude);
         }
 
-        if (typeof value.longitude === "number" && Number.isFinite(value.longitude)) {
+        if (
+          typeof value.longitude === "number" &&
+          Number.isFinite(value.longitude)
+        ) {
           location.longitude = new Prisma.Decimal(value.longitude);
         }
 
@@ -155,7 +167,7 @@ const normalizeAttributes = (
 };
 
 const toProfileAttribute = (
-  attribute: ContactWithAttributes["attributes"][number]
+  attribute: ContactWithAttributes["attributes"][number],
 ): ContactProfileAttribute | null => {
   switch (attribute.type) {
     case ContactAttributeType.STRING:
@@ -175,7 +187,8 @@ const toProfileAttribute = (
           }
         : null;
     case ContactAttributeType.NUMBER:
-      return attribute.numberValue !== null && attribute.numberValue !== undefined
+      return attribute.numberValue !== null &&
+        attribute.numberValue !== undefined
         ? {
             key: attribute.key,
             type: ContactAttributeType.NUMBER,
@@ -220,7 +233,9 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
   group: contact.group ? mapGroup(contact.group) : undefined,
   profileAttributes: contact.attributes
     .map(toProfileAttribute)
-    .filter((attribute): attribute is ContactProfileAttribute => Boolean(attribute)),
+    .filter((attribute): attribute is ContactProfileAttribute =>
+      Boolean(attribute),
+    ),
   events: (() => {
     const eventMap = new Map<
       string,
@@ -236,28 +251,49 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
           createdAt: Date;
           updatedAt: Date;
         };
-        roles: { eventRole: { id: string; teamId: string; name: string; color?: string; createdAt: Date; updatedAt: Date } }[];
+        roles: {
+          eventRole: {
+            id: string;
+            teamId: string;
+            name: string;
+            color?: string;
+            createdAt: Date;
+            updatedAt: Date;
+          };
+        }[];
         participationTypes: Set<"linked" | "registered">;
         registration?: { id: string; createdAt: Date };
       }
     >();
 
-    const upsertEvent = (eventId: string, entry: Partial<{
-      event: {
-        id: string;
-        teamId: string;
-        title: string;
-        description?: string;
-        location?: string;
-        startDate: Date;
-        endDate?: Date;
-        createdAt: Date;
-        updatedAt: Date;
-      };
-      roles: { eventRole: { id: string; teamId: string; name: string; color?: string; createdAt: Date; updatedAt: Date } }[];
-      participationType: "linked" | "registered";
-      registration: { id: string; createdAt: Date };
-    }>) => {
+    const upsertEvent = (
+      eventId: string,
+      entry: Partial<{
+        event: {
+          id: string;
+          teamId: string;
+          title: string;
+          description?: string;
+          location?: string;
+          startDate: Date;
+          endDate?: Date;
+          createdAt: Date;
+          updatedAt: Date;
+        };
+        roles: {
+          eventRole: {
+            id: string;
+            teamId: string;
+            name: string;
+            color?: string;
+            createdAt: Date;
+            updatedAt: Date;
+          };
+        }[];
+        participationType: "linked" | "registered";
+        registration: { id: string; createdAt: Date };
+      }>,
+    ) => {
       const existing = eventMap.get(eventId);
       if (existing) {
         if (entry.event) {
@@ -278,12 +314,16 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
       eventMap.set(eventId, {
         event: entry.event!,
         roles: entry.roles ?? [],
-        participationTypes: new Set(entry.participationType ? [entry.participationType] : []),
+        participationTypes: new Set(
+          entry.participationType ? [entry.participationType] : [],
+        ),
         registration: entry.registration,
       });
     };
 
-    const mapEventDetails = (event: ContactWithAttributes["events"][number]["event"]) => ({
+    const mapEventDetails = (
+      event: ContactWithAttributes["events"][number]["event"],
+    ) => ({
       id: event.id,
       teamId: event.teamId,
       title: event.title,
@@ -330,13 +370,19 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
         participationTypes: Array.from(entry.participationTypes),
         registration: entry.registration,
       }))
-      .sort((a, b) => a.event.startDate.getTime() - b.event.startDate.getTime());
+      .sort(
+        (a, b) => a.event.startDate.getTime() - b.event.startDate.getTime(),
+      );
   })(),
   createdAt: contact.createdAt,
   updatedAt: contact.updatedAt,
 });
 
-const getTeamContacts = async (teamId: string, query?: string, userId?: string) => {
+const getTeamContacts = async (
+  teamId: string,
+  query?: string,
+  userId?: string,
+) => {
   const where: Prisma.ContactWhereInput = {
     teamId,
   };
@@ -358,15 +404,14 @@ const getTeamContacts = async (teamId: string, query?: string, userId?: string) 
     });
 
     // Check if user belongs to any group with canAccessAllContacts permission
-    const hasAllAccessPermission = userGroups.some((ug) => ug.group.canAccessAllContacts);
+    const hasAllAccessPermission = userGroups.some(
+      (ug) => ug.group.canAccessAllContacts,
+    );
 
     if (!hasAllAccessPermission) {
       // User can only see contacts with no group OR contacts in their groups
       const groupIds = userGroups.map((ug) => ug.groupId);
-      where.OR = [
-        { groupId: null },
-        { groupId: { in: groupIds } },
-      ];
+      where.OR = [{ groupId: null }, { groupId: { in: groupIds } }];
     }
     // If user has canAccessAllContacts permission, don't apply any group filtering
   }
@@ -391,10 +436,7 @@ const getTeamContacts = async (teamId: string, query?: string, userId?: string) 
 
     // Combine group filtering with search
     if (where.OR) {
-      where.AND = [
-        { OR: where.OR },
-        { OR: searchConditions },
-      ];
+      where.AND = [{ OR: where.OR }, { OR: searchConditions }];
       delete where.OR;
     } else {
       where.OR = searchConditions;
@@ -472,7 +514,11 @@ const getContactById = async (contactId: string, teamId: string) => {
   return mapContact(contact);
 };
 
-const createContact = async (input: CreateContactInput, userId?: string, userName?: string) => {
+const createContact = async (
+  input: CreateContactInput,
+  userId?: string,
+  userName?: string,
+) => {
   const { teamId, name, email, phone, groupId, profileAttributes } = input;
   const normalizedAttributes = normalizeAttributes(profileAttributes);
   const trimmedName = name.trim();
@@ -559,10 +605,16 @@ const createContact = async (input: CreateContactInput, userId?: string, userNam
   });
 };
 
-const updateContact = async (input: UpdateContactInput, userId?: string, userName?: string) => {
-  const { contactId, teamId, name, email, phone, groupId, profileAttributes } = input;
+const updateContact = async (
+  input: UpdateContactInput,
+  userId?: string,
+  userName?: string,
+) => {
+  const { contactId, teamId, name, email, phone, groupId, profileAttributes } =
+    input;
   const normalizedName = typeof name === "string" ? name.trim() : undefined;
-  const normalizedEmail = email === undefined ? undefined : email.trim().toLowerCase();
+  const normalizedEmail =
+    email === undefined ? undefined : email.trim().toLowerCase();
   const normalizedPhone = phone === undefined ? undefined : phone.trim();
 
   return prisma.$transaction(async (tx) => {
@@ -585,7 +637,15 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
     const updates: Prisma.ContactUncheckedUpdateInput = {};
 
     if (normalizedName !== undefined && normalizedName !== existing.name) {
-      await logFieldUpdate(contactId, "name", existing.name, normalizedName, userId, userName, tx);
+      await logFieldUpdate(
+        contactId,
+        "name",
+        existing.name,
+        normalizedName,
+        userId,
+        userName,
+        tx,
+      );
       updates.name = normalizedName;
     }
 
@@ -600,21 +660,47 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
         });
 
         if (conflictingContact) {
-          throw new Error("A contact with this email already exists for this team.");
+          throw new Error(
+            "A contact with this email already exists for this team.",
+          );
         }
       }
 
-      await logFieldUpdate(contactId, "email", existing.email, normalizedEmail, userId, userName, tx);
+      await logFieldUpdate(
+        contactId,
+        "email",
+        existing.email,
+        normalizedEmail,
+        userId,
+        userName,
+        tx,
+      );
       updates.email = normalizedEmail;
     }
 
     if (normalizedPhone !== undefined && normalizedPhone !== existing.phone) {
-      await logFieldUpdate(contactId, "phone", existing.phone, normalizedPhone, userId, userName, tx);
+      await logFieldUpdate(
+        contactId,
+        "phone",
+        existing.phone,
+        normalizedPhone,
+        userId,
+        userName,
+        tx,
+      );
       updates.phone = normalizedPhone;
     }
 
     if (groupId !== undefined && groupId !== existing.groupId) {
-      await logFieldUpdate(contactId, "groupId", existing.groupId, groupId, userId, userName, tx);
+      await logFieldUpdate(
+        contactId,
+        "groupId",
+        existing.groupId,
+        groupId,
+        userId,
+        userName,
+        tx,
+      );
       updates.groupId = groupId;
     }
 
@@ -632,12 +718,12 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
 
       // Get existing attributes as a map
       const existingAttrsMap = new Map(
-        existing.attributes.map((attr) => [attr.key, attr])
+        existing.attributes.map((attr) => [attr.key, attr]),
       );
 
       // Get new attributes as a map
       const newAttrsMap = new Map(
-        normalizedAttributes.map((attr) => [attr.key, attr])
+        normalizedAttributes.map((attr) => [attr.key, attr]),
       );
 
       // Find attributes to delete (in existing but not in new)
@@ -651,7 +737,7 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
             null,
             userId,
             userName,
-            tx
+            tx,
           );
           await tx.contactAttribute.delete({
             where: { id: existingAttr.id },
@@ -672,7 +758,7 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
             newAttr,
             userId,
             userName,
-            tx
+            tx,
           );
           await tx.contactAttribute.create({
             data: {
@@ -693,11 +779,15 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
           const hasChanged =
             existingAttr.type !== newAttr.type ||
             existingAttr.stringValue !== newAttr.stringValue ||
-            existingAttr.numberValue?.toString() !== newAttr.numberValue?.toString() ||
-            existingAttr.dateValue?.toISOString() !== newAttr.dateValue?.toISOString() ||
+            existingAttr.numberValue?.toString() !==
+              newAttr.numberValue?.toString() ||
+            existingAttr.dateValue?.toISOString() !==
+              newAttr.dateValue?.toISOString() ||
             existingAttr.locationLabel !== newAttr.locationLabel ||
-            existingAttr.latitude?.toString() !== newAttr.latitude?.toString() ||
-            existingAttr.longitude?.toString() !== newAttr.longitude?.toString();
+            existingAttr.latitude?.toString() !==
+              newAttr.latitude?.toString() ||
+            existingAttr.longitude?.toString() !==
+              newAttr.longitude?.toString();
 
           if (hasChanged) {
             await logFieldUpdate(
@@ -707,7 +797,7 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
               newAttr,
               userId,
               userName,
-              tx
+              tx,
             );
             await tx.contactAttribute.update({
               where: { id: existingAttr.id },
@@ -771,4 +861,10 @@ const deleteContacts = async (teamId: string, ids: string[]) => {
   });
 };
 
-export { getTeamContacts, getContactById, createContact, updateContact, deleteContacts };
+export {
+  getTeamContacts,
+  getContactById,
+  createContact,
+  updateContact,
+  deleteContacts,
+};

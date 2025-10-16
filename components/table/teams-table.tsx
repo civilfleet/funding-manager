@@ -1,9 +1,9 @@
 "use client";
 
-import { DataTable } from "@/components/data-table";
-import { columns } from "./teams-columns";
-import { useToast } from "@/hooks/use-toast";
 import useSWR from "swr";
+import { DataTable } from "@/components/data-table";
+import { useToast } from "@/hooks/use-toast";
+import { columns } from "./teams-columns";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -24,4 +24,4 @@ export default function TeamsTable() {
       <DataTable columns={columns(mutate)} data={data?.data || []} />
     </div>
   );
-} 
+}

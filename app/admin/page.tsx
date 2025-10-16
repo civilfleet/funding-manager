@@ -1,7 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Building, FileText, DollarSign } from "lucide-react";
+import { Building, DollarSign, FileText, Users } from "lucide-react";
 import Link from "next/link";
 import RecentActivity from "@/components/recent-activity";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default async function AdminDashboard() {
   return (
@@ -19,11 +25,13 @@ export default async function AdminDashboard() {
             </CardContent>
           </Card>
         </Link>
-        
+
         <Link href="/admin/organizations">
           <Card className="hover:bg-accent transition-colors cursor-pointer h-full">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-medium">Organizations</CardTitle>
+              <CardTitle className="text-lg font-medium">
+                Organizations
+              </CardTitle>
               <Building className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -31,19 +39,23 @@ export default async function AdminDashboard() {
             </CardContent>
           </Card>
         </Link>
-        
+
         <Link href="/admin/funding-requests">
           <Card className="hover:bg-accent transition-colors cursor-pointer h-full">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-medium">Funding Requests</CardTitle>
+              <CardTitle className="text-lg font-medium">
+                Funding Requests
+              </CardTitle>
               <DollarSign className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <CardDescription>Review and manage funding requests</CardDescription>
+              <CardDescription>
+                Review and manage funding requests
+              </CardDescription>
             </CardContent>
           </Card>
         </Link>
-        
+
         <Link href="/admin/users">
           <Card className="hover:bg-accent transition-colors cursor-pointer h-full">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -51,7 +63,9 @@ export default async function AdminDashboard() {
               <Users className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <CardDescription>Manage user accounts and permissions</CardDescription>
+              <CardDescription>
+                Manage user accounts and permissions
+              </CardDescription>
             </CardContent>
           </Card>
         </Link>
@@ -61,4 +75,4 @@ export default async function AdminDashboard() {
       </div>
     </div>
   );
-} 
+}

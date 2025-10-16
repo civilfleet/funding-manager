@@ -1,6 +1,13 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useCallback, useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
+import { DataSelectBox } from "@/components/helper/data-select-box";
+import formatCurrency from "@/components/helper/format-currency";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -12,15 +19,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FundingRequest, FundingStatus } from "@/types";
-import { Controller, useForm } from "react-hook-form";
-import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { DataSelectBox } from "@/components/helper/data-select-box";
-import { Card, CardContent } from "@/components/ui/card";
-import formatCurrency from "@/components/helper/format-currency";
+import { FundingRequest, FundingStatus } from "@/types";
 
 interface CreateTransactionFormProps {
   fundingRequest?: FundingRequest;
@@ -36,12 +36,19 @@ const schema = z.object({
     .refine((val) => val !== 0, "Amount cannot be zero"),
 });
 
-export default function CreateTransaction({ fundingRequest, teamId, refreshData }: CreateTransactionFormProps) {
+export default function CreateTransaction({
+  fundingRequest,
+  teamId,
+  refreshData,
+}: CreateTransactionFormProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedRequestData, setSelectedRequestData] = useState<FundingRequest | null>(fundingRequest || null);
-  const [remainingAmount, setRemainingAmount] = useState<number>(fundingRequest?.remainingAmount || 0);
+  const [selectedRequestData, setSelectedRequestData] =
+    useState<FundingRequest | null>(fundingRequest || null);
+  const [remainingAmount, setRemainingAmount] = useState<number>(
+    fundingRequest?.remainingAmount || 0,
+  );
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -52,29 +59,34 @@ export default function CreateTransaction({ fundingRequest, teamId, refreshData 
   });
 
   // Fetch funding request details
-  const fetchFundingRequestDetails = useCallback(async (requestId: string) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/funding-requests/${requestId}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch funding request: ${response.statusText}`);
+  const fetchFundingRequestDetails = useCallback(
+    async (requestId: string) => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/funding-requests/${requestId}`);
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch funding request: ${response.statusText}`,
+          );
+        }
+        const { data } = await response.json();
+        console.log("data", data);
+        setSelectedRequestData(data);
+        setRemainingAmount(data.remainingAmount || 0);
+      } catch (error) {
+        console.error("Error fetching funding request detail:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch funding request details",
+          variant: "destructive",
+        });
+        setSelectedRequestData(null);
+      } finally {
+        setIsLoading(false);
       }
-      const { data } = await response.json();
-      console.log("data", data);
-      setSelectedRequestData(data);
-      setRemainingAmount(data.remainingAmount || 0);
-    } catch (error) {
-      console.error("Error fetching funding request detail:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch funding request details",
-        variant: "destructive",
-      });
-      setSelectedRequestData(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+    },
+    [toast],
+  );
 
   // Initialize component with fundingRequest prop data
   useEffect(() => {
@@ -153,7 +165,10 @@ export default function CreateTransaction({ fundingRequest, teamId, refreshData 
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create transaction",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to create transaction",
         variant: "destructive",
       });
     } finally {
@@ -169,7 +184,9 @@ export default function CreateTransaction({ fundingRequest, teamId, refreshData 
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-xl">Create Transaction</DialogTitle>
-          <DialogDescription>Allocate funds to a funding request</DialogDescription>
+          <DialogDescription>
+            Allocate funds to a funding request
+          </DialogDescription>
         </DialogHeader>
 
         {selectedRequestData && (
@@ -180,13 +197,23 @@ export default function CreateTransaction({ fundingRequest, teamId, refreshData 
                 <span>{selectedRequestData.name}</span>
 
                 <span className="font-medium">Requested Amount:</span>
-                <span>{formatCurrency(selectedRequestData.amountRequested || 0)}</span>
+                <span>
+                  {formatCurrency(selectedRequestData.amountRequested || 0)}
+                </span>
 
                 <span className="font-medium">Approved Amount:</span>
-                <span>{formatCurrency(selectedRequestData.amountAgreed || 0)}</span>
+                <span>
+                  {formatCurrency(selectedRequestData.amountAgreed || 0)}
+                </span>
 
                 <span className="font-medium">Available Balance:</span>
-                <span className={remainingAmount < 0 ? "text-destructive font-bold" : "text-green-600 font-bold"}>
+                <span
+                  className={
+                    remainingAmount < 0
+                      ? "text-destructive font-bold"
+                      : "text-green-600 font-bold"
+                  }
+                >
                   {formatCurrency(remainingAmount)}
                 </span>
 
@@ -226,7 +253,11 @@ export default function CreateTransaction({ fundingRequest, teamId, refreshData 
                         }}
                         disabled={isLoading}
                       />
-                      {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
+                      {fieldState.error && (
+                        <p className="text-sm text-destructive">
+                          {fieldState.error.message}
+                        </p>
+                      )}
                     </div>
                   )}
                 />
@@ -245,7 +276,9 @@ export default function CreateTransaction({ fundingRequest, teamId, refreshData 
                 render={({ field, fieldState }) => (
                   <div className="space-y-2">
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2">€</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2">
+                        €
+                      </span>
                       <Input
                         id="amount"
                         type="number"
@@ -260,8 +293,16 @@ export default function CreateTransaction({ fundingRequest, teamId, refreshData 
                         disabled={isLoading || !selectedRequestData}
                       />
                     </div>
-                    {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
-                    {remainingAmount < 0 && <p className="text-sm text-destructive">Amount exceeds available funds</p>}
+                    {fieldState.error && (
+                      <p className="text-sm text-destructive">
+                        {fieldState.error.message}
+                      </p>
+                    )}
+                    {remainingAmount < 0 && (
+                      <p className="text-sm text-destructive">
+                        Amount exceeds available funds
+                      </p>
+                    )}
                   </div>
                 )}
               />
@@ -269,10 +310,20 @@ export default function CreateTransaction({ fundingRequest, teamId, refreshData 
           </div>
 
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || remainingAmount < 0 || !form.formState.isValid}>
+            <Button
+              type="submit"
+              disabled={
+                isLoading || remainingAmount < 0 || !form.formState.isValid
+              }
+            >
               {isLoading ? "Creating..." : "Create Transaction"}
             </Button>
           </DialogFooter>

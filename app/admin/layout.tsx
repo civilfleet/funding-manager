@@ -1,6 +1,6 @@
+import { Shield } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Shield } from "lucide-react";
 
 export default async function RootLayout({
   children,

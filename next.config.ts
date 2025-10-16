@@ -2,12 +2,18 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   env: {
     DATABASE_URL: process.env.DATABASE_URL,
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ["http://localhost:3000", "https://funding-manager.vercel.app"],
+      allowedOrigins: [
+        "http://localhost:3000",
+        "https://funding-manager.vercel.app",
+      ],
     },
   },
 };

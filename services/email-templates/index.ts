@@ -46,4 +46,9 @@ const updateEmailTemplate = async (teamId: string, template: EmailTemplate) => {
   return updatedTemplate;
 };
 
-export { createEmailTemplate, getEmailTemplateByType, getEmailTemplates, updateEmailTemplate };
+export {
+  createEmailTemplate,
+  getEmailTemplateByType,
+  getEmailTemplates,
+  updateEmailTemplate,
+};

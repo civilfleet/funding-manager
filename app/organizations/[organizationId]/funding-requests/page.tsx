@@ -1,6 +1,7 @@
+import Link from "next/link";
 import FundingRequestTable from "@/components/table/funding-request-table";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+
 interface PageProps {
   params: Promise<{
     organizationId: string;
@@ -21,4 +22,3 @@ export default async function Page({ params }: PageProps) {
     </div>
   );
 }
-

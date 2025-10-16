@@ -1,5 +1,5 @@
-import { EMAIL_TEMPLATES_TYPES } from "@/constants";
 import { z } from "zod";
+import { EMAIL_TEMPLATES_TYPES } from "@/constants";
 
 const createEmailTemplateSchema = z.object({
   id: z.string().optional(),

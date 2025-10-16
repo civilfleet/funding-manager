@@ -1,6 +1,6 @@
+import { auth } from "@/auth";
 import CreateTransaction from "@/components/forms/modal/create-transaction";
 import TransactionTable from "@/components/table/transaction-table";
-import { auth } from "@/auth";
 import { assertTeamModuleAccess } from "@/lib/permissions";
 import { AppModule } from "@/types";
 
@@ -21,7 +21,7 @@ export default async function Page({ params }: PageProps) {
       userId: session?.user?.userId,
       roles: session?.user?.roles,
     },
-    "FUNDING" satisfies AppModule
+    "FUNDING" satisfies AppModule,
   );
 
   return (

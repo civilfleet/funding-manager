@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
-import { createOrganizationSchema, updateOrganizationSchema } from "@/validations/organizations";
-import { createOrUpdateOrganization, getOrganizations } from "@/services/organizations";
 import { z } from "zod";
 import { sendEmail } from "@/lib/nodemailer";
 import { handlePrismaError } from "@/lib/utils";
+import {
+  createOrUpdateOrganization,
+  getOrganizations,
+} from "@/services/organizations";
+import {
+  createOrganizationSchema,
+  updateOrganizationSchema,
+} from "@/validations/organizations";
 
 export async function GET(req: Request) {
   try {
@@ -17,11 +23,14 @@ export async function GET(req: Request) {
       {
         data,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
@@ -33,7 +42,8 @@ export async function POST(req: Request) {
       .and(z.object({ teamId: z.string().uuid() }))
       .and(z.object({ isFilledByOrg: z.boolean() }))
       .parse({ ...organizationData });
-    const { organization, user } = await createOrUpdateOrganization(validatedData);
+    const { organization, user } =
+      await createOrUpdateOrganization(validatedData);
 
     // if teamId is provided, it means the organization is created by a team
     if (organizationData.teamId) {
@@ -47,7 +57,7 @@ export async function POST(req: Request) {
           {
             name: organization.name,
             email: validatedData.email,
-          }
+          },
         ),
         sendEmail(
           {
@@ -58,7 +68,7 @@ export async function POST(req: Request) {
           {
             name: user?.name,
             email: user?.email,
-          }
+          },
         ),
       ]);
     }
@@ -67,12 +77,15 @@ export async function POST(req: Request) {
       {
         message: "success",
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const { message } = handlePrismaError(e);
     console.log(message, "message");
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }
 
@@ -88,10 +101,13 @@ export async function PUT(req: Request) {
       {
         message: "success",
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (e) {
     const { message } = handlePrismaError(e);
-    return NextResponse.json({ error: message }, { status: 400, statusText: message });
+    return NextResponse.json(
+      { error: message },
+      { status: 400, statusText: message },
+    );
   }
 }

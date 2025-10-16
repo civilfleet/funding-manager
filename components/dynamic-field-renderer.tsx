@@ -1,10 +1,10 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { FieldType, FormField, FormFieldOption } from "@/types";
+import { ExternalLink, File, Mail } from "lucide-react";
 import Link from "next/link";
-import { Mail, ExternalLink, File } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { FieldType, FormField, FormFieldOption } from "@/types";
 
 interface DynamicFieldRendererProps {
   field: FormField;
@@ -26,7 +26,7 @@ const DynamicFieldRenderer = ({ field, value }: DynamicFieldRendererProps) => {
         const numValue = Number(value);
         return (
           <span className="font-medium">
-            {new Intl.NumberFormat('en-US', {
+            {new Intl.NumberFormat("en-US", {
               minimumFractionDigits: 0,
               maximumFractionDigits: 2,
             }).format(numValue)}
@@ -72,7 +72,7 @@ const DynamicFieldRenderer = ({ field, value }: DynamicFieldRendererProps) => {
       case FieldType.SELECT:
       case FieldType.RADIO:
         const selectedOption = field.options?.find(
-          (option: FormFieldOption) => option.value === value
+          (option: FormFieldOption) => option.value === value,
         );
         return (
           <Badge variant="secondary">
@@ -86,7 +86,7 @@ const DynamicFieldRenderer = ({ field, value }: DynamicFieldRendererProps) => {
             <div className="flex flex-wrap gap-1">
               {value.map((val, index) => {
                 const option = field.options?.find(
-                  (opt: FormFieldOption) => opt.value === val
+                  (opt: FormFieldOption) => opt.value === val,
                 );
                 return (
                   <Badge key={index} variant="secondary" className="text-xs">
@@ -107,7 +107,7 @@ const DynamicFieldRenderer = ({ field, value }: DynamicFieldRendererProps) => {
         );
 
       case FieldType.FILE:
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
           return (
             <Link
               href={value}
