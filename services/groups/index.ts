@@ -512,4 +512,5 @@ export {
   getUserGroups,
   ensureDefaultGroup,
   getUserModuleAccess,
+  mapGroup,
 };

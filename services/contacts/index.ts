@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import { ensureDefaultGroup } from "@/services/groups";
+import { ensureDefaultGroup, mapGroup } from "@/services/groups";
 import {
   Contact as ContactType,
   ContactAttributeType,
@@ -42,7 +42,11 @@ type NormalizedAttribute = {
 type ContactWithAttributes = Prisma.ContactGetPayload<{
   include: {
     attributes: true;
-    group: true;
+    group: {
+      include: {
+        modulePermissions: true;
+      };
+    };
     events: {
       include: {
         event: true;
@@ -213,17 +217,7 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
   email: contact.email ?? undefined,
   phone: contact.phone ?? undefined,
   groupId: contact.groupId ?? undefined,
-  group: contact.group
-    ? {
-        id: contact.group.id,
-        teamId: contact.group.teamId,
-        name: contact.group.name,
-        description: contact.group.description ?? undefined,
-        canAccessAllContacts: contact.group.canAccessAllContacts,
-        createdAt: contact.group.createdAt,
-        updatedAt: contact.group.updatedAt,
-      }
-    : undefined,
+  group: contact.group ? mapGroup(contact.group) : undefined,
   profileAttributes: contact.attributes
     .map(toProfileAttribute)
     .filter((attribute): attribute is ContactProfileAttribute => Boolean(attribute)),
@@ -411,7 +405,11 @@ const getTeamContacts = async (teamId: string, query?: string, userId?: string) 
     where,
     include: {
       attributes: true,
-      group: true,
+      group: {
+        include: {
+          modulePermissions: true,
+        },
+      },
       events: {
         include: {
           event: true,
@@ -444,7 +442,11 @@ const getContactById = async (contactId: string, teamId: string) => {
     },
     include: {
       attributes: true,
-      group: true,
+      group: {
+        include: {
+          modulePermissions: true,
+        },
+      },
       events: {
         include: {
           event: true,
@@ -474,7 +476,7 @@ const createContact = async (input: CreateContactInput, userId?: string, userNam
   const { teamId, name, email, phone, groupId, profileAttributes } = input;
   const normalizedAttributes = normalizeAttributes(profileAttributes);
   const trimmedName = name.trim();
-  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedEmail = (email ?? "").trim().toLowerCase();
   if (!normalizedEmail) {
     throw new Error("Email is required");
   }
@@ -530,7 +532,11 @@ const createContact = async (input: CreateContactInput, userId?: string, userNam
       where: { id: contact.id },
       include: {
         attributes: true,
-        group: true,
+        group: {
+          include: {
+            modulePermissions: true,
+          },
+        },
         events: {
           include: {
             event: true,
@@ -720,7 +726,11 @@ const updateContact = async (input: UpdateContactInput, userId?: string, userNam
       where: { id: contactId },
       include: {
         attributes: true,
-        group: true,
+        group: {
+          include: {
+            modulePermissions: true,
+          },
+        },
         events: {
           include: {
             event: true,
