@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -100,10 +100,19 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
     fetcher
   );
 
-  const groups: Group[] = (groupsData?.data || []).map((group: Group) => ({
-    ...group,
-    modules: group.modules && group.modules.length ? group.modules : APP_MODULES,
-  }));
+  const groups: Group[] = useMemo(() => {
+    const rawGroups: Group[] = (groupsData?.data || []).map((group: Group) => ({
+      ...group,
+      modules: group.modules && group.modules.length ? group.modules : APP_MODULES,
+    }));
+
+    return rawGroups.sort((a, b) => {
+      if (a.isDefaultGroup === b.isDefaultGroup) {
+        return 0;
+      }
+      return a.isDefaultGroup ? -1 : 1;
+    });
+  }, [groupsData]);
   const users: User[] = usersData?.data || [];
 
   const form = useForm({
@@ -119,6 +128,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
   });
 
   const typedControl = form.control as unknown as import("react-hook-form").Control<FormValues>;
+  const isEditingDefaultGroup = editingGroup?.isDefaultGroup ?? false;
 
   const handleOpenDialog = (group?: Group) => {
     if (group) {
@@ -514,23 +524,38 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
               <FormField
                 control={typedControl}
                 name="userIds"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>Group Members</FormLabel>
-                    <FormDescription>
-                      Select users who should be part of this group
-                    </FormDescription>
-                    <div className="space-y-2 max-h-60 overflow-y-auto border rounded-md p-3">
-                      {users.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No users available</p>
-                      ) : (
-                        users.map((user) => (
-                          <FormField
-                            key={user.id}
-                            control={typedControl}
-                            name="userIds"
-                            render={({ field }) => {
-                              return (
+                render={() => {
+                  if (isEditingDefaultGroup) {
+                    return (
+                      <FormItem>
+                        <FormLabel>Group Members</FormLabel>
+                        <FormDescription>
+                          Membership in the default group is managed automatically. Users without
+                          another group assignment belong here by default.
+                        </FormDescription>
+                        <p className="text-sm text-muted-foreground">
+                          Add someone to another group to remove them from the default group.
+                        </p>
+                      </FormItem>
+                    );
+                  }
+
+                  return (
+                    <FormItem>
+                      <FormLabel>Group Members</FormLabel>
+                      <FormDescription>
+                        Select users who should be part of this group
+                      </FormDescription>
+                      <div className="space-y-2 max-h-60 overflow-y-auto border rounded-md p-3">
+                        {users.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">No users available</p>
+                        ) : (
+                          users.map((user) => (
+                            <FormField
+                              key={user.id}
+                              control={typedControl}
+                              name="userIds"
+                              render={({ field }) => (
                                 <FormItem
                                   key={user.id}
                                   className="flex flex-row items-start space-x-3 space-y-0"
@@ -539,13 +564,14 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                                     <Checkbox
                                       checked={field.value?.includes(user.id)}
                                       onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...(field.value || []), user.id])
-                                          : field.onChange(
-                                              (field.value || []).filter(
-                                                (value) => value !== user.id
-                                              )
-                                            );
+                                        if (checked) {
+                                          field.onChange([...(field.value || []), user.id]);
+                                          return;
+                                        }
+
+                                        field.onChange(
+                                          (field.value || []).filter((value) => value !== user.id)
+                                        );
                                       }}
                                     />
                                   </FormControl>
@@ -558,15 +584,15 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                                     )}
                                   </FormLabel>
                                 </FormItem>
-                              );
-                            }}
-                          />
-                        ))
-                      )}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                              )}
+                            />
+                          ))
+                        )}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               <DialogFooter>

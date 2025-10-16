@@ -135,13 +135,46 @@ const ensureDefaultGroup = async (
   });
 
   if (teamUsers?.users?.length) {
-    await client.userGroup.createMany({
-      data: teamUsers.users.map((user) => ({
-        groupId: defaultGroup.id,
-        userId: user.id,
-      })),
-      skipDuplicates: true,
+    const teamUserIds = teamUsers.users.map((user) => user.id);
+
+    const usersWithOtherGroups = await client.userGroup.findMany({
+      where: {
+        userId: { in: teamUserIds },
+        group: {
+          teamId,
+          isDefaultGroup: false,
+        },
+      },
+      select: {
+        userId: true,
+      },
+      distinct: ["userId"],
     });
+
+    const userIdsWithOtherGroups = new Set(usersWithOtherGroups.map((entry) => entry.userId));
+
+    const userIdsNeedingDefault = teamUserIds.filter(
+      (userId) => !userIdsWithOtherGroups.has(userId)
+    );
+
+    if (userIdsNeedingDefault.length) {
+      await client.userGroup.createMany({
+        data: userIdsNeedingDefault.map((userId) => ({
+          groupId: defaultGroup.id,
+          userId,
+        })),
+        skipDuplicates: true,
+      });
+    }
+
+    if (userIdsWithOtherGroups.size) {
+      await client.userGroup.deleteMany({
+        where: {
+          groupId: defaultGroup.id,
+          userId: { in: Array.from(userIdsWithOtherGroups) },
+        },
+      });
+    }
   }
 
   return defaultGroup;
@@ -365,6 +398,10 @@ const addUsersToGroup = async (input: AddUsersToGroupInput) => {
     throw new Error("Group not found");
   }
 
+  if (group.isDefaultGroup) {
+    throw new Error("Cannot manually assign users to the default group");
+  }
+
   // Get existing user-group relationships
   const existing = await prisma.userGroup.findMany({
     where: {
@@ -385,6 +422,8 @@ const addUsersToGroup = async (input: AddUsersToGroupInput) => {
       })),
     });
   }
+
+  await ensureDefaultGroup(teamId);
 };
 
 const removeUsersFromGroup = async (input: RemoveUsersFromGroupInput) => {
@@ -402,12 +441,18 @@ const removeUsersFromGroup = async (input: RemoveUsersFromGroupInput) => {
     throw new Error("Group not found");
   }
 
+  if (group.isDefaultGroup) {
+    throw new Error("Cannot manually remove users from the default group");
+  }
+
   await prisma.userGroup.deleteMany({
     where: {
       groupId,
       userId: { in: userIds },
     },
   });
+
+  await ensureDefaultGroup(teamId);
 };
 
 const getUserGroups = async (userId: string, teamId: string) => {
