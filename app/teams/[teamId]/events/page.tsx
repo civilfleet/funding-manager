@@ -2,6 +2,9 @@ import Link from "next/link";
 
 import EventTable from "@/components/table/event-table";
 import { Button } from "@/components/ui/button";
+import { auth } from "@/auth";
+import { assertTeamModuleAccess } from "@/lib/permissions";
+import { AppModule } from "@/types";
 
 interface EventsPageProps {
   params: Promise<{ teamId: string }>;
@@ -9,6 +12,16 @@ interface EventsPageProps {
 
 export default async function EventsPage({ params }: EventsPageProps) {
   const { teamId } = await params;
+
+  const session = await auth();
+  await assertTeamModuleAccess(
+    {
+      teamId,
+      userId: session?.user?.userId,
+      roles: session?.user?.roles,
+    },
+    "CRM" satisfies AppModule
+  );
 
   return (
     <div className="p-4 space-y-6">

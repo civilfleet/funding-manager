@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Mail, Phone, Calendar, MapPin, Hash, Type, CalendarDays, Users } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { ContactAttributeType } from "@/types";
+import { ContactAttributeType, AppModule } from "@/types";
 import ContactEngagementHistory from "@/components/contact-engagement-history";
 import ContactChangeHistory from "@/components/contact-change-history";
+import { auth } from "@/auth";
+import { assertTeamModuleAccess } from "@/lib/permissions";
 
 interface ContactDetailPageProps {
   params: Promise<{
@@ -65,6 +67,15 @@ const getAttributeIcon = (type: ContactAttributeType) => {
 
 export default async function ContactDetailPage({ params }: ContactDetailPageProps) {
   const { teamId, id } = await params;
+  const session = await auth();
+  await assertTeamModuleAccess(
+    {
+      teamId,
+      userId: session?.user?.userId,
+      roles: session?.user?.roles,
+    },
+    "CRM" satisfies AppModule
+  );
   const contact = await getContactById(id, teamId);
 
   if (!contact) {

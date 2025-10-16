@@ -9,6 +9,7 @@ import { Loader2, Plus, Pencil, Trash2, Users } from "lucide-react";
 import useSWR from "swr";
 
 import { createGroupSchema } from "@/validations/groups";
+import { APP_MODULES, AppModule } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
 import {
@@ -46,6 +47,8 @@ type Group = {
   name: string;
   description?: string;
   canAccessAllContacts: boolean;
+  modules: AppModule[];
+  isDefaultGroup: boolean;
   users?: Array<{
     userId: string;
     user: {
@@ -70,6 +73,16 @@ interface GroupsManagerProps {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
+const MODULE_LABELS: Record<AppModule, string> = {
+  CRM: "CRM",
+  FUNDING: "Funding",
+};
+
+const MODULE_DESCRIPTIONS: Record<AppModule, string> = {
+  CRM: "Access contacts, events, and other CRM tools.",
+  FUNDING: "Access funding requests, agreements, and financial workflows.",
+};
+
 export default function GroupsManager({ teamId }: GroupsManagerProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -87,7 +100,10 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
     fetcher
   );
 
-  const groups: Group[] = groupsData?.data || [];
+  const groups: Group[] = (groupsData?.data || []).map((group: Group) => ({
+    ...group,
+    modules: group.modules && group.modules.length ? group.modules : APP_MODULES,
+  }));
   const users: User[] = usersData?.data || [];
 
   const form = useForm({
@@ -98,6 +114,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
       description: "",
       canAccessAllContacts: false,
       userIds: [] as string[],
+      modules: APP_MODULES as AppModule[],
     },
   });
 
@@ -112,6 +129,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
         description: group.description || "",
         canAccessAllContacts: group.canAccessAllContacts,
         userIds: group.users?.map(u => u.userId) || [],
+        modules: group.modules ?? APP_MODULES,
       });
     } else {
       setEditingGroup(null);
@@ -121,6 +139,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
         description: "",
         canAccessAllContacts: false,
         userIds: [],
+        modules: APP_MODULES,
       });
     }
     setIsDialogOpen(true);
@@ -148,6 +167,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
             name: values.name,
             description: values.description,
             canAccessAllContacts: values.canAccessAllContacts,
+            modules: values.modules,
           }),
         });
 
@@ -324,6 +344,13 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                         {group.description}
                       </p>
                     )}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {group.modules.map((module) => (
+                        <Badge key={module} variant="outline">
+                          {MODULE_LABELS[module] ?? module}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -336,6 +363,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                     <Button
                       variant="ghost"
                       size="sm"
+                      disabled={group.isDefaultGroup}
                       onClick={() => handleDelete(group.id, group.name)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -397,6 +425,67 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+
+              <FormField
+                control={typedControl}
+                name="modules"
+                render={({ field }) => {
+                  const value = field.value ?? [];
+
+                  const toggleModule = (module: AppModule, checked: boolean) => {
+                    if (checked) {
+                      const next = Array.from(new Set([...value, module]));
+                      field.onChange(next);
+                      form.clearErrors("modules");
+                    } else {
+                      const next = value.filter((current) => current !== module);
+                      if (next.length === 0) {
+                        form.setError("modules", {
+                          type: "manual",
+                          message: "Select at least one module",
+                        });
+                        return;
+                      }
+                      field.onChange(next);
+                    }
+                  };
+
+                  return (
+                    <FormItem>
+                      <FormLabel>Enabled Modules</FormLabel>
+                      <FormDescription>
+                        Choose which application modules members of this group can access.
+                      </FormDescription>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {APP_MODULES.map((module) => (
+                          <div
+                            key={module}
+                            className="flex items-start space-x-3 rounded-md border p-3"
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={value.includes(module)}
+                                onCheckedChange={(checked) =>
+                                  toggleModule(module, checked === true)
+                                }
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-sm font-medium">
+                                {MODULE_LABELS[module]}
+                              </FormLabel>
+                              <p className="text-xs text-muted-foreground">
+                                {MODULE_DESCRIPTIONS[module]}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField

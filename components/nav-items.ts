@@ -1,15 +1,18 @@
 import { Building, BookOpen, Scroll, BookUser, FolderOpen, Users, Settings, UserCircle2, Calendar, UsersRound, type LucideIcon } from "lucide-react";
+import { AppModule } from "@/types";
 
 type NavItemBase = {
   title: string;
   url: string;
   icon: LucideIcon;
   isActive?: boolean;
+  module?: AppModule;
 };
 
 type NavItemSeparator = {
   type: "separator";
   label?: string;
+  module?: AppModule;
 };
 
 type NavItem = NavItemBase | NavItemSeparator;
@@ -37,46 +40,55 @@ const navItems: {
     {
       type: "separator",
       label: "Funding",
+      module: "FUNDING",
     },
     {
       title: "Organizations",
       url: "organizations",
       icon: Building,
       isActive: true,
+      module: "FUNDING",
     },
     {
       title: "Funding Requests",
       url: "funding-requests",
       icon: BookOpen,
+      module: "FUNDING",
     },
     {
       title: "Donation Agreements",
       url: "donation-agreements",
       icon: Scroll,
+      module: "FUNDING",
     },
     {
       title: "Transactions",
       url: "transactions",
       icon: Scroll,
+      module: "FUNDING",
     },
     {
       title: "Files",
       url: "files",
       icon: FolderOpen,
+      module: "FUNDING",
     },
     {
       type: "separator",
       label: "CRM",
+      module: "CRM",
     },
     {
       title: "Contacts",
       url: "contacts",
       icon: UserCircle2,
+      module: "CRM",
     },
     {
       title: "Events",
       url: "events",
       icon: Calendar,
+      module: "CRM",
     },
     {
       type: "separator",

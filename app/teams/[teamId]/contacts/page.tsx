@@ -2,6 +2,9 @@ import Link from "next/link";
 
 import ContactTable from "@/components/table/contact-table";
 import { Button } from "@/components/ui/button";
+import { auth } from "@/auth";
+import { assertTeamModuleAccess } from "@/lib/permissions";
+import { AppModule } from "@/types";
 
 interface ContactsPageProps {
   params: Promise<{ teamId: string }>;
@@ -9,6 +12,16 @@ interface ContactsPageProps {
 
 export default async function ContactsPage({ params }: ContactsPageProps) {
   const { teamId } = await params;
+
+  const session = await auth();
+  await assertTeamModuleAccess(
+    {
+      teamId,
+      userId: session?.user?.userId,
+      roles: session?.user?.roles,
+    },
+    "CRM" satisfies AppModule
+  );
 
   return (
     <div className="p-4 space-y-6">

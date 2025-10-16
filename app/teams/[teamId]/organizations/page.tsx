@@ -2,9 +2,22 @@ import OrganizationTable from "@/components/table/organization-table";
 import { Button } from "@/components/ui/button";
 import { CopyRegistrationLinkButton } from "@/components/buttons/copy-registration-link-button";
 import Link from "next/link";
+import { auth } from "@/auth";
+import { assertTeamModuleAccess } from "@/lib/permissions";
+import { AppModule } from "@/types";
 
 export default async function Organization({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = await params;
+
+  const session = await auth();
+  await assertTeamModuleAccess(
+    {
+      teamId,
+      userId: session?.user?.userId,
+      roles: session?.user?.roles,
+    },
+    "FUNDING" satisfies AppModule
+  );
 
   return (
     <div className="p-4 w-full">

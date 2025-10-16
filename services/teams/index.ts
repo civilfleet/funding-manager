@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { Roles } from "@/types";
+import { ensureDefaultGroup } from "@/services/groups";
 import { CreateTeamInput } from "@/validations/team";
 import _, { update } from "lodash";
 
@@ -73,6 +74,7 @@ const createTeam = async (teamData: CreateTeamInput) => {
   }
 
   const team = await prisma.teams.create(query);
+  await ensureDefaultGroup(team.id);
   return {
     team,
   };

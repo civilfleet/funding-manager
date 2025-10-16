@@ -11,6 +11,9 @@ import {
 import { getEventById, getEventRegistrations } from "@/services/events";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
+import { assertTeamModuleAccess } from "@/lib/permissions";
+import { AppModule } from "@/types";
 
 interface EventDetailPageProps {
   params: Promise<{ teamId: string; id: string }>;
@@ -18,6 +21,16 @@ interface EventDetailPageProps {
 
 export default async function EventDetailPage({ params }: EventDetailPageProps) {
   const { teamId, id } = await params;
+
+  const session = await auth();
+  await assertTeamModuleAccess(
+    {
+      teamId,
+      userId: session?.user?.userId,
+      roles: session?.user?.roles,
+    },
+    "CRM" satisfies AppModule
+  );
 
   const event = await getEventById(id, teamId);
 

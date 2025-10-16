@@ -226,6 +226,11 @@ enum ContactAttributeType {
   LOCATION
 }
 
+enum AppModule {
+  CRM
+  FUNDING
+}
+
 model Contact {
   id                String               @id @default(uuid()) @unique
   teamId            String
@@ -555,6 +560,8 @@ model Group {
   name                  String      @db.VarChar(255)
   description           String?     @db.Text
   canAccessAllContacts  Boolean     @default(false)  // If true, users in this group can see all contacts
+  isDefaultGroup        Boolean     @default(false)
+  modulePermissions     GroupModulePermission[]
   createdAt             DateTime    @default(now()) @db.Timestamptz(6)
   updatedAt             DateTime    @updatedAt @db.Timestamptz(6)
 
@@ -563,6 +570,7 @@ model Group {
 
   @@unique([teamId, name])
   @@index([teamId])
+  @@index([teamId, isDefaultGroup])
 }
 
 model UserGroup {
@@ -574,5 +582,17 @@ model UserGroup {
 
   @@id([userId, groupId])
   @@index([userId])
+  @@index([groupId])
+}
+
+model GroupModulePermission {
+  id        String    @id @default(uuid()) @unique
+  groupId   String
+  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  module    AppModule
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+
+  @@unique([groupId, module])
   @@index([groupId])
 }

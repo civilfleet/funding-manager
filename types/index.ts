@@ -16,6 +16,9 @@ export enum Roles {
   Admin = "Admin",
 }
 
+export const APP_MODULES = ["CRM", "FUNDING"] as const;
+export type AppModule = (typeof APP_MODULES)[number];
+
 export enum ContactAttributeType {
   STRING = "STRING",
   NUMBER = "NUMBER",
@@ -85,6 +88,8 @@ export interface Group {
   name: string;
   description?: string;
   canAccessAllContacts: boolean;
+  isDefaultGroup: boolean;
+  modules: AppModule[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -296,6 +301,7 @@ export interface Teams {
   organizations: Organization[];
   users: User[];
   contacts?: Contact[];
+  modules?: AppModule[];
   createdAt: Date;
   updatedAt: Date;
 }

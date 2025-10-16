@@ -1,6 +1,9 @@
 import DonationAgreementTable from "@/components/table/donation-agreement-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { auth } from "@/auth";
+import { assertTeamModuleAccess } from "@/lib/permissions";
+import { AppModule } from "@/types";
 
 interface PageProps {
   params: Promise<{
@@ -10,6 +13,16 @@ interface PageProps {
 
 export default async function Organization({ params }: PageProps) {
   const teamId = (await params).teamId;
+
+  const session = await auth();
+  await assertTeamModuleAccess(
+    {
+      teamId,
+      userId: session?.user?.userId,
+      roles: session?.user?.roles,
+    },
+    "FUNDING" satisfies AppModule
+  );
 
   return (
     <div className="p-4 w-full">

@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { Group } from "@/types";
+import { Group, AppModule, APP_MODULES } from "@/types";
 import { Prisma } from "@prisma/client";
 
 type CreateGroupInput = {
@@ -8,6 +8,7 @@ type CreateGroupInput = {
   description?: string;
   canAccessAllContacts?: boolean;
   userIds?: string[]; // Optional initial users
+  modules?: AppModule[];
 };
 
 type UpdateGroupInput = {
@@ -16,6 +17,7 @@ type UpdateGroupInput = {
   name?: string;
   description?: string;
   canAccessAllContacts?: boolean;
+  modules?: AppModule[];
 };
 
 type AddUsersToGroupInput = {
@@ -30,7 +32,120 @@ type RemoveUsersFromGroupInput = {
   userIds: string[];
 };
 
-type GroupWithDefaults = Prisma.GroupGetPayload<Record<string, never>>;
+type GroupWithDefaults = Prisma.GroupGetPayload<{
+  include: {
+    modulePermissions: true;
+  };
+}>;
+
+const DEFAULT_GROUP_NAME = "Default Access";
+
+const ensureDefaultGroup = async (
+  teamId: string,
+  client: Prisma.TransactionClient | typeof prisma = prisma
+) => {
+  let defaultGroup = await client.group.findFirst({
+    where: {
+      teamId,
+      isDefaultGroup: true,
+    },
+    include: {
+      modulePermissions: true,
+    },
+  });
+
+  if (!defaultGroup) {
+    const existing = await client.group.findFirst({
+      where: {
+        teamId,
+        name: DEFAULT_GROUP_NAME,
+      },
+      include: {
+        modulePermissions: true,
+      },
+    });
+
+    if (existing) {
+      defaultGroup = await client.group.update({
+        where: { id: existing.id },
+        data: { isDefaultGroup: true, canAccessAllContacts: true },
+        include: {
+          modulePermissions: true,
+        },
+      });
+    } else {
+      defaultGroup = await client.group.create({
+        data: {
+          teamId,
+          name: DEFAULT_GROUP_NAME,
+          description: "Default access group",
+          isDefaultGroup: true,
+          canAccessAllContacts: true,
+          modulePermissions: {
+            create: APP_MODULES.map((module) => ({ module })),
+          },
+        },
+        include: {
+          modulePermissions: true,
+        },
+      });
+    }
+  }
+
+  if (!defaultGroup.canAccessAllContacts) {
+    await client.group.update({
+      where: { id: defaultGroup.id },
+      data: { canAccessAllContacts: true },
+    });
+
+    defaultGroup = await client.group.findUniqueOrThrow({
+      where: { id: defaultGroup.id },
+      include: {
+        modulePermissions: true,
+      },
+    });
+  }
+
+  if (!defaultGroup.modulePermissions.length) {
+    await client.groupModulePermission.createMany({
+      data: APP_MODULES.map((module) => ({
+        groupId: defaultGroup.id,
+        module,
+      })),
+      skipDuplicates: true,
+    });
+
+    defaultGroup = await client.group.findUniqueOrThrow({
+      where: { id: defaultGroup.id },
+      include: {
+        modulePermissions: true,
+      },
+    });
+  }
+
+  const teamUsers = await client.teams.findUnique({
+    where: { id: teamId },
+    select: {
+      users: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  });
+
+  if (teamUsers?.users?.length) {
+    await client.userGroup.createMany({
+      data: teamUsers.users.map((user) => ({
+        groupId: defaultGroup.id,
+        userId: user.id,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  return defaultGroup;
+};
 
 const mapGroup = (group: GroupWithDefaults): Group => ({
   id: group.id,
@@ -38,17 +153,26 @@ const mapGroup = (group: GroupWithDefaults): Group => ({
   name: group.name,
   description: group.description ?? undefined,
   canAccessAllContacts: group.canAccessAllContacts,
+  isDefaultGroup: group.isDefaultGroup,
+  modules: group.modulePermissions.length
+    ? group.modulePermissions.map((permission) => permission.module as AppModule)
+    : APP_MODULES,
   createdAt: group.createdAt,
   updatedAt: group.updatedAt,
 });
 
 const getTeamGroups = async (teamId: string) => {
+  await ensureDefaultGroup(teamId);
+
   const groups = await prisma.group.findMany({
     where: {
       teamId,
     },
     orderBy: {
       name: "asc",
+    },
+    include: {
+      modulePermissions: true,
     },
   });
 
@@ -60,6 +184,9 @@ const getGroupById = async (groupId: string, teamId: string) => {
     where: {
       id: groupId,
       teamId,
+    },
+    include: {
+      modulePermissions: true,
     },
   });
 
@@ -88,6 +215,7 @@ const getGroupWithUsers = async (groupId: string, teamId: string) => {
           },
         },
       },
+      modulePermissions: true,
     },
   });
 
@@ -106,43 +234,97 @@ const getGroupWithUsers = async (groupId: string, teamId: string) => {
 };
 
 const createGroup = async (input: CreateGroupInput) => {
-  const { teamId, name, description, canAccessAllContacts, userIds } = input;
+  const { teamId, name, description, canAccessAllContacts, userIds, modules } = input;
 
-  const group = await prisma.group.create({
-    data: {
-      teamId,
-      name,
-      description,
-      canAccessAllContacts: canAccessAllContacts ?? false,
-      users: userIds && userIds.length > 0
-        ? {
-            create: userIds.map((userId) => ({
-              userId,
-            })),
-          }
-        : undefined,
-    },
+  const modulesToAssign: AppModule[] = Array.from(
+    new Set(
+      (modules && modules.length ? modules : APP_MODULES).filter((module): module is AppModule =>
+        APP_MODULES.includes(module)
+      )
+    )
+  );
+
+  const group = await prisma.$transaction(async (tx) => {
+    const created = await tx.group.create({
+      data: {
+        teamId,
+        name,
+        description,
+        canAccessAllContacts: canAccessAllContacts ?? false,
+        modulePermissions: {
+          create: modulesToAssign.map((module) => ({ module })),
+        },
+        users: userIds && userIds.length > 0
+          ? {
+              create: userIds.map((userId) => ({
+                userId,
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        modulePermissions: true,
+      },
+    });
+
+    await ensureDefaultGroup(teamId, tx);
+
+    return created;
   });
 
   return mapGroup(group);
 };
 
 const updateGroup = async (input: UpdateGroupInput) => {
-  const { id, teamId, name, description, canAccessAllContacts } = input;
+  const { id, teamId, name, description, canAccessAllContacts, modules } = input;
 
-  const group = await prisma.group.update({
-    where: {
-      id,
-      teamId,
-    },
-    data: {
-      name,
-      description,
-      canAccessAllContacts,
-    },
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.group.update({
+      where: {
+        id,
+        teamId,
+      },
+      data: {
+        name,
+        description,
+        canAccessAllContacts,
+      },
+    });
+
+    if (modules !== undefined) {
+      const modulesToAssign: AppModule[] = Array.from(
+        new Set((modules.length ? modules : APP_MODULES).filter((module): module is AppModule =>
+          APP_MODULES.includes(module)
+        ))
+      );
+
+      await tx.groupModulePermission.deleteMany({
+        where: { groupId: id },
+      });
+
+      if (modulesToAssign.length) {
+        await tx.groupModulePermission.createMany({
+          data: modulesToAssign.map((module) => ({
+            groupId: id,
+            module,
+          })),
+        });
+      }
+    }
+
+    await ensureDefaultGroup(teamId, tx);
+
+    const updated = await tx.group.findUniqueOrThrow({
+      where: { id },
+      include: {
+        modulePermissions: true,
+      },
+    });
+
+    return updated;
   });
 
-  return mapGroup(group);
+  return mapGroup(result);
 };
 
 const deleteGroups = async (teamId: string, ids: string[]) => {
@@ -150,11 +332,21 @@ const deleteGroups = async (teamId: string, ids: string[]) => {
     return;
   }
 
-  await prisma.group.deleteMany({
-    where: {
-      id: { in: ids },
-      teamId,
-    },
+  await prisma.$transaction(async (tx) => {
+    const defaultGroup = await ensureDefaultGroup(teamId, tx);
+
+    if (ids.includes(defaultGroup.id)) {
+      throw new Error("Default group cannot be deleted");
+    }
+
+    await tx.group.deleteMany({
+      where: {
+        id: { in: ids },
+        teamId,
+      },
+    });
+
+    await ensureDefaultGroup(teamId, tx);
   });
 };
 
@@ -227,11 +419,44 @@ const getUserGroups = async (userId: string, teamId: string) => {
       },
     },
     include: {
-      group: true,
+      group: {
+        include: {
+          modulePermissions: true,
+        },
+      },
     },
   });
 
   return userGroups.map((ug) => mapGroup(ug.group));
+};
+
+const getUserModuleAccess = async (userId: string, teamId: string): Promise<AppModule[]> => {
+  const groups = await getUserGroups(userId, teamId);
+
+  if (!groups.length) {
+    const defaultGroup = await ensureDefaultGroup(teamId);
+    return defaultGroup.modulePermissions.length
+      ? defaultGroup.modulePermissions.map((permission) => permission.module as AppModule)
+      : APP_MODULES;
+  }
+
+  const modules = new Set<AppModule>();
+
+  for (const group of groups) {
+    for (const module of group.modules) {
+      modules.add(module);
+    }
+  }
+
+  if (modules.size) {
+    return Array.from(modules);
+  }
+
+  const defaultGroup = await ensureDefaultGroup(teamId);
+
+  return defaultGroup.modulePermissions.length
+    ? defaultGroup.modulePermissions.map((permission) => permission.module as AppModule)
+    : APP_MODULES;
 };
 
 export {
@@ -244,4 +469,6 @@ export {
   addUsersToGroup,
   removeUsersFromGroup,
   getUserGroups,
+  ensureDefaultGroup,
+  getUserModuleAccess,
 };

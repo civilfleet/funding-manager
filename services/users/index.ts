@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
-import { Roles } from "@/types";
+import { Roles, APP_MODULES, AppModule } from "@/types";
+import { ensureDefaultGroup } from "@/services/groups";
 import { omit } from "lodash";
 
 export interface User {
@@ -50,7 +51,10 @@ const getAdminUser = async (userId: string) => {
 
   return {
     ...user,
-    teams,
+    teams: teams.map((team) => ({
+      ...team,
+      modules: APP_MODULES,
+    })),
     organizations,
   };
 };
@@ -88,7 +92,98 @@ const getUserCurrent = async (userId: string) => {
     },
   });
 
-  return user;
+  if (!user) {
+    return user;
+  }
+
+  const teamIds = user.teams.map((team) => team.id);
+  const modulesByTeam = new Map<string, Set<AppModule>>();
+
+  if (teamIds.length > 0) {
+    await Promise.all(teamIds.map((id) => ensureDefaultGroup(id)));
+
+    const memberships = await prisma.userGroup.findMany({
+      where: {
+        userId,
+        group: {
+          teamId: {
+            in: teamIds,
+          },
+        },
+      },
+      include: {
+        group: {
+          select: {
+            teamId: true,
+            modulePermissions: true,
+          },
+        },
+      },
+    });
+
+    for (const membership of memberships) {
+      const teamId = membership.group.teamId;
+      const set = modulesByTeam.get(teamId) ?? new Set<AppModule>();
+
+      if (!membership.group.modulePermissions.length) {
+        APP_MODULES.forEach((module) => set.add(module));
+      } else {
+        for (const permission of membership.group.modulePermissions) {
+          set.add(permission.module as AppModule);
+        }
+      }
+
+      modulesByTeam.set(teamId, set);
+    }
+  }
+
+  let defaultGroupsByTeam: Map<string, AppModule[]> = new Map();
+
+  if (teamIds.length > 0) {
+    const defaultGroups = await prisma.group.findMany({
+      where: {
+        teamId: {
+          in: teamIds,
+        },
+        isDefaultGroup: true,
+      },
+      include: {
+        modulePermissions: true,
+      },
+    });
+
+    defaultGroupsByTeam = new Map(
+      defaultGroups.map((group) => [
+        group.teamId,
+        group.modulePermissions.length
+          ? group.modulePermissions.map((permission) => permission.module as AppModule)
+          : APP_MODULES,
+      ])
+    );
+  }
+
+  const teamsWithModules = user.teams.map((team) => {
+    const set = modulesByTeam.get(team.id);
+
+    if (set && set.size) {
+      return {
+        ...team,
+        modules: Array.from(set),
+      };
+    }
+
+    const fallback = defaultGroupsByTeam.get(team.id);
+
+    return {
+      ...team,
+      modules: fallback && fallback.length ? fallback : APP_MODULES,
+    };
+  });
+
+  return {
+    ...user,
+    teams: teamsWithModules,
+  };
 };
 
 const getUsers = async (

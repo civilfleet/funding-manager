@@ -28,7 +28,18 @@ async function sendEmail(emailContent: EMAIL_CONTENT, data: any) {
       html = handlebars.compile(emailContent.content)(data);
     }
 
-    console.log(data);
+    const { to, subject, template } = {
+      to: emailContent.to,
+      subject: emailContent.subject,
+      template: emailContent.template ?? "inline-content",
+    };
+
+    console.info("[mail] Dispatching email", {
+      to,
+      subject,
+      template,
+      hasContent: Boolean(emailContent.content),
+    });
 
     const info = await transporter.sendMail({
       from: emailContent?.from ?? process.env.BREVO_SENDER_EMAIL,
@@ -37,9 +48,21 @@ async function sendEmail(emailContent: EMAIL_CONTENT, data: any) {
       html,
     });
 
+    console.info("[mail] Email dispatched", {
+      to,
+      subject,
+      messageId: info.messageId,
+      response: info.response,
+    });
+
     return info;
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("[mail] Error sending email", {
+      to: emailContent.to,
+      subject: emailContent.subject,
+      template: emailContent.template ?? "inline-content",
+      error,
+    });
     throw error;
   }
 }

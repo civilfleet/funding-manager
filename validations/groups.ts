@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { APP_MODULES } from "@/types";
 
 export const createGroupSchema = z.object({
   teamId: z.string().uuid(),
@@ -6,6 +7,10 @@ export const createGroupSchema = z.object({
   description: z.string().optional(),
   canAccessAllContacts: z.boolean().optional().default(false),
   userIds: z.array(z.string().uuid()).optional(),
+  modules: z
+    .array(z.enum(APP_MODULES))
+    .optional()
+    .transform((value) => (value && value.length ? Array.from(new Set(value)) : APP_MODULES)),
 });
 
 export type CreateGroupInput = z.infer<typeof createGroupSchema>;
@@ -16,6 +21,10 @@ export const updateGroupSchema = z.object({
   name: z.string().min(1, "Name is required").max(255).optional(),
   description: z.string().optional(),
   canAccessAllContacts: z.boolean().optional(),
+  modules: z
+    .array(z.enum(APP_MODULES))
+    .optional()
+    .transform((value) => (value ? Array.from(new Set(value)) : undefined)),
 });
 
 export type UpdateGroupInput = z.infer<typeof updateGroupSchema>;

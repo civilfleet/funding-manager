@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { ensureDefaultGroup } from "@/services/groups";
 import {
   Contact as ContactType,
   ContactAttributeType,
@@ -345,6 +346,8 @@ const getTeamContacts = async (teamId: string, query?: string, userId?: string) 
   const where: Prisma.ContactWhereInput = {
     teamId,
   };
+
+  await ensureDefaultGroup(teamId);
 
   // If userId is provided, filter by group access
   if (userId) {
