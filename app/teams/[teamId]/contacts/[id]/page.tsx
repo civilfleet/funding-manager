@@ -73,211 +73,228 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
 
   return (
     <div className="p-4">
-      <div className="mx-auto w-full max-w-6xl space-y-6">
-        <Card className="w-full shadow-sm">
-          <CardHeader className="border-b pb-3">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle className="text-xl font-semibold">{contact.name}</CardTitle>
-                <CardDescription>Contact Details</CardDescription>
-              </div>
-              <Button asChild>
-                <Link href={`/teams/${teamId}/contacts/${id}/edit`}>Edit Contact</Link>
-              </Button>
-            </div>
-          </CardHeader>
-
-          <CardContent className="pt-6">
-            <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-              <section className="space-y-4">
-                <div>
-                  <h3 className="text-base font-semibold">Basic Information</h3>
-                  <p className="text-sm text-muted-foreground">Core contact details</p>
-                </div>
-
-                {contact.email || contact.phone ? (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {contact.email && (
-                      <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-3">
-                        <Mail className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Email</p>
-                          <a href={`mailto:${contact.email}`} className="text-base hover:underline">
-                            {contact.email}
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                    {contact.phone && (
-                      <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-3">
-                        <Phone className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Phone</p>
-                          <a href={`tel:${contact.phone}`} className="text-base hover:underline">
-                            {contact.phone}
-                          </a>
-                        </div>
-                      </div>
-                    )}
+      <div className="mx-auto w-full">
+        <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
+          <div className="space-y-6 lg:col-span-8">
+            <Card className="w-full shadow-sm">
+              <CardHeader className="border-b pb-3">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <CardTitle className="text-xl font-semibold">{contact.name}</CardTitle>
+                    <CardDescription>Contact Details</CardDescription>
                   </div>
-                ) : (
-                  <p className="rounded-md border border-dashed p-3 text-center text-sm text-muted-foreground">
-                    No contact information available
-                  </p>
-                )}
-              </section>
-
-              <section className="space-y-4">
-                <div>
-                  <h3 className="text-base font-semibold">Metadata</h3>
-                  <p className="text-sm text-muted-foreground">Contact lifecycle details</p>
+                  <Button asChild>
+                    <Link href={`/teams/${teamId}/contacts/${id}/edit`}>Edit Contact</Link>
+                  </Button>
                 </div>
+              </CardHeader>
 
-                <div className="grid gap-3">
-                  {contact.group && (
-                    <div className="rounded-md border bg-muted/30 p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <p className="text-sm font-medium text-muted-foreground">Group</p>
-                      </div>
-                      <p className="text-base">{contact.group.name}</p>
-                      {contact.group.description && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {contact.group.description}
-                        </p>
-                      )}
+              <CardContent className="pt-6">
+                <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+                  <section className="space-y-4">
+                    <div>
+                      <h3 className="text-base font-semibold">Basic Information</h3>
+                      <p className="text-sm text-muted-foreground">Core contact details</p>
                     </div>
-                  )}
-                  <div className="rounded-md border bg-muted/30 p-3">
-                    <p className="text-sm font-medium text-muted-foreground">Created At</p>
-                    <p className="text-base">{format(new Date(contact.createdAt), "PPpp")}</p>
-                  </div>
-                  <div className="rounded-md border bg-muted/30 p-3">
-                    <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
-                    <p className="text-base">{format(new Date(contact.updatedAt), "PPpp")}</p>
-                  </div>
-                </div>
-              </section>
-            </div>
-          </CardContent>
-        </Card>
 
-        {contact.profileAttributes.length > 0 && (
-          <Card className="w-full shadow-sm">
-            <CardHeader className="border-b pb-3">
-              <div>
-                <CardTitle className="text-xl font-semibold">Profile Attributes</CardTitle>
-                <CardDescription>Additional information about this contact</CardDescription>
-              </div>
-            </CardHeader>
-
-            <CardContent className="pt-6">
-              <div className="grid gap-4 sm:grid-cols-2">
-                {contact.profileAttributes.map((attribute, index) => {
-                  const Icon = getAttributeIcon(attribute.type);
-                  return (
-                    <div
-                      key={index}
-                      className="flex items-start gap-3 rounded-md border bg-muted/30 p-3"
-                    >
-                      <Icon className="mt-0.5 h-5 w-5 text-muted-foreground" />
-                      <div className="flex-1">
-                        <div className="mb-1 flex items-center gap-2">
-                          <p className="text-sm font-medium">{attribute.key}</p>
-                          <Badge variant="outline" className="text-xs">
-                            {attribute.type}
-                          </Badge>
-                        </div>
-                        <p className="text-base">
-                          {formatAttributeValue(attribute.type, attribute.value)}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card className="w-full shadow-sm">
-          <CardHeader className="border-b pb-3">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5" />
-              <CardTitle className="text-xl font-semibold">Associated Events</CardTitle>
-            </div>
-            <CardDescription>Events this contact is participating in</CardDescription>
-          </CardHeader>
-
-          <CardContent className="pt-6">
-            {contact.events && contact.events.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2">
-                {contact.events.map((contactEvent) => (
-                  <Link
-                    key={contactEvent.event.id}
-                    href={`/teams/${teamId}/events/${contactEvent.event.id}`}
-                    className="block h-full rounded-md border bg-muted/30 p-4 transition-colors hover:bg-muted/50"
-                  >
-                    <div className="space-y-3">
-                      <div className="space-y-1">
-                        <h4 className="text-base font-semibold">{contactEvent.event.title}</h4>
-                        {contactEvent.event.description && (
-                          <p className="text-sm text-muted-foreground">
-                            {contactEvent.event.description}
-                          </p>
+                    {contact.email || contact.phone ? (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {contact.email && (
+                          <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-3">
+                            <Mail className="h-5 w-5 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">Email</p>
+                              <a href={`mailto:${contact.email}`} className="text-base hover:underline">
+                                {contact.email}
+                              </a>
+                            </div>
+                          </div>
                         )}
-                      </div>
-
-                      <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="h-4 w-4" />
-                          <span>{format(new Date(contactEvent.event.startDate), "PPP")}</span>
-                        </div>
-                        {contactEvent.event.location && (
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className="h-4 w-4" />
-                            <span>{contactEvent.event.location}</span>
+                        {contact.phone && (
+                          <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-3">
+                            <Phone className="h-5 w-5 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                              <a href={`tel:${contact.phone}`} className="text-base hover:underline">
+                                {contact.phone}
+                              </a>
+                            </div>
                           </div>
                         )}
                       </div>
+                    ) : (
+                      <p className="rounded-md border border-dashed p-3 text-center text-sm text-muted-foreground">
+                        No contact information available
+                      </p>
+                    )}
+                  </section>
 
-                      {contactEvent.roles && contactEvent.roles.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {contactEvent.roles.map((role, idx) => (
-                            <Badge
-                              key={idx}
-                              variant="secondary"
-                              style={
-                                role.eventRole.color
-                                  ? {
-                                      backgroundColor: `${role.eventRole.color}20`,
-                                      color: role.eventRole.color,
-                                      borderColor: role.eventRole.color,
-                                    }
-                                  : undefined
-                              }
-                            >
-                              {role.eventRole.name}
-                            </Badge>
-                          ))}
+                  <section className="space-y-4">
+                    <div>
+                      <h3 className="text-base font-semibold">Metadata</h3>
+                      <p className="text-sm text-muted-foreground">Contact lifecycle details</p>
+                    </div>
+
+                    <div className="grid gap-3">
+                      {contact.group && (
+                        <div className="rounded-md border bg-muted/30 p-3">
+                          <div className="mb-1 flex items-center gap-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <p className="text-sm font-medium text-muted-foreground">Group</p>
+                          </div>
+                          <p className="text-base">{contact.group.name}</p>
+                          {contact.group.description && (
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {contact.group.description}
+                            </p>
+                          )}
                         </div>
                       )}
+                      <div className="rounded-md border bg-muted/30 p-3">
+                        <p className="text-sm font-medium text-muted-foreground">Created At</p>
+                        <p className="text-base">{format(new Date(contact.createdAt), "PPpp")}</p>
+                      </div>
+                      <div className="rounded-md border bg-muted/30 p-3">
+                        <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
+                        <p className="text-base">{format(new Date(contact.updatedAt), "PPpp")}</p>
+                      </div>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No associated events yet.</p>
-            )}
-          </CardContent>
-        </Card>
+                  </section>
+                </div>
+              </CardContent>
+            </Card>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div>
+            {contact.profileAttributes.length > 0 && (
+              <Card className="w-full shadow-sm">
+                <CardHeader className="border-b pb-3">
+                  <div>
+                    <CardTitle className="text-xl font-semibold">Profile Attributes</CardTitle>
+                    <CardDescription>Additional information about this contact</CardDescription>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="pt-6">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {contact.profileAttributes.map((attribute, index) => {
+                      const Icon = getAttributeIcon(attribute.type);
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-start gap-3 rounded-md border bg-muted/30 p-3"
+                        >
+                          <Icon className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                          <div className="flex-1">
+                            <div className="mb-1 flex items-center gap-2">
+                              <p className="text-sm font-medium">{attribute.key}</p>
+                              <Badge variant="outline" className="text-xs">
+                                {attribute.type}
+                              </Badge>
+                            </div>
+                            <p className="text-base">
+                              {formatAttributeValue(attribute.type, attribute.value)}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <ContactEngagementHistory contactId={id} teamId={teamId} />
           </div>
-          <div>
+
+          <div className="space-y-6 lg:col-span-4 lg:col-start-9">
             <ContactChangeHistory contactId={id} />
+            <Card className="w-full shadow-sm">
+              <CardHeader className="border-b pb-3">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-5 w-5" />
+                  <CardTitle className="text-xl font-semibold">Associated Events</CardTitle>
+                </div>
+                <CardDescription>Events this contact is participating in</CardDescription>
+              </CardHeader>
+
+              <CardContent className="pt-6">
+                {contact.events && contact.events.length > 0 ? (
+                  <div className="grid gap-4">
+                    {contact.events.map((contactEvent) => (
+                      <Link
+                        key={contactEvent.event.id}
+                        href={`/teams/${teamId}/events/${contactEvent.event.id}`}
+                        className="block h-full rounded-md border bg-muted/30 p-4 transition-colors hover:bg-muted/50"
+                      >
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <h4 className="text-base font-semibold">{contactEvent.event.title}</h4>
+                            {contactEvent.event.description && (
+                              <p className="text-sm text-muted-foreground">
+                                {contactEvent.event.description}
+                              </p>
+                            )}
+                          </div>
+
+                          {contactEvent.participationTypes?.length ? (
+                            <div className="flex flex-wrap gap-2">
+                              {contactEvent.participationTypes.includes("linked") && (
+                                <Badge variant="outline">Linked contact</Badge>
+                              )}
+                              {contactEvent.participationTypes.includes("registered") && (
+                                <Badge variant="outline">Registered attendee</Badge>
+                              )}
+                            </div>
+                          ) : null}
+
+                          <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="h-4 w-4" />
+                              <span>{format(new Date(contactEvent.event.startDate), "PPP")}</span>
+                            </div>
+                            {contactEvent.event.location && (
+                              <div className="flex items-center gap-1.5">
+                                <MapPin className="h-4 w-4" />
+                                <span>{contactEvent.event.location}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {contactEvent.roles && contactEvent.roles.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {contactEvent.roles.map((role, idx) => (
+                                <Badge
+                                  key={idx}
+                                  variant="secondary"
+                                  style={
+                                    role.eventRole.color
+                                      ? {
+                                          backgroundColor: `${role.eventRole.color}20`,
+                                          color: role.eventRole.color,
+                                          borderColor: role.eventRole.color,
+                                        }
+                                      : undefined
+                                  }
+                                >
+                                  {role.eventRole.name}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+
+                          {contactEvent.registration && (
+                            <p className="text-xs text-muted-foreground">
+                              Registered on {format(new Date(contactEvent.registration.createdAt), "PPpp")}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No associated events yet.</p>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

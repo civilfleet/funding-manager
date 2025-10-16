@@ -52,6 +52,11 @@ type ContactWithAttributes = Prisma.ContactGetPayload<{
         };
       };
     };
+    registrations: {
+      include: {
+        event: true;
+      };
+    };
   };
 }>;
 
@@ -221,29 +226,117 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
   profileAttributes: contact.attributes
     .map(toProfileAttribute)
     .filter((attribute): attribute is ContactProfileAttribute => Boolean(attribute)),
-  events: (contact.events || []).map((eventContact) => ({
-    event: {
-      id: eventContact.event.id,
-      teamId: eventContact.event.teamId,
-      title: eventContact.event.title,
-      description: eventContact.event.description ?? undefined,
-      location: eventContact.event.location ?? undefined,
-      startDate: eventContact.event.startDate,
-      endDate: eventContact.event.endDate ?? undefined,
-      createdAt: eventContact.event.createdAt,
-      updatedAt: eventContact.event.updatedAt,
-    },
-    roles: eventContact.roles.map((role) => ({
-      eventRole: {
-        id: role.eventRole.id,
-        teamId: role.eventRole.teamId,
-        name: role.eventRole.name,
-        color: role.eventRole.color ?? undefined,
-        createdAt: role.eventRole.createdAt,
-        updatedAt: role.eventRole.updatedAt,
-      },
-    })),
-  })),
+  events: (() => {
+    const eventMap = new Map<
+      string,
+      {
+        event: {
+          id: string;
+          teamId: string;
+          title: string;
+          description?: string;
+          location?: string;
+          startDate: Date;
+          endDate?: Date;
+          createdAt: Date;
+          updatedAt: Date;
+        };
+        roles: { eventRole: { id: string; teamId: string; name: string; color?: string; createdAt: Date; updatedAt: Date } }[];
+        participationTypes: Set<"linked" | "registered">;
+        registration?: { id: string; createdAt: Date };
+      }
+    >();
+
+    const upsertEvent = (eventId: string, entry: Partial<{
+      event: {
+        id: string;
+        teamId: string;
+        title: string;
+        description?: string;
+        location?: string;
+        startDate: Date;
+        endDate?: Date;
+        createdAt: Date;
+        updatedAt: Date;
+      };
+      roles: { eventRole: { id: string; teamId: string; name: string; color?: string; createdAt: Date; updatedAt: Date } }[];
+      participationType: "linked" | "registered";
+      registration: { id: string; createdAt: Date };
+    }>) => {
+      const existing = eventMap.get(eventId);
+      if (existing) {
+        if (entry.event) {
+          existing.event = entry.event;
+        }
+        if (entry.roles) {
+          existing.roles = entry.roles;
+        }
+        if (entry.participationType) {
+          existing.participationTypes.add(entry.participationType);
+        }
+        if (entry.registration) {
+          existing.registration = entry.registration;
+        }
+        return;
+      }
+
+      eventMap.set(eventId, {
+        event: entry.event!,
+        roles: entry.roles ?? [],
+        participationTypes: new Set(entry.participationType ? [entry.participationType] : []),
+        registration: entry.registration,
+      });
+    };
+
+    const mapEventDetails = (event: ContactWithAttributes["events"][number]["event"]) => ({
+      id: event.id,
+      teamId: event.teamId,
+      title: event.title,
+      description: event.description ?? undefined,
+      location: event.location ?? undefined,
+      startDate: event.startDate,
+      endDate: event.endDate ?? undefined,
+      createdAt: event.createdAt,
+      updatedAt: event.updatedAt,
+    });
+
+    (contact.events || []).forEach((eventContact) => {
+      upsertEvent(eventContact.event.id, {
+        event: mapEventDetails(eventContact.event),
+        roles: eventContact.roles.map((role) => ({
+          eventRole: {
+            id: role.eventRole.id,
+            teamId: role.eventRole.teamId,
+            name: role.eventRole.name,
+            color: role.eventRole.color ?? undefined,
+            createdAt: role.eventRole.createdAt,
+            updatedAt: role.eventRole.updatedAt,
+          },
+        })),
+        participationType: "linked",
+      });
+    });
+
+    (contact.registrations || []).forEach((registration) => {
+      upsertEvent(registration.event.id, {
+        event: mapEventDetails(registration.event),
+        participationType: "registered",
+        registration: {
+          id: registration.id,
+          createdAt: registration.createdAt,
+        },
+      });
+    });
+
+    return Array.from(eventMap.values())
+      .map((entry) => ({
+        event: entry.event,
+        roles: entry.roles,
+        participationTypes: Array.from(entry.participationTypes),
+        registration: entry.registration,
+      }))
+      .sort((a, b) => a.event.startDate.getTime() - b.event.startDate.getTime());
+  })(),
   createdAt: contact.createdAt,
   updatedAt: contact.updatedAt,
 });
@@ -326,6 +419,11 @@ const getTeamContacts = async (teamId: string, query?: string, userId?: string) 
           },
         },
       },
+      registrations: {
+        include: {
+          event: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -352,6 +450,11 @@ const getContactById = async (contactId: string, teamId: string) => {
               eventRole: true,
             },
           },
+        },
+      },
+      registrations: {
+        include: {
+          event: true,
         },
       },
     },

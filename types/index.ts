@@ -67,9 +67,16 @@ export interface Event {
   updatedAt: Date;
 }
 
+export type ContactParticipationType = "linked" | "registered";
+
 export interface ContactEvent {
   event: Event;
   roles: { eventRole: EventRole }[];
+  participationTypes: ContactParticipationType[];
+  registration?: {
+    id: string;
+    createdAt: Date;
+  };
 }
 
 export interface Group {
