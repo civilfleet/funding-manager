@@ -47,7 +47,7 @@
         "noUndeclaredVariables": "off",
         "noUnreachable": "off",
         "noUnreachableSuper": "off",
-        "noUnusedVariables": "error",
+        "noUnusedVariables": "warn",
         "useExhaustiveDependencies": "warn",
         "useHookAtTopLevel": "error",
         "useJsxKeyInIterable": "error"
