@@ -1,4 +1,4 @@
-export default {
+const mailConfig = {
   host: process.env.BREVO_HOST as string, // SMTP host
   port: 465, // SMTP port
   secure: true, // true for 465, false for other ports
@@ -8,3 +8,5 @@ export default {
     pass: process.env.BREVO_PASSWORD as string, // SMTP password
   },
 };
+
+export default mailConfig;

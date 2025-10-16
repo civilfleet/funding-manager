@@ -53,7 +53,7 @@ const getAdminUser = async (userId: string) => {
     ...user,
     teams: teams.map((team) => ({
       ...team,
-      modules: APP_MODULES,
+      modules: [...APP_MODULES],
     })),
     organizations,
   };
@@ -157,7 +157,7 @@ const getUserCurrent = async (userId: string) => {
         group.teamId,
         group.modulePermissions.length
           ? group.modulePermissions.map((permission) => permission.module as AppModule)
-          : APP_MODULES,
+          : [...APP_MODULES],
       ])
     );
   }
@@ -176,7 +176,7 @@ const getUserCurrent = async (userId: string) => {
 
     return {
       ...team,
-      modules: fallback && fallback.length ? fallback : APP_MODULES,
+      modules: fallback && fallback.length ? fallback : [...APP_MODULES],
     };
   });
 

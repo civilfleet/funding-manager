@@ -189,7 +189,7 @@ const mapGroup = (group: GroupWithDefaults): Group => ({
   isDefaultGroup: group.isDefaultGroup,
   modules: group.modulePermissions.length
     ? group.modulePermissions.map((permission) => permission.module as AppModule)
-    : APP_MODULES,
+    : [...APP_MODULES],
   createdAt: group.createdAt,
   updatedAt: group.updatedAt,
 });
@@ -269,12 +269,9 @@ const getGroupWithUsers = async (groupId: string, teamId: string) => {
 const createGroup = async (input: CreateGroupInput) => {
   const { teamId, name, description, canAccessAllContacts, userIds, modules } = input;
 
+  const baseModules = modules && modules.length ? modules : [...APP_MODULES];
   const modulesToAssign: AppModule[] = Array.from(
-    new Set(
-      (modules && modules.length ? modules : APP_MODULES).filter((module): module is AppModule =>
-        APP_MODULES.includes(module)
-      )
-    )
+    new Set(baseModules.filter((module): module is AppModule => APP_MODULES.includes(module)))
   );
 
   const group = await prisma.$transaction(async (tx) => {
@@ -325,10 +322,9 @@ const updateGroup = async (input: UpdateGroupInput) => {
     });
 
     if (modules !== undefined) {
+      const baseModules = modules.length ? modules : [...APP_MODULES];
       const modulesToAssign: AppModule[] = Array.from(
-        new Set((modules.length ? modules : APP_MODULES).filter((module): module is AppModule =>
-          APP_MODULES.includes(module)
-        ))
+        new Set(baseModules.filter((module): module is AppModule => APP_MODULES.includes(module)))
       );
 
       await tx.groupModulePermission.deleteMany({
@@ -482,14 +478,14 @@ const getUserModuleAccess = async (userId: string, teamId: string): Promise<AppM
     const defaultGroup = await ensureDefaultGroup(teamId);
     return defaultGroup.modulePermissions.length
       ? defaultGroup.modulePermissions.map((permission) => permission.module as AppModule)
-      : APP_MODULES;
+      : [...APP_MODULES];
   }
 
   const modules = new Set<AppModule>();
 
   for (const group of groups) {
-    for (const module of group.modules) {
-      modules.add(module);
+    for (const moduleName of group.modules) {
+      modules.add(moduleName);
     }
   }
 
@@ -501,7 +497,7 @@ const getUserModuleAccess = async (userId: string, teamId: string): Promise<AppM
 
   return defaultGroup.modulePermissions.length
     ? defaultGroup.modulePermissions.map((permission) => permission.module as AppModule)
-    : APP_MODULES;
+    : [...APP_MODULES];
 };
 
 export {

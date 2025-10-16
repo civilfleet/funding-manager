@@ -103,7 +103,10 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
   const groups: Group[] = useMemo(() => {
     const rawGroups: Group[] = (groupsData?.data || []).map((group: Group) => ({
       ...group,
-      modules: group.modules && group.modules.length ? group.modules : APP_MODULES,
+      modules:
+        group.modules && group.modules.length
+          ? [...group.modules]
+          : [...APP_MODULES],
     }));
 
     return rawGroups.sort((a, b) => {
@@ -123,7 +126,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
       description: "",
       canAccessAllContacts: false,
       userIds: [] as string[],
-      modules: APP_MODULES as AppModule[],
+      modules: [...APP_MODULES],
     },
   });
 
@@ -139,7 +142,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
         description: group.description || "",
         canAccessAllContacts: group.canAccessAllContacts,
         userIds: group.users?.map(u => u.userId) || [],
-        modules: group.modules ?? APP_MODULES,
+        modules: group.modules ?? [...APP_MODULES],
       });
     } else {
       setEditingGroup(null);
@@ -149,7 +152,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
         description: "",
         canAccessAllContacts: false,
         userIds: [],
-        modules: APP_MODULES,
+        modules: [...APP_MODULES],
       });
     }
     setIsDialogOpen(true);

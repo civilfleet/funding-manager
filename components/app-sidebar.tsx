@@ -48,7 +48,7 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
         setTeams(
           teams.map((team: { id: string; name: string; email: string; modules?: AppModule[] }) => ({
             ...team,
-            modules: team.modules && team.modules.length ? team.modules : APP_MODULES,
+            modules: team.modules && team.modules.length ? team.modules : [...APP_MODULES],
           }))
         );
         setOrganizations(organizations);
@@ -63,7 +63,13 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
 
   const activeTeam = activeType === "team" ? teams.find((item) => item.id === activeId) : null;
 
-  const allowedModules = activeTeam?.modules && activeTeam.modules.length > 0 ? activeTeam.modules : APP_MODULES;
+  const allowedModules = React.useMemo(() => {
+    if (activeTeam?.modules && activeTeam.modules.length > 0) {
+      return activeTeam.modules;
+    }
+
+    return [...APP_MODULES];
+  }, [activeTeam?.modules]);
 
   const filterNavItemsByModules = React.useCallback(
     (items: NavigationList): NavigationList => {
@@ -86,13 +92,19 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
 
       const cleaned: NavigationItem[] = [];
 
+      const isSeparatorItem = (
+        candidate: NavigationItem
+      ): candidate is Extract<NavigationItem, { type: "separator" }> =>
+        "type" in candidate && candidate.type === "separator";
+
       for (let i = 0; i < filtered.length; i++) {
         const item = filtered[i];
 
-        if (item.type === "separator") {
-          const hasPreviousContent = cleaned.length > 0 && cleaned[cleaned.length - 1].type !== "separator";
+        if (isSeparatorItem(item)) {
+          const hasPreviousContent =
+            cleaned.length > 0 && !isSeparatorItem(cleaned[cleaned.length - 1]);
           let j = i + 1;
-          while (j < filtered.length && filtered[j].type === "separator") {
+          while (j < filtered.length && isSeparatorItem(filtered[j])) {
             j++;
           }
           const hasNextContent = j < filtered.length;
@@ -105,7 +117,7 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
         cleaned.push(item);
       }
 
-      if (cleaned.length && cleaned[cleaned.length - 1].type === "separator") {
+      if (cleaned.length && isSeparatorItem(cleaned[cleaned.length - 1])) {
         cleaned.pop();
       }
 
