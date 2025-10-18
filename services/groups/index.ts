@@ -216,10 +216,31 @@ const getTeamGroups = async (teamId: string) => {
     },
     include: {
       modulePermissions: true,
+      users: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      },
     },
   });
 
-  return groups.map(mapGroup);
+  return groups.map((group) => ({
+    ...mapGroup(group),
+    users: group.users.map((ug) => ({
+      userId: ug.userId,
+      user: {
+        id: ug.user.id,
+        name: ug.user.name,
+        email: ug.user.email,
+      },
+    })),
+  }));
 };
 
 const getGroupById = async (groupId: string, teamId: string) => {
