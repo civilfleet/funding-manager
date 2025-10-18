@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "biome check .",
+    "lint": "biome check . --diagnostic-level error",
     "check": "eslint . && tsc --noEmit",
     "postinstall": "prisma generate"
   },
