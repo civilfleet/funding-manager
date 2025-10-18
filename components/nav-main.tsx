@@ -49,14 +49,14 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
             {items.map((item, index) => {
               if (item.type === "separator") {
                 return (
-                  <div key={index} className="px-2 py-2">
+                  <li key={index} className="px-2 py-2">
                     {item.label && (
                       <div className="px-2 pb-1 text-xs font-semibold text-muted-foreground">
                         {item.label}
                       </div>
                     )}
                     <Separator />
-                  </div>
+                  </li>
                 );
               }
 
@@ -84,14 +84,14 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
             {items.map((item, index) => {
               if (item.type === "separator") {
                 return (
-                  <div key={index} className="px-2 py-2">
+                  <li key={index} className="px-2 py-2">
                     {item.label && (
                       <div className="px-2 pb-1 text-xs font-semibold text-muted-foreground">
                         {item.label}
                       </div>
                     )}
                     <Separator />
-                  </div>
+                  </li>
                 );
               }
 

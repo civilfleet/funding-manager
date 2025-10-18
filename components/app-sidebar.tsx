@@ -2,7 +2,6 @@
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import * as React from "react";
-import { useEffect, useState } from "react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
@@ -20,16 +19,24 @@ type NavigationKey = keyof typeof navigationItems;
 type NavigationItem = (typeof navigationItems)[NavigationKey][number];
 type NavigationList = NavigationItem[];
 
-type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
+type AppSidebarProps = {
   navItems: "team" | "organization" | "admin";
-};
+  teams?: Array<{
+    id: string;
+    name: string;
+    email: string;
+    modules?: AppModule[];
+  }>;
+  organizations?: Array<{ id: string; name: string; email: string }>;
+} & Omit<React.ComponentProps<typeof Sidebar>, "teams" | "organizations">;
 
-export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
+export function AppSidebar({
+  navItems,
+  teams: initialTeams = [],
+  organizations: initialOrganizations = [],
+  ...sidebarProps
+}: AppSidebarProps) {
   const { data: session } = useSession();
-  const [organizations, setOrganizations] = useState([]);
-  const [teams, setTeams] = useState<
-    Array<{ id: string; name: string; email: string; modules?: AppModule[] }>
-  >([]);
   const pathname = usePathname();
 
   // Extract the active ID and type from the URL
@@ -45,38 +52,18 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
   const activeId =
     pathSegments[0] === "admin" ? "admin" : (pathSegments[1] ?? null);
 
-  useEffect(() => {
-    const getItems = async () => {
-      try {
-        const response = await fetch(`/api/users/current`);
-        const {
-          data: { teams, organizations },
-        } = await response.json();
-        setTeams(
-          teams.map(
-            (team: {
-              id: string;
-              name: string;
-              email: string;
-              modules?: AppModule[];
-            }) => ({
-              ...team,
-              modules:
-                team.modules && team.modules.length
-                  ? team.modules
-                  : [...APP_MODULES],
-            }),
-          ),
-        );
-        setOrganizations(organizations);
-      } catch (error) {
-        console.error("Error fetching teams:", error);
-        throw new Error("Failed to fetch teams");
-      }
-    };
+  // Normalize teams to ensure modules are set
+  const teams = React.useMemo(
+    () =>
+      initialTeams.map((team) => ({
+        ...team,
+        modules:
+          team.modules && team.modules.length ? team.modules : [...APP_MODULES],
+      })),
+    [initialTeams],
+  );
 
-    getItems();
-  }, [session?.user?.roles]);
+  const organizations = initialOrganizations;
 
   const activeTeam =
     activeType === "team" ? teams.find((item) => item.id === activeId) : null;
@@ -119,6 +106,12 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
         const item = filtered[i];
 
         if (isSeparatorItem(item)) {
+          // Always show separators with labels (module names)
+          if (item.label) {
+            cleaned.push(item);
+            continue;
+          }
+
           const hasPreviousContent =
             cleaned.length > 0 && !isSeparatorItem(cleaned[cleaned.length - 1]);
           let j = i + 1;
@@ -150,7 +143,7 @@ export function AppSidebar({ navItems, ...props }: AppSidebarProps) {
   }, [filterNavItemsByModules, navItems]);
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="icon" {...sidebarProps}>
       <SidebarHeader>
         <TeamSwitcher
           organizations={organizations}
