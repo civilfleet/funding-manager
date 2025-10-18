@@ -9,8 +9,10 @@ const transporter = nodemailer.createTransport({
   ...config,
 });
 
-// eslint-disable-next-line  @typescript-eslint/no-explicit-any
-const compileTemplate = (templateName: string, data: any) => {
+const compileTemplate = (
+  templateName: string,
+  data: Record<string, unknown>,
+) => {
   const filePath = path.join(
     process.cwd(),
     "templates",
@@ -20,8 +22,10 @@ const compileTemplate = (templateName: string, data: any) => {
   return handlebars.compile(source)(data);
 };
 
-// eslint-disable-next-line  @typescript-eslint/no-explicit-any
-async function sendEmail(emailContent: EMAIL_CONTENT, data: any) {
+async function sendEmail(
+  emailContent: EMAIL_CONTENT,
+  data: Record<string, unknown>,
+) {
   try {
     let html;
     if (!emailContent.content) {

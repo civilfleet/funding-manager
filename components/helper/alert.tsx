@@ -19,8 +19,7 @@ export default function Alert({
 }: {
   title: string;
   description: string;
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  form: UseFormReturn | any | undefined;
+  form: UseFormReturn<Record<string, unknown>> | undefined;
   formId: string;
 }) {
   return (

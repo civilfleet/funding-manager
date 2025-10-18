@@ -20,8 +20,7 @@ export default function FormInputControl({
   isFilled = false,
   className,
 }: {
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  form: UseFormReturn | any | undefined;
+  form: UseFormReturn<Record<string, unknown>> | undefined;
   name: string;
   label?: string;
   placeholder: string;

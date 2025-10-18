@@ -67,10 +67,9 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
   const groups: Group[] = groupsData?.data || [];
 
   const form = useForm<ContactFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(
       isEditMode ? updateContactSchema : createContactSchema,
-    ) as any,
+    ) as import("react-hook-form").Resolver<ContactFormValues>,
     defaultValues: isEditMode
       ? {
           teamId,

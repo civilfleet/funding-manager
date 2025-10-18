@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check . --diagnostic-level error",
-    "check": "eslint . && tsc --noEmit",
+    "check": "biome check . --diagnostic-level error && tsc --noEmit",
     "postinstall": "prisma generate"
   },
   "dependencies": {
