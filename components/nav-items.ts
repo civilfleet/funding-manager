@@ -4,6 +4,7 @@ import {
   Building,
   Calendar,
   FolderOpen,
+  List,
   type LucideIcon,
   Scroll,
   Settings,
@@ -94,6 +95,12 @@ const navItems: {
       title: "Contacts",
       url: "contacts",
       icon: UserCircle2,
+      module: "CRM",
+    },
+    {
+      title: "Lists",
+      url: "lists",
+      icon: List,
       module: "CRM",
     },
     {

@@ -150,6 +150,7 @@ model Teams {
 
   Transaction Transaction[]
   contacts     Contact[]
+  contactLists ContactList[]
   events       Event[]
   eventRoles   EventRole[]
   groups       Group[]
@@ -247,10 +248,37 @@ model Contact {
   registrations     EventRegistration[]
   engagements       ContactEngagement[]
   changeLogs        ContactChangeLog[]
+  lists             ContactListMember[]
 
   @@index([groupId])
   @@index([teamId, groupId])
   @@unique([teamId, email])
+}
+
+model ContactList {
+  id          String              @id @default(uuid()) @unique
+  teamId      String
+  team        Teams               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name        String              @db.VarChar(255)
+  description String?             @db.Text
+  createdAt   DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime            @updatedAt @db.Timestamptz(6)
+  contacts    ContactListMember[]
+
+  @@index([teamId])
+}
+
+model ContactListMember {
+  id          String      @id @default(uuid()) @unique
+  listId      String
+  list        ContactList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  contactId   String
+  contact     Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now()) @db.Timestamptz(6)
+
+  @@unique([listId, contactId])
+  @@index([listId])
+  @@index([contactId])
 }
 
 model ContactAttribute {
