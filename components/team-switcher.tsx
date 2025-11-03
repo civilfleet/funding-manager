@@ -123,7 +123,7 @@ export function TeamSwitcher({
                 <DropdownMenuSeparator />
               </>
             )}
-            {teams.length > 0 && (
+            {teams.length > 0 ? (
               <>
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
                   Teams
@@ -143,8 +143,12 @@ export function TeamSwitcher({
                 ))}
                 <DropdownMenuSeparator />
               </>
+            ) : (
+              <DropdownMenuItem className="text-muted-foreground">
+                No teams available
+              </DropdownMenuItem>
             )}
-            {organizations.length > 0 && (
+            {organizations.length > 0 ? (
               <>
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
                   Organizations
@@ -163,6 +167,10 @@ export function TeamSwitcher({
                   </DropdownMenuItem>
                 ))}
               </>
+            ) : (
+              <DropdownMenuItem className="text-muted-foreground">
+                No organizations available
+              </DropdownMenuItem>
             )}
           </DropdownMenuContent>
         </DropdownMenu>

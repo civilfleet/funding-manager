@@ -520,12 +520,7 @@ const getUserModuleAccess = async (
   const groups = await getUserGroups(userId, teamId);
 
   if (!groups.length) {
-    const defaultGroup = await ensureDefaultGroup(teamId);
-    return defaultGroup.modulePermissions.length
-      ? defaultGroup.modulePermissions.map(
-          (permission) => permission.module as AppModule,
-        )
-      : [...APP_MODULES];
+    return [];
   }
 
   const modules = new Set<AppModule>();

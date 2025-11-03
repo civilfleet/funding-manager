@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { sendEmail } from "@/lib/nodemailer";
-import { handlePrismaError } from "@/lib/utils";
+import { getLoginUrl, handlePrismaError } from "@/lib/utils";
 import {
   createOrUpdateOrganization,
   getOrganizations,
@@ -47,27 +47,37 @@ export async function POST(req: Request) {
 
     // if teamId is provided, it means the organization is created by a team
     if (organizationData.teamId) {
+      const loginUrl = getLoginUrl();
+      const appUrl = getAppUrl();
+      const subject = appUrl
+        ? `You're In! Welcome to ${appUrl}.`
+        : "You're In! Welcome.";
+
       await Promise.all([
         sendEmail(
           {
             to: organization.email,
-            subject: "You’re In! Welcome to Partner App.",
+            subject,
             template: "welcome",
           },
           {
             name: organization.name,
             email: validatedData.email,
+            loginUrl,
+            appUrl,
           },
         ),
         sendEmail(
           {
             to: user?.email as string,
-            subject: "You’re In! Welcome to Partner App.",
+            subject,
             template: "welcome",
           },
           {
             name: user?.name,
             email: user?.email,
+            loginUrl,
+            appUrl,
           },
         ),
       ]);

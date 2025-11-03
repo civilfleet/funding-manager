@@ -54,3 +54,37 @@ export function calculateMonthsDuration(
       (1000 * 60 * 60 * 24 * 30),
   );
 }
+
+export function getAppUrl(): string {
+  const rawUrl =
+    process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "";
+
+  if (!rawUrl) {
+    return "";
+  }
+
+  try {
+    const parsed = new URL(rawUrl);
+    const origin = parsed.origin;
+    const pathname = parsed.pathname.replace(/\/$/, "");
+
+    if (!pathname || pathname === "/" || pathname === "/api/auth") {
+      return origin;
+    }
+
+    return `${origin}${pathname}`;
+  } catch {
+    return rawUrl.replace(/\/api\/auth\/?$/, "").replace(/\/$/, "");
+  }
+}
+
+export function getLoginUrl(path = "/"): string {
+  const baseUrl = getAppUrl();
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  if (!baseUrl) {
+    return normalizedPath;
+  }
+
+  return `${baseUrl}${normalizedPath}`;
+}

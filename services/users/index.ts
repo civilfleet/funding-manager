@@ -295,22 +295,84 @@ const getUsersForDonation = async ({
 const createUser = async (user: User) => {
   const teamId = user.teamId;
   const organizationId = user.organizationId;
-  const newUser = await prisma.user.create({
-    data: {
-      ...omit(user, ["organizationId", "teamId"]),
-      ...(organizationId && {
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email: user.email },
+    select: {
+      id: true,
+      roles: true,
+    },
+  });
+
+  const connectOrganizations = organizationId
+    ? {
         organizations: {
           connect: [{ id: organizationId }],
         },
-      }),
-      ...(teamId && {
+      }
+    : {};
+
+  const connectTeams = teamId
+    ? {
         teams: {
           connect: { id: teamId },
         },
-      }),
+      }
+    : {};
+
+  const updatableFields = [
+    "name",
+    "address",
+    "phone",
+    "postalCode",
+    "city",
+    "country",
+  ] as const;
+
+  if (existingUser) {
+    const updatedRoles = Array.from(
+      new Set([...(existingUser.roles || []), ...(user.roles || [])]),
+    );
+
+    const data: Record<string, unknown> = {
+      roles: {
+        set: updatedRoles,
+      },
+      ...connectOrganizations,
+      ...connectTeams,
+    };
+
+    for (const field of updatableFields) {
+      const value = user[field];
+      if (value !== undefined && value !== null) {
+        data[field] = value;
+      }
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { email: user.email },
+      data,
+    });
+
+    if (teamId) {
+      await ensureDefaultGroup(teamId);
+    }
+
+    return updatedUser;
+  }
+
+  const newUser = await prisma.user.create({
+    data: {
+      ...omit(user, ["organizationId", "teamId"]),
+      ...connectOrganizations,
+      ...connectTeams,
       fundingRequests: undefined,
     },
   });
+
+  if (teamId) {
+    await ensureDefaultGroup(teamId);
+  }
 
   return newUser;
 };
@@ -365,6 +427,15 @@ const deleteUser = async (
     }
 
     if (teamId) {
+      await prisma.userGroup.deleteMany({
+        where: {
+          userId,
+          group: {
+            teamId,
+          },
+        },
+      });
+
       // Remove user from team
       await prisma.user.update({
         where: { id: userId },

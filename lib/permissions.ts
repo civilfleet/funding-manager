@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getUserModuleAccess } from "@/services/groups";
 import { AppModule, Roles } from "@/types";
 
@@ -13,7 +13,7 @@ export const assertTeamModuleAccess = async (
   module: AppModule,
 ) => {
   if (!userId) {
-    notFound();
+    redirect("/");
   }
 
   if (roles?.includes(Roles.Admin)) {
@@ -23,7 +23,7 @@ export const assertTeamModuleAccess = async (
   const modules = await getUserModuleAccess(userId!, teamId);
 
   if (!modules.includes(module)) {
-    notFound();
+    redirect("/");
   }
 };
 

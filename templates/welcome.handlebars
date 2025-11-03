@@ -2,7 +2,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Welcome to PartnerApp</title>
+    <title>
+      Welcome to
+      {{#if appUrl}}{{appUrl}}{{else}}your new workspace{{/if}}
+    </title>
     <style>
       body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
       .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px
@@ -14,20 +17,32 @@
   </head>
   <body>
     <div class="container">
-      <div class="header">Welcome to PartnerApp!</div>
+      <div class="header">
+        Welcome to {{#if appUrl}}{{appUrl}}{{else}}your new workspace{{/if}}!
+      </div>
       <div class="content">
         <p>Hello {{name}},</p>
-        <p>You have now onboarded on PartnerApp. Now you can use all the
-          features available on the Partner App.</p>
-        <p>For more information, contact
-          <a
-            href="mailto:kontakt@civilfleet.org"
-          >kontakt@civilfleet.org</a>.</p>
+        <p>You now have access to
+          {{#if appUrl}}{{appUrl}}{{else}}your new workspace{{/if}}. Sign in to
+          explore everything that is available to you.</p>
+        {{#if loginUrl}}
+          <p>
+            <a
+              href="{{loginUrl}}"
+              style="display: inline-block; padding: 10px 18px; background-color: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-weight: 600;"
+            >Log in</a>
+          </p>
+          <p style="font-size: 14px; color: #555;">
+            If the button doesn't work, copy and paste this link into your browser:
+            <br />
+            <a href="{{loginUrl}}">{{loginUrl}}</a>
+          </p>
+        {{/if}}
         <p>Your login email is: <strong>{{email}}</strong></p>
       </div>
       <div class="footer">
         <p>Thanks,</p>
-        <p>The PartnerApp Team</p>
+        <p>{{#if appUrl}}{{appUrl}}{{else}}The Team{{/if}}</p>
       </div>
     </div>
   </body>

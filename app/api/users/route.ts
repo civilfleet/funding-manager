@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/nodemailer";
-import { handlePrismaError } from "@/lib/utils";
+import { getAppUrl, getLoginUrl, handlePrismaError } from "@/lib/utils";
 import { createUser, getUsers, getUsersForDonation } from "@/services/users";
 import { Roles } from "@/types";
 import { createUserSchema } from "@/validations/organizations";
@@ -66,15 +66,24 @@ export async function POST(req: Request) {
       });
     }
 
+    const loginUrl = getLoginUrl();
+    const appUrl = getAppUrl();
+
+    const subject = appUrl
+      ? `You're In! Welcome to ${appUrl}.`
+      : "You're In! Welcome.";
+
     await sendEmail(
       {
         to: validatedData.email,
-        subject: "You're In! Welcome to Partner App.",
+        subject,
         template: "welcome",
       },
       {
         name: validatedData.name,
         email: validatedData.email,
+        loginUrl,
+        appUrl,
       },
     );
 
