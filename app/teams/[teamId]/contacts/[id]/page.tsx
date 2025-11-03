@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { auth } from "@/auth";
 import ContactChangeHistory from "@/components/contact-change-history";
 import ContactEngagementHistory from "@/components/contact-engagement-history";
 import { Badge } from "@/components/ui/badge";
@@ -23,9 +22,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { assertTeamModuleAccess } from "@/lib/permissions";
 import { getContactById } from "@/services/contacts";
-import { AppModule, ContactAttributeType } from "@/types";
+import { ContactAttributeType } from "@/types";
 
 interface ContactDetailPageProps {
   params: Promise<{
@@ -90,15 +88,6 @@ export default async function ContactDetailPage({
   params,
 }: ContactDetailPageProps) {
   const { teamId, id } = await params;
-  const session = await auth();
-  await assertTeamModuleAccess(
-    {
-      teamId,
-      userId: session?.user?.userId,
-      roles: session?.user?.roles,
-    },
-    "CRM" satisfies AppModule,
-  );
   const contact = await getContactById(id, teamId);
 
   if (!contact) {

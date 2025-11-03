@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation";
-import { auth } from "@/auth";
 import ContactForm from "@/components/forms/contact";
-import { assertTeamModuleAccess } from "@/lib/permissions";
 import { getContactById } from "@/services/contacts";
-import { AppModule } from "@/types";
 
 interface EditContactPageProps {
   params: Promise<{
@@ -16,15 +13,6 @@ export default async function EditContactPage({
   params,
 }: EditContactPageProps) {
   const { teamId, id } = await params;
-  const session = await auth();
-  await assertTeamModuleAccess(
-    {
-      teamId,
-      userId: session?.user?.userId,
-      roles: session?.user?.roles,
-    },
-    "CRM" satisfies AppModule,
-  );
   const contact = await getContactById(id, teamId);
 
   if (!contact) {

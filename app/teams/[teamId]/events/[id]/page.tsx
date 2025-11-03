@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { auth } from "@/auth";
 import EventForm from "@/components/forms/event";
 import type { EventRegistrationRow } from "@/components/table/event-registration-columns";
 import EventRegistrationsTable from "@/components/table/event-registrations-table";
@@ -11,9 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { assertTeamModuleAccess } from "@/lib/permissions";
 import { getEventById, getEventRegistrations } from "@/services/events";
-import { AppModule } from "@/types";
 
 interface EventDetailPageProps {
   params: Promise<{ teamId: string; id: string }>;
@@ -23,16 +20,6 @@ export default async function EventDetailPage({
   params,
 }: EventDetailPageProps) {
   const { teamId, id } = await params;
-
-  const session = await auth();
-  await assertTeamModuleAccess(
-    {
-      teamId,
-      userId: session?.user?.userId,
-      roles: session?.user?.roles,
-    },
-    "CRM" satisfies AppModule,
-  );
 
   const event = await getEventById(id, teamId);
 

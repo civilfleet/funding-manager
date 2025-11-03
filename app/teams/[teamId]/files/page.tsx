@@ -1,7 +1,4 @@
-import { auth } from "@/auth";
 import FileTable from "@/components/table/file-table";
-import { assertTeamModuleAccess } from "@/lib/permissions";
-import { AppModule } from "@/types";
 
 interface PageProps {
   params: Promise<{
@@ -11,15 +8,6 @@ interface PageProps {
 export default async function Page({ params }: PageProps) {
   const teamId = (await params).teamId;
 
-  const session = await auth();
-  await assertTeamModuleAccess(
-    {
-      teamId,
-      userId: session?.user?.userId,
-      roles: session?.user?.roles,
-    },
-    "FUNDING" satisfies AppModule,
-  );
   return (
     <div className="p-4 w-full">
       <div className="flex justify-between">

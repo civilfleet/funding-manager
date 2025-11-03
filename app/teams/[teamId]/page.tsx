@@ -1,7 +1,5 @@
 import { Building, DollarSign, Settings, Users } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 import RecentActivity from "@/components/recent-activity";
 import {
   Card,
@@ -11,8 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import prisma from "@/lib/prisma";
-import { hasModuleAccess } from "@/lib/permissions";
-import { AppModule } from "@/types";
 
 interface TeamPageProps {
   params: Promise<{
@@ -22,24 +18,6 @@ interface TeamPageProps {
 
 export default async function TeamPage({ params }: TeamPageProps) {
   const { teamId } = await params;
-
-  const session = await auth();
-  if (!session) {
-    return redirect("/");
-  }
-
-  const canAccess = await hasModuleAccess(
-    {
-      teamId,
-      userId: session.user?.userId,
-      roles: session.user?.roles,
-    },
-    "CRM" satisfies AppModule,
-  );
-
-  if (!canAccess) {
-    return redirect("/");
-  }
 
   const team = await prisma.teams.findUnique({
     where: { id: teamId },
