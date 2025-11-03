@@ -52,12 +52,9 @@ async function sendEmail(
       hasContent: Boolean(emailContent.content),
     });
 
-    // Determine sender email based on provider
+    // Determine sender email
     const senderEmail =
-      emailContent?.from ??
-      process.env.BREVO_SENDER_EMAIL ??
-      process.env.SMTP_FROM ??
-      process.env.SMTP_USER;
+      emailContent?.from ?? process.env.SMTP_FROM ?? process.env.SMTP_USER;
 
     const info = await transporter.sendMail({
       from: senderEmail,

@@ -2,6 +2,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth, { DefaultSession } from "next-auth";
 import Nodemailer from "next-auth/providers/nodemailer";
 import authConfig from "./config/auth";
+import mailConfig from "./config/mail";
 import prisma from "./lib/prisma";
 import { Roles } from "./types";
 
@@ -24,15 +25,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [
     Nodemailer({
-      server: {
-        host: process.env.BREVO_HOST,
-        port: parseInt(process.env.BREVO_PORT || "587"),
-        auth: {
-          user: process.env.BREVO_USERNAME,
-          pass: process.env.BREVO_PASSWORD,
-        },
-      },
-      from: process.env.BREVO_SENDER_EMAIL,
+      server: mailConfig,
+      from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
       maxAge: 24 * 60 * 60, // 24 hours
     }),
   ],
