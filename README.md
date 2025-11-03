@@ -91,9 +91,20 @@ Submitted → Accepted → WaitingForSignature → Approved → FundsDisbursing 
    AWS_S3_BUCKET_NAME="your-bucket-name"
    AWS_REGION="us-east-1"
 
-   # Email (Brevo)
-   BREVO_API_KEY="your-brevo-api-key"
+   # Email Configuration (Option 1: Brevo - Recommended)
+   BREVO_HOST="smtp-relay.brevo.com"
+   BREVO_PORT="465"
+   BREVO_USERNAME="your-brevo-username"
+   BREVO_PASSWORD="your-brevo-password"
    BREVO_SENDER_EMAIL="noreply@yourdomain.com"
+
+   # Email Configuration (Option 2: Generic SMTP - Fallback)
+   # Only needed if Brevo is not configured
+   SMTP_HOST="smtp.gmail.com"
+   SMTP_PORT="587"
+   SMTP_USER="your-smtp-username"
+   SMTP_PASS="your-smtp-password"
+   SMTP_FROM="noreply@yourdomain.com"
 
    # Sentry (optional)
    SENTRY_DSN="your-sentry-dsn"
@@ -166,6 +177,41 @@ npx prisma studio        # Open Prisma Studio
 - **Role-based Access Control**: Organization, Team, and Admin roles
 - **Route Protection**: Middleware handles access control and redirects
 - **Session Management**: Includes user roles, organizationId, and teamId
+
+## 📧 Email Configuration
+
+The application supports two email providers with automatic fallback:
+
+### Option 1: Brevo (Recommended)
+Brevo is the primary email provider. Configure these variables:
+```env
+BREVO_HOST="smtp-relay.brevo.com"
+BREVO_PORT="465"
+BREVO_SECURE="true"
+BREVO_USERNAME="your-brevo-username"
+BREVO_PASSWORD="your-brevo-password"
+BREVO_SENDER_EMAIL="noreply@yourdomain.com"
+```
+
+### Option 2: Generic SMTP (Fallback)
+If Brevo is not configured, the system automatically falls back to generic SMTP:
+```env
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_SECURE="false"
+SMTP_USER="your-smtp-username"
+SMTP_PASS="your-smtp-password"
+SMTP_FROM="noreply@yourdomain.com"
+```
+
+**Common SMTP Providers:**
+- **Gmail**: `smtp.gmail.com:587` (requires app-specific password)
+- **Outlook**: `smtp-mail.outlook.com:587`
+- **SendGrid**: `smtp.sendgrid.net:587`
+- **Mailgun**: `smtp.mailgun.org:587`
+- **Amazon SES**: `email-smtp.[region].amazonaws.com:587`
+
+**Note**: If neither Brevo nor SMTP is configured, the application will attempt to use localhost:25, which will likely fail. At least one email provider must be configured for the application to send emails.
 
 ## 🚀 Deployment
 

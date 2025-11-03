@@ -3,11 +3,14 @@ import handlebars from "handlebars";
 import nodemailer from "nodemailer";
 import path from "path";
 import { EMAIL_CONTENT } from "@/types";
-import config from "../config/mail";
+import config, { mailProvider } from "../config/mail";
 
 const transporter = nodemailer.createTransport({
   ...config,
 });
+
+// Log the email provider being used
+console.info(`[mail] Email provider configured: ${mailProvider}`);
 
 const compileTemplate = (
   templateName: string,
@@ -49,8 +52,15 @@ async function sendEmail(
       hasContent: Boolean(emailContent.content),
     });
 
+    // Determine sender email based on provider
+    const senderEmail =
+      emailContent?.from ??
+      process.env.BREVO_SENDER_EMAIL ??
+      process.env.SMTP_FROM ??
+      process.env.SMTP_USER;
+
     const info = await transporter.sendMail({
-      from: emailContent?.from ?? process.env.BREVO_SENDER_EMAIL,
+      from: senderEmail,
       to: emailContent.to,
       subject: emailContent.subject,
       html,

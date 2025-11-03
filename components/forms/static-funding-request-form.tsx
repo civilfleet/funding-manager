@@ -30,7 +30,8 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 
 interface StaticFundingRequestFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Accept any form that includes at least these static fields
+  // biome-ignore lint/suspicious/noExplicitAny: Component needs to work with dynamic form schemas
   form: UseFormReturn<any>;
 }
 
