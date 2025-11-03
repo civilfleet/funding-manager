@@ -30,7 +30,8 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 
 interface StaticFundingRequestFormProps {
-  form: UseFormReturn<Record<string, unknown>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  form: UseFormReturn<any>;
 }
 
 export default function StaticFundingRequestForm({

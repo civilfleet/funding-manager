@@ -65,7 +65,7 @@ export function DataSelectBox({
 
             return (
               <SelectItem key={idx} value={String(optionId)}>
-                {optionValue}
+                {String(optionValue)}
               </SelectItem>
             );
           })}

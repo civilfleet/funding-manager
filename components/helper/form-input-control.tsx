@@ -1,6 +1,6 @@
 import { CheckCircle2 } from "lucide-react";
 import React from "react";
-import { FieldValues, UseFormReturn } from "react-hook-form";
+import { FieldValues, Path, UseFormReturn } from "react-hook-form";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import {
   FormControl,
@@ -20,8 +20,8 @@ export default function FormInputControl<TFieldValues extends FieldValues>({
   isFilled = false,
   className,
 }: {
-  form: UseFormReturn<TFieldValues> | undefined;
-  name: string;
+  form: UseFormReturn<TFieldValues>;
+  name: Path<TFieldValues>;
   label?: string;
   placeholder: string;
   disabled?: boolean;
@@ -51,7 +51,7 @@ export default function FormInputControl<TFieldValues extends FieldValues>({
                 )}
                 {...field}
               />
-              {isFilled && !form.formState.errors[name] && (
+              {isFilled && !form.formState.errors[name as string] && (
                 <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500" />
               )}
             </div>

@@ -1,4 +1,4 @@
-import { UseFormReturn } from "react-hook-form";
+import { FieldValues, UseFormReturn } from "react-hook-form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,7 +11,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "../ui/button";
-export default function Alert({
+export default function Alert<TFieldValues extends FieldValues>({
   title = "Are you absolutely sure?",
   description = "This action cannot be undone. ",
   form,
@@ -19,7 +19,7 @@ export default function Alert({
 }: {
   title: string;
   description: string;
-  form: UseFormReturn<Record<string, unknown>> | undefined;
+  form: UseFormReturn<TFieldValues>;
   formId: string;
 }) {
   return (
