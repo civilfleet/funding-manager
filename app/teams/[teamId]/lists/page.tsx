@@ -8,15 +8,7 @@ export default async function ContactListsPage({
   const { teamId } = await params;
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Contact Lists</h1>
-        <p className="text-muted-foreground mt-2">
-          Organize your contacts into lists for better management and targeted
-          communications.
-        </p>
-      </div>
-
+    <div className="p-4">
       <ContactListsManager teamId={teamId} />
     </div>
   );
