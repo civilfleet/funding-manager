@@ -1,6 +1,6 @@
 import { CheckCircle2 } from "lucide-react";
 import React from "react";
-import { UseFormReturn } from "react-hook-form";
+import { FieldValues, UseFormReturn } from "react-hook-form";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import {
   FormControl,
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 
-export default function FormInputControl({
+export default function FormInputControl<TFieldValues extends FieldValues>({
   form,
   name,
   label,
@@ -20,7 +20,7 @@ export default function FormInputControl({
   isFilled = false,
   className,
 }: {
-  form: UseFormReturn<Record<string, unknown>> | undefined;
+  form: UseFormReturn<TFieldValues> | undefined;
   name: string;
   label?: string;
   placeholder: string;
