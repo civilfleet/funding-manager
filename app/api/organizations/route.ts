@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { sendEmail } from "@/lib/nodemailer";
-import { getLoginUrl, handlePrismaError } from "@/lib/utils";
+import { getAppUrl, getLoginUrl, handlePrismaError } from "@/lib/utils";
 import {
   createOrUpdateOrganization,
   getOrganizations,

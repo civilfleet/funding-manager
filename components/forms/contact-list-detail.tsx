@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import useSWR from "swr";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ type ContactList = {
   contacts: Contact[];
 };
 
-type FormValues = z.infer<typeof createContactListSchema>;
+type FormValues = z.input<typeof createContactListSchema>;
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 

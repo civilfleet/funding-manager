@@ -4,7 +4,7 @@ export const createContactListSchema = z.object({
   teamId: z.string().uuid(),
   name: z.string().min(1, "Name is required").max(255),
   description: z.string().optional(),
-  contactIds: z.array(z.string().uuid()).optional().default([]),
+  contactIds: z.array(z.string().uuid()).default([]),
 });
 
 export const updateContactListSchema = z.object({
