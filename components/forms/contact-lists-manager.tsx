@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Pencil, Plus, Trash2, Users } from "lucide-react";
+import { Check, Copy, Loader2, Pencil, Plus, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -22,6 +22,11 @@ type ContactList = {
   name: string;
   description?: string;
   contactCount: number;
+  contacts: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  }[];
 };
 
 interface ContactListsManagerProps {
@@ -36,6 +41,7 @@ export default function ContactListsManager({
   const router = useRouter();
   const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [copiedListId, setCopiedListId] = useState<string | null>(null);
 
   const { data: listsData, mutate } = useSWR(
     `/api/contact-lists?teamId=${teamId}`,
@@ -89,6 +95,73 @@ export default function ContactListsManager({
       });
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleCopyContacts = async (list: ContactList) => {
+    if (!list.contacts?.length) {
+      toast({
+        title: "No contacts to copy",
+        description: "Add contacts to this list to copy them.",
+      });
+      return;
+    }
+
+    if (typeof navigator === "undefined" || !navigator.clipboard) {
+      toast({
+        title: "Clipboard unavailable",
+        description: "Copying contacts is not supported in this environment.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const contactsText = list.contacts
+      .map((contact) => {
+        const name = contact.name?.trim();
+        const email = contact.email?.trim();
+
+        if (name && email) {
+          return `${name} <${email}>`;
+        }
+
+        if (email) {
+          return email;
+        }
+
+        return name ?? "";
+      })
+      .filter((entry) => entry.length > 0)
+      .join("\n");
+
+    if (!contactsText) {
+      toast({
+        title: "Nothing to copy",
+        description:
+          "Contacts in this list are missing names or emails to copy.",
+      });
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(contactsText);
+      setCopiedListId(list.id);
+      toast({
+        title: "Contacts copied",
+        description: `Copied ${list.contacts.length} contact${
+          list.contacts.length === 1 ? "" : "s"
+        } to your clipboard.`,
+      });
+      setTimeout(() => setCopiedListId((current) =>
+        current === list.id ? null : current,
+      ), 2000);
+    } catch (error) {
+      toast({
+        title: "Unable to copy contacts",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -158,6 +231,19 @@ export default function ContactListsManager({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleCopyContacts(list)}
+                          aria-label="Copy contacts"
+                          title="Copy contacts"
+                        >
+                          {copiedListId === list.id ? (
+                            <Check className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
                         <Button
                           asChild
                           variant="ghost"
