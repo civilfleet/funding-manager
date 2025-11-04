@@ -168,7 +168,9 @@ export default function ContactTable({ teamId }: ContactTableProps) {
     return data.data as ContactRow[];
   }, [data]);
 
-  const attributeKeys = useMemo(() => {
+  const [attributeKeyOptions, setAttributeKeyOptions] = useState<string[]>([]);
+
+  useEffect(() => {
     const keys = new Set<string>();
     contacts.forEach((contact) => {
       contact.profileAttributes?.forEach((attribute) => {
@@ -177,11 +179,16 @@ export default function ContactTable({ teamId }: ContactTableProps) {
         }
       });
     });
-    return Array.from(keys).sort((a, b) => a.localeCompare(b));
+
+    const sortedKeys = Array.from(keys).sort((a, b) => a.localeCompare(b));
+
+    if (sortedKeys.length) {
+      setAttributeKeyOptions(sortedKeys);
+    }
   }, [contacts]);
 
   useEffect(() => {
-    if (!attributeKeys.length) {
+    if (!attributeKeyOptions.length) {
       return;
     }
 
@@ -190,17 +197,17 @@ export default function ContactTable({ teamId }: ContactTableProps) {
       const updated = previous.map((filter) => {
         if (
           filter.type === "attribute" &&
-          !attributeKeys.includes(filter.key)
+          !attributeKeyOptions.includes(filter.key)
         ) {
           changed = true;
-          return { ...filter, key: attributeKeys[0] };
+          return { ...filter, key: attributeKeyOptions[0] };
         }
         return filter;
       });
 
       return changed ? updated : previous;
     });
-  }, [attributeKeys]);
+  }, [attributeKeyOptions]);
 
   if (error) {
     toast({
@@ -285,7 +292,7 @@ export default function ContactTable({ teamId }: ContactTableProps) {
             operator: "has",
           };
         case "attribute":
-          if (!attributeKeys.length) {
+          if (!attributeKeyOptions.length) {
             return {
               type: "attribute",
               key: "",
@@ -295,7 +302,7 @@ export default function ContactTable({ teamId }: ContactTableProps) {
           }
           return {
             type: "attribute",
-            key: attributeKeys[0],
+            key: attributeKeyOptions[0],
             operator: "contains",
             value: "",
           };
@@ -319,11 +326,11 @@ export default function ContactTable({ teamId }: ContactTableProps) {
           };
       }
     },
-    [attributeKeys, eventRoles, groups],
+    [attributeKeyOptions, eventRoles, groups],
   );
 
   const handleAddFilter = (option: FilterOption) => {
-    if (option.type === "attribute" && attributeKeys.length === 0) {
+    if (option.type === "attribute" && attributeKeyOptions.length === 0) {
       return;
     }
 
@@ -334,6 +341,9 @@ export default function ContactTable({ teamId }: ContactTableProps) {
 
       if (option.type === "contactField") {
         return filter.type === "contactField" && filter.field === option.field;
+      }
+      if (option.type === "attribute") {
+        return false;
       }
 
       return true;
@@ -422,7 +432,7 @@ export default function ContactTable({ teamId }: ContactTableProps) {
       return true;
     }
 
-    if (option.type === "attribute" && attributeKeys.length === 0) {
+    if (option.type === "attribute" && attributeKeyOptions.length === 0) {
       return true;
     }
 
@@ -487,7 +497,7 @@ export default function ContactTable({ teamId }: ContactTableProps) {
           </div>
         );
       case "attribute": {
-        if (attributeKeys.length === 0) {
+        if (attributeKeyOptions.length === 0) {
           return (
             <span className="text-sm text-muted-foreground">
               No attributes available
@@ -495,9 +505,9 @@ export default function ContactTable({ teamId }: ContactTableProps) {
           );
         }
 
-        const selectedKey = attributeKeys.includes(filter.key)
+        const selectedKey = attributeKeyOptions.includes(filter.key)
           ? filter.key
-          : attributeKeys[0] ?? "";
+          : attributeKeyOptions[0] ?? "";
 
         return (
           <div className="flex flex-wrap items-center gap-2">
@@ -510,13 +520,13 @@ export default function ContactTable({ teamId }: ContactTableProps) {
                     : current,
                 )
               }
-              disabled={attributeKeys.length === 0}
+              disabled={attributeKeyOptions.length === 0}
             >
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Select attribute" />
               </SelectTrigger>
               <SelectContent>
-                {attributeKeys.map((key) => (
+                {attributeKeyOptions.map((key) => (
                   <SelectItem key={key} value={key}>
                     {key}
                   </SelectItem>
