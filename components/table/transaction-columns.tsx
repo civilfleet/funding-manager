@@ -1,4 +1,4 @@
-import { ColumnDef, Row } from "@tanstack/react-table";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import formatCurrency from "@/components/helper/format-currency";
@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Transaction } from "@/types";
+import type { Transaction } from "@/types";
 import { UploadReceiptModal } from "../upload-receipt-modal";
 
 const ActionsCell = ({ row }: { row: Row<Transaction> }) => {

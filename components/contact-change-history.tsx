@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ChangeAction, ContactChangeLog } from "@/types";
+import { ChangeAction, type ContactChangeLog } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 

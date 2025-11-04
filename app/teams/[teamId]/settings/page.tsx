@@ -1,5 +1,5 @@
 import { getEmailTemplates } from "@/services/email-templates";
-import { EmailTemplate } from "@/types";
+import type { EmailTemplate } from "@/types";
 import TeamSettingsTabs from "./team-settings-tabs";
 
 interface PageProps {

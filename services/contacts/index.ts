@@ -7,9 +7,9 @@ import {
 import { ensureDefaultGroup, mapGroup } from "@/services/groups";
 import {
   ContactAttributeType,
-  ContactLocationValue,
-  ContactProfileAttribute,
-  Contact as ContactType,
+  type ContactLocationValue,
+  type ContactProfileAttribute,
+  type Contact as ContactType,
 } from "@/types";
 
 type CreateContactInput = {

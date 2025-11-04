@@ -1,4 +1,4 @@
-import { S3, S3ClientConfig } from "@aws-sdk/client-s3";
+import { S3, type S3ClientConfig } from "@aws-sdk/client-s3";
 
 interface S3ClientCredentials {
   accessKeyId: string;

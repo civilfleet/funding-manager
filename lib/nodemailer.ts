@@ -2,7 +2,7 @@ import fs from "fs";
 import handlebars from "handlebars";
 import nodemailer from "nodemailer";
 import path from "path";
-import { EMAIL_CONTENT } from "@/types";
+import type { EMAIL_CONTENT } from "@/types";
 import config, { mailProvider } from "../config/mail";
 
 const transporter = nodemailer.createTransport({

@@ -1,20 +1,28 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.6/schema.json",
-  "vcs": {
-    "enabled": false,
-    "clientKind": "git",
-    "useIgnoreFile": false
-  },
+  "$schema": "https://biomejs.dev/schemas/2.3.3/schema.json",
   "files": {
-    "ignoreUnknown": false,
+    "ignoreUnknown": true,
     "includes": [
       "**",
-      "!.*/**",
-      "!node_modules/**",
-      "!.next/**",
-      "!out/**",
-      "!build/**",
-      "!next-env.d.ts"
+      "!.*",
+      "!node_modules",
+      "!.next",
+      "!out",
+      "!build",
+      "!.yarn",
+      "!.vercel",
+      "!dist",
+      "!coverage",
+      "!public",
+      "!prisma/migrations",
+      "!**/*.d.ts",
+      "!**/*.log",
+      "!**/*.lock",
+      "!**/*.hbs",
+      "!templates",
+      "!docs",
+      "!next-env.d.ts",
+      "!tsconfig.tsbuildinfo"
     ]
   },
   "formatter": {
@@ -24,63 +32,15 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": false,
-      "a11y": {
-        "noAriaUnsupportedElements": "warn",
-        "useAltText": "warn",
-        "useAriaPropsForRole": "warn",
-        "useAriaPropsSupportedByRole": "warn",
-        "useValidAriaProps": "warn",
-        "useValidAriaValues": "warn"
-      },
-      "complexity": {
-        "noArguments": "error",
-        "noUselessTypeConstraint": "error"
-      },
+      "recommended": true,
       "correctness": {
-        "noChildrenProp": "error",
-        "noConstAssign": "off",
-        "noGlobalObjectCalls": "off",
-        "noInvalidBuiltinInstantiation": "off",
-        "noInvalidConstructorSuper": "off",
-        "noSetterReturn": "off",
-        "noUndeclaredVariables": "off",
-        "noUnreachable": "off",
-        "noUnreachableSuper": "off",
-        "noUnusedVariables": "warn",
-        "useExhaustiveDependencies": "warn",
-        "useHookAtTopLevel": "error",
-        "useJsxKeyInIterable": "error"
-      },
-      "security": {
-        "noDangerouslySetInnerHtmlWithChildren": "error"
-      },
-      "style": {
-        "noCommonJs": "error",
-        "noNamespace": "error",
-        "useArrayLiterals": "error",
-        "useAsConstAssertion": "error",
-        "useConst": "error"
+        "noUnusedVariables": "warn"
       },
       "suspicious": {
-        "noClassAssign": "off",
-        "noCommentText": "error",
-        "noDuplicateClassMembers": "off",
-        "noDuplicateJsxProps": "error",
-        "noDuplicateObjectKeys": "off",
-        "noDuplicateParameters": "off",
-        "noExplicitAny": "error",
-        "noExtraNonNullAssertion": "error",
-        "noFunctionAssign": "off",
-        "noImportAssign": "off",
-        "noMisleadingInstantiator": "error",
-        "noRedeclare": "off",
-        "noUnsafeDeclarationMerging": "error",
-        "noUnsafeNegation": "off",
-        "noVar": "error",
-        "noWith": "off",
-        "useGetterReturn": "off",
-        "useNamespaceKeyword": "error"
+        "noExplicitAny": "warn"
+      },
+      "style": {
+        "noCommonJs": "off"
       }
     },
     "includes": [
@@ -89,115 +49,36 @@
       "!.next/**",
       "!out/**",
       "!build/**",
-      "!next-env.d.ts"
+      "!.yarn/**",
+      "!.vercel/**",
+      "!public/**",
+      "!prisma/migrations/**",
+      "!**/*.d.ts",
+      "!**/*.hbs",
+      "!templates/**",
+      "!docs/**",
+      "!next-env.d.ts",
+      "!tsconfig.tsbuildinfo"
     ]
   },
   "javascript": {
     "formatter": {
       "quoteStyle": "double"
-    },
-    "globals": [
-      "onanimationend",
-      "onstorage",
-      "ondragend",
-      "exports",
-      "onloadeddata",
-      "onlostpointercapture",
-      "onanimationiteration",
-      "onfocus",
-      "onkeyup",
-      "onmousedown",
-      "onoffline",
-      "onplay",
-      "onafterprint",
-      "onanimationstart",
-      "onprogress",
-      "onpause",
-      "onended",
-      "onclick",
-      "onpointerover",
-      "onmouseout",
-      "onloadstart",
-      "oncanplay",
-      "ondblclick",
-      "onappinstalled",
-      "onpointermove",
-      "ontoggle",
-      "ondrag",
-      "onchange",
-      "oncontextmenu",
-      "onmessage",
-      "onblur",
-      "onabort",
-      "onpointerdown",
-      "onbeforeinstallprompt",
-      "oncancel",
-      "onbeforeprint",
-      "onpointerout",
-      "oncuechange",
-      "ongotpointercapture",
-      "onsearch",
-      "onsubmit",
-      "onloadedmetadata",
-      "onpointerup",
-      "onstalled",
-      "onlanguagechange",
-      "onreset",
-      "onsuspend",
-      "onerror",
-      "onmouseenter",
-      "onscroll",
-      "onload",
-      "onresize",
-      "onmouseover",
-      "ondragover",
-      "ondragstart",
-      "oninput",
-      "onpagehide",
-      "oncanplaythrough",
-      "onmousemove",
-      "oninvalid",
-      "ontimeupdate",
-      "onratechange",
-      "ondurationchange",
-      "onmouseup",
-      "onmessageerror",
-      "ondevicemotion",
-      "onkeypress",
-      "onwheel",
-      "onpointerleave",
-      "location",
-      "onauxclick",
-      "ononline",
-      "onselect",
-      "ondrop",
-      "onkeydown",
-      "onclose",
-      "ondeviceorientationabsolute",
-      "ontransitionend",
-      "onpageshow",
-      "ondeviceorientation",
-      "onseeking",
-      "OffscreenCanvas",
-      "onpointercancel",
-      "onunload",
-      "onmouseleave",
-      "onrejectionhandled",
-      "ondragleave",
-      "onseeked",
-      "onhashchange",
-      "onwaiting",
-      "onpointerenter",
-      "onunhandledrejection",
-      "ondragenter",
-      "onpopstate",
-      "onmousewheel",
-      "onemptied",
-      "onbeforeunload",
-      "onplaying",
-      "onvolumechange"
-    ]
+    }
   },
+  "overrides": [
+    {
+      "includes": ["**/*.config.*", "scripts/**/*.{ts,tsx,js}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noCommonJs": "off"
+          }
+        }
+      }
+    }
+    
+  ],
   "assist": {
     "enabled": true,
     "actions": {

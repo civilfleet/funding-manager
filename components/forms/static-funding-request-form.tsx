@@ -8,7 +8,7 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import {
   Card,
   CardContent,

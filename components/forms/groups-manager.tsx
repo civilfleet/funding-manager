@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
-import { z } from "zod";
+import type { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +37,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { APP_MODULES, AppModule } from "@/types";
+import { APP_MODULES, type AppModule } from "@/types";
 import { createGroupSchema } from "@/validations/groups";
 
 type Group = {

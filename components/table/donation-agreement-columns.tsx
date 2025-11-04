@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { truncate } from "lodash";
 import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DonationAgreement } from "@/types";
+import type { DonationAgreement } from "@/types";
 
 export const columns: ColumnDef<DonationAgreement>[] = [
   {

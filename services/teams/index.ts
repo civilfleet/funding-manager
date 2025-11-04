@@ -2,7 +2,7 @@ import _, { update } from "lodash";
 import prisma from "@/lib/prisma";
 import { ensureDefaultGroup } from "@/services/groups";
 import { Roles } from "@/types";
-import { CreateTeamInput } from "@/validations/team";
+import type { CreateTeamInput } from "@/validations/team";
 
 const getTeamsByRoles = async (roles: string[] | null) => {
   return prisma.teams.findMany({

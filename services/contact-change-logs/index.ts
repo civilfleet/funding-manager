@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { ChangeAction, ContactChangeLog } from "@/types";
+import { ChangeAction, type ContactChangeLog } from "@/types";
 
 type ChangeLogMetadata = Prisma.JsonObject;
 

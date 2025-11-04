@@ -1,6 +1,6 @@
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { File } from "@/types";
+import type { File } from "@/types";
 export const columns: ColumnDef<File>[] = [
   {
     accessorKey: "organization",

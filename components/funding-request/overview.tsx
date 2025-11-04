@@ -33,7 +33,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { calculateMonthsDuration } from "@/lib/utils";
 // Types
-import { FormSection, type FundingRequest } from "@/types";
+import type { FormSection, FundingRequest } from "@/types";
 
 const FundingRequestOverview = ({ data }: { data: FundingRequest }) => {
   const [formConfiguration, setFormConfiguration] = useState<FormSection[]>([]);

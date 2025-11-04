@@ -7,7 +7,7 @@ import FormInputControl from "@/components/helper/form-input-control";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
-import { FileTypes, FundingRequest, FundingStatus } from "@/types";
+import { type FileTypes, type FundingRequest, FundingStatus } from "@/types";
 
 const amountOfferSchema = z.object({
   amountAgreed: z.coerce.number(),

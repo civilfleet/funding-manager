@@ -50,7 +50,7 @@ export async function PATCH(
     // Start a transaction to handle all updates
     const team = await prisma.$transaction(async (tx) => {
       // Update bank details if provided
-      let bankDetailsId = undefined;
+      let bankDetailsId ;
       if (bankDetails) {
         const existingTeam = await tx.teams.findUnique({
           where: { id: teamId },

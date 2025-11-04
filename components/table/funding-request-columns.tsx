@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link"; // Import Link
 // import { MoreHorizontal } from "lucide-react"; // No longer needed
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 //   DropdownMenuSeparator,
 //   DropdownMenuTrigger,
 // } from "@/components/ui/dropdown-menu"; // No longer needed
-import { FundingRequest } from "@/types";
+import type { FundingRequest } from "@/types";
 import { StatusBadge } from "../helper/status-badge";
 
 export const columns: ColumnDef<FundingRequest>[] = [

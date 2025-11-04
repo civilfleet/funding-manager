@@ -1,14 +1,14 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import {
   ContactAttributeType,
-  ContactEvent,
-  ContactProfileAttribute,
+  type ContactEvent,
+  type ContactProfileAttribute,
 } from "@/types";
 
 export type ContactRow = {

@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { FieldType, FormField, FormSection } from "@/types";
+import { FieldType, FormField, type FormSection } from "@/types";
 
 export async function getFormConfiguration(
   teamId: string,

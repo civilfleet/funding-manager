@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { FileTypes } from "@/types";
+import type { FileTypes } from "@/types";
 import FileUpload from "../file-uploader";
 import ButtonControl from "../helper/button-control";
 import { Form } from "../ui/form";

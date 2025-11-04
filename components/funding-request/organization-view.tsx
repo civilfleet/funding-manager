@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FundingRequest } from "@/types";
+import type { FundingRequest } from "@/types";
 
 const OrganizationView = ({ data }: { data: FundingRequest }) => {
   return (

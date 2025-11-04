@@ -6,7 +6,7 @@ import {
   createFundingRequest,
   getFundingRequests,
 } from "@/services/funding-request";
-import { FundingStatus } from "@/types";
+import type { FundingStatus } from "@/types";
 import { createFundingRequestSchema } from "@/validations/funding-request";
 
 export async function GET(req: Request) {

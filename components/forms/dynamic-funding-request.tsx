@@ -53,8 +53,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getDefaultFormConfiguration } from "@/services/form-config";
 import {
   FieldType,
-  FormField as FormFieldType,
-  FormSection,
+  type FormField as FormFieldType,
+  type FormSection,
   FundingStatus,
 } from "@/types";
 import FileUpload from "../file-uploader";
@@ -88,7 +88,7 @@ export default function DynamicFundingRequest({
           case FieldType.TEXT:
           case FieldType.TEXTAREA:
           case FieldType.EMAIL:
-          case FieldType.URL:
+          case FieldType.URL: {
             let stringSchema = z.string();
             if (field.isRequired) {
               stringSchema = stringSchema.min(1, `${field.label} is required`);
@@ -113,8 +113,9 @@ export default function DynamicFundingRequest({
             }
             fieldSchema = stringSchema;
             break;
+          }
 
-          case FieldType.NUMBER:
+          case FieldType.NUMBER: {
             let numberSchema = z.coerce.number();
             if (field.isRequired) {
               numberSchema = numberSchema.min(0, `${field.label} is required`);
@@ -133,8 +134,9 @@ export default function DynamicFundingRequest({
             }
             fieldSchema = numberSchema;
             break;
+          }
 
-          case FieldType.DATE:
+          case FieldType.DATE: {
             let dateSchema = z.string();
             if (field.isRequired) {
               dateSchema = dateSchema.min(1, `${field.label} is required`);
@@ -146,6 +148,7 @@ export default function DynamicFundingRequest({
               },
             );
             break;
+          }
 
           case FieldType.SELECT:
           case FieldType.RADIO:
@@ -172,7 +175,7 @@ export default function DynamicFundingRequest({
             }
             break;
 
-          case FieldType.MULTISELECT:
+          case FieldType.MULTISELECT: {
             let arraySchema = z.array(z.string());
             if (field.isRequired) {
               arraySchema = arraySchema.min(
@@ -182,8 +185,9 @@ export default function DynamicFundingRequest({
             }
             fieldSchema = arraySchema;
             break;
+          }
 
-          case FieldType.CHECKBOX:
+          case FieldType.CHECKBOX: {
             const boolSchema = z.boolean();
             if (field.isRequired) {
               fieldSchema = boolSchema.refine((val) => val === true, {
@@ -193,8 +197,9 @@ export default function DynamicFundingRequest({
               fieldSchema = boolSchema;
             }
             break;
+          }
 
-          default:
+          default: {
             let defaultSchema = z.string();
             if (field.isRequired) {
               defaultSchema = defaultSchema.min(
@@ -203,6 +208,7 @@ export default function DynamicFundingRequest({
               );
             }
             fieldSchema = defaultSchema;
+          }
         }
 
         if (!field.isRequired && field.type !== FieldType.CHECKBOX) {

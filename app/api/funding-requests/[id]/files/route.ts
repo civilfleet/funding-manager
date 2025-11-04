@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { sendEmail } from "@/lib/nodemailer";
 import { handlePrismaError } from "@/lib/utils";
 import { uploadFundingRequestFile } from "@/services/funding-request";
-import { FileTypes } from "@/types";
+import type { FileTypes } from "@/types";
 
 export async function PUT(
   req: Request,

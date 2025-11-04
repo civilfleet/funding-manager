@@ -1,8 +1,8 @@
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
-import { FileTypes, FundingStatus } from "@/types";
+import { type FileTypes, FundingStatus } from "@/types";
 
 type FundingRequestData = {
   id?: string;

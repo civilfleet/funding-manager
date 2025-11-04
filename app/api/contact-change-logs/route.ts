@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { handlePrismaError } from "@/lib/utils";
 import { getContactChangeLogs } from "@/services/contact-change-logs";
 

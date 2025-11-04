@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getUserModuleAccess } from "@/services/groups";
-import { AppModule, Roles } from "@/types";
+import { type AppModule, Roles } from "@/types";
 
 interface TeamModuleAccessArgs {
   teamId: string;

@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { EmailTemplate } from "@/types";
+import type { EmailTemplate } from "@/types";
 
 const getEmailTemplateByType = async (teamId: string, type: string) => {
   const template = await prisma.emailTemplates.findFirst({

@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { ExternalLink, File, Mail } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { FieldType, FormField, FormFieldOption } from "@/types";
+import { FieldType, type FormField, type FormFieldOption } from "@/types";
 
 interface DynamicFieldRendererProps {
   field: FormField;
@@ -22,7 +22,7 @@ const DynamicFieldRenderer = ({ field, value }: DynamicFieldRendererProps) => {
       case FieldType.TEXTAREA:
         return <span className="whitespace-pre-wrap">{String(value)}</span>;
 
-      case FieldType.NUMBER:
+      case FieldType.NUMBER: {
         const numValue = Number(value);
         return (
           <span className="font-medium">
@@ -32,6 +32,7 @@ const DynamicFieldRenderer = ({ field, value }: DynamicFieldRendererProps) => {
             }).format(numValue)}
           </span>
         );
+      }
 
       case FieldType.DATE:
         try {
@@ -70,7 +71,7 @@ const DynamicFieldRenderer = ({ field, value }: DynamicFieldRendererProps) => {
         );
 
       case FieldType.SELECT:
-      case FieldType.RADIO:
+      case FieldType.RADIO: {
         const selectedOption = field.options?.find(
           (option: FormFieldOption) => option.value === value,
         );
@@ -79,6 +80,7 @@ const DynamicFieldRenderer = ({ field, value }: DynamicFieldRendererProps) => {
             {selectedOption?.label || String(value)}
           </Badge>
         );
+      }
 
       case FieldType.MULTISELECT:
         if (Array.isArray(value)) {

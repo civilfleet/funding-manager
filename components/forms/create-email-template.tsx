@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FileText } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
+import type * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { EMAIL_TEMPLATES_TYPES } from "@/constants";
 import { useToast } from "@/hooks/use-toast";
-import { EmailTemplate } from "@/types";
+import type { EmailTemplate } from "@/types";
 import { createEmailTemplateSchema } from "@/validations/email-templates";
 import { EmailEditor } from "../email-editor";
 

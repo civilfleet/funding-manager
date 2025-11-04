@@ -5,7 +5,7 @@ import Link from "next/link";
 import { redirect, useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import type { z } from "zod";
 import FileUpload from "@/components/file-uploader";
 import ButtonControl from "@/components/helper/button-control";
 import FormInputControl from "@/components/helper/form-input-control";

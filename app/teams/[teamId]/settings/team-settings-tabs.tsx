@@ -8,7 +8,7 @@ import FormConfigurationManager from "@/components/forms/form-configuration-mana
 import StrategicPrioritiesForm from "@/components/forms/strategic-priorities";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EmailTemplate } from "@/types";
+import type { EmailTemplate } from "@/types";
 
 interface TeamSettingsTabsProps {
   teamId: string;

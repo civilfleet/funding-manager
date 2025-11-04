@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { FundingRequest, FundingStatus } from "@/types";
+import { type FundingRequest, FundingStatus } from "@/types";
 
 interface CreateTransactionFormProps {
   fundingRequest?: FundingRequest;

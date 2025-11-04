@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { handlePrismaError } from "@/lib/utils";
 import { addUsersToGroup, removeUsersFromGroup } from "@/services/groups";

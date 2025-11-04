@@ -12,7 +12,7 @@ import {
   Users,
   UsersRound,
 } from "lucide-react";
-import { AppModule } from "@/types";
+import type { AppModule } from "@/types";
 
 type NavItemBase = {
   title: string;

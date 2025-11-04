@@ -1,6 +1,6 @@
 import { CheckCircle2 } from "lucide-react";
 import React from "react";
-import { FieldValues, Path, UseFormReturn } from "react-hook-form";
+import type { FieldValues, Path, UseFormReturn } from "react-hook-form";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import {
   FormControl,

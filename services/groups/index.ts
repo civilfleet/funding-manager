@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { APP_MODULES, AppModule, Group } from "@/types";
+import { APP_MODULES, type AppModule, type Group } from "@/types";
 
 type CreateGroupInput = {
   teamId: string;

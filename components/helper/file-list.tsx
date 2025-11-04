@@ -1,7 +1,7 @@
 import { Download, FileText } from "lucide-react"; // Icons for files
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { File } from "@/types";
+import type { File } from "@/types";
 
 interface FileListProps {
   files?: File[];

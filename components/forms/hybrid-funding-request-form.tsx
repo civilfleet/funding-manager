@@ -41,8 +41,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
   FieldType,
-  FormField as FormFieldType,
-  FormSection,
+  type FormField as FormFieldType,
+  type FormSection,
   FundingStatus,
 } from "@/types";
 import { staticFundingRequestSchema } from "@/validations/funding-request";
@@ -79,7 +79,7 @@ export default function HybridFundingRequestForm({
           case FieldType.TEXT:
           case FieldType.TEXTAREA:
           case FieldType.EMAIL:
-          case FieldType.URL:
+          case FieldType.URL: {
             let stringSchema = z.string();
             if (field.minLength !== null && field.minLength !== undefined) {
               stringSchema = stringSchema.min(
@@ -101,8 +101,9 @@ export default function HybridFundingRequestForm({
             }
             fieldSchema = stringSchema;
             break;
+          }
 
-          case FieldType.NUMBER:
+          case FieldType.NUMBER: {
             let numberSchema = z.coerce.number();
             if (field.minValue !== null && field.minValue !== undefined) {
               numberSchema = numberSchema.min(
@@ -118,6 +119,7 @@ export default function HybridFundingRequestForm({
             }
             fieldSchema = numberSchema;
             break;
+          }
 
           case FieldType.DATE:
             fieldSchema = z

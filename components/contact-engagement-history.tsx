@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import {
-  ContactEngagement,
+  type ContactEngagement,
   EngagementDirection,
   EngagementSource,
   TodoStatus,

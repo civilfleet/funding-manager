@@ -1,10 +1,10 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import NextAuth, { DefaultSession } from "next-auth";
+import NextAuth, { type DefaultSession } from "next-auth";
 import Nodemailer from "next-auth/providers/nodemailer";
 import authConfig from "./config/auth";
 import mailConfig from "./config/mail";
 import prisma from "./lib/prisma";
-import { Roles } from "./types";
+import type { Roles } from "./types";
 
 declare module "next-auth" {
   interface Session {

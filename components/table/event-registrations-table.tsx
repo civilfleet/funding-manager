@@ -2,7 +2,7 @@
 
 import { DataTable } from "@/components/data-table";
 import {
-  EventRegistrationRow,
+  type EventRegistrationRow,
   eventRegistrationColumns,
   renderEventRegistrationCard,
 } from "@/components/table/event-registration-columns";

@@ -1,7 +1,7 @@
 import { omit } from "lodash";
 import prisma from "@/lib/prisma";
 import { ensureDefaultGroup } from "@/services/groups";
-import { APP_MODULES, AppModule, Roles } from "@/types";
+import { APP_MODULES, type AppModule, type Roles } from "@/types";
 
 export interface User {
   name?: string;

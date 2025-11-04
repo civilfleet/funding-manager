@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import type { PropsWithChildren } from "react";
 import { auth } from "@/auth";
 import { hasModuleAccess } from "@/lib/permissions";
-import { AppModule } from "@/types";
+import type { AppModule } from "@/types";
 
 export default async function TeamLayout({
   children,
