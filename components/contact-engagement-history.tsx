@@ -207,8 +207,7 @@ export default function ContactEngagementHistory({
                 <div className="flex gap-4">
                   <div className="flex flex-col items-center">
                     {engagement.source === EngagementSource.TODO ? (
-                      <>
-                        <div
+                      <div
                           className={`rounded-full p-2 ${
                             engagement.todoStatus === TodoStatus.COMPLETED
                               ? "bg-green-100"
@@ -235,7 +234,6 @@ export default function ContactEngagementHistory({
                             );
                           })()}
                         </div>
-                      </>
                     ) : (
                       <div
                         className={`rounded-full p-2 ${

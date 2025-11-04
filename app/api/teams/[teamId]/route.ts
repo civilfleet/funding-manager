@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ teamId: string }> },
 ) {
   try {
@@ -18,7 +18,7 @@ export async function GET(
     }
 
     return NextResponse.json(team);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to fetch team" },
       { status: 500 },
@@ -50,7 +50,7 @@ export async function PATCH(
     // Start a transaction to handle all updates
     const team = await prisma.$transaction(async (tx) => {
       // Update bank details if provided
-      let bankDetailsId ;
+      let bankDetailsId: string | undefined;
       if (bankDetails) {
         const existingTeam = await tx.teams.findUnique({
           where: { id: teamId },
@@ -131,7 +131,7 @@ export async function PATCH(
           });
         } else {
           // Create new user and connect to team
-          const newUser = await tx.user.create({
+          const _newUser = await tx.user.create({
             data: {
               name: user.name,
               email: user.email,
@@ -160,7 +160,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ teamId: string }> },
 ) {
   try {
@@ -172,7 +172,7 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to delete team" },
       { status: 500 },

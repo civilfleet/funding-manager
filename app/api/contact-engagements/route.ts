@@ -40,11 +40,11 @@ const createEngagementSchema = z.object({
     .optional(),
   dueDate: z
     .string()
-    .refine((date) => !isNaN(Date.parse(date)), {
+    .refine((date) => !Number.isNaN(Date.parse(date)), {
       message: "Invalid date format",
     })
     .optional(),
-  engagedAt: z.string().refine((date) => !isNaN(Date.parse(date)), {
+  engagedAt: z.string().refine((date) => !Number.isNaN(Date.parse(date)), {
     message: "Invalid date format",
   }),
 });
@@ -66,7 +66,7 @@ const updateEngagementSchema = z.object({
     .optional(),
   dueDate: z
     .string()
-    .refine((date) => !isNaN(Date.parse(date)), {
+    .refine((date) => !Number.isNaN(Date.parse(date)), {
       message: "Invalid date format",
     })
     .optional()

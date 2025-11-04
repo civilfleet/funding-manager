@@ -6,12 +6,8 @@ import FundingRequestDetails from "../funding-request-details";
 
 export default function FundingRequestData({
   fundingRequestId,
-  teamId,
-  organizationId,
 }: {
   fundingRequestId: string;
-  teamId?: string;
-  organizationId?: string;
 }) {
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
   const { data, isLoading, mutate } = useSWR(

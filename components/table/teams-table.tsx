@@ -9,7 +9,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function TeamsTable() {
   const { toast } = useToast();
-  const { data, error, isLoading, mutate } = useSWR("/api/teams", fetcher);
+  const { data, error, mutate } = useSWR("/api/teams", fetcher);
 
   if (error) {
     toast({

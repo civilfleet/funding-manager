@@ -3,7 +3,6 @@
 import { ChevronsUpDown, GalleryVerticalEnd, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import * as React from "react";
 
 import {
   DropdownMenu,
@@ -54,7 +53,7 @@ export function TeamSwitcher({
           ? { name: "Admin Dashboard", id: "admin" }
           : null;
 
-  const setItem = (item: SwitcherItem, subUrl: string, id: string) => {
+  const setItem = (_item: SwitcherItem, subUrl: string, id: string) => {
     if (subUrl === "teams") {
       router.push(`/${subUrl}/${id}`); // Team dashboard
     } else if (subUrl === "admin") {

@@ -26,7 +26,6 @@ import { useToast } from "@/hooks/use-toast";
 import { type FundingRequest, FundingStatus } from "@/types";
 import { createDonationAgreementSchema as schema } from "@/validations/donation-agreement";
 import FileUpload from "../file-uploader";
-import FundingRequestDetail from "../funding-request-details";
 import { DataSelectBox } from "../helper/data-select-box";
 
 export default function DonationAgreement({ teamId }: { teamId: string }) {
@@ -38,7 +37,7 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fundingRequestDetail, setFundingRequestDetail] =
+  const [_fundingRequestDetail, setFundingRequestDetail] =
     useState<FundingRequest | null>(null);
   const [users, setUsers] = useState<string[]>([]);
 
@@ -283,9 +282,9 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
                     Selected User Persons
                   </h4>
                   <div className="flex flex-wrap gap-2">
-                    {users.map((person, index) => (
+                    {users.map((person) => (
                       <Badge
-                        key={index}
+                        key={person}
                         variant="secondary"
                         className="py-1 px-2"
                       >

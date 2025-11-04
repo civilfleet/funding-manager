@@ -2,7 +2,6 @@ import {
   CreditCard,
   DollarSign,
   FileText,
-  Settings,
   Users,
 } from "lucide-react";
 import Link from "next/link";

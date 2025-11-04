@@ -3,7 +3,6 @@
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarGroup,
@@ -11,7 +10,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Roles } from "@/types";
 
 interface NavItem {
   title?: string;
@@ -28,7 +26,6 @@ interface NavItem {
 
 export function NavMain({ items = [] }: { items?: NavItem[] }) {
   const pathname = usePathname();
-  const { data: session } = useSession();
 
   // Extract the subUrl and id from the pathname
   const pathSegments = pathname.split("/").filter(Boolean);
@@ -45,11 +42,11 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
     <SidebarGroup>
       <SidebarMenu>
         {isAdminSection ? (
-          <>
-            {items.map((item, index) => {
+          items.map((item) => {
+              const key = item.url ?? item.title ?? item.label ?? item.type ?? "nav-separator";
               if (item.type === "separator") {
                 return (
-                  <li key={index} className="px-2 py-2">
+                  <li key={key} className="px-2 py-2">
                     {item.label && (
                       <div className="px-2 pb-1 text-xs font-semibold text-muted-foreground">
                         {item.label}
@@ -64,7 +61,7 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
               const isActive = pathname.startsWith(fullPath);
 
               return (
-                <SidebarMenuItem key={index}>
+                <SidebarMenuItem key={key}>
                   <SidebarMenuButton
                     asChild
                     tooltip={item.title}
@@ -77,14 +74,16 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               );
-            })}
-          </>
+            })
         ) : hasActiveContext ? (
-          <>
-            {items.map((item, index) => {
+          items.map((item) => {
+              const key =
+                [subUrl, id, item.url, item.title, item.label].filter(Boolean).join("-") ||
+                item.type ||
+                "nav-item";
               if (item.type === "separator") {
                 return (
-                  <li key={index} className="px-2 py-2">
+                  <li key={key} className="px-2 py-2">
                     {item.label && (
                       <div className="px-2 pb-1 text-xs font-semibold text-muted-foreground">
                         {item.label}
@@ -99,7 +98,7 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
               const isActive = pathname.startsWith(fullPath);
 
               return (
-                <SidebarMenuItem key={index}>
+                <SidebarMenuItem key={key}>
                   <SidebarMenuButton
                     asChild
                     tooltip={item.title}
@@ -112,8 +111,7 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               );
-            })}
-          </>
+            })
         ) : (
           <SidebarMenuItem>
             <div className="px-3 py-2 text-sm text-muted-foreground">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import CreateEmailTemplate from "@/components/forms/create-email-template";
 import EventRolesManager from "@/components/forms/event-roles-manager";
 import FormConfigurationManager from "@/components/forms/form-configuration-manager";
@@ -32,8 +32,9 @@ export default function TeamSettingsTabs({
 
   // Get tab from URL or default to "general"
   const tabFromUrl = searchParams.get("tab");
-  const isValidTab = (tab: string | null): tab is TabValue =>
-    tab !== null && VALID_TABS.includes(tab as TabValue);
+  const isValidTab = useCallback((tab: string | null): tab is TabValue => {
+    return tab !== null && VALID_TABS.includes(tab as TabValue);
+  }, []);
 
   const [activeTab, setActiveTab] = useState<TabValue>(
     isValidTab(tabFromUrl) ? tabFromUrl : "general",
@@ -65,7 +66,7 @@ export default function TeamSettingsTabs({
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+  }, [isValidTab]);
 
   return (
     <Tabs

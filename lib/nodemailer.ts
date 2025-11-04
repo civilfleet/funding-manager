@@ -1,7 +1,7 @@
-import fs from "fs";
+import fs from "node:fs";
 import handlebars from "handlebars";
 import nodemailer from "nodemailer";
-import path from "path";
+import path from "node:path";
 import type { EMAIL_CONTENT } from "@/types";
 import config, { mailProvider } from "../config/mail";
 
@@ -30,14 +30,11 @@ async function sendEmail(
   data: Record<string, unknown>,
 ) {
   try {
-    let html;
-    if (!emailContent.content) {
-      html = compileTemplate(emailContent.template, {
-        ...data,
-      });
-    } else {
-      html = handlebars.compile(emailContent.content)(data);
-    }
+    const html = emailContent.content
+      ? handlebars.compile(emailContent.content)(data)
+      : compileTemplate(emailContent.template, {
+          ...data,
+        });
 
     const { to, subject, template } = {
       to: emailContent.to,

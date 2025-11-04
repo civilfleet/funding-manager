@@ -19,7 +19,7 @@ const staticFundingRequestSchema = z.object({
     .min(10, "Sustainability details must be at least 10 characters."),
   expectedCompletionDate: z
     .string()
-    .refine((date) => !isNaN(Date.parse(date)), {
+    .refine((date) => !Number.isNaN(Date.parse(date)), {
       message: "Invalid date format.",
     }),
 });

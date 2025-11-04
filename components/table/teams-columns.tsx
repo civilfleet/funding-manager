@@ -34,7 +34,7 @@ export type Team = {
 
 const ActionsCell = ({ team, mutate }: { team: Team; mutate: () => void }) => {
   const { toast } = useToast();
-  const router = useRouter();
+  const _router = useRouter();
   const [open, setOpen] = useState(false);
 
   const handleDelete = async () => {
@@ -55,7 +55,7 @@ const ActionsCell = ({ team, mutate }: { team: Team; mutate: () => void }) => {
       // Revalidate the teams data
       mutate();
       setOpen(false);
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to delete team",

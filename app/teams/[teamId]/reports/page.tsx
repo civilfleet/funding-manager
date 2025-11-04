@@ -3,7 +3,7 @@ interface PageProps {
 }
 
 export default async function Page({ params }: PageProps) {
-  const { teamId } = await params;
+  await params;
 
   return <div className="flex flex-col w-1/2">reports page</div>;
 }

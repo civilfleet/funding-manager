@@ -14,12 +14,14 @@ export default async function RootLayout({
   const session = await auth();
   if (!session) return redirect("/login");
 
-  let userData;
-  if (session?.user?.roles?.includes(Roles.Admin)) {
-    userData = await getAdminUser(session?.user?.userId as string);
-  } else {
-    userData = await getUserCurrent(session?.user?.userId as string);
+  const userId = session.user?.userId;
+  if (!userId) {
+    return redirect("/login");
   }
+
+  const userData = session.user?.roles?.includes(Roles.Admin)
+    ? await getAdminUser(userId)
+    : await getUserCurrent(userId);
 
   // Serialize data to ensure consistency between server and client
   const teams = userData?.teams

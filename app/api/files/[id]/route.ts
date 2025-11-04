@@ -35,7 +35,7 @@ export async function GET(
 
     return new NextResponse(Body as ReadableStream, {
       headers: {
-        "Content-Disposition": "attachment; filename=" + name,
+        "Content-Disposition": `attachment; filename=${name}`,
         "Content-Type": "application/octet-stream",
       },
     });

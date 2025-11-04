@@ -51,7 +51,7 @@ const formConfigSchema = z.object({
 });
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ teamId: string }> },
 ) {
   try {

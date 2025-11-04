@@ -1,7 +1,6 @@
-import { auth } from "@/auth";
+
 import prisma from "@/lib/prisma";
 import { FundingStatus } from "@/types";
-import { deleteFile } from "../file/s3-service";
 
 type DonationAgreement = {
   agreement: string;
@@ -123,13 +122,13 @@ const getDonationAgreements = async (
 ) => {
   const where: Record<string, unknown> = {};
   if (orgId) {
-    where["organizationId"] = orgId;
+    where.organizationId = orgId;
   }
   if (teamId) {
-    where["teamId"] = teamId;
+    where.teamId = teamId;
   }
   if (searchQuery) {
-    where["fundingRequest"] = {
+    where.fundingRequest = {
       name: {
         contains: searchQuery,
         mode: "insensitive",

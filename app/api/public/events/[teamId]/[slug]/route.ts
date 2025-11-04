@@ -3,7 +3,7 @@ import { handlePrismaError } from "@/lib/utils";
 import { getPublicEventBySlug } from "@/services/events";
 
 export async function GET(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ teamId: string; slug: string }> },
 ) {
   try {

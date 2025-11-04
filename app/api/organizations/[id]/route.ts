@@ -7,7 +7,7 @@ import {
 } from "@/services/organizations";
 
 export async function GET(
-  req: Request,
+  _req: Request,
   {
     params,
   }: {
@@ -56,7 +56,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  req: Request,
+  _req: Request,
   {
     params,
   }: {

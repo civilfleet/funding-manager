@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { redirect, useParams, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -40,7 +40,7 @@ export default function RegisterPage() {
         const data = await response.json();
         setTeamName(data.name);
         setStrategicPriorities(data.strategicPriorities || "");
-      } catch (error) {
+      } catch (_error) {
         toast({
           title: "Error",
           description: "Team not found",

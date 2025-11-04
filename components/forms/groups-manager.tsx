@@ -99,7 +99,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
     const rawGroups: Group[] = (groupsData?.data || []).map((group: Group) => ({
       ...group,
       modules:
-        group.modules && group.modules.length
+        group.modules?.length
           ? [...group.modules]
           : [...APP_MODULES],
     }));

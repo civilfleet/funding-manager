@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, GripVertical, Plus, Save, Settings, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -35,7 +35,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { FieldType, FormField as FormFieldType, type FormSection } from "@/types";
+import { FieldType, type FormSection } from "@/types";
 
 const fieldOptionSchema = z.object({
   label: z.string().min(1, "Label is required"),
@@ -97,6 +97,25 @@ const formConfigSchema = z.object({
   sections: z.array(formSectionSchema).default([]),
 });
 
+const createId = (prefix: string) =>
+  `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+type ConfigSection = FormConfigValues["sections"][number];
+type ConfigField = ConfigSection["fields"][number];
+
+const ensureFieldIds = (fields: ConfigField[]): ConfigField[] =>
+  fields.map((field) => ({
+    ...field,
+    id: field.id ?? createId("field"),
+  }));
+
+const ensureSectionIds = (sections: ConfigSection[]): ConfigSection[] =>
+  sections.map((section) => ({
+    ...section,
+    id: section.id ?? createId("section"),
+    fields: ensureFieldIds(section.fields ?? []),
+  }));
+
 type FormConfigValues = z.infer<typeof formConfigSchema>;
 
 interface FormConfigurationManagerProps {
@@ -118,40 +137,26 @@ export default function FormConfigurationManager({
     },
   });
 
-  const {
-    fields: sections,
-    append: appendSection,
-    remove: removeSection,
-    move: moveSection,
-  } = useFieldArray({
+  const { fields: sections, append: appendSection, remove: removeSection } =
+    useFieldArray({
     control: form.control,
     name: "sections",
   });
 
-  useEffect(() => {
-    loadFormConfiguration();
-  }, [teamId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const loadFormConfiguration = async () => {
+  const loadFormConfiguration = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/teams/${teamId}/form-config`);
       if (response.ok) {
         const data = await response.json();
         if (data.sections && data.sections.length > 0) {
-          form.reset({ sections: data.sections });
+          const sectionsWithIds = ensureSectionIds(data.sections);
+          form.reset({ sections: sectionsWithIds });
           // Open all sections by default
-          const openState = data.sections.reduce(
-            (
-              acc: Record<string, boolean>,
-              section: FormSection,
-              index: number,
-            ) => {
-              acc[`section-${index}`] = true;
-              return acc;
-            },
-            {},
-          );
+          const openState: Record<string, boolean> = {};
+          sectionsWithIds.forEach((_, index) => {
+            openState[`section-${index}`] = true;
+          });
           setOpenSections(openState);
         } else {
           // No configuration exists - show empty state
@@ -171,12 +176,16 @@ export default function FormConfigurationManager({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [form, teamId]);
+
+  useEffect(() => {
+    void loadFormConfiguration();
+  }, [loadFormConfiguration]);
 
   const loadDefaultConfiguration = () => {
     // Load the new default configuration that only contains example additional fields
     // Static fields (name, description, purpose, etc.) are no longer configurable
-    const defaultSections = [
+    const defaultSections = ensureSectionIds([
       {
         name: "Additional Project Information",
         description:
@@ -221,21 +230,19 @@ export default function FormConfigurationManager({
           },
         ],
       },
-    ];
+    ]);
 
     form.reset({ sections: defaultSections });
-    const openState = defaultSections.reduce(
-      (acc: Record<string, boolean>, _, index) => {
-        acc[`section-${index}`] = true;
-        return acc;
-      },
-      {},
-    );
+    const openState: Record<string, boolean> = {};
+    defaultSections.forEach((_, index) => {
+      openState[`section-${index}`] = true;
+    });
     setOpenSections(openState);
   };
 
   const addSection = () => {
     appendSection({
+      id: createId("section"),
       name: "New Section",
       description: "",
       order: sections.length + 1,
@@ -244,9 +251,11 @@ export default function FormConfigurationManager({
   };
 
   const addField = (sectionIndex: number) => {
-    const currentFields =
-      form.getValues(`sections.${sectionIndex}.fields`) || [];
-    const newField = {
+    const currentFields = ensureFieldIds(
+      (form.getValues(`sections.${sectionIndex}.fields`) as ConfigField[] | undefined) ?? [],
+    );
+    const newField: ConfigField = {
+      id: createId("field"),
       key: `field_${currentFields.length + 1}`,
       label: "New Field",
       type: FieldType.TEXT,
@@ -261,11 +270,10 @@ export default function FormConfigurationManager({
   };
 
   const removeField = (sectionIndex: number, fieldIndex: number) => {
-    const currentFields =
-      form.getValues(`sections.${sectionIndex}.fields`) || [];
-    const updatedFields = currentFields.filter(
-      (_, index) => index !== fieldIndex,
+    const currentFields = ensureFieldIds(
+      (form.getValues(`sections.${sectionIndex}.fields`) as ConfigField[] | undefined) ?? [],
     );
+    const updatedFields = currentFields.filter((_, index) => index !== fieldIndex);
     form.setValue(`sections.${sectionIndex}.fields`, updatedFields);
   };
 
@@ -295,7 +303,7 @@ export default function FormConfigurationManager({
         title: "Configuration Saved",
         description: "Form configuration has been successfully updated.",
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Save Failed",
         description: "Failed to save form configuration. Please try again.",
@@ -574,9 +582,9 @@ export default function FormConfigurationManager({
 
                               {form
                                 .watch(`sections.${sectionIndex}.fields`)
-                                ?.map((field, fieldIndex) => (
+                                ?.map((fieldData, fieldIndex) => (
                                   <Card
-                                    key={fieldIndex}
+                                    key={(fieldData as { id: string }).id}
                                     className="border border-border"
                                   >
                                     <CardContent className="pt-4 space-y-4">
@@ -972,9 +980,12 @@ export default function FormConfigurationManager({
                                                     `sections.${sectionIndex}.fields.${fieldIndex}.options`,
                                                   )
                                                   ?.map(
-                                                    (option, optionIndex) => (
+                                                    (_option, optionIndex) => (
                                                       <Card
-                                                        key={optionIndex}
+                                                        key={
+                                                          _option?.value ??
+                                                          `option-${optionIndex}`
+                                                        }
                                                         className="border border-muted"
                                                       >
                                                         <CardContent className="pt-4 space-y-4">

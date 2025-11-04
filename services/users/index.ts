@@ -126,7 +126,9 @@ const getUserCurrent = async (userId: string) => {
       const set = modulesByTeam.get(teamId) ?? new Set<AppModule>();
 
       if (!membership.group.modulePermissions.length) {
-        APP_MODULES.forEach((module) => set.add(module));
+        for (const module of APP_MODULES) {
+          set.add(module);
+        }
       } else {
         for (const permission of membership.group.modulePermissions) {
           set.add(permission.module as AppModule);
@@ -167,7 +169,7 @@ const getUserCurrent = async (userId: string) => {
   const teamsWithModules = user.teams.map((team) => {
     const set = modulesByTeam.get(team.id);
 
-    if (set && set.size) {
+    if (set?.size) {
       return {
         ...team,
         modules: Array.from(set),
@@ -178,7 +180,7 @@ const getUserCurrent = async (userId: string) => {
 
     return {
       ...team,
-      modules: fallback && fallback.length ? fallback : [...APP_MODULES],
+      modules: fallback?.length ? fallback : [...APP_MODULES],
     };
   });
 
@@ -378,7 +380,6 @@ const createUser = async (user: User) => {
 };
 
 const getUserById = async (id: string) => {
-  try {
     const user = await prisma.user.findUnique({
       where: {
         id,
@@ -386,9 +387,6 @@ const getUserById = async (id: string) => {
     });
 
     return user;
-  } catch (error) {
-    throw error;
-  }
 };
 
 const getTeamsUsers = async (teamId: string) => {
@@ -413,7 +411,6 @@ const deleteUser = async (
   organizationId?: string,
   teamId?: string,
 ) => {
-  try {
     if (organizationId) {
       // Remove user from organization
       await prisma.user.update({
@@ -448,9 +445,6 @@ const deleteUser = async (
     }
 
     return true;
-  } catch (error) {
-    throw error;
-  }
 };
 
 export {

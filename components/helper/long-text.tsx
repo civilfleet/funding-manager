@@ -13,6 +13,7 @@ function LongText({ content }: { content: string }) {
   return (
     <div className="space-y-2 relative p-2 ">
       <button
+        type="button"
         onClick={handleCopy}
         className="absolute top-2 right-2 p-1 rounded-md hover:bg-gray-100"
       >

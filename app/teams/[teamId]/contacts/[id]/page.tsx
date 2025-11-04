@@ -232,11 +232,11 @@ export default async function ContactDetailPage({
 
                 <CardContent className="pt-6">
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {contact.profileAttributes.map((attribute, index) => {
+                    {contact.profileAttributes.map((attribute) => {
                       const Icon = getAttributeIcon(attribute.type);
                       return (
                         <div
-                          key={index}
+                          key={`${attribute.key}-${attribute.type}`}
                           className="flex items-start gap-3 rounded-md border bg-muted/30 p-3"
                         >
                           <Icon className="mt-0.5 h-5 w-5 text-muted-foreground" />
@@ -341,9 +341,9 @@ export default async function ContactDetailPage({
                           {contactEvent.roles &&
                             contactEvent.roles.length > 0 && (
                               <div className="flex flex-wrap gap-2">
-                                {contactEvent.roles.map((role, idx) => (
+                                {contactEvent.roles.map((role) => (
                                   <Badge
-                                    key={idx}
+                                    key={`${contactEvent.event.id}-${role.eventRole.id}`}
                                     variant="secondary"
                                     style={
                                       role.eventRole.color

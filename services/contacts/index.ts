@@ -134,7 +134,7 @@ const normalizeAttributes = (
           type: ContactAttributeType.LOCATION,
         };
 
-        if (value.label && value.label.trim()) {
+        if (value.label?.trim()) {
           location.locationLabel = value.label.trim();
         }
 
@@ -311,8 +311,12 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
         return;
       }
 
+      if (!entry.event) {
+        return;
+      }
+
       eventMap.set(eventId, {
-        event: entry.event!,
+        event: entry.event,
         roles: entry.roles ?? [],
         participationTypes: new Set(
           entry.participationType ? [entry.participationType] : [],

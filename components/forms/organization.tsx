@@ -7,7 +7,6 @@ import type { z } from "zod";
 import Alert from "@/components/helper/alert";
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { useTeamStore } from "@/store/store";
 import {
   createOrganizationSchema,
   updateOrganizationSchema,
@@ -63,7 +62,7 @@ type Organization = {
 
 export default function OrganizationForm({ data }: { data: Organization }) {
   const { toast } = useToast();
-  const [isUpdate] = useState(data?.email ? true : false);
+  const [isUpdate] = useState(!!data?.email);
   const schema = isUpdate ? updateOrganizationSchema : createOrganizationSchema;
 
   // Helper function to check if a field is filled
@@ -106,22 +105,20 @@ export default function OrganizationForm({ data }: { data: Organization }) {
 
   async function onSubmit(values: z.infer<typeof schema>) {
     try {
-      let response;
-      if (!data?.email) {
-        response = await fetch("/api/organizations", {
-          method: "POST",
-          body: JSON.stringify({
-            ...values,
-            teamId: data?.teamId,
-            isFilledByOrg: false,
-          }),
-        });
-      } else {
-        response = await fetch("/api/organizations", {
-          method: "PUT",
-          body: JSON.stringify({ ...values, isFilledByOrg: true }),
-        });
-      }
+      const requestInit: RequestInit = !data?.email
+        ? {
+            method: "POST",
+            body: JSON.stringify({
+              ...values,
+              teamId: data?.teamId,
+              isFilledByOrg: false,
+            }),
+          }
+        : {
+            method: "PUT",
+            body: JSON.stringify({ ...values, isFilledByOrg: true }),
+          };
+      const response = await fetch("/api/organizations", requestInit);
       // check for error
       if (!response.ok) {
         const errorData = await response.json();
@@ -174,7 +171,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                 />
                 <FormInputControl
                   form={form}
-                  disabled={data?.email ? true : false}
+                  disabled={!!data?.email}
                   name="email"
                   placeholder="Email address"
                   isFilled={isFieldFilled(data?.email)}
@@ -297,7 +294,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                 />
                 <FormInputControl
                   form={form}
-                  disabled={data?.email ? true : false}
+                  disabled={!!data?.email}
                   name="user.email"
                   placeholder="User person email"
                   isFilled={isFieldFilled(data?.user?.email)}
@@ -327,7 +324,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                     name="articlesOfAssociation"
                     data={
                       data?.Files?.find(
-                        (file) => file.type == "ARTICLES_OF_ASSOCIATION",
+                        (file) => file.type === "ARTICLES_OF_ASSOCIATION",
                       )?.id
                     }
                     error={
@@ -345,7 +342,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   <FileUpload
                     placeholder="Logo of your Organization"
                     name="logo"
-                    data={data?.Files?.find((file) => file.type == "LOGO")?.id}
+                    data={data?.Files?.find((file) => file.type === "LOGO")?.id}
                     error={
                       form?.formState?.errors?.logo
                         ? (form.formState.errors?.logo?.message as string)

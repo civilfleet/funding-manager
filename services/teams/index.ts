@@ -1,10 +1,10 @@
-import _, { update } from "lodash";
+import _ from "lodash";
 import prisma from "@/lib/prisma";
 import { ensureDefaultGroup } from "@/services/groups";
 import { Roles } from "@/types";
 import type { CreateTeamInput } from "@/validations/team";
 
-const getTeamsByRoles = async (roles: string[] | null) => {
+const getTeamsByRoles = async (_roles: string[] | null) => {
   return prisma.teams.findMany({
     select: {
       id: true,

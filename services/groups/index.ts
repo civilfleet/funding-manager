@@ -301,7 +301,7 @@ const createGroup = async (input: CreateGroupInput) => {
   const { teamId, name, description, canAccessAllContacts, userIds, modules } =
     input;
 
-  const baseModules = modules && modules.length ? modules : [...APP_MODULES];
+  const baseModules = modules?.length ? modules : [...APP_MODULES];
   const modulesToAssign: AppModule[] = Array.from(
     new Set(
       baseModules.filter((module): module is AppModule =>

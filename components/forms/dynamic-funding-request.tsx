@@ -11,7 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -58,6 +58,21 @@ import {
   FundingStatus,
 } from "@/types";
 import FileUpload from "../file-uploader";
+
+type FundingFile = { id: string; name: string; url: string };
+
+const createEmptyFundingFile = (): FundingFile => ({
+  id: `file-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  name: "",
+  url: "",
+});
+
+const withFileIds = (files: Array<Partial<FundingFile>>): FundingFile[] =>
+  files.map((file) => ({
+    id: file.id ?? `file-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: file.name ?? "",
+    url: file.url ?? "",
+  }));
 
 interface DynamicFundingRequestProps {
   organizationId: string;
@@ -142,7 +157,7 @@ export default function DynamicFundingRequest({
               dateSchema = dateSchema.min(1, `${field.label} is required`);
             }
             fieldSchema = dateSchema.refine(
-              (date) => !isNaN(Date.parse(date)),
+              (date) => !Number.isNaN(Date.parse(date)),
               {
                 message: "Invalid date format",
               },
@@ -228,6 +243,7 @@ export default function DynamicFundingRequest({
     ]);
     schemaFields.files = z.array(
       z.object({
+        id: z.string(),
         name: z.string(),
         url: z.string(),
       }),
@@ -244,11 +260,16 @@ export default function DynamicFundingRequest({
     defaultValues: {},
   });
 
-  useEffect(() => {
-    loadFormConfiguration();
-  }, [teamId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const files = withFileIds((form.watch("files") as Array<Partial<FundingFile>> | undefined) ?? []);
 
-  const loadFormConfiguration = async () => {
+  useEffect(() => {
+    const currentFiles = (form.getValues("files") as Array<Partial<FundingFile>> | undefined) ?? [];
+    if (currentFiles.some((file) => !(file && 'id' in file))) {
+      form.setValue("files" as keyof Record<string, unknown>, withFileIds(currentFiles));
+    }
+  }, [form]);
+
+  const loadFormConfiguration = useCallback(async () => {
     setIsLoading(true);
     try {
       let config: FormSection[];
@@ -270,7 +291,7 @@ export default function DynamicFundingRequest({
       // Set default values
       const defaultValues: Record<string, unknown> = {
         status: FundingStatus.Submitted,
-        files: [{ name: "", url: "" }],
+        files: [createEmptyFundingFile()],
       };
 
       config.forEach((section) => {
@@ -306,9 +327,13 @@ export default function DynamicFundingRequest({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [form, teamId, toast]);
 
-  const renderField = (field: FormFieldType, sectionIndex: number) => {
+  useEffect(() => {
+    void loadFormConfiguration();
+  }, [loadFormConfiguration]);
+
+  const renderField = (field: FormFieldType, _sectionIndex: number) => {
     const fieldName = field.key;
 
     return (
@@ -629,23 +654,15 @@ export default function DynamicFundingRequest({
                   Supporting Documents
                 </h3>
                 <Badge variant="outline" className="text-xs">
-                  {(
-                    form.watch("files") as
-                      | { name: string; url: string }[]
-                      | undefined
-                  )?.length || 0}{" "}
+                  {files.length}{" "}
                   files
                 </Badge>
               </div>
 
               <div className="space-y-4">
-                {(
-                  form.watch("files") as
-                    | { name: string; url: string }[]
-                    | undefined
-                )?.map((file: { name: string; url: string }, index: number) => (
+                {files.map((file, index) => (
                   <div
-                    key={index}
+                    key={file.id}
                     className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-end sm:space-x-2"
                   >
                     <FormField
@@ -681,7 +698,7 @@ export default function DynamicFundingRequest({
                     <FormField
                       control={form.control}
                       name={`files.${index}.url`}
-                      render={({}) => (
+                      render={({ field }) => (
                         <FormItem className="flex-1">
                           <FormLabel
                             className={index !== 0 ? "sr-only" : undefined}
@@ -691,17 +708,9 @@ export default function DynamicFundingRequest({
                           <FormControl>
                             <FileUpload
                               placeholder="Upload document"
-                              name={`file-${index}`}
-                              data=""
-                              onFileUpload={(url) =>
-                                form.setValue(
-                                  `files.${index}.url` as keyof Record<
-                                    string,
-                                    unknown
-                                  >,
-                                  url,
-                                )
-                              }
+                              name={`file-${file.id}`}
+                              data={typeof field.value === "string" ? field.value : ""}
+                              onFileUpload={(url) => field.onChange(url)}
                             />
                           </FormControl>
                           <FormMessage />
@@ -714,26 +723,16 @@ export default function DynamicFundingRequest({
                       variant="destructive"
                       size="icon"
                       onClick={() => {
-                        const currentFiles =
-                          (form.getValues("files") as
-                            | { name: string; url: string }[]
-                            | undefined) || [];
+                        const currentFiles = withFileIds(
+                          (form.getValues("files") as Array<Partial<FundingFile>> | undefined) ?? [],
+                        );
                         const updatedFiles = currentFiles.filter(
-                          (_: unknown, i: number) => i !== index,
+                          (existing) => existing.id !== file.id,
                         );
-                        form.setValue(
-                          "files" as keyof Record<string, unknown>,
-                          updatedFiles,
-                        );
+                        form.setValue("files" as keyof Record<string, unknown>, updatedFiles);
                       }}
                       className="mt-2 sm:mt-0"
-                      disabled={
-                        ((
-                          form.watch("files") as
-                            | { name: string; url: string }[]
-                            | undefined
-                        )?.length || 0) <= 1
-                      }
+                      disabled={files.length <= 1}
                     >
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Remove file</span>
@@ -746,13 +745,12 @@ export default function DynamicFundingRequest({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const currentFiles =
-                      (form.getValues("files") as
-                        | { name: string; url: string }[]
-                        | undefined) || [];
+                    const currentFiles = withFileIds(
+                      (form.getValues("files") as Array<Partial<FundingFile>> | undefined) ?? [],
+                    );
                     form.setValue("files" as keyof Record<string, unknown>, [
                       ...currentFiles,
-                      { name: "", url: "" },
+                      createEmptyFundingFile(),
                     ]);
                   }}
                   className="mt-2"

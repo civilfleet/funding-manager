@@ -1,83 +1,92 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 import type { User } from "@/types";
+
+const userDetailPath = (id: string) => `users/${id}`;
+
+const NavigableCell = ({
+  id,
+  children,
+  className,
+}: {
+  id: string;
+  children: ReactNode;
+  className?: string;
+}) => (
+  <Link
+    href={userDetailPath(id)}
+    className={cn(
+      "block text-left cursor-pointer hover:text-primary rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+      className,
+    )}
+  >
+    {children}
+  </Link>
+);
 
 export const columns: ColumnDef<User>[] = [
   {
     accessorKey: "name",
     header: () => <div className="text-left w-36">Name</div>,
     cell: ({ row }) => (
-      <div
-        className="text-left cursor-pointer hover:text-primary"
-        onClick={() => (window.location.href = `users/${row.original.id}`)}
-      >
+      <NavigableCell id={row.original.id}>
         {row.original?.name || "N/A"}
-      </div>
+      </NavigableCell>
     ),
   },
   {
     accessorKey: "email",
     header: () => <div className="text-left w-36">Email</div>,
     cell: ({ row }) => (
-      <div
-        className="text-left cursor-pointer hover:text-primary"
-        onClick={() => (window.location.href = `users/${row.original.id}`)}
-      >
+      <NavigableCell id={row.original.id}>
         {row.original?.email || "N/A"}
-      </div>
+      </NavigableCell>
     ),
   },
   {
     accessorKey: "phone",
     header: () => <div className="text-left w-36">Phone</div>,
     cell: ({ row }) => (
-      <div
-        className="text-left cursor-pointer hover:text-primary"
-        onClick={() => (window.location.href = `users/${row.original.id}`)}
-      >
+      <NavigableCell id={row.original.id}>
         {row.original?.phone || "N/A"}
-      </div>
+      </NavigableCell>
     ),
   },
   {
     accessorKey: "city",
     header: () => <div className="text-left w-36">City</div>,
     cell: ({ row }) => (
-      <div
-        className="text-left cursor-pointer hover:text-primary"
-        onClick={() => (window.location.href = `users/${row.original.id}`)}
-      >
+      <NavigableCell id={row.original.id}>
         {row.original?.city || "N/A"}
-      </div>
+      </NavigableCell>
     ),
   },
   {
     accessorKey: "country",
     header: () => <div className="text-left w-36">Country</div>,
     cell: ({ row }) => (
-      <div
-        className="text-left cursor-pointer hover:text-primary"
-        onClick={() => (window.location.href = `users/${row.original.id}`)}
-      >
+      <NavigableCell id={row.original.id}>
         {row.original?.country || "N/A"}
-      </div>
+      </NavigableCell>
     ),
   },
   {
     accessorKey: "roles",
     header: () => <div className="text-left w-36">Roles</div>,
     cell: ({ row }) => (
-      <div
-        className="text-left cursor-pointer hover:text-primary"
-        onClick={() => (window.location.href = `users/${row.original.id}`)}
-      >
-        {row.original?.roles || "N/A"}
-      </div>
+      <NavigableCell id={row.original.id}>
+        {Array.isArray(row.original?.roles)
+          ? row.original.roles.join(', ')
+          : row.original?.roles || 'N/A'}
+      </NavigableCell>
     ),
   },
   {
@@ -87,19 +96,11 @@ export const columns: ColumnDef<User>[] = [
       const groups = row.original?.groups;
       if (!groups || groups.length === 0) {
         return (
-          <div
-            className="text-left cursor-pointer hover:text-primary"
-            onClick={() => (window.location.href = `users/${row.original.id}`)}
-          >
-            No groups
-          </div>
+          <NavigableCell id={row.original.id}>No groups</NavigableCell>
         );
       }
       return (
-        <div
-          className="flex flex-wrap gap-1 cursor-pointer"
-          onClick={() => (window.location.href = `users/${row.original.id}`)}
-        >
+        <NavigableCell id={row.original.id} className="flex flex-wrap gap-1">
           {groups.map(
             (userGroup: {
               groupId: string;
@@ -114,7 +115,7 @@ export const columns: ColumnDef<User>[] = [
               </Badge>
             ),
           )}
-        </div>
+        </NavigableCell>
       );
     },
   },
@@ -122,28 +123,22 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: "createdAt",
     header: () => <div className="text-left w-36">Created At</div>,
     cell: ({ row }) => (
-      <div
-        className="text-left cursor-pointer hover:text-primary"
-        onClick={() => (window.location.href = `users/${row.original.id}`)}
-      >
+      <NavigableCell id={row.original.id}>
         {row.original?.createdAt
           ? new Date(row.original.createdAt).toLocaleDateString()
           : "N/A"}
-      </div>
+      </NavigableCell>
     ),
   },
   {
     accessorKey: "updatedAt",
     header: () => <div className="text-left w-36">Updated At</div>,
     cell: ({ row }) => (
-      <div
-        className="text-left cursor-pointer hover:text-primary"
-        onClick={() => (window.location.href = `users/${row.original.id}`)}
-      >
+      <NavigableCell id={row.original.id}>
         {row.original?.updatedAt
           ? new Date(row.original.updatedAt).toLocaleDateString()
           : "N/A"}
-      </div>
+      </NavigableCell>
     ),
   },
   {
@@ -183,7 +178,7 @@ const UserActions = ({ user }: { user: User }) => {
       });
 
       router.refresh();
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to remove user",

@@ -49,6 +49,14 @@ import { staticFundingRequestSchema } from "@/validations/funding-request";
 import FileUpload from "../file-uploader";
 import StaticFundingRequestForm from "./static-funding-request-form";
 
+type UploadedFile = { id: string; name: string; url: string };
+
+const createUploadedFile = (fileUrl: string): UploadedFile => ({
+  id: `uploaded-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  name: fileUrl.split('/').pop() || 'Uploaded File',
+  url: fileUrl,
+});
+
 interface HybridFundingRequestFormProps {
   organizationId: string;
   teamId?: string;
@@ -65,7 +73,7 @@ export default function HybridFundingRequestForm({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formConfiguration, setFormConfiguration] = useState<FormSection[]>([]);
-  const [files, setFiles] = useState<{ name: string; url: string }[]>([]);
+  const [files, setFiles] = useState<UploadedFile[]>([]);
 
   // Dynamic schema generation for additional fields
   const generateDynamicSchema = (sections: FormSection[]) => {
@@ -124,7 +132,7 @@ export default function HybridFundingRequestForm({
           case FieldType.DATE:
             fieldSchema = z
               .string()
-              .refine((date) => !isNaN(Date.parse(date)), {
+              .refine((date) => !Number.isNaN(Date.parse(date)), {
                 message: "Invalid date format.",
               });
             break;
@@ -239,11 +247,10 @@ export default function HybridFundingRequestForm({
 
   // File upload handler
   const handleFileUpload = (fileUrl: string) => {
-    const fileName = fileUrl.split("/").pop() || "Uploaded File";
-    const newFile = { name: fileName, url: fileUrl };
+    const newFile = createUploadedFile(fileUrl);
     const updatedFiles = [...files, newFile];
     setFiles(updatedFiles);
-    form.setValue("files", updatedFiles);
+    form.setValue("files", updatedFiles.map(({ name, url }) => ({ name, url })));
   };
 
   // Dynamic field renderer
@@ -534,9 +541,9 @@ export default function HybridFundingRequestForm({
             {files.length > 0 && (
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Uploaded Files:</h4>
-                {files.map((file, index) => (
+                {files.map((file) => (
                   <div
-                    key={index}
+                    key={file.id}
                     className="flex items-center justify-between p-2 bg-muted rounded"
                   >
                     <span className="text-sm">{file.name}</span>
@@ -546,10 +553,10 @@ export default function HybridFundingRequestForm({
                       size="sm"
                       onClick={() => {
                         const updatedFiles = files.filter(
-                          (_, i) => i !== index,
+                          (item) => item.id !== file.id,
                         );
                         setFiles(updatedFiles);
-                        form.setValue("files", updatedFiles);
+                        form.setValue("files", updatedFiles.map(({ name, url }) => ({ name, url })));
                       }}
                     >
                       Remove

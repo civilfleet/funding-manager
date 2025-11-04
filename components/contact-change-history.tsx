@@ -153,7 +153,7 @@ export default function ContactChangeHistory({
                 ? Object.entries(log.metadata)
                 : [];
               const creationSource = log.metadata
-                ? log.metadata["source"]
+                ? log.metadata.source
                 : undefined;
               return (
                 <div key={log.id}>

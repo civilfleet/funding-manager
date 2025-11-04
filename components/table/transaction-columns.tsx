@@ -38,7 +38,7 @@ const ActionsCell = ({ row }: { row: Row<Transaction> }) => {
       <UploadReceiptModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
-        onUpload={(fileUrl) => {
+        onUpload={(_fileUrl) => {
           // The table will automatically refresh due to the data being refetched
         }}
         transactionId={transaction.id}

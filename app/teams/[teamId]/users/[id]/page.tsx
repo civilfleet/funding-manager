@@ -5,7 +5,7 @@ export default async function Page({
 }: {
   params: Promise<{ teamId: string; id: string }>;
 }) {
-  const { teamId, id } = await params;
+  const { id } = await params;
 
   return (
     <div className="p-4 w-full">

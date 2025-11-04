@@ -20,7 +20,8 @@ export const assertTeamModuleAccess = async (
     return;
   }
 
-  const modules = await getUserModuleAccess(userId!, teamId);
+  const resolvedUserId = userId ?? redirect("/");
+  const modules = await getUserModuleAccess(resolvedUserId, teamId);
 
   if (!modules.includes(module)) {
     redirect("/");

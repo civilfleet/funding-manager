@@ -12,22 +12,19 @@ export async function GET(req: Request) {
     const teamId = searchParams.get("teamId") || "";
     const fundingRequestId = searchParams.get("fundingRequestId") || "";
     const organizationId = searchParams.get("organizationId") || "";
-    let data;
-
-    if (fundingRequestId && teamId) {
-      data = await getUsersForDonation({
-        teamId: teamId,
-        fundingRequestId: fundingRequestId,
-      });
-    } else {
-      data = await getUsers(
-        {
-          teamId: teamId || undefined,
-          organizationId: organizationId || undefined,
-        },
-        searchQuery,
-      );
-    }
+    const data =
+      fundingRequestId && teamId
+        ? await getUsersForDonation({
+            teamId,
+            fundingRequestId,
+          })
+        : await getUsers(
+            {
+              teamId: teamId || undefined,
+              organizationId: organizationId || undefined,
+            },
+            searchQuery,
+          );
 
     return NextResponse.json(
       { data },

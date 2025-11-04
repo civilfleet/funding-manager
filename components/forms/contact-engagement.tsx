@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
@@ -48,7 +48,7 @@ const engagementSchema = z.object({
   ]),
   subject: z.string().optional(),
   message: z.string().min(1, "Message is required"),
-  engagedAt: z.string().refine((date) => !isNaN(Date.parse(date)), {
+  engagedAt: z.string().refine((date) => !Number.isNaN(Date.parse(date)), {
     message: "Invalid date format",
   }),
   assignedToUserId: z.string().optional(),

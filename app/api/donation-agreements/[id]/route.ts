@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { handlePrismaError } from "@/lib/utils";
 import {
   getDonationAgreementById,

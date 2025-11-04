@@ -31,7 +31,7 @@ const createEmailTemplate = async (teamId: string, template: EmailTemplate) => {
   });
   return newTemplate;
 };
-const updateEmailTemplate = async (teamId: string, template: EmailTemplate) => {
+const updateEmailTemplate = async (_teamId: string, template: EmailTemplate) => {
   console.log(template);
   const updatedTemplate = await prisma.emailTemplates.update({
     where: { id: template.id },

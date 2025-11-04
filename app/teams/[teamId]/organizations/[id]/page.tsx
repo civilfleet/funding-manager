@@ -5,7 +5,7 @@ export default async function Profile({
 }: {
   params: Promise<{ id: string; teamId: string }>;
 }) {
-  const { id, teamId } = await params;
+  const { id } = await params;
 
   return (
     <div>

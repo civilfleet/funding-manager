@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle, CreditCard, Download, Upload } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import type React from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -243,9 +242,9 @@ export default function SignDonationAgreement({
                 <h2 className="text-lg font-semibold mb-2">User Signatures</h2>
                 {data.userSignatures.length > 0 ? (
                   <div className="space-y-2">
-                    {data.userSignatures.map((signature, index) => (
+                    {data.userSignatures.map((signature) => (
                       <div
-                        key={index}
+                        key={signature.id}
                         className="flex items-center justify-between bg-muted p-2 rounded-md"
                       >
                         <span className="text-sm font-medium">
@@ -277,20 +276,20 @@ export default function SignDonationAgreement({
                   </h2>
                   {isAdmin && (
                     <div className="mb-4">
-                      <label className="text-sm font-medium mb-2 block">
+                      <label className="text-sm font-medium mb-2 block" htmlFor="sign-on-behalf">
                         Sign on behalf of:
                       </label>
                       <Select
                         value={selectedUserId}
                         onValueChange={setSelectedUserId}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger id="sign-on-behalf">
                           <SelectValue placeholder="Select user to sign for" />
                         </SelectTrigger>
                         <SelectContent>
-                          {data.userSignatures.map((signature, index) => (
+                          {data.userSignatures.map((signature) => (
                             <SelectItem
-                              key={index}
+                              key={signature.id}
                               value={signature.user?.id || ""}
                               disabled={signature.signedAt !== null}
                             >

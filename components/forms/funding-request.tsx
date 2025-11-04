@@ -363,9 +363,9 @@ export default function FundingRequest({
               </div>
 
               <div className="space-y-4">
-                {files.map((field, index) => (
+                {files.map((file, index) => (
                   <div
-                    key={field.id}
+                    key={file.id}
                     className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-end sm:space-x-2"
                   >
                     <FormField
@@ -397,7 +397,7 @@ export default function FundingRequest({
                     <FormField
                       control={form.control}
                       name={`files.${index}.url`}
-                      render={({}) => (
+                      render={({ field }) => (
                         <FormItem className="flex-1">
                           <FormLabel
                             className={index !== 0 ? "sr-only" : undefined}
@@ -407,11 +407,9 @@ export default function FundingRequest({
                           <FormControl>
                             <FileUpload
                               placeholder="Upload document"
-                              name={`file-${index}`}
-                              data=""
-                              onFileUpload={(url) =>
-                                form.setValue(`files.${index}.url`, url)
-                              }
+                              name={`file-${file.id}`}
+                              data={typeof field.value === "string" ? field.value : ""}
+                              onFileUpload={(url) => field.onChange(url)}
                             />
                           </FormControl>
                           <FormMessage />

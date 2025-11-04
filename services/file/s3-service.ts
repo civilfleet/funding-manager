@@ -15,7 +15,7 @@ export const uploadFile = async ({
 }) => {
   try {
     fileName = cleanFileName(fileName);
-    fileName = `${new Date().getTime()}-${fileName}`;
+    fileName = `${Date.now()}-${fileName}`;
 
     const command = new PutObjectCommand({
       Key: `${fileName}`,

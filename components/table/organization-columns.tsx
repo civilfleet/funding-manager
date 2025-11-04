@@ -42,7 +42,7 @@ function OrganizationActions({
   mutate: () => void;
 }) {
   const { toast } = useToast();
-  const router = useRouter();
+  const _router = useRouter();
 
   const handleDelete = async () => {
     try {

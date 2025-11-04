@@ -4,13 +4,16 @@ import { getAdminUser, getUserCurrent } from "@/services/users";
 import { Roles } from "@/types";
 
 export default async function TeamsPage() {
-  let data;
   const session = await auth();
-  if (session?.user?.roles?.includes(Roles.Admin)) {
-    data = await getAdminUser(session?.user?.userId as string);
-  } else {
-    data = await getUserCurrent(session?.user?.userId as string);
+  const userId = session?.user?.userId;
+
+  if (!session || !userId) {
+    return redirect("/login");
   }
+
+  const data = session.user.roles?.includes(Roles.Admin)
+    ? await getAdminUser(userId)
+    : await getUserCurrent(userId);
 
   const { teams = [] } = data || {};
 

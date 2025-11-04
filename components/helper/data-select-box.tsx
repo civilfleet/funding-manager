@@ -1,5 +1,4 @@
 import get from "lodash/get";
-import * as React from "react";
 import useSWR from "swr";
 import {
   Select,
@@ -59,12 +58,12 @@ export function DataSelectBox({
       <SelectContent>
         <SelectGroup>
           <SelectLabel>{label}</SelectLabel>
-          {options?.map((option, idx) => {
+          {options?.map((option) => {
             const optionValue = get(option, attribute, "Not Available");
             const optionId = get(option, targetKey, "Not Available");
 
             return (
-              <SelectItem key={idx} value={String(optionId)}>
+              <SelectItem key={String(optionId)} value={String(optionId)}>
                 {String(optionValue)}
               </SelectItem>
             );

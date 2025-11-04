@@ -26,9 +26,9 @@ export const FileList = ({ files, organizationFiles }: FileListProps) => {
           <div className="grid grid-cols-1 gap-3">
             {" "}
             {/* Reduced gap */}
-            {allFiles.map((file, index) => (
+            {allFiles.map((file) => (
               <div
-                key={index}
+                key={file.id}
                 className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors" // Reduced padding
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">

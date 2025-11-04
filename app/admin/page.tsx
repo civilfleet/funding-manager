@@ -1,4 +1,4 @@
-import { Building, DollarSign, FileText, Users } from "lucide-react";
+import { Building, DollarSign, Users } from "lucide-react";
 import Link from "next/link";
 import RecentActivity from "@/components/recent-activity";
 import {

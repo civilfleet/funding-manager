@@ -713,7 +713,9 @@ export default function EventForm({
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
+                              aria-hidden="true"
                             >
+                              <title>Completed step</title>
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"

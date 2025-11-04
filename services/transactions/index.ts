@@ -65,16 +65,16 @@ const getTransactions = async ({
   const where: Record<string, unknown> = {};
 
   if (organizationId) {
-    where["organizationId"] = organizationId;
+    where.organizationId = organizationId;
   }
   if (teamId) {
-    where["teamId"] = teamId;
+    where.teamId = teamId;
   }
   if (fundingRequestId) {
-    where["fundingRequestId"] = fundingRequestId;
+    where.fundingRequestId = fundingRequestId;
   }
   if (searchQuery) {
-    where["fundingRequest"] = {
+    where.fundingRequest = {
       name: {
         contains: searchQuery,
         mode: "insensitive",

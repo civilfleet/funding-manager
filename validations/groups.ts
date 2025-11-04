@@ -11,7 +11,7 @@ export const createGroupSchema = z.object({
     .array(z.enum(APP_MODULES))
     .optional()
     .transform((value) =>
-      value && value.length
+      value?.length
         ? Array.from(new Set(value))
         : Array.from(APP_MODULES),
     ),

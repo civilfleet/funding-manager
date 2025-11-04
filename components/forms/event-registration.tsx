@@ -84,7 +84,9 @@ export default function EventRegistrationForm({
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
+            <title>Success icon</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"

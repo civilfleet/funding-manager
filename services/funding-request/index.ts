@@ -142,7 +142,6 @@ const updateFundingRequest = async (
   data: Partial<FundingRequestData>,
   teamId: string,
 ) => {
-  try {
     const team = await prisma.teams.findFirst({
       where: {
         id: teamId,
@@ -197,9 +196,6 @@ const updateFundingRequest = async (
       },
     });
     return fundingRequest;
-  } catch (e) {
-    throw e;
-  }
 };
 
 const updateFundingRequestStatus = async (
@@ -329,27 +325,27 @@ const getFundingRequests = async (
 ) => {
   const where: Prisma.FundingRequestWhereInput = {};
   if (orgId) {
-    where["organizationId"] = orgId;
+    where.organizationId = orgId;
   }
   if (teamId) {
-    where["teamId"] = teamId;
+    where.teamId = teamId;
   }
   if (searchQuery) {
-    where["description"] = {
+    where.description = {
       contains: searchQuery,
     };
-    where["purpose"] = {
+    where.purpose = {
       contains: searchQuery,
     };
-    where["refinancingConcept"] = {
+    where.refinancingConcept = {
       contains: searchQuery,
     };
-    where["sustainability"] = {
+    where.sustainability = {
       contains: searchQuery,
     };
   }
   if (status?.length) {
-    where["status"] = {
+    where.status = {
       in: status,
     };
   }

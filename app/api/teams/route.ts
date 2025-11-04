@@ -11,7 +11,7 @@ export async function GET() {
     });
 
     return NextResponse.json({ data: teams });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to fetch teams" },
       { status: 500 },

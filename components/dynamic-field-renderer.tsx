@@ -42,7 +42,7 @@ const DynamicFieldRenderer = ({ field, value }: DynamicFieldRendererProps) => {
               {format(date, "MMMM d, yyyy")}
             </Badge>
           );
-        } catch (error) {
+        } catch (_error) {
           return <span>{String(value)}</span>;
         }
 
@@ -86,12 +86,16 @@ const DynamicFieldRenderer = ({ field, value }: DynamicFieldRendererProps) => {
         if (Array.isArray(value)) {
           return (
             <div className="flex flex-wrap gap-1">
-              {value.map((val, index) => {
+              {value.map((val) => {
                 const option = field.options?.find(
                   (opt: FormFieldOption) => opt.value === val,
                 );
                 return (
-                  <Badge key={index} variant="secondary" className="text-xs">
+                  <Badge
+                    key={`${field.id}-${String(val)}`}
+                    variant="secondary"
+                    className="text-xs"
+                  >
                     {option?.label || String(val)}
                   </Badge>
                 );

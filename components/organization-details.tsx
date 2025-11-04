@@ -73,10 +73,10 @@ export default function OrganizationDetails({
       case "rejected":
         return "destructive";
       case "approved":
-      case "Submitted":
+      case "submitted":
         return "default";
 
-      case "Accepted":
+      case "accepted":
         return "secondary";
       default:
         return "outline";

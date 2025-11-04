@@ -22,7 +22,7 @@ export function UploadReceiptModal({
   onUpload,
   transactionId,
 }: UploadReceiptModalProps) {
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [_fileUrl, setFileUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

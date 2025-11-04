@@ -34,7 +34,7 @@ export type EventRow = {
   updatedAt: string | Date;
 };
 
-const formatDate = (value?: string | Date | null) => {
+const _formatDate = (value?: string | Date | null) => {
   if (!value) {
     return "—";
   }

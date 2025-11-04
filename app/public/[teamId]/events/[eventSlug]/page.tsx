@@ -40,7 +40,9 @@ export default async function PublicEventPage({
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
+                <title>Event date</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -67,7 +69,9 @@ export default async function PublicEventPage({
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
+                  <title>Event location</title>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"

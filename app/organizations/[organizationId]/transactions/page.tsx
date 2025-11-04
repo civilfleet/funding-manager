@@ -1,6 +1,5 @@
-import Link from "next/link";
+
 import TransactionTable from "@/components/table/transaction-table";
-import { Button } from "@/components/ui/button";
 
 interface PageProps {
   params: Promise<{

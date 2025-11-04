@@ -1,5 +1,4 @@
 import { Roles } from "@prisma/client";
-import _ from "lodash";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 

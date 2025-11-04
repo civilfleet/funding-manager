@@ -58,7 +58,7 @@ export function AppSidebar({
       initialTeams.map((team) => ({
         ...team,
         modules:
-          team.modules && team.modules.length ? team.modules : [...APP_MODULES],
+          team.modules?.length ? team.modules : [...APP_MODULES],
       })),
     [initialTeams],
   );

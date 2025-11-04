@@ -2,14 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
 
-type RouteContext = {
-  params: {
-    teamId: string;
-  };
-};
-
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ teamId: string }> },
 ) {
   const { teamId } = await params;

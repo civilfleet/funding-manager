@@ -345,15 +345,13 @@ const FundingRequestOverview = ({ data }: { data: FundingRequest }) => {
                 .slice(0, 3)
                 .map(
                   (
-                    file: { id: string; name: string; type: string },
-                    index: number,
+                    file: { id: string; name: string; type: string }
                   ) => (
                     <Link
                       href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.id}`}
-                      key={index}
+                      key={file.id}
                     >
                       <div
-                        key={index}
                         className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50"
                       >
                         <div className="flex items-center gap-2">

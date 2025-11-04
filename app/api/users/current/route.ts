@@ -6,13 +6,15 @@ import { Roles } from "@/types";
 
 export async function GET() {
   try {
-    let data;
     const session = await auth();
-    if (session?.user?.roles?.includes(Roles.Admin)) {
-      data = await getAdminUser(session?.user?.userId as string);
-    } else {
-      data = await getUserCurrent(session?.user?.userId as string);
+    const userId = session?.user?.userId;
+    if (!session || !userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const data = session.user?.roles?.includes(Roles.Admin)
+      ? await getAdminUser(userId)
+      : await getUserCurrent(userId);
 
     return NextResponse.json(
       {

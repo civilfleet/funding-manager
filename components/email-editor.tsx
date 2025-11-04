@@ -46,9 +46,11 @@ export const EmailEditor = ({ value, onChange }: EmailEditorProps) => {
       </div>
 
       {isPreview ? (
-        <div
-          className="w-full min-h-[200px] p-4 border rounded-md bg-white"
-          dangerouslySetInnerHTML={{ __html: value }}
+        <iframe
+          title="Email preview"
+          sandbox=""
+          className="w-full min-h-[200px] border rounded-md bg-white"
+          srcDoc={value}
         />
       ) : (
         <textarea
