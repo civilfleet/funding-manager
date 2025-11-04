@@ -15,19 +15,28 @@ export default async function TeamLayout({
     return redirect("/");
   }
 
-  const canAccess = await hasModuleAccess(
-    {
-      teamId,
-      userId: session.user?.userId,
-      roles: session.user?.roles,
-    },
-    "CRM" satisfies AppModule,
-  );
+  const [canAccessCrm, canAccessFunding] = await Promise.all([
+    hasModuleAccess(
+      {
+        teamId,
+        userId: session.user?.userId,
+        roles: session.user?.roles,
+      },
+      "CRM" satisfies AppModule,
+    ),
+    hasModuleAccess(
+      {
+        teamId,
+        userId: session.user?.userId,
+        roles: session.user?.roles,
+      },
+      "FUNDING" satisfies AppModule,
+    ),
+  ]);
 
-  if (!canAccess) {
+  if (!canAccessCrm && !canAccessFunding) {
     return redirect("/");
   }
 
   return <>{children}</>;
 }
-
