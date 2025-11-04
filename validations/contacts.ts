@@ -80,6 +80,64 @@ const contactAttributeSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
+const optionalDateString = z.preprocess(
+  preprocessEmptyString,
+  z
+    .string()
+    .refine((value) => {
+      if (typeof value !== "string") {
+        return false;
+      }
+
+      const parsed = Date.parse(value);
+      return !Number.isNaN(parsed);
+    })
+    .optional(),
+);
+
+const contactFieldFilterSchema = z
+  .object({
+    type: z.literal("contactField"),
+    field: z.enum(["email", "phone"]),
+    operator: z.enum(["has", "missing", "contains"]),
+    value: optionalText(z.string()),
+  })
+  .refine(
+    (data) => {
+      if (data.operator === "contains") {
+        return Boolean(data.value?.trim());
+      }
+      return true;
+    },
+    {
+      message: "Provide a value for contains filters",
+      path: ["value"],
+    },
+  );
+
+export const contactFilterSchema = z.discriminatedUnion("type", [
+  contactFieldFilterSchema,
+  z.object({
+    type: z.literal("group"),
+    groupId: z.string().uuid("Group id must be a valid UUID"),
+  }),
+  z.object({
+    type: z.literal("eventRole"),
+    eventRoleId: z.string().uuid("Event role id must be a valid UUID"),
+  }),
+  z
+    .object({
+      type: z.literal("createdAt"),
+      from: optionalDateString,
+      to: optionalDateString,
+    })
+    .refine((value) => Boolean(value.from) || Boolean(value.to), {
+      message: "Provide at least a start or end date",
+    }),
+]);
+
+export const contactFiltersSchema = z.array(contactFilterSchema).default([]);
+
 export const createContactSchema = z.object({
   teamId: z.string().uuid("Team id must be a valid UUID"),
   name: z.string().min(1, "Name is required"),
@@ -93,6 +151,8 @@ export const createContactSchema = z.object({
 });
 
 export type CreateContactInput = z.infer<typeof createContactSchema>;
+
+export type ContactFilterInput = z.infer<typeof contactFilterSchema>;
 
 export const updateContactSchema = z.object({
   contactId: z.string().uuid("Contact id must be a valid UUID"),

@@ -7,9 +7,11 @@ import {
 import { ensureDefaultGroup, mapGroup } from "@/services/groups";
 import {
   ContactAttributeType,
+  type ContactFilter,
   type ContactLocationValue,
   type ContactProfileAttribute,
   type Contact as ContactType,
+  Roles,
 } from "@/types";
 
 type CreateContactInput = {
@@ -386,15 +388,20 @@ const getTeamContacts = async (
   teamId: string,
   query?: string,
   userId?: string,
+  filters?: ContactFilter[],
+  roles: Roles[] = [],
 ) => {
-  const where: Prisma.ContactWhereInput = {
-    teamId,
-  };
-
   await ensureDefaultGroup(teamId);
 
-  // If userId is provided, filter by group access
-  if (userId) {
+  const andConditions: Prisma.ContactWhereInput[] = [
+    {
+      teamId,
+    },
+  ];
+
+  const isAdmin = roles.includes(Roles.Admin);
+
+  if (userId && !isAdmin) {
     const userGroups = await prisma.userGroup.findMany({
       where: { userId },
       include: {
@@ -407,17 +414,25 @@ const getTeamContacts = async (
       },
     });
 
-    // Check if user belongs to any group with canAccessAllContacts permission
     const hasAllAccessPermission = userGroups.some(
       (ug) => ug.group.canAccessAllContacts,
     );
 
     if (!hasAllAccessPermission) {
-      // User can only see contacts with no group OR contacts in their groups
-      const groupIds = userGroups.map((ug) => ug.groupId);
-      where.OR = [{ groupId: null }, { groupId: { in: groupIds } }];
+      const groupIds = userGroups
+        .map((ug) => ug.groupId)
+        .filter((id): id is string => Boolean(id));
+
+      if (groupIds.length > 0) {
+        andConditions.push({
+          OR: [{ groupId: null }, { groupId: { in: groupIds } }],
+        });
+      } else {
+        andConditions.push({
+          groupId: null,
+        });
+      }
     }
-    // If user has canAccessAllContacts permission, don't apply any group filtering
   }
 
   if (query) {
@@ -438,14 +453,132 @@ const getTeamContacts = async (
       },
     ];
 
-    // Combine group filtering with search
-    if (where.OR) {
-      where.AND = [{ OR: where.OR }, { OR: searchConditions }];
-      delete where.OR;
-    } else {
-      where.OR = searchConditions;
+    andConditions.push({
+      OR: searchConditions,
+    });
+  }
+
+  const resolvedFilters = filters ?? [];
+
+  const contactFieldFilters = resolvedFilters.filter(
+    (filter): filter is Extract<ContactFilter, { type: "contactField" }> =>
+      filter.type === "contactField",
+  );
+
+  contactFieldFilters.forEach((filter) => {
+    const fieldName = filter.field;
+
+    const containsCondition =
+      fieldName === "email"
+        ? {
+            email: {
+              contains: filter.value?.trim() ?? "",
+              mode: "insensitive",
+            },
+          }
+        : {
+            phone: {
+              contains: filter.value?.trim() ?? "",
+              mode: "insensitive",
+            },
+          };
+
+    const notNullCondition =
+      fieldName === "email"
+        ? { email: { not: null } }
+        : { phone: { not: null } };
+
+    const notEmptyCondition =
+      fieldName === "email"
+        ? { NOT: { email: "" } }
+        : { NOT: { phone: "" } };
+
+    const missingCondition =
+      fieldName === "email"
+        ? { OR: [{ email: null }, { email: "" }] }
+        : { OR: [{ phone: null }, { phone: "" }] };
+
+    switch (filter.operator) {
+      case "contains": {
+        if (filter.value && filter.value.trim()) {
+          andConditions.push(containsCondition);
+        }
+        break;
+      }
+      case "has": {
+        andConditions.push(notNullCondition);
+        andConditions.push(notEmptyCondition);
+        break;
+      }
+      case "missing": {
+        andConditions.push(missingCondition);
+        break;
+      }
+      default:
+        break;
+    }
+  });
+
+  const groupFilters = resolvedFilters.filter(
+    (filter): filter is Extract<ContactFilter, { type: "group" }> =>
+      filter.type === "group" && Boolean(filter.groupId),
+  );
+  if (groupFilters.length > 0) {
+    andConditions.push({
+      OR: groupFilters.map((filter) => ({ groupId: filter.groupId })),
+    });
+  }
+
+  const eventRoleIds = resolvedFilters
+    .filter(
+      (filter): filter is Extract<ContactFilter, { type: "eventRole" }> =>
+        filter.type === "eventRole" && Boolean(filter.eventRoleId),
+    )
+    .map((filter) => filter.eventRoleId);
+  if (eventRoleIds.length > 0) {
+    andConditions.push({
+      events: {
+        some: {
+          roles: {
+            some: {
+              eventRoleId: {
+                in: eventRoleIds,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  const createdAtFilter = resolvedFilters.find(
+    (filter): filter is Extract<ContactFilter, { type: "createdAt" }> =>
+      filter.type === "createdAt" &&
+      (Boolean(filter.from) || Boolean(filter.to)),
+  );
+  if (createdAtFilter) {
+    const dateFilter: Prisma.DateTimeFilter = {};
+    if (createdAtFilter.from) {
+      const fromDate = new Date(createdAtFilter.from);
+      if (!Number.isNaN(fromDate.getTime())) {
+        dateFilter.gte = fromDate;
+      }
+    }
+    if (createdAtFilter.to) {
+      const toDate = new Date(createdAtFilter.to);
+      if (!Number.isNaN(toDate.getTime())) {
+        dateFilter.lte = toDate;
+      }
+    }
+    if (Object.keys(dateFilter).length > 0) {
+      andConditions.push({
+        createdAt: dateFilter,
+      });
     }
   }
+
+  const where: Prisma.ContactWhereInput =
+    andConditions.length === 1 ? andConditions[0] : { AND: andConditions };
 
   const contacts = await prisma.contact.findMany({
     where,

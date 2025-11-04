@@ -114,6 +114,29 @@ export interface Contact {
   updatedAt: Date;
 }
 
+export type ContactFilter =
+  | {
+      type: "contactField";
+      field: "email" | "phone";
+      operator: "has" | "missing" | "contains";
+      value?: string;
+    }
+  | {
+      type: "group";
+      groupId: string;
+    }
+  | {
+      type: "eventRole";
+      eventRoleId: string;
+    }
+  | {
+      type: "createdAt";
+      from?: string;
+      to?: string;
+    };
+
+export type ContactFilterType = ContactFilter["type"];
+
 export enum EngagementDirection {
   INBOUND = "INBOUND",
   OUTBOUND = "OUTBOUND",

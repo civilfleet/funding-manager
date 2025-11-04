@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Filter, Loader2, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Filter, Loader2, Plus, X } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
@@ -17,12 +17,52 @@ import {
 } from "@/components/table/contact-columns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Form } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import type { ContactFilter, ContactFilterType } from "@/types";
 
 interface ContactTableProps {
   teamId: string;
 }
+
+type FilterOption = {
+  type: ContactFilterType;
+  label: string;
+  allowMultiple?: boolean;
+  field?: "email" | "phone";
+};
+
+const FILTER_OPTIONS: FilterOption[] = [
+  {
+    type: "contactField",
+    field: "email",
+    label: "Email",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
+    field: "phone",
+    label: "Phone",
+    allowMultiple: true,
+  },
+  { type: "group", label: "Group", allowMultiple: true },
+  { type: "eventRole", label: "Event role", allowMultiple: true },
+  { type: "createdAt", label: "Created date", allowMultiple: false },
+];
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -30,12 +70,28 @@ const querySchema = z.object({
   query: z.string(),
 });
 
+const isFilterComplete = (filter: ContactFilter) => {
+  switch (filter.type) {
+    case "contactField":
+      if (filter.operator === "contains") {
+        return Boolean(filter.value?.trim());
+      }
+      return true;
+    case "group":
+      return Boolean(filter.groupId);
+    case "eventRole":
+      return Boolean(filter.eventRoleId);
+    case "createdAt":
+      return Boolean(filter.from) || Boolean(filter.to);
+    default:
+      return true;
+  }
+};
+
 export default function ContactTable({ teamId }: ContactTableProps) {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState<string | null>(
-    null,
-  );
+  const [filters, setFilters] = useState<ContactFilter[]>([]);
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
@@ -44,56 +100,67 @@ export default function ContactTable({ teamId }: ContactTableProps) {
 
   const query = form.watch("query");
 
-  // Wrap renderContactCard with teamId
-  const renderCard = (contact: ContactRow) =>
-    renderContactCard(contact, teamId);
+  const activeFilters = useMemo(
+    () => filters.filter(isFilterComplete),
+    [filters],
+  );
 
-  const { data, error, isLoading, mutate } = useSWR(
-    `/api/contacts?teamId=${teamId}&query=${encodeURIComponent(query)}`,
+  const filtersQuery = useMemo(() => {
+    if (!activeFilters.length) {
+      return "";
+    }
+
+    return `&filters=${encodeURIComponent(JSON.stringify(activeFilters))}`;
+  }, [activeFilters]);
+
+  const contactsKey = `/api/contacts?teamId=${teamId}&query=${encodeURIComponent(query)}${filtersQuery}`;
+
+  const { data, error, isLoading, mutate } = useSWR(contactsKey, fetcher);
+
+  const { data: rolesData } = useSWR(
+    `/api/event-roles?teamId=${teamId}`,
     fetcher,
   );
 
-  const { data: rolesData, isLoading: rolesLoading } = useSWR(
-    `/api/event-roles?teamId=${teamId}`,
+  const { data: groupsData } = useSWR(
+    `/api/groups?teamId=${teamId}`,
     fetcher,
   );
 
   const eventRoles = useMemo(() => {
     if (!rolesData?.data) {
-      return [];
+      return [] as Array<{ id: string; name: string; color?: string }>;
     }
-    return rolesData.data as Array<{
-      id: string;
-      name: string;
-      color?: string;
-    }>;
+
+    return rolesData.data as Array<{ id: string; name: string; color?: string }>;
   }, [rolesData]);
 
-  const allContacts = useMemo<ContactRow[]>(() => {
+  const groups = useMemo(() => {
+    if (!groupsData?.data) {
+      return [] as Array<{ id: string; name: string }>;
+    }
+
+    return groupsData.data as Array<{ id: string; name: string }>;
+  }, [groupsData]);
+
+  const groupMap = useMemo(() => {
+    return new Map(groups.map((group) => [group.id, group]));
+  }, [groups]);
+
+  const eventRoleMap = useMemo(() => {
+    return new Map(eventRoles.map((role) => [role.id, role]));
+  }, [eventRoles]);
+
+  const renderCard = (contact: ContactRow) =>
+    renderContactCard(contact, teamId);
+
+  const contacts = useMemo<ContactRow[]>(() => {
     if (!data?.data) {
       return [];
     }
 
     return data.data as ContactRow[];
   }, [data]);
-
-  const contacts = useMemo<ContactRow[]>(() => {
-    if (!selectedRoleFilter) {
-      return allContacts;
-    }
-
-    return allContacts.filter((contact) => {
-      if (!contact.events || contact.events.length === 0) {
-        return false;
-      }
-
-      return contact.events.some((eventContact) =>
-        eventContact.roles.some(
-          (role) => role.eventRole.id === selectedRoleFilter,
-        ),
-      );
-    });
-  }, [allContacts, selectedRoleFilter]);
 
   if (error) {
     toast({
@@ -157,62 +224,380 @@ export default function ContactTable({ teamId }: ContactTableProps) {
     }
   };
 
-  const handleRoleFilterToggle = (roleId: string) => {
-    setSelectedRoleFilter((current) => (current === roleId ? null : roleId));
+  const updateFilter = useCallback(
+    (index: number, updater: (current: ContactFilter) => ContactFilter) => {
+      setFilters((previous) =>
+        previous.map((filter, idx) =>
+          idx === index ? updater(filter) : filter,
+        ),
+      );
+    },
+    [],
+  );
+
+  const createDefaultFilter = useCallback(
+    (option: FilterOption): ContactFilter => {
+      switch (option.type) {
+        case "contactField":
+          return {
+            type: "contactField",
+            field: option.field ?? "email",
+            operator: "has",
+          };
+        case "group":
+          return {
+            type: "group",
+            groupId: groups[0]?.id ?? "",
+          };
+        case "eventRole":
+          return {
+            type: "eventRole",
+            eventRoleId: eventRoles[0]?.id ?? "",
+          };
+        case "createdAt":
+          return { type: "createdAt" };
+        default:
+          return {
+            type: "contactField",
+            field: "email",
+            operator: "has",
+          };
+      }
+    },
+    [eventRoles, groups],
+  );
+
+  const handleAddFilter = (option: FilterOption) => {
+    const alreadyExists = filters.some((filter) => {
+      if (filter.type !== option.type) {
+        return false;
+      }
+
+      if (option.type === "contactField") {
+        return filter.type === "contactField" && filter.field === option.field;
+      }
+
+      return true;
+    });
+
+    if (alreadyExists && !option.allowMultiple) {
+      return;
+    }
+
+    setFilters((previous) => [...previous, createDefaultFilter(option)]);
+  };
+
+  const handleRemoveFilter = (index: number) => {
+    setFilters((previous) => previous.filter((_, idx) => idx !== index));
+  };
+
+  const summarizeFilter = useCallback(
+    (filter: ContactFilter) => {
+      switch (filter.type) {
+        case "contactField": {
+          const label = filter.field === "email" ? "Email" : "Phone";
+          if (filter.operator === "contains") {
+            return filter.value
+              ? `${label} contains “${filter.value}”`
+              : `${label} contains…`;
+          }
+          if (filter.operator === "has") {
+            return `${label} present`;
+          }
+          return `${label} missing`;
+        }
+        case "group": {
+          const groupName = filter.groupId
+            ? groupMap.get(filter.groupId)?.name
+            : undefined;
+          return groupName ? `Group: ${groupName}` : "Group: Select…";
+        }
+        case "eventRole": {
+          const roleName = filter.eventRoleId
+            ? eventRoleMap.get(filter.eventRoleId)?.name
+            : undefined;
+          return roleName ? `Role: ${roleName}` : "Role: Select…";
+        }
+        case "createdAt": {
+          if (filter.from && filter.to) {
+            return `Created between ${filter.from} and ${filter.to}`;
+          }
+          if (filter.from) {
+            return `Created after ${filter.from}`;
+          }
+          if (filter.to) {
+            return `Created before ${filter.to}`;
+          }
+          return "Created date";
+        }
+        default:
+          return "Filter";
+      }
+    },
+    [eventRoleMap, groupMap],
+  );
+
+  const isOptionDisabled = (option: FilterOption) => {
+    const alreadyExists = filters.some((filter) => {
+      if (filter.type !== option.type) {
+        return false;
+      }
+
+      if (option.type === "contactField") {
+        return filter.type === "contactField" && filter.field === option.field;
+      }
+
+      return true;
+    });
+
+    if (alreadyExists && !option.allowMultiple) {
+      return true;
+    }
+
+    if (option.type === "group" && groups.length === 0) {
+      return true;
+    }
+
+    if (option.type === "eventRole" && eventRoles.length === 0) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const renderFilterControl = (filter: ContactFilter, index: number) => {
+    switch (filter.type) {
+      case "contactField":
+        return (
+          <div className="flex flex-wrap items-center gap-2">
+            <Select
+              value={filter.operator}
+              onValueChange={(value) =>
+                updateFilter(index, (current) =>
+                  current.type === "contactField"
+                    ? {
+                        ...current,
+                        operator: value as "has" | "missing" | "contains",
+                        value:
+                          value === "contains"
+                            ? current.value ?? ""
+                            : undefined,
+                      }
+                    : current,
+                )
+              }
+            >
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="has">Has value</SelectItem>
+                <SelectItem value="missing">Is missing</SelectItem>
+                <SelectItem value="contains">Contains</SelectItem>
+              </SelectContent>
+            </Select>
+            {filter.operator === "contains" && (
+              <Input
+                type="text"
+                placeholder="Contains…"
+                value={filter.value ?? ""}
+                onChange={(event) => {
+                  const nextValue = event.currentTarget.value;
+                  updateFilter(index, (current) =>
+                    current.type === "contactField"
+                      ? { ...current, value: nextValue }
+                      : current,
+                  );
+                }}
+                className="w-56"
+              />
+            )}
+          </div>
+        );
+      case "group":
+        return (
+          <Select
+            value={filter.groupId ?? ""}
+            onValueChange={(value) =>
+              updateFilter(index, (current) =>
+                current.type === "group" ? { ...current, groupId: value } : current,
+              )
+            }
+          >
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select group" />
+            </SelectTrigger>
+            <SelectContent>
+              {groups.map((group) => (
+                <SelectItem key={group.id} value={group.id}>
+                  {group.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      case "eventRole":
+        return (
+          <Select
+            value={filter.eventRoleId ?? ""}
+            onValueChange={(value) =>
+              updateFilter(index, (current) =>
+                current.type === "eventRole"
+                  ? { ...current, eventRoleId: value }
+                  : current,
+              )
+            }
+          >
+            <SelectTrigger className="w-52">
+              <SelectValue placeholder="Select role" />
+            </SelectTrigger>
+            <SelectContent>
+              {eventRoles.map((role) => (
+                <SelectItem key={role.id} value={role.id}>
+                  {role.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      case "createdAt":
+        return (
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">From</span>
+              <Input
+                type="date"
+                value={filter.from ?? ""}
+                onChange={(event) =>
+                  updateFilter(index, (current) =>
+                    current.type === "createdAt"
+                      ? { ...current, from: event.currentTarget.value || undefined }
+                      : current,
+                  )
+                }
+                className="w-40"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">To</span>
+              <Input
+                type="date"
+                value={filter.to ?? ""}
+                onChange={(event) =>
+                  updateFilter(index, (current) =>
+                    current.type === "createdAt"
+                      ? { ...current, to: event.currentTarget.value || undefined }
+                      : current,
+                  )
+                }
+                className="w-40"
+              />
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
-    <div className="flex flex-col gap-4 my-4">
+    <div className="my-4 flex flex-col gap-5">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="flex w-full max-w-md"
+          className="flex w-full flex-col gap-2 sm:max-w-md sm:flex-row"
         >
           <FormInputControl
             form={form}
             name="query"
             placeholder="Search contacts"
           />
-          <ButtonControl type="submit" label="Search" className="ml-2" />
+          <ButtonControl type="submit" label="Search" className="sm:ml-2" />
         </form>
       </Form>
 
-      {!rolesLoading && eventRoles.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Filter className="h-4 w-4" />
-            <span>Filter by event role:</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {eventRoles.map((role) => (
-              <Badge
-                key={role.id}
-                variant={selectedRoleFilter === role.id ? "default" : "outline"}
-                className="cursor-pointer hover:bg-accent transition-colors"
-                style={
-                  selectedRoleFilter === role.id && role.color
-                    ? {
-                        backgroundColor: `${role.color}20`,
-                        color: role.color,
-                        borderColor: role.color,
-                      }
-                    : {}
-                }
-                onClick={() => handleRoleFilterToggle(role.id)}
+      <div className="flex flex-wrap items-center gap-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" size="sm" className="gap-2">
+              <Plus className="h-4 w-4" />
+              <Filter className="h-4 w-4" />
+              Add filter
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {FILTER_OPTIONS.map((option) => (
+              <DropdownMenuItem
+                key={`${option.type}-${option.field ?? "default"}`}
+                disabled={isOptionDisabled(option)}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  handleAddFilter(option);
+                }}
               >
-                {role.name}
-                {selectedRoleFilter === role.id && (
-                  <X className="ml-1 h-3 w-3" />
-                )}
-              </Badge>
+                {option.label}
+              </DropdownMenuItem>
             ))}
-          </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {filters.length > 0 && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setFilters([])}
+          >
+            Clear filters
+          </Button>
+        )}
+      </div>
+
+      {filters.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {filters.map((filter, index) => {
+            const option = FILTER_OPTIONS.find(
+              (item) =>
+                item.type === filter.type &&
+                (filter.type !== "contactField" ||
+                  item.field === filter.field),
+            );
+            return (
+              <div
+                key={`${filter.type}-${index}`}
+                className="flex flex-wrap items-center gap-3 rounded-md border bg-muted/30 p-3"
+              >
+                <span className="text-sm font-medium">
+                  {option?.label ?? "Filter"}
+                </span>
+                {renderFilterControl(filter, index)}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemoveFilter(index)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {activeFilters.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {activeFilters.map((filter, index) => (
+            <Badge key={`active-${filter.type}-${index}`} variant="secondary">
+              {summarizeFilter(filter)}
+            </Badge>
+          ))}
         </div>
       )}
 
       <div className="rounded-md border p-2">
         {isLoading ? (
-          <div className="flex justify-center items-center h-32">
+          <div className="flex h-32 items-center justify-center">
             <Loader className="h-6 w-6 text-muted-foreground" />
           </div>
         ) : (

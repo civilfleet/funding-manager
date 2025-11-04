@@ -11,14 +11,18 @@ import {
 import {
   createContactSchema,
   deleteContactsSchema,
+  contactFiltersSchema,
   updateContactSchema,
 } from "@/validations/contacts";
+import type { ContactFilterInput } from "@/validations/contacts";
+import type { Roles } from "@/types";
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const teamId = searchParams.get("teamId");
     const query = searchParams.get("query") || "";
+    const filtersParam = searchParams.get("filters");
 
     if (!teamId) {
       return NextResponse.json(
@@ -27,11 +31,10 @@ export async function GET(req: Request) {
       );
     }
 
-    // Get the current user's ID for group filtering
     const session = await auth();
-    let userId: string | undefined;
+    let userId = session?.user?.userId ?? undefined;
 
-    if (session?.user?.email) {
+    if (!userId && session?.user?.email) {
       const user = await prisma.user.findUnique({
         where: { email: session.user.email },
         select: { id: true },
@@ -39,7 +42,28 @@ export async function GET(req: Request) {
       userId = user?.id;
     }
 
-    const contacts = await getTeamContacts(teamId, query || undefined, userId);
+    let filters: ContactFilterInput[] | undefined;
+    if (filtersParam) {
+      try {
+        const parsed = JSON.parse(filtersParam);
+        filters = contactFiltersSchema.parse(parsed);
+      } catch (error) {
+        return NextResponse.json(
+          { error: "Invalid filters parameter" },
+          { status: 400 },
+        );
+      }
+    }
+
+    const roles = (session?.user?.roles ?? []) as Roles[];
+
+    const contacts = await getTeamContacts(
+      teamId,
+      query || undefined,
+      userId,
+      filters,
+      roles,
+    );
     return NextResponse.json({ data: contacts }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
