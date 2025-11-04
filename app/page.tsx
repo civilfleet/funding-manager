@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { LoginForm } from "@/components/login-form";
 import { getUserCurrent } from "@/services/users";
 import { Roles } from "@/types";
+import { APP_NAME } from "@/constants/app";
 
 export default async function LoginPage() {
   const session = await auth();
@@ -36,7 +37,7 @@ export default async function LoginPage() {
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <GalleryVerticalEnd className="size-4" />
             </div>
-            Funding Management System
+            {APP_NAME}
           </a>
         </div>
         <div className="flex flex-1 items-center justify-center">

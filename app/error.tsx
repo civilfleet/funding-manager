@@ -1,5 +1,7 @@
 "use client";
 
+import { APP_NAME } from "@/constants/app";
+
 function AppError() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
@@ -7,7 +9,7 @@ function AppError() {
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="/" className="flex items-center gap-2 font-medium">
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground"></div>
-            Funding Management System
+            {APP_NAME}
           </a>
         </div>
         <div className="flex flex-1 items-center justify-center">

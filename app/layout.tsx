@@ -5,11 +5,12 @@ import { Inter } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "@/components/ui/toaster";
+import { APP_NAME } from "@/constants/app";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Partner App",
+  title: APP_NAME,
   description: "A funding manager application.",
 };
 
