@@ -162,7 +162,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
               className="space-y-8"
               id="organization-form"
             >
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormInputControl
                   form={form}
                   name="name"
@@ -222,7 +222,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                 <hr />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormInputControl
                   form={form}
                   name="taxID"
@@ -255,7 +255,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                 <hr />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormInputControl
                   form={form}
                   name="bankDetails.bankName"
@@ -285,7 +285,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                 User Person
                 <hr />
               </h4>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormInputControl
                   form={form}
                   name="user.name"
@@ -317,7 +317,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                 <hr />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <FileUpload
                     placeholder="Article of Association"
@@ -364,7 +364,7 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                 />
               ) : (
                 <ButtonControl
-                  className="w-24"
+                  className="w-full sm:w-24"
                   type="submit"
                   disabled={form.formState.isSubmitting}
                 />

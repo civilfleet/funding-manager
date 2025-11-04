@@ -8,7 +8,7 @@ export default async function Page({
   const { teamId } = await params;
 
   return (
-    <div className="flex flex-col w-2/3 p-4">
+    <div className="flex w-full max-w-3xl flex-col gap-6 p-4">
       <OrganizationForm
         data={{
           name: undefined,

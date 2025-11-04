@@ -11,12 +11,12 @@ export default async function Organization({
   const { teamId } = await params;
 
   return (
-    <div className="p-4 w-full">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl my-2">Organizations</h1>
-        <div className="flex gap-2">
+    <div className="w-full space-y-6 p-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-semibold">Organizations</h1>
+        <div className="flex flex-wrap gap-2">
           <CopyRegistrationLinkButton teamId={teamId} />
-          <Link href="organizations/create">
+          <Link href={`/teams/${teamId}/organizations/create`}>
             <Button type="button">Create New</Button>
           </Link>
         </div>

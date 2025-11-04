@@ -2,7 +2,11 @@ import { Shield } from "lucide-react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { getAdminUser, getUserCurrent } from "@/services/users";
 import { Roles } from "@/types";
 
@@ -40,7 +44,8 @@ export default async function RootLayout({
           organizations={organizations}
         />
         <SidebarInset>
-          <div className="flex items-center gap-2 p-4 border-b">
+          <div className="flex items-center gap-2 border-b p-4">
+            <SidebarTrigger className="-ml-1 md:hidden" />
             <Shield className="size-5 text-primary" />
             <h1 className="text-xl font-semibold">Admin Dashboard</h1>
           </div>

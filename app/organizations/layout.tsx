@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { getAdminUser, getUserCurrent } from "@/services/users";
 import { Roles } from "@/types";
 
@@ -39,8 +43,16 @@ export default async function RootLayout({
           organizations={organizations}
         />
         <SidebarInset>
-          <div className="flex flex-1 flex-col gap-4 p-8 pt-0 m-5">
-            {children}
+          <div className="flex min-h-svh flex-1 flex-col">
+            <header className="flex items-center gap-2 border-b bg-background px-4 py-3 md:hidden">
+              <SidebarTrigger className="-ml-1" />
+              <span className="text-sm font-semibold">
+                Organization Navigation
+              </span>
+            </header>
+            <div className="flex flex-1 flex-col gap-4 p-4 md:m-5 md:p-8 md:pt-0">
+              {children}
+            </div>
           </div>
         </SidebarInset>
       </SidebarProvider>
