@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import type { PropsWithChildren } from "react";
 import { auth } from "@/auth";
-import { assertTeamModuleAccess } from "@/lib/permissions";
+import { hasModuleAccess } from "@/lib/permissions";
 
 export default async function OrganizationsLayout({
   children,
@@ -14,7 +14,7 @@ export default async function OrganizationsLayout({
     redirect("/");
   }
 
-  await assertTeamModuleAccess(
+  const canAccessFunding = await hasModuleAccess(
     {
       teamId,
       userId: session.user?.userId,
@@ -22,6 +22,10 @@ export default async function OrganizationsLayout({
     },
     "FUNDING",
   );
+
+  if (!canAccessFunding) {
+    return redirect(`/teams/${teamId}/contacts`);
+  }
 
   return <>{children}</>;
 }

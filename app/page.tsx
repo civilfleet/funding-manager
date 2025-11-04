@@ -23,7 +23,18 @@ export default async function LoginPage() {
     } else if (session.user.roles?.includes(Roles.Team)) {
       const userData = await getUserCurrent(session.user.userId);
       if (userData?.teams && userData.teams.length > 0) {
-        return redirect(`/teams/${userData.teams[0].id}/organizations`);
+        const [primaryTeam] = userData.teams;
+        const modules = primaryTeam?.modules ?? [];
+
+        if (modules.includes("FUNDING")) {
+          return redirect(`/teams/${primaryTeam.id}/organizations`);
+        }
+
+        if (modules.includes("CRM")) {
+          return redirect(`/teams/${primaryTeam.id}/contacts`);
+        }
+
+        return redirect(`/teams/${primaryTeam.id}`);
       }
       return redirect("/teams");
     }
