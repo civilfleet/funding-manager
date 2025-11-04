@@ -122,6 +122,12 @@ export type ContactFilter =
       value?: string;
     }
   | {
+      type: "attribute";
+      key: string;
+      operator: "contains" | "equals";
+      value: string;
+    }
+  | {
       type: "group";
       groupId: string;
     }

@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Filter, Loader2, Plus, X } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
@@ -59,6 +59,7 @@ const FILTER_OPTIONS: FilterOption[] = [
     label: "Phone",
     allowMultiple: true,
   },
+  { type: "attribute", label: "Attribute", allowMultiple: true },
   { type: "group", label: "Group", allowMultiple: true },
   { type: "eventRole", label: "Event role", allowMultiple: true },
   { type: "createdAt", label: "Created date", allowMultiple: false },
@@ -77,6 +78,11 @@ const isFilterComplete = (filter: ContactFilter) => {
         return Boolean(filter.value?.trim());
       }
       return true;
+    case "attribute":
+      if (!filter.key?.trim()) {
+        return false;
+      }
+      return Boolean(filter.value?.trim());
     case "group":
       return Boolean(filter.groupId);
     case "eventRole":
@@ -162,6 +168,40 @@ export default function ContactTable({ teamId }: ContactTableProps) {
     return data.data as ContactRow[];
   }, [data]);
 
+  const attributeKeys = useMemo(() => {
+    const keys = new Set<string>();
+    contacts.forEach((contact) => {
+      contact.profileAttributes?.forEach((attribute) => {
+        if (attribute?.key) {
+          keys.add(attribute.key);
+        }
+      });
+    });
+    return Array.from(keys).sort((a, b) => a.localeCompare(b));
+  }, [contacts]);
+
+  useEffect(() => {
+    if (!attributeKeys.length) {
+      return;
+    }
+
+    setFilters((previous) => {
+      let changed = false;
+      const updated = previous.map((filter) => {
+        if (
+          filter.type === "attribute" &&
+          !attributeKeys.includes(filter.key)
+        ) {
+          changed = true;
+          return { ...filter, key: attributeKeys[0] };
+        }
+        return filter;
+      });
+
+      return changed ? updated : previous;
+    });
+  }, [attributeKeys]);
+
   if (error) {
     toast({
       title: "Unable to load contacts",
@@ -244,6 +284,21 @@ export default function ContactTable({ teamId }: ContactTableProps) {
             field: option.field ?? "email",
             operator: "has",
           };
+        case "attribute":
+          if (!attributeKeys.length) {
+            return {
+              type: "attribute",
+              key: "",
+              operator: "contains",
+              value: "",
+            };
+          }
+          return {
+            type: "attribute",
+            key: attributeKeys[0],
+            operator: "contains",
+            value: "",
+          };
         case "group":
           return {
             type: "group",
@@ -264,10 +319,14 @@ export default function ContactTable({ teamId }: ContactTableProps) {
           };
       }
     },
-    [eventRoles, groups],
+    [attributeKeys, eventRoles, groups],
   );
 
   const handleAddFilter = (option: FilterOption) => {
+    if (option.type === "attribute" && attributeKeys.length === 0) {
+      return;
+    }
+
     const alreadyExists = filters.some((filter) => {
       if (filter.type !== option.type) {
         return false;
@@ -305,6 +364,15 @@ export default function ContactTable({ teamId }: ContactTableProps) {
             return `${label} present`;
           }
           return `${label} missing`;
+        }
+        case "attribute": {
+          const keyLabel = filter.key || "Attribute";
+          const operatorLabel =
+            filter.operator === "equals" ? "equals" : "contains";
+          const trimmedValue = (filter.value ?? "").trim();
+          return trimmedValue
+            ? `${keyLabel} ${operatorLabel} “${trimmedValue}”`
+            : `${keyLabel} ${operatorLabel}…`;
         }
         case "group": {
           const groupName = filter.groupId
@@ -351,6 +419,10 @@ export default function ContactTable({ teamId }: ContactTableProps) {
     });
 
     if (alreadyExists && !option.allowMultiple) {
+      return true;
+    }
+
+    if (option.type === "attribute" && attributeKeys.length === 0) {
       return true;
     }
 
@@ -414,6 +486,81 @@ export default function ContactTable({ teamId }: ContactTableProps) {
             )}
           </div>
         );
+      case "attribute": {
+        if (attributeKeys.length === 0) {
+          return (
+            <span className="text-sm text-muted-foreground">
+              No attributes available
+            </span>
+          );
+        }
+
+        const selectedKey = attributeKeys.includes(filter.key)
+          ? filter.key
+          : attributeKeys[0] ?? "";
+
+        return (
+          <div className="flex flex-wrap items-center gap-2">
+            <Select
+              value={selectedKey}
+              onValueChange={(value) =>
+                updateFilter(index, (current) =>
+                  current.type === "attribute"
+                    ? { ...current, key: value }
+                    : current,
+                )
+              }
+              disabled={attributeKeys.length === 0}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select attribute" />
+              </SelectTrigger>
+              <SelectContent>
+                {attributeKeys.map((key) => (
+                  <SelectItem key={key} value={key}>
+                    {key}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={filter.operator}
+              onValueChange={(value) =>
+                updateFilter(index, (current) =>
+                  current.type === "attribute"
+                    ? {
+                        ...current,
+                        operator: value as "contains" | "equals",
+                      }
+                    : current,
+                )
+              }
+            >
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="contains">Contains</SelectItem>
+                <SelectItem value="equals">Equals</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              type="text"
+              placeholder="Value"
+              value={filter.value}
+              onChange={(event) => {
+                const nextValue = event.currentTarget.value;
+                updateFilter(index, (current) =>
+                  current.type === "attribute"
+                    ? { ...current, value: nextValue }
+                    : current,
+                );
+              }}
+              className="w-56"
+            />
+          </div>
+        );
+      }
       case "group":
         return (
           <Select

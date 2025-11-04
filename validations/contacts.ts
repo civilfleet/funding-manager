@@ -115,8 +115,16 @@ const contactFieldFilterSchema = z
     },
   );
 
+const attributeFilterSchema = z.object({
+  type: z.literal("attribute"),
+  key: z.string().trim().min(1, "Attribute key is required"),
+  operator: z.enum(["contains", "equals"]),
+  value: z.string().trim().min(1, "Attribute value is required"),
+});
+
 export const contactFilterSchema = z.discriminatedUnion("type", [
   contactFieldFilterSchema,
+  attributeFilterSchema,
   z.object({
     type: z.literal("group"),
     groupId: z.string().uuid("Group id must be a valid UUID"),

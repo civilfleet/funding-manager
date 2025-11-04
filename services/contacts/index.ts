@@ -520,6 +520,93 @@ const getTeamContacts = async (
     }
   });
 
+  const attributeFilters = resolvedFilters.filter(
+    (filter): filter is Extract<ContactFilter, { type: "attribute" }> =>
+      filter.type === "attribute" && Boolean(filter.key?.trim()),
+  );
+
+  attributeFilters.forEach((filter) => {
+    const key = filter.key.trim();
+    const value = (filter.value ?? "").trim();
+
+    const baseCondition: Prisma.ContactAttributeWhereInput = {
+      key: { equals: key },
+    };
+
+    if (filter.operator === "contains") {
+      if (!value) {
+        return;
+      }
+
+      andConditions.push({
+        attributes: {
+          some: {
+            ...baseCondition,
+            OR: [
+              {
+                stringValue: {
+                  contains: value,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+              {
+                locationLabel: {
+                  contains: value,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+            ],
+          },
+        },
+      });
+      return;
+    }
+
+    if (filter.operator === "equals") {
+      if (!value) {
+        return;
+      }
+
+      const orClauses: Prisma.ContactAttributeWhereInput[] = [
+        {
+          stringValue: {
+            equals: value,
+            mode: Prisma.QueryMode.insensitive,
+          },
+        },
+        {
+          locationLabel: {
+            equals: value,
+            mode: Prisma.QueryMode.insensitive,
+          },
+        },
+      ];
+
+      const numericValue = Number(value);
+      if (!Number.isNaN(numericValue)) {
+        orClauses.push({
+          numberValue: new Prisma.Decimal(numericValue),
+        });
+      }
+
+      const dateValue = new Date(value);
+      if (!Number.isNaN(dateValue.getTime())) {
+        orClauses.push({
+          dateValue,
+        });
+      }
+
+      andConditions.push({
+        attributes: {
+          some: {
+            ...baseCondition,
+            OR: orClauses,
+          },
+        },
+      });
+    }
+  });
+
   const groupFilters = resolvedFilters.filter(
     (filter): filter is Extract<ContactFilter, { type: "group" }> =>
       filter.type === "group" && Boolean(filter.groupId),
