@@ -467,19 +467,20 @@ const getTeamContacts = async (
 
   contactFieldFilters.forEach((filter) => {
     const fieldName = filter.field;
+    const trimmedValue = filter.value?.trim() ?? "";
 
     const containsCondition =
       fieldName === "email"
         ? {
             email: {
-              contains: filter.value?.trim() ?? "",
-              mode: "insensitive",
+              contains: trimmedValue,
+              mode: Prisma.QueryMode.insensitive,
             },
           }
         : {
             phone: {
-              contains: filter.value?.trim() ?? "",
-              mode: "insensitive",
+              contains: trimmedValue,
+              mode: Prisma.QueryMode.insensitive,
             },
           };
 
@@ -490,8 +491,8 @@ const getTeamContacts = async (
 
     const notEmptyCondition =
       fieldName === "email"
-        ? { NOT: { email: "" } }
-        : { NOT: { phone: "" } };
+        ? { NOT: { email: { equals: "" } } }
+        : { NOT: { phone: { equals: "" } } };
 
     const missingCondition =
       fieldName === "email"
@@ -500,7 +501,7 @@ const getTeamContacts = async (
 
     switch (filter.operator) {
       case "contains": {
-        if (filter.value && filter.value.trim()) {
+        if (trimmedValue) {
           andConditions.push(containsCondition);
         }
         break;
