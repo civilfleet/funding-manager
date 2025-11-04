@@ -1,17 +1,25 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@/auth";
 import { handlePrismaError } from "@/lib/utils";
 import {
   getContactListById,
   updateContactList,
 } from "@/services/contact-lists";
 import { updateContactListSchema } from "@/validations/contact-lists";
+import type { Roles } from "@/types";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await auth();
+
+    if (!session?.user?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     const teamId = searchParams.get("teamId");
@@ -23,7 +31,13 @@ export async function GET(
       );
     }
 
-    const list = await getContactListById(id, teamId);
+    const roles = (session.user.roles ?? []) as Roles[];
+    const list = await getContactListById(
+      id,
+      teamId,
+      session.user.userId,
+      roles,
+    );
 
     if (!list) {
       return NextResponse.json({ error: "List not found" }, { status: 404 });

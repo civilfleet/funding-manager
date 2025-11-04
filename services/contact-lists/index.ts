@@ -1,4 +1,7 @@
+import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { ensureDefaultGroup } from "@/services/groups";
+import { Roles } from "@/types";
 
 type CreateContactListInput = {
   teamId: string;
@@ -26,13 +29,75 @@ type RemoveContactsInput = {
   contactIds: string[];
 };
 
-const getTeamContactLists = async (teamId: string) => {
+const buildContactVisibilityFilter = async (
+  teamId: string,
+  userId?: string,
+  roles: Roles[] = [],
+): Promise<Prisma.ContactListMemberWhereInput | undefined> => {
+  if (!userId || roles.includes(Roles.Admin)) {
+    return undefined;
+  }
+
+  await ensureDefaultGroup(teamId);
+
+  const memberships = await prisma.userGroup.findMany({
+    where: {
+      userId,
+      group: {
+        teamId,
+      },
+    },
+    select: {
+      groupId: true,
+      group: {
+        select: {
+          canAccessAllContacts: true,
+        },
+      },
+    },
+  });
+
+  if (memberships.some((membership) => membership.group.canAccessAllContacts)) {
+    return undefined;
+  }
+
+  const accessibleGroupIds = memberships
+    .map((membership) => membership.groupId)
+    .filter((id): id is string => Boolean(id));
+
+  if (!accessibleGroupIds.length) {
+    return {
+      contact: {
+        groupId: null,
+      },
+    };
+  }
+
+  return {
+    contact: {
+      OR: [{ groupId: null }, { groupId: { in: accessibleGroupIds } }],
+    },
+  };
+};
+
+const getTeamContactLists = async (
+  teamId: string,
+  userId?: string,
+  roles: Roles[] = [],
+) => {
+  const contactAccessWhere = await buildContactVisibilityFilter(
+    teamId,
+    userId,
+    roles,
+  );
+
   const lists = await prisma.contactList.findMany({
     where: {
       teamId,
     },
     include: {
       contacts: {
+        ...(contactAccessWhere ? { where: contactAccessWhere } : {}),
         include: {
           contact: {
             select: {
@@ -41,11 +106,6 @@ const getTeamContactLists = async (teamId: string) => {
               email: true,
             },
           },
-        },
-      },
-      _count: {
-        select: {
-          contacts: true,
         },
       },
     },
@@ -59,14 +119,25 @@ const getTeamContactLists = async (teamId: string) => {
     teamId: list.teamId,
     name: list.name,
     description: list.description ?? undefined,
-    contactCount: list._count.contacts,
+    contactCount: list.contacts.length,
     contacts: list.contacts.map((c) => c.contact),
     createdAt: list.createdAt,
     updatedAt: list.updatedAt,
   }));
 };
 
-const getContactListById = async (listId: string, teamId: string) => {
+const getContactListById = async (
+  listId: string,
+  teamId: string,
+  userId?: string,
+  roles: Roles[] = [],
+) => {
+  const contactAccessWhere = await buildContactVisibilityFilter(
+    teamId,
+    userId,
+    roles,
+  );
+
   const list = await prisma.contactList.findFirst({
     where: {
       id: listId,
@@ -74,6 +145,7 @@ const getContactListById = async (listId: string, teamId: string) => {
     },
     include: {
       contacts: {
+        ...(contactAccessWhere ? { where: contactAccessWhere } : {}),
         include: {
           contact: {
             select: {
