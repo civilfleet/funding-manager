@@ -1,6 +1,7 @@
 import Link from "next/link";
 import UserTable from "@/components/table/user-table";
 import { Button } from "@/components/ui/button";
+import { BulkInviteUsersDialog } from "@/components/forms/bulk-invite-users";
 
 interface PageProps {
   params: Promise<{
@@ -13,11 +14,14 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <div className="p-4">
-      <div className="flex justify-between">
-        <h1 className="text-2xl  my-2">Users</h1>
-        <Link href="users/create">
-          <Button type="button">Create New</Button>
-        </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl my-2">Users</h1>
+        <div className="flex items-center gap-2">
+          <Link href="create">
+            <Button type="button">Invite New User</Button>
+          </Link>
+          <BulkInviteUsersDialog teamId={teamId} />
+        </div>
       </div>
       <UserTable teamId={teamId} organizationId="" />
     </div>
