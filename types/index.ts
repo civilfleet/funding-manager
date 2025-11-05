@@ -117,7 +117,7 @@ export interface Contact {
 export type ContactFilter =
   | {
       type: "contactField";
-      field: "email" | "phone";
+      field: "email" | "phone" | "name";
       operator: "has" | "missing" | "contains";
       value?: string;
     }

@@ -469,35 +469,68 @@ const getTeamContacts = async (
     const fieldName = filter.field;
     const trimmedValue = filter.value?.trim() ?? "";
 
-    const containsCondition =
-      fieldName === "email"
-        ? {
+    const containsCondition = (() => {
+      switch (fieldName) {
+        case "email":
+          return {
             email: {
               contains: trimmedValue,
               mode: Prisma.QueryMode.insensitive,
             },
-          }
-        : {
+          };
+        case "phone":
+          return {
             phone: {
               contains: trimmedValue,
               mode: Prisma.QueryMode.insensitive,
             },
           };
+        case "name":
+        default:
+          return {
+            name: {
+              contains: trimmedValue,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          };
+      }
+    })();
 
-    const notNullCondition =
-      fieldName === "email"
-        ? { email: { not: null } }
-        : { phone: { not: null } };
+    const notNullCondition = (() => {
+      switch (fieldName) {
+        case "email":
+          return { email: { not: null } };
+        case "phone":
+          return { phone: { not: null } };
+        case "name":
+        default:
+          return { name: { not: null } };
+      }
+    })();
 
-    const notEmptyCondition =
-      fieldName === "email"
-        ? { NOT: { email: { equals: "" } } }
-        : { NOT: { phone: { equals: "" } } };
+    const notEmptyCondition = (() => {
+      switch (fieldName) {
+        case "email":
+          return { NOT: { email: { equals: "" } } };
+        case "phone":
+          return { NOT: { phone: { equals: "" } } };
+        case "name":
+        default:
+          return { NOT: { name: { equals: "" } } };
+      }
+    })();
 
-    const missingCondition =
-      fieldName === "email"
-        ? { OR: [{ email: null }, { email: "" }] }
-        : { OR: [{ phone: null }, { phone: "" }] };
+    const missingCondition = (() => {
+      switch (fieldName) {
+        case "email":
+          return { OR: [{ email: null }, { email: "" }] };
+        case "phone":
+          return { OR: [{ phone: null }, { phone: "" }] };
+        case "name":
+        default:
+          return { OR: [{ name: null }, { name: "" }] };
+      }
+    })();
 
     switch (filter.operator) {
       case "contains": {

@@ -98,7 +98,7 @@ const optionalDateString = z.preprocess(
 const contactFieldFilterSchema = z
   .object({
     type: z.literal("contactField"),
-    field: z.enum(["email", "phone"]),
+    field: z.enum(["email", "phone", "name"]),
     operator: z.enum(["has", "missing", "contains"]),
     value: optionalText(z.string()),
   })

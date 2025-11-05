@@ -43,10 +43,16 @@ type FilterOption = {
   type: ContactFilterType;
   label: string;
   allowMultiple?: boolean;
-  field?: "email" | "phone";
+  field?: "email" | "phone" | "name";
 };
 
 const FILTER_OPTIONS: FilterOption[] = [
+  {
+    type: "contactField",
+    field: "name",
+    label: "Name",
+    allowMultiple: true,
+  },
   {
     type: "contactField",
     field: "email",
@@ -64,6 +70,12 @@ const FILTER_OPTIONS: FilterOption[] = [
   { type: "eventRole", label: "Event role", allowMultiple: true },
   { type: "createdAt", label: "Created date", allowMultiple: false },
 ];
+
+const CONTACT_FIELD_LABELS: Record<"email" | "phone" | "name", string> = {
+  name: "Name",
+  email: "Email",
+  phone: "Phone",
+};
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -98,6 +110,7 @@ export default function ContactTable({ teamId }: ContactTableProps) {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
   const [filters, setFilters] = useState<ContactFilter[]>([]);
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
@@ -285,12 +298,16 @@ export default function ContactTable({ teamId }: ContactTableProps) {
   const createDefaultFilter = useCallback(
     (option: FilterOption): ContactFilter => {
       switch (option.type) {
-        case "contactField":
+        case "contactField": {
+          const field = option.field ?? "email";
+          const operator = field === "name" ? "contains" : "has";
           return {
             type: "contactField",
-            field: option.field ?? "email",
-            operator: "has",
+            field,
+            operator,
+            ...(operator === "contains" ? { value: "" } : {}),
           };
+        }
         case "attribute":
           if (!attributeKeyOptions.length) {
             return {
@@ -354,6 +371,7 @@ export default function ContactTable({ teamId }: ContactTableProps) {
     }
 
     setFilters((previous) => [...previous, createDefaultFilter(option)]);
+    setIsFilterMenuOpen(false);
   };
 
   const handleRemoveFilter = (index: number) => {
@@ -364,7 +382,7 @@ export default function ContactTable({ teamId }: ContactTableProps) {
     (filter: ContactFilter) => {
       switch (filter.type) {
         case "contactField": {
-          const label = filter.field === "email" ? "Email" : "Phone";
+          const label = CONTACT_FIELD_LABELS[filter.field];
           if (filter.operator === "contains") {
             return filter.value
               ? `${label} contains “${filter.value}”`
@@ -674,7 +692,10 @@ export default function ContactTable({ teamId }: ContactTableProps) {
       </Form>
 
       <div className="flex flex-wrap items-center gap-3">
-        <DropdownMenu>
+        <DropdownMenu
+          open={isFilterMenuOpen}
+          onOpenChange={setIsFilterMenuOpen}
+        >
           <DropdownMenuTrigger asChild>
             <Button type="button" variant="outline" size="sm" className="gap-2">
               <Plus className="h-4 w-4" />
