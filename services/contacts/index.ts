@@ -496,7 +496,7 @@ const getTeamContacts = async (
       }
     })();
 
-    const notNullCondition = (() => {
+    const notNullCondition: Prisma.ContactWhereInput | null = (() => {
       switch (fieldName) {
         case "email":
           return { email: { not: null } };
@@ -504,7 +504,7 @@ const getTeamContacts = async (
           return { phone: { not: null } };
         case "name":
         default:
-          return { name: { not: null } };
+          return null;
       }
     })();
 
@@ -520,15 +520,25 @@ const getTeamContacts = async (
       }
     })();
 
-    const missingCondition = (() => {
+    const missingCondition: Prisma.ContactWhereInput = (() => {
       switch (fieldName) {
         case "email":
-          return { OR: [{ email: null }, { email: "" }] };
+          return {
+            OR: [
+              { email: { equals: null } },
+              { email: { equals: "" } },
+            ],
+          };
         case "phone":
-          return { OR: [{ phone: null }, { phone: "" }] };
+          return {
+            OR: [
+              { phone: { equals: null } },
+              { phone: { equals: "" } },
+            ],
+          };
         case "name":
         default:
-          return { OR: [{ name: null }, { name: "" }] };
+          return { name: { equals: "" } };
       }
     })();
 
@@ -540,7 +550,9 @@ const getTeamContacts = async (
         break;
       }
       case "has": {
-        andConditions.push(notNullCondition);
+        if (notNullCondition) {
+          andConditions.push(notNullCondition);
+        }
         andConditions.push(notEmptyCondition);
         break;
       }
