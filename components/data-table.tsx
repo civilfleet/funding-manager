@@ -4,7 +4,9 @@ import {
   type ColumnDef,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
   type RowSelectionState,
+  type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
 import { LayoutGrid, List } from "lucide-react";
@@ -47,6 +49,7 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   const [view, setView] = React.useState<"table" | "card">(initialView);
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const selectionColumn = React.useMemo<ColumnDef<TData, TValue>[]>(
     () =>
@@ -96,10 +99,13 @@ export function DataTable<TData, TValue>({
     data,
     columns: enhancedColumns,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     enableRowSelection: selectable,
     onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
     state: {
       rowSelection,
+      sorting,
     },
   });
 

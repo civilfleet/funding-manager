@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import {
   ContactAttributeType,
   type ContactEvent,
@@ -34,6 +35,13 @@ const formatDate = (value?: string | Date | null) => {
   }
 
   return format(parsed, "PP");
+};
+
+const getDateValue = (value: string | Date) => {
+  const parsed = value instanceof Date ? value : new Date(value);
+  const time = parsed.getTime();
+
+  return Number.isNaN(time) ? 0 : time;
 };
 
 const formatAttributeValue = (attribute: ContactProfileAttribute) => {
@@ -105,28 +113,42 @@ const ContactNameCell = ({ contact }: { contact: ContactRow }) => {
 export const contactColumns: ColumnDef<ContactRow>[] = [
   {
     accessorKey: "name",
-    header: "Name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
     cell: ({ row }) => <ContactNameCell contact={row.original} />,
   },
   {
     accessorKey: "email",
-    header: "Email",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Email" />
+    ),
     cell: ({ row }) => <span>{row.original.email || "—"}</span>,
   },
   {
     accessorKey: "phone",
-    header: "Phone",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Phone" />
+    ),
     cell: ({ row }) => <span>{row.original.phone || "—"}</span>,
   },
   {
     accessorKey: "profileAttributes",
-    header: "Attributes",
+    enableSorting: false,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Attributes" />
+    ),
     cell: ({ row }) => renderAttributes(row.original.profileAttributes),
   },
   {
     accessorKey: "createdAt",
-    header: "Created",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Created" />
+    ),
     cell: ({ row }) => <span>{formatDate(row.original.createdAt)}</span>,
+    sortingFn: (rowA, rowB) =>
+      getDateValue(rowA.original.createdAt) -
+      getDateValue(rowB.original.createdAt),
   },
 ];
 
