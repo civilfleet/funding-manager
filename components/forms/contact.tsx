@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Combobox } from "@/components/ui/combobox";
 import { useToast } from "@/hooks/use-toast";
 import { type Contact, ContactAttributeType } from "@/types";
 import {
@@ -63,6 +64,10 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
   const isEditMode = Boolean(contact);
 
   const { data: groupsData } = useSWR(`/api/groups?teamId=${teamId}`, fetcher);
+  const { data: attributeKeysData, isLoading: attributeKeysLoading } = useSWR(
+    teamId ? `/api/contacts/attribute-keys?teamId=${teamId}` : null,
+    fetcher,
+  );
 
   const groups: Group[] = groupsData?.data || [];
 
@@ -115,6 +120,32 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
   );
 
   const attributes = watch("profileAttributes");
+  const attributeKeyOptions = useMemo(() => {
+    const keys = new Set<string>();
+
+    const dataKeys = attributeKeysData?.data;
+
+    if (Array.isArray(dataKeys)) {
+      dataKeys
+        .map((key: unknown) => (typeof key === "string" ? key.trim() : ""))
+        .filter(Boolean)
+        .forEach((key) => keys.add(key));
+    }
+
+    (contact?.profileAttributes ?? []).forEach((attribute) => {
+      const key = attribute?.key?.trim();
+      if (key) {
+        keys.add(key);
+      }
+    });
+
+    return Array.from(keys)
+      .map((key) => ({
+        value: key,
+        label: key,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [attributeKeysData, contact?.profileAttributes]);
 
   const handleTypeChange = (index: number, type: ContactAttributeType) => {
     let initialValue: CreateContactFormValues["profileAttributes"][number]["value"];
@@ -506,19 +537,34 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                         <FormField
                           control={typedControl}
                           name={`profileAttributes.${index}.key`}
-                          render={({ field }) => (
-                            <FormItem className="sm:col-span-2">
-                              <FormLabel>Label *</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="e.g. Relationship"
-                                  {...field}
-                                  value={field.value ?? ""}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
+                          render={({ field }) => {
+                            const currentValue =
+                              typeof field.value === "string"
+                                ? field.value
+                                : "";
+
+                            return (
+                              <FormItem className="sm:col-span-2">
+                                <FormLabel>Label *</FormLabel>
+                                <FormControl>
+                                  <Combobox
+                                    value={currentValue}
+                                    onChange={(value) => {
+                                      field.onChange(value);
+                                    }}
+                                    onBlur={field.onBlur}
+                                    placeholder="e.g. Relationship"
+                                    searchPlaceholder="Search or type label..."
+                                    emptyStateText="No labels found."
+                                    options={attributeKeyOptions}
+                                    allowCustomValue
+                                    isLoading={attributeKeysLoading}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }}
                         />
 
                         <FormField

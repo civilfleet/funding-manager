@@ -1131,10 +1131,32 @@ const deleteContacts = async (teamId: string, ids: string[]) => {
   });
 };
 
+const getTeamContactAttributeKeys = async (
+  teamId: string,
+  userId?: string,
+  roles: Roles[] = [],
+) => {
+  const contacts = await getTeamContacts(teamId, undefined, userId, undefined, roles);
+
+  const keys = new Set<string>();
+
+  contacts.forEach((contact) => {
+    contact.profileAttributes?.forEach((attribute) => {
+      const key = attribute?.key?.trim();
+      if (key) {
+        keys.add(key);
+      }
+    });
+  });
+
+  return Array.from(keys).sort((a, b) => a.localeCompare(b));
+};
+
 export {
   getTeamContacts,
   getContactById,
   createContact,
   updateContact,
   deleteContacts,
+  getTeamContactAttributeKeys,
 };
