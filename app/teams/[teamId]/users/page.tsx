@@ -17,7 +17,7 @@ export default async function Page({ params }: PageProps) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl my-2">Users</h1>
         <div className="flex items-center gap-2">
-          <Link href="create">
+          <Link href={`/teams/${teamId}/users/create`}>
             <Button type="button">Invite New User</Button>
           </Link>
           <BulkInviteUsersDialog teamId={teamId} />

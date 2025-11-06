@@ -60,14 +60,14 @@ export default function UserForm({
       });
 
       if (!response.ok) {
-        throw new Error(response.statusText || "Failed to create user");
+        throw new Error(response.statusText || "Failed to invite user");
       }
 
       await response.json();
 
       toast({
-        title: "User created",
-        description: `${values.name} has been successfully added to your team.`,
+        title: "User invited",
+        description: `${values.name} has been successfully invited to your team.`,
         variant: "default",
       });
 
@@ -80,7 +80,7 @@ export default function UserForm({
       }
     } catch (error) {
       toast({
-        title: "Error creating user",
+        title: "Error inviting user",
         description:
           error instanceof Error
             ? error.message
@@ -95,9 +95,11 @@ export default function UserForm({
   return (
     <Card className="w-full shadow-xs">
       <CardHeader className="border-b pb-3">
-        <CardTitle className="text-xl font-semibold">Add Team Member</CardTitle>
+        <CardTitle className="text-xl font-semibold">
+          Invite Team Member
+        </CardTitle>
         <CardDescription>
-          Enter the details of the new team member you want to add to your
+          Enter the details of the team member you want to invite to your
           organization
         </CardDescription>
       </CardHeader>
@@ -186,10 +188,10 @@ export default function UserForm({
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  Inviting...
                 </>
               ) : (
-                "Create User"
+                "Invite User"
               )}
             </Button>
           </CardFooter>
