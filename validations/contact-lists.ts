@@ -1,9 +1,13 @@
 import { z } from "zod";
+import { ContactListType } from "@/types";
+import { contactFiltersSchema } from "@/validations/contacts";
 
 export const createContactListSchema = z.object({
   teamId: z.string().uuid(),
   name: z.string().min(1, "Name is required").max(255),
   description: z.string().optional(),
+  type: z.nativeEnum(ContactListType).default(ContactListType.MANUAL),
+  filters: contactFiltersSchema.optional(),
   contactIds: z.array(z.string().uuid()).default([]),
 });
 
@@ -12,6 +16,8 @@ export const updateContactListSchema = z.object({
   teamId: z.string().uuid(),
   name: z.string().min(1, "Name is required").max(255).optional(),
   description: z.string().optional(),
+  type: z.nativeEnum(ContactListType).optional(),
+  filters: contactFiltersSchema.optional(),
 });
 
 export const addContactsToListSchema = z.object({

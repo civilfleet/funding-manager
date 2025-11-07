@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import useSWR from "swr";
+import { ContactListFiltersBuilder } from "@/components/forms/contact-list-filters-builder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,21 +29,32 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
+import { ContactListType, type ContactFilter } from "@/types";
 import { createContactListSchema } from "@/validations/contact-lists";
 
 type Contact = {
   id: string;
   name: string;
   email: string | null;
+  phone: string | null;
 };
 
 type ContactList = {
   id: string;
   name: string;
   description?: string | null;
+  type: ContactListType;
+  filters?: ContactFilter[];
   contacts: Contact[];
 };
 
@@ -75,30 +87,17 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
     revalidateOnFocus: false,
   });
 
-  const contactQueryParam = debouncedQuery.trim()
-    ? `&query=${encodeURIComponent(debouncedQuery.trim())}`
-    : "";
-  const contactsKey = `/api/contacts?teamId=${teamId}${contactQueryParam}`;
-
-  const {
-    data: contactsData,
-    isValidating: isLoadingContacts,
-  } = useSWR(contactsKey, fetcher, {
-    keepPreviousData: true,
-  });
-
   const list: ContactList | undefined = listData?.data;
-  const contacts: Contact[] = useMemo(
-    () => contactsData?.data || [],
-    [contactsData],
-  );
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(createContactListSchema),
+    resolver: zodResolver(createContactListSchema) as any,
+    mode: "onSubmit",
     defaultValues: {
       teamId,
       name: "",
       description: "",
+      type: ContactListType.MANUAL,
+      filters: [],
       contactIds: [],
     },
   });
@@ -106,17 +105,14 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
   const typedControl =
     form.control as unknown as import("react-hook-form").Control<FormValues>;
 
-  const existingContactIds = useMemo(
-    () => new Set(list?.contacts?.map((contact) => contact.id) || []),
-    [list],
-  );
-
   useEffect(() => {
     if (isNewList) {
       form.reset({
         teamId,
         name: "",
         description: "",
+        type: ContactListType.MANUAL,
+        filters: [],
         contactIds: [],
       });
       return;
@@ -126,35 +122,79 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
       return;
     }
 
-    form.reset({
-      teamId,
-      name: list.name,
-      description: list.description || "",
-      contactIds: list.contacts?.map((contact) => contact.id) || [],
-    });
-  }, [form, list, teamId, isNewList]);
+    // Set form values individually to avoid issues with form.reset
+    form.setValue("teamId", teamId);
+    form.setValue("name", list.name);
+    form.setValue("description", list.description || "");
+    form.setValue("type", list.type);
+    form.setValue("filters", (list.filters || []) as any);
+    form.setValue("contactIds",
+      list.type === ContactListType.MANUAL
+        ? list.contacts.map((contact) => contact.id)
+        : []
+    );
+  }, [list, teamId, isNewList]);
+
+  const watchedListType = form.watch("type");
+
+  // Use list.type directly when available, otherwise use watched value
+  const effectiveListType = !isNewList && list?.type
+    ? list.type
+    : (watchedListType || ContactListType.MANUAL);
+
+  const filtersValue = form.watch("filters") ?? [];
+  const contactIdsValue = form.watch("contactIds") ?? [];
+  const isSmartList = effectiveListType === ContactListType.SMART;
+
+  const contactQueryParam = debouncedQuery.trim()
+    ? `&query=${encodeURIComponent(debouncedQuery.trim())}`
+    : "";
+  const filtersQueryParam = isSmartList
+    ? `&filters=${encodeURIComponent(JSON.stringify(filtersValue))}`
+    : "";
+  const contactsKey = `/api/contacts?teamId=${teamId}${contactQueryParam}${filtersQueryParam}`;
+
+  const {
+    data: contactsData,
+    isValidating: isLoadingContacts,
+  } = useSWR(contactsKey, fetcher, {
+    keepPreviousData: true,
+  });
+
+  const contacts: Contact[] = useMemo(
+    () => (contactsData?.data as Contact[] | undefined) ?? [],
+    [contactsData],
+  );
+
+  const existingContactIds = useMemo(() => {
+    if (!list || list.type !== ContactListType.MANUAL) {
+      return new Set<string>();
+    }
+
+    return new Set(list.contacts.map((contact) => contact.id));
+  }, [list]);
+
+  const selectedCount = isSmartList ? 0 : contactIdsValue.length;
+  const previewCount = contacts.length;
 
   const handleRemoveContact = async (contactId: string) => {
-    if (!list) {
+    if (!list || list.type !== ContactListType.MANUAL) {
       return;
     }
 
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(
-        `/api/contact-lists/${list.id}/contacts`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            teamId,
-            contactIds: [contactId],
-          }),
+      const response = await fetch(`/api/contact-lists/${list.id}/contacts`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          teamId,
+          contactIds: [contactId],
+        }),
+      });
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
@@ -162,10 +202,9 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
       }
 
       await mutateList();
-      const currentContactIds = form.getValues("contactIds") || [];
       form.setValue(
         "contactIds",
-        currentContactIds.filter((id) => id !== contactId),
+        contactIdsValue.filter((id) => id !== contactId),
       );
       toast({
         title: "Contact removed",
@@ -188,12 +227,21 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
 
     try {
       if (isNewList) {
+        const payload: Record<string, unknown> = {
+          ...values,
+          contactIds:
+            values.type === ContactListType.MANUAL ? values.contactIds : [],
+          ...(values.type === ContactListType.SMART
+            ? { filters: values.filters ?? [] }
+            : {}),
+        };
+
         const createResponse = await fetch("/api/contact-lists", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(values),
+          body: JSON.stringify(payload),
         });
 
         if (!createResponse.ok) {
@@ -215,16 +263,24 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
         throw new Error("List not found");
       }
 
+      const shouldSendFilters =
+        values.type === ContactListType.SMART ||
+        list.type === ContactListType.SMART;
+
+      const updatePayload: Record<string, unknown> = {
+        teamId: values.teamId,
+        name: values.name,
+        description: values.description,
+        type: values.type,
+        ...(shouldSendFilters ? { filters: values.filters ?? [] } : {}),
+      };
+
       const updateResponse = await fetch(`/api/contact-lists/${list.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          teamId: values.teamId,
-          name: values.name,
-          description: values.description,
-        }),
+        body: JSON.stringify(updatePayload),
       });
 
       if (!updateResponse.ok) {
@@ -232,54 +288,57 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
         throw new Error(errorBody.error || "Failed to update list");
       }
 
-      const newContactIds = values.contactIds || [];
-      const contactsToAdd = newContactIds.filter(
-        (id) => !existingContactIds.has(id),
-      );
+      if (values.type === ContactListType.MANUAL) {
+        const newContactIds = values.contactIds || [];
 
-      const contactsToRemove = [...existingContactIds].filter(
-        (id) => !newContactIds.includes(id),
-      );
-
-      if (contactsToAdd.length > 0) {
-        const addResponse = await fetch(
-          `/api/contact-lists/${list.id}/contacts`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              teamId: values.teamId,
-              contactIds: contactsToAdd,
-            }),
-          },
+        const contactsToAdd = newContactIds.filter(
+          (id) => !existingContactIds.has(id),
         );
 
-        if (!addResponse.ok) {
-          const errorBody = await addResponse.json().catch(() => ({}));
-          throw new Error(errorBody.error || "Failed to add contacts");
+        const contactsToRemove = [...existingContactIds].filter(
+          (id) => !newContactIds.includes(id),
+        );
+
+        if (contactsToAdd.length > 0) {
+          const addResponse = await fetch(
+            `/api/contact-lists/${list.id}/contacts`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                teamId: values.teamId,
+                contactIds: contactsToAdd,
+              }),
+            },
+          );
+
+          if (!addResponse.ok) {
+            const errorBody = await addResponse.json().catch(() => ({}));
+            throw new Error(errorBody.error || "Failed to add contacts");
+          }
         }
-      }
 
-      if (contactsToRemove.length > 0) {
-        const removeResponse = await fetch(
-          `/api/contact-lists/${list.id}/contacts`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
+        if (contactsToRemove.length > 0) {
+          const removeResponse = await fetch(
+            `/api/contact-lists/${list.id}/contacts`,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                teamId: values.teamId,
+                contactIds: contactsToRemove,
+              }),
             },
-            body: JSON.stringify({
-              teamId: values.teamId,
-              contactIds: contactsToRemove,
-            }),
-          },
-        );
+          );
 
-        if (!removeResponse.ok) {
-          const errorBody = await removeResponse.json().catch(() => ({}));
-          throw new Error(errorBody.error || "Failed to remove contacts");
+          if (!removeResponse.ok) {
+            const errorBody = await removeResponse.json().catch(() => ({}));
+            throw new Error(errorBody.error || "Failed to remove contacts");
+          }
         }
       }
 
@@ -329,9 +388,11 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
 
   const headerTitle = isNewList ? "Create contact list" : list?.name ?? "";
   const headerDescription = isNewList
-    ? "Set up the name, description, and members for this contact list."
+    ? "Set up the name, description, and list behaviour."
     : list?.description ?? "";
-  const selectedCount = form.watch("contactIds")?.length ?? 0;
+
+  const currentListType = effectiveListType;
+  const currentContactsCount = list?.contacts.length ?? 0;
 
   return (
     <div className="space-y-6">
@@ -344,9 +405,17 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
         </div>
         <div className="flex items-center gap-2">
           {!isNewList && (
-            <Badge variant="secondary">
-              {list?.contacts.length ?? 0} contacts
-            </Badge>
+            <>
+              <Badge variant="secondary">
+                {currentContactsCount} contact
+                {currentContactsCount === 1 ? "" : "s"}
+              </Badge>
+              <Badge variant="outline">
+                {currentListType === ContactListType.SMART
+                  ? "Smart list"
+                  : "Manual list"}
+              </Badge>
+            </>
           )}
           <Button asChild variant="outline">
             <Link href={`/teams/${teamId}/lists`}>Back to Lists</Link>
@@ -361,13 +430,13 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
           </CardTitle>
           <CardDescription>
             {isNewList
-              ? "Give your list a name, optional description, and choose contacts to include."
-              : "Update the list name, description, and membership in a single place."}
+              ? "Give your list a name, optional description, and choose how contacts should be managed."
+              : "Update the list name, description, type, and membership in a single place."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6">
               <FormField
                 control={typedControl}
                 name="name"
@@ -405,81 +474,197 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
 
               <FormField
                 control={typedControl}
-                name="contactIds"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>Contacts</FormLabel>
-                    <FormDescription>
-                      Search and select contacts to include in this list.
-                    </FormDescription>
-                    <Input
-                      className="mt-2"
-                      value={searchQuery}
-                      onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder="Search contacts by name or email"
-                    />
-                    <div className="space-y-2 max-h-60 overflow-y-auto border rounded-md p-3 mt-2">
-                      {isLoadingContacts && contacts.length === 0 ? (
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Loading contacts...
-                        </div>
-                      ) : contacts.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                          {debouncedQuery.trim()
-                            ? "No contacts match your search"
-                            : "No contacts available"}
-                        </p>
-                      ) : (
-                        contacts.map((contact) => (
-                          <FormField
-                            key={contact.id}
-                            control={typedControl}
-                            name="contactIds"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(contact.id)}
-                                    onCheckedChange={(checked) => {
-                                      if (checked) {
-                                        field.onChange([
-                                          ...(field.value || []),
-                                          contact.id,
-                                        ]);
-                                        return;
-                                      }
+                name="type"
+                render={({ field }) => {
+                  // Use list.type as fallback when field.value is empty
+                  const selectValue = !isNewList && list?.type && !field.value
+                    ? list.type
+                    : (field.value || ContactListType.MANUAL);
 
-                                      field.onChange(
-                                        (field.value || []).filter(
-                                          (value) => value !== contact.id,
-                                        ),
-                                      );
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {contact.name}
-                                  {contact.email && (
-                                    <span className="ml-2 text-sm text-muted-foreground">
-                                      ({contact.email})
-                                    </span>
-                                  )}
-                                </FormLabel>
-                              </FormItem>
-                            )}
-                          />
-                        ))
-                      )}
-                    </div>
-                    <FormDescription className="text-xs text-muted-foreground">
-                      {selectedCount} contact
-                      {selectedCount === 1 ? "" : "s"} selected.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                  return (
+                    <FormItem>
+                      <FormLabel>List type</FormLabel>
+                      <FormDescription>
+                        Manual lists include only the contacts you select. Smart
+                        lists stay in sync automatically based on filters.
+                      </FormDescription>
+                      <Select
+                        key={list?.id || "new"}
+                        value={selectValue}
+                        onValueChange={(value) =>
+                          field.onChange(value as ContactListType)
+                        }
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full sm:w-[320px]">
+                            <SelectValue placeholder="Select list type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={ContactListType.MANUAL}>
+                            Manual (select contacts)
+                          </SelectItem>
+                          <SelectItem value={ContactListType.SMART}>
+                            Smart (auto-updating)
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
+
+              {isSmartList ? (
+                <FormField
+                  control={typedControl}
+                  name="filters"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Filters</FormLabel>
+                      <FormDescription>
+                        Contacts matching these filters are included
+                        automatically.
+                      </FormDescription>
+                      <FormControl>
+                        <ContactListFiltersBuilder
+                          teamId={teamId}
+                          value={(field.value ?? []) as ContactFilter[]}
+                          onChange={(next) => field.onChange(next as any)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <FormField
+                  control={typedControl}
+                  name="contactIds"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>Contacts</FormLabel>
+                      <FormDescription>
+                        Search and select contacts to include in this list.
+                      </FormDescription>
+                      <Input
+                        className="mt-2"
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                        placeholder="Search contacts by name, email, or phone"
+                      />
+                      <div className="mt-2 max-h-60 space-y-2 overflow-y-auto rounded-md border p-3">
+                        {isLoadingContacts && contacts.length === 0 ? (
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Loading contacts...
+                          </div>
+                        ) : contacts.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            {debouncedQuery.trim()
+                              ? "No contacts match your search"
+                              : "No contacts available"}
+                          </p>
+                        ) : (
+                          contacts.map((contact) => (
+                            <FormField
+                              key={contact.id}
+                              control={typedControl}
+                              name="contactIds"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(contact.id)}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          field.onChange([
+                                            ...(field.value || []),
+                                            contact.id,
+                                          ]);
+                                          return;
+                                        }
+
+                                        field.onChange(
+                                          (field.value || []).filter(
+                                            (value) => value !== contact.id,
+                                          ),
+                                        );
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="flex flex-col gap-0.5 font-normal">
+                                    <span>{contact.name}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {[contact.email, contact.phone]
+                                        .filter(Boolean)
+                                        .join(" • ")}
+                                    </span>
+                                  </FormLabel>
+                                </FormItem>
+                              )}
+                            />
+                          ))
+                        )}
+                      </div>
+                      <FormDescription className="text-xs text-muted-foreground">
+                        {selectedCount} contact
+                        {selectedCount === 1 ? "" : "s"} selected.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {isSmartList && (
+                <div className="space-y-2">
+                  <FormLabel>Matching contacts preview</FormLabel>
+                  <FormDescription>
+                    Search within the current filter results to confirm the list
+                    looks right.
+                  </FormDescription>
+                  <Input
+                    className="mt-2"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search contacts by name, email, or phone"
+                  />
+                  <div className="mt-2 max-h-60 space-y-2 overflow-y-auto rounded-md border p-3">
+                    {isLoadingContacts && contacts.length === 0 ? (
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Loading contacts...
+                      </div>
+                    ) : contacts.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        {filtersValue.length
+                          ? "No contacts currently match these filters."
+                          : "No contacts found. Adjust your filters or search term."}
+                      </p>
+                    ) : (
+                      contacts.map((contact) => (
+                        <div
+                          key={contact.id}
+                          className="rounded-md border p-3 text-sm"
+                        >
+                          <p className="font-medium">{contact.name}</p>
+                          <p className="text-muted-foreground">
+                            {[contact.email, contact.phone]
+                              .filter(Boolean)
+                              .join(" • ")}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Showing {previewCount} contact
+                    {previewCount === 1 ? "" : "s"} that match the current
+                    filters.
+                  </p>
+                </div>
+              )}
 
               <div className="flex justify-end gap-2">
                 <Button
@@ -490,9 +675,14 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
                       teamId,
                       name: isNewList ? "" : list?.name ?? "",
                       description: isNewList ? "" : list?.description || "",
-                      contactIds: isNewList
-                        ? []
-                        : list?.contacts?.map((contact) => contact.id) || [],
+                      type: isNewList
+                        ? ContactListType.MANUAL
+                        : list?.type ?? ContactListType.MANUAL,
+                      filters: isNewList ? [] : list?.filters ?? [],
+                      contactIds:
+                        !isNewList && list?.type === ContactListType.MANUAL
+                          ? list.contacts.map((contact) => contact.id)
+                          : [],
                     });
                   }}
                   disabled={isSubmitting}
@@ -522,15 +712,23 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
       {!isNewList && (
         <Card>
           <CardHeader>
-            <CardTitle>Current contacts</CardTitle>
+            <CardTitle>
+              {list?.type === ContactListType.SMART
+                ? "Matching contacts"
+                : "Current contacts"}
+            </CardTitle>
             <CardDescription>
-              These contacts are currently part of the list.
+              {list?.type === ContactListType.SMART
+                ? "These contacts currently match the filters. The list will update automatically as contacts change."
+                : "These contacts are currently part of the list."}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {list?.contacts.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No contacts are assigned to this list yet.
+                {list?.type === ContactListType.SMART
+                  ? "No contacts currently match the configured filters."
+                  : "No contacts are assigned to this list yet."}
               </p>
             ) : (
               <div className="space-y-3">
@@ -541,21 +739,23 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
                   >
                     <div>
                       <p className="font-medium">{contact.name}</p>
-                      {contact.email && (
-                        <p className="text-sm text-muted-foreground">
-                          {contact.email}
-                        </p>
-                      )}
+                      <p className="text-sm text-muted-foreground">
+                        {[contact.email, contact.phone]
+                          .filter(Boolean)
+                          .join(" • ")}
+                      </p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveContact(contact.id)}
-                      disabled={isSubmitting}
-                    >
-                      <X className="h-4 w-4" />
-                      <span className="sr-only">Remove contact</span>
-                    </Button>
+                    {list?.type === ContactListType.MANUAL && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveContact(contact.id)}
+                        disabled={isSubmitting}
+                      >
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Remove contact</span>
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>

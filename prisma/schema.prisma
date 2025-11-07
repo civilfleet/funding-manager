@@ -255,12 +255,19 @@ model Contact {
   @@unique([teamId, email])
 }
 
+enum ContactListType {
+  MANUAL
+  SMART
+}
+
 model ContactList {
   id          String              @id @default(uuid()) @unique
   teamId      String
   team        Teams               @relation(fields: [teamId], references: [id], onDelete: Cascade)
   name        String              @db.VarChar(255)
   description String?             @db.Text
+  type        ContactListType     @default(MANUAL)
+  filters     Json?               @db.JsonB
   createdAt   DateTime            @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime            @updatedAt @db.Timestamptz(6)
   contacts    ContactListMember[]

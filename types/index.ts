@@ -143,6 +143,24 @@ export type ContactFilter =
 
 export type ContactFilterType = ContactFilter["type"];
 
+export enum ContactListType {
+  MANUAL = "MANUAL",
+  SMART = "SMART",
+}
+
+export interface ContactList {
+  id: string;
+  teamId: string;
+  name: string;
+  description?: string;
+  type: ContactListType;
+  filters?: ContactFilter[];
+  contacts: Array<Pick<Contact, "id" | "name" | "email" | "phone">>;
+  contactCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export enum EngagementDirection {
   INBOUND = "INBOUND",
   OUTBOUND = "OUTBOUND",

@@ -1,0 +1,501 @@
+"use client";
+
+import { Filter, Plus, Trash2 } from "lucide-react";
+import { useMemo } from "react";
+import useSWR from "swr";
+import type {
+  ContactFilter,
+  ContactFilterType,
+} from "@/types";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type FilterOption = {
+  type: ContactFilterType;
+  label: string;
+  allowMultiple?: boolean;
+  field?: "email" | "phone" | "name";
+};
+
+const FILTER_OPTIONS: FilterOption[] = [
+  {
+    type: "contactField",
+    field: "name",
+    label: "Name contains…",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
+    field: "email",
+    label: "Has email / email contains…",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
+    field: "phone",
+    label: "Has phone / phone contains…",
+    allowMultiple: true,
+  },
+  { type: "attribute", label: "Profile attribute", allowMultiple: true },
+  { type: "group", label: "Group membership", allowMultiple: true },
+  { type: "eventRole", label: "Event role participation", allowMultiple: true },
+  { type: "createdAt", label: "Created date range", allowMultiple: false },
+];
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+interface ContactListFiltersBuilderProps {
+  teamId: string;
+  value: ContactFilter[];
+  onChange: (filters: ContactFilter[]) => void;
+}
+
+const CONTACT_FIELD_LABELS: Record<"email" | "phone" | "name", string> = {
+  name: "Name",
+  email: "Email",
+  phone: "Phone",
+};
+
+export function ContactListFiltersBuilder({
+  teamId,
+  value,
+  onChange,
+}: ContactListFiltersBuilderProps) {
+  const filters = value ?? [];
+
+  const { data: groupsData } = useSWR(
+    `/api/groups?teamId=${teamId}`,
+    fetcher,
+  );
+
+  const { data: rolesData } = useSWR(
+    `/api/event-roles?teamId=${teamId}`,
+    fetcher,
+  );
+
+  const groups = useMemo(() => {
+    if (!groupsData?.data) {
+      return [] as Array<{ id: string; name: string }>;
+    }
+
+    return groupsData.data as Array<{ id: string; name: string }>;
+  }, [groupsData]);
+
+  const eventRoles = useMemo(() => {
+    if (!rolesData?.data) {
+      return [] as Array<{ id: string; name: string }>;
+    }
+
+    return rolesData.data as Array<{ id: string; name: string }>;
+  }, [rolesData]);
+
+  const updateFilter = (index: number, updated: ContactFilter) => {
+    onChange(filters.map((filter, idx) => (idx === index ? updated : filter)));
+  };
+
+  const removeFilter = (index: number) => {
+    onChange(filters.filter((_, idx) => idx !== index));
+  };
+
+  const createDefaultFilter = (option: FilterOption): ContactFilter => {
+    switch (option.type) {
+      case "contactField": {
+        const field = option.field ?? "email";
+        const operator = field === "name" ? "contains" : "has";
+        return {
+          type: "contactField",
+          field,
+          operator,
+          ...(operator === "contains" ? { value: "" } : {}),
+        };
+      }
+      case "attribute":
+        return {
+          type: "attribute",
+          key: "",
+          operator: "contains",
+          value: "",
+        };
+      case "group":
+        return {
+          type: "group",
+          groupId: groups[0]?.id ?? "",
+        };
+      case "eventRole":
+        return {
+          type: "eventRole",
+          eventRoleId: eventRoles[0]?.id ?? "",
+        };
+      case "createdAt":
+        return {
+          type: "createdAt",
+        };
+      default:
+        return {
+          type: "contactField",
+          field: "email",
+          operator: "has",
+        };
+    }
+  };
+
+  const canAddOption = (option: FilterOption) => {
+    if (option.type === "group" && groups.length === 0) {
+      return false;
+    }
+    if (option.type === "eventRole" && eventRoles.length === 0) {
+      return false;
+    }
+    if (option.allowMultiple) {
+      return true;
+    }
+
+    return !filters.some((filter) => {
+      if (filter.type !== option.type) {
+        return false;
+      }
+
+      if (option.type === "contactField" && filter.type === "contactField") {
+        return filter.field === option.field;
+      }
+
+      return true;
+    });
+  };
+
+  const handleAddFilter = (option: FilterOption) => {
+    if (!canAddOption(option)) {
+      return;
+    }
+
+    onChange([...filters, createDefaultFilter(option)]);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Filter className="h-4 w-4" />
+          <span>Filters automatically keep this list up to date.</span>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Add filter
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {FILTER_OPTIONS.map((option) => (
+              <DropdownMenuItem
+                key={`${option.type}-${option.field ?? "any"}`}
+                onClick={() => handleAddFilter(option)}
+                disabled={!canAddOption(option)}
+              >
+                {option.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {filters.length === 0 ? (
+        <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+          No filters configured. All contacts in the team will be included.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {filters.map((filter, index) => {
+            switch (filter.type) {
+              case "contactField": {
+                const fieldLabel = CONTACT_FIELD_LABELS[filter.field];
+                return (
+                  <div
+                    key={`contact-field-${filter.field}-${index}`}
+                    className="rounded-md border p-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <Badge variant="outline">{fieldLabel}</Badge>
+                        <span>Contact field</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeFilter(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Remove filter</span>
+                      </Button>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <Select
+                        value={filter.operator}
+                        onValueChange={(value) => {
+                          const operator = value as "contains" | "has" | "missing";
+                          updateFilter(index, {
+                            ...filter,
+                            operator,
+                            ...(operator === "contains"
+                              ? { value: filter.value ?? "" }
+                              : { value: undefined }),
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Select operator" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="contains">Contains value</SelectItem>
+                          <SelectItem value="has">Is present</SelectItem>
+                          <SelectItem value="missing">Is missing</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {filter.operator === "contains" ? (
+                        <Input
+                          className="min-w-[220px]"
+                          placeholder={`Enter ${fieldLabel.toLowerCase()}`}
+                          value={filter.value ?? ""}
+                          onChange={(event) =>
+                            updateFilter(index, {
+                              ...filter,
+                              value: event.target.value,
+                            })
+                          }
+                        />
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              }
+              case "attribute":
+                return (
+                  <div
+                    key={`attribute-${index}`}
+                    className="rounded-md border p-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <Badge variant="outline">Attribute</Badge>
+                        <span>Custom profile field</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeFilter(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Remove filter</span>
+                      </Button>
+                    </div>
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <Input
+                        placeholder="Attribute key (e.g. city)"
+                        value={filter.key}
+                        onChange={(event) =>
+                          updateFilter(index, {
+                            ...filter,
+                            key: event.target.value,
+                          })
+                        }
+                      />
+                      <Select
+                        value={filter.operator}
+                        onValueChange={(value) =>
+                          updateFilter(index, {
+                            ...filter,
+                            operator: value as "contains" | "equals",
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select operator" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="contains">Contains value</SelectItem>
+                          <SelectItem value="equals">Equals value</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        placeholder="Value"
+                        value={filter.value}
+                        onChange={(event) =>
+                          updateFilter(index, {
+                            ...filter,
+                            value: event.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                );
+              case "group":
+                return (
+                  <div
+                    key={`group-${index}`}
+                    className="rounded-md border p-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <Badge variant="outline">Group</Badge>
+                        <span>Group membership</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeFilter(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Remove filter</span>
+                      </Button>
+                    </div>
+                    <div className="mt-3">
+                      <Select
+                        value={filter.groupId}
+                        onValueChange={(value) =>
+                          updateFilter(index, {
+                            ...filter,
+                            groupId: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select group" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {groups.map((group) => (
+                            <SelectItem key={group.id} value={group.id}>
+                              {group.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                );
+              case "eventRole":
+                return (
+                  <div
+                    key={`event-role-${index}`}
+                    className="rounded-md border p-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <Badge variant="outline">Event role</Badge>
+                        <span>Participation</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeFilter(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Remove filter</span>
+                      </Button>
+                    </div>
+                    <div className="mt-3">
+                      <Select
+                        value={filter.eventRoleId}
+                        onValueChange={(value) =>
+                          updateFilter(index, {
+                            ...filter,
+                            eventRoleId: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select event role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {eventRoles.map((role) => (
+                            <SelectItem key={role.id} value={role.id}>
+                              {role.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                );
+              case "createdAt":
+                return (
+                  <div
+                    key={`created-at-${index}`}
+                    className="rounded-md border p-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <Badge variant="outline">Created at</Badge>
+                        <span>Date range</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeFilter(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Remove filter</span>
+                      </Button>
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          From
+                        </label>
+                        <Input
+                          type="date"
+                          value={filter.from ?? ""}
+                          onChange={(event) =>
+                            updateFilter(index, {
+                              ...filter,
+                              from: event.target.value || undefined,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          To
+                        </label>
+                        <Input
+                          type="date"
+                          value={filter.to ?? ""}
+                          onChange={(event) =>
+                            updateFilter(index, {
+                              ...filter,
+                              to: event.target.value || undefined,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              default:
+                return null;
+            }
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

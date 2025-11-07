@@ -16,11 +16,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { ContactListType } from "@/types";
 
 type ContactList = {
   id: string;
   name: string;
   description?: string;
+  type: ContactListType;
   contactCount: number;
   contacts: {
     id: string;
@@ -207,12 +209,17 @@ export default function ContactListsManager({
                 {lists.map((list) => (
                   <TableRow key={list.id}>
                     <TableCell className="font-medium">
-                      <Link
-                        href={`/teams/${teamId}/lists/${list.id}`}
-                        className="hover:underline"
-                      >
-                        {list.name}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/teams/${teamId}/lists/${list.id}`}
+                          className="hover:underline"
+                        >
+                          {list.name}
+                        </Link>
+                        <Badge variant="outline" className="text-xs uppercase">
+                          {list.type === ContactListType.SMART ? "Smart" : "Manual"}
+                        </Badge>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge className="flex w-fit items-center gap-1" variant="secondary">

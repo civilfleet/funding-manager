@@ -1,13 +1,16 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { getTeamContacts } from "@/services/contacts";
 import { ensureDefaultGroup } from "@/services/groups";
-import { Roles } from "@/types";
+import { ContactListType, type ContactFilter, Roles } from "@/types";
 
 type CreateContactListInput = {
   teamId: string;
   name: string;
   description?: string;
   contactIds?: string[];
+  type?: ContactListType;
+  filters?: ContactFilter[];
 };
 
 type UpdateContactListInput = {
@@ -15,6 +18,8 @@ type UpdateContactListInput = {
   teamId: string;
   name?: string;
   description?: string;
+  type?: ContactListType;
+  filters?: ContactFilter[];
 };
 
 type AddContactsInput = {
@@ -27,6 +32,20 @@ type RemoveContactsInput = {
   listId: string;
   teamId: string;
   contactIds: string[];
+};
+
+const parseFilters = (
+  value: Prisma.JsonValue | null | undefined,
+): ContactFilter[] => {
+  if (!value) {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    return value as ContactFilter[];
+  }
+
+  return [];
 };
 
 const buildContactVisibilityFilter = async (
@@ -104,6 +123,7 @@ const getTeamContactLists = async (
               id: true,
               name: true,
               email: true,
+              phone: true,
             },
           },
         },
@@ -114,16 +134,59 @@ const getTeamContactLists = async (
     },
   });
 
-  return lists.map((list) => ({
-    id: list.id,
-    teamId: list.teamId,
-    name: list.name,
-    description: list.description ?? undefined,
-    contactCount: list.contacts.length,
-    contacts: list.contacts.map((c) => c.contact),
-    createdAt: list.createdAt,
-    updatedAt: list.updatedAt,
-  }));
+  const results = await Promise.all(
+    lists.map(async (list) => {
+      const filters = parseFilters(list.filters as Prisma.JsonValue | null);
+
+      if (list.type === ContactListType.SMART) {
+        const smartContacts = await getTeamContacts(
+          teamId,
+          undefined,
+          userId,
+          filters,
+          roles,
+        );
+
+        return {
+          id: list.id,
+          teamId: list.teamId,
+          name: list.name,
+          description: list.description ?? undefined,
+          type: list.type,
+          filters,
+          contactCount: smartContacts.length,
+          contacts: smartContacts.map((contact) => ({
+            id: contact.id,
+            name: contact.name,
+            email: contact.email ?? null,
+            phone: contact.phone ?? null,
+          })),
+          createdAt: list.createdAt,
+          updatedAt: list.updatedAt,
+        };
+      }
+
+      return {
+        id: list.id,
+        teamId: list.teamId,
+        name: list.name,
+        description: list.description ?? undefined,
+        type: list.type,
+        filters,
+        contactCount: list.contacts.length,
+        contacts: list.contacts.map((c) => ({
+          id: c.contact.id,
+          name: c.contact.name,
+          email: c.contact.email,
+          phone: c.contact.phone,
+        })),
+        createdAt: list.createdAt,
+        updatedAt: list.updatedAt,
+      };
+    }),
+  );
+
+  return results;
 };
 
 const getContactListById = async (
@@ -164,27 +227,77 @@ const getContactListById = async (
     return null;
   }
 
+  const filters = parseFilters(list.filters as Prisma.JsonValue | null);
+
+  if (list.type === ContactListType.SMART) {
+    const smartContacts = await getTeamContacts(
+      teamId,
+      undefined,
+      userId,
+      filters,
+      roles,
+    );
+
+    return {
+      id: list.id,
+      teamId: list.teamId,
+      name: list.name,
+      description: list.description ?? undefined,
+      type: list.type,
+      filters,
+      contacts: smartContacts.map((contact) => ({
+        id: contact.id,
+        name: contact.name,
+        email: contact.email ?? null,
+        phone: contact.phone ?? null,
+      })),
+      createdAt: list.createdAt,
+      updatedAt: list.updatedAt,
+    };
+  }
+
   return {
     id: list.id,
     teamId: list.teamId,
     name: list.name,
     description: list.description ?? undefined,
-    contacts: list.contacts.map((c) => c.contact),
+    type: list.type,
+    filters,
+    contacts: list.contacts.map((c) => ({
+      id: c.contact.id,
+      name: c.contact.name,
+      email: c.contact.email,
+      phone: c.contact.phone,
+    })),
     createdAt: list.createdAt,
     updatedAt: list.updatedAt,
   };
 };
 
 const createContactList = async (input: CreateContactListInput) => {
-  const { teamId, name, description, contactIds } = input;
+  const {
+    teamId,
+    name,
+    description,
+    contactIds,
+    type = ContactListType.MANUAL,
+    filters,
+  } = input;
+
+  const isSmartList = type === ContactListType.SMART;
+  const filtersData = isSmartList
+    ? ((filters ?? []) as Prisma.InputJsonValue)
+    : undefined;
 
   const list = await prisma.contactList.create({
     data: {
       teamId,
       name,
       description,
+      type,
+      filters: filtersData,
       contacts:
-        contactIds && contactIds.length > 0
+        !isSmartList && contactIds && contactIds.length > 0
           ? {
               create: contactIds.map((contactId) => ({
                 contactId,
@@ -201,29 +314,74 @@ const createContactList = async (input: CreateContactListInput) => {
     },
   });
 
+  const parsedFilters = parseFilters(list.filters as Prisma.JsonValue | null);
+
   return {
     id: list.id,
     teamId: list.teamId,
     name: list.name,
     description: list.description ?? undefined,
-    contactCount: list._count.contacts,
+    type: list.type,
+    filters: parsedFilters,
+    contactCount:
+      list.type === ContactListType.MANUAL ? list._count.contacts : 0,
     createdAt: list.createdAt,
     updatedAt: list.updatedAt,
   };
 };
 
 const updateContactList = async (input: UpdateContactListInput) => {
-  const { id, teamId, name, description } = input;
+  const { id, teamId, name, description, type, filters } = input;
+
+  const existing = await prisma.contactList.findFirst({
+    where: {
+      id,
+      teamId,
+    },
+    select: {
+      type: true,
+    },
+  });
+
+  if (!existing) {
+    throw new Error("List not found");
+  }
+
+  const targetType = type ?? existing.type;
+
+  const data: Prisma.ContactListUpdateInput = {};
+
+  if (typeof name !== "undefined") {
+    data.name = name;
+  }
+
+  if (typeof description !== "undefined") {
+    data.description = description;
+  }
+
+  if (typeof type !== "undefined") {
+    data.type = type;
+  }
+
+  if (targetType === ContactListType.SMART) {
+    if (typeof filters !== "undefined") {
+      data.filters = (filters ?? []) as Prisma.InputJsonValue;
+    } else if (existing.type !== ContactListType.SMART) {
+      data.filters = [] as Prisma.InputJsonValue;
+    }
+  } else if (
+    existing.type === ContactListType.SMART ||
+    typeof filters !== "undefined"
+  ) {
+    data.filters = Prisma.JsonNull;
+  }
 
   const list = await prisma.contactList.update({
     where: {
       id,
       teamId,
     },
-    data: {
-      name,
-      description,
-    },
+    data,
     include: {
       _count: {
         select: {
@@ -233,12 +391,17 @@ const updateContactList = async (input: UpdateContactListInput) => {
     },
   });
 
+  const parsedFilters = parseFilters(list.filters as Prisma.JsonValue | null);
+
   return {
     id: list.id,
     teamId: list.teamId,
     name: list.name,
     description: list.description ?? undefined,
-    contactCount: list._count.contacts,
+    type: list.type,
+    filters: parsedFilters,
+    contactCount:
+      list.type === ContactListType.MANUAL ? list._count.contacts : 0,
     createdAt: list.createdAt,
     updatedAt: list.updatedAt,
   };
@@ -270,6 +433,10 @@ const addContactsToList = async (input: AddContactsInput) => {
 
   if (!list) {
     throw new Error("List not found");
+  }
+
+  if (list.type === ContactListType.SMART) {
+    throw new Error("Cannot manually modify contacts for smart lists");
   }
 
   // Get existing contacts in list
@@ -307,6 +474,10 @@ const removeContactsFromList = async (input: RemoveContactsInput) => {
 
   if (!list) {
     throw new Error("List not found");
+  }
+
+  if (list.type === ContactListType.SMART) {
+    throw new Error("Cannot manually modify contacts for smart lists");
   }
 
   await prisma.contactListMember.deleteMany({
