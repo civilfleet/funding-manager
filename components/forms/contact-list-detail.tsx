@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import useSWR from "swr";
@@ -56,9 +56,26 @@ type ContactList = {
   type: ContactListType;
   filters?: ContactFilter[];
   contacts: Contact[];
+  teamId: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 };
 
 type FormValues = z.input<typeof createContactListSchema>;
+const buildFormValues = (
+  teamId: string,
+  source?: ContactList | null,
+): FormValues => ({
+  teamId,
+  name: source?.name ?? "",
+  description: source?.description ?? "",
+  type: source?.type ?? ContactListType.MANUAL,
+  filters: (source?.filters ?? []) as FormValues["filters"],
+  contactIds:
+    source && source.type === ContactListType.MANUAL
+      ? source.contacts.map((contact) => contact.id)
+      : [],
+});
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -73,6 +90,7 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedQuery = useDebounce(searchQuery, 300);
+  const lastSyncedKeyRef = useRef<string | null>(null);
 
   const isNewList = listId === "new";
   const listKey = isNewList
@@ -89,61 +107,76 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
 
   const list: ContactList | undefined = listData?.data;
 
+  const newListDefaults = useMemo<FormValues>(
+    () => buildFormValues(teamId),
+    [teamId],
+  );
+
+  const fallbackValues = useMemo<FormValues>(
+    () => (isNewList || !list ? newListDefaults : buildFormValues(teamId, list)),
+    [isNewList, list, newListDefaults, teamId],
+  );
+
   const form = useForm<FormValues>({
     resolver: zodResolver(createContactListSchema) as any,
     mode: "onSubmit",
-    defaultValues: {
-      teamId,
-      name: "",
-      description: "",
-      type: ContactListType.MANUAL,
-      filters: [],
-      contactIds: [],
-    },
+    defaultValues: newListDefaults,
   });
 
   const typedControl =
     form.control as unknown as import("react-hook-form").Control<FormValues>;
 
-  useEffect(() => {
+  const listSyncKey = useMemo(() => {
     if (isNewList) {
-      form.reset({
-        teamId,
-        name: "",
-        description: "",
-        type: ContactListType.MANUAL,
-        filters: [],
-        contactIds: [],
-      });
-      return;
+      return `new-${teamId}`;
     }
 
     if (!list) {
+      return null;
+    }
+
+    const updatedAtValue = Number(new Date(list.updatedAt));
+    const suffix = Number.isNaN(updatedAtValue) ? "unknown" : updatedAtValue;
+
+    return `${list.id}-${suffix}`;
+  }, [isNewList, list, teamId]);
+
+  useEffect(() => {
+    if (!listSyncKey) {
       return;
     }
 
-    // Set form values individually to avoid issues with form.reset
-    form.setValue("teamId", teamId);
-    form.setValue("name", list.name);
-    form.setValue("description", list.description || "");
-    form.setValue("type", list.type);
-    form.setValue("filters", (list.filters || []) as any);
-    form.setValue("contactIds",
-      list.type === ContactListType.MANUAL
-        ? list.contacts.map((contact) => contact.id)
-        : []
-    );
-  }, [list, teamId, isNewList]);
+    if (lastSyncedKeyRef.current === listSyncKey) {
+      return;
+    }
+
+    if (isNewList || !list) {
+      form.reset(newListDefaults);
+    } else {
+      form.reset(buildFormValues(teamId, list));
+    }
+
+    lastSyncedKeyRef.current = listSyncKey;
+  }, [form, isNewList, list, listSyncKey, newListDefaults, teamId]);
+
+  const isFormSynced = Boolean(
+    listSyncKey && lastSyncedKeyRef.current === listSyncKey,
+  );
 
   const watchedListType = form.watch("type");
+  const fallbackListType = fallbackValues.type ?? ContactListType.MANUAL;
+  const effectiveListType = isFormSynced
+    ? watchedListType ?? fallbackListType
+    : fallbackListType;
 
-  // Use list.type directly when available, otherwise use watched value
-  const effectiveListType = !isNewList && list?.type
-    ? list.type
-    : (watchedListType || ContactListType.MANUAL);
-
-  const filtersValue = form.watch("filters") ?? [];
-  const contactIdsValue = form.watch("contactIds") ?? [];
+  const watchedFilters = form.watch("filters");
+  const watchedContactIds = form.watch("contactIds");
+  const filtersValue = isFormSynced
+    ? watchedFilters ?? []
+    : fallbackValues.filters ?? [];
+  const contactIdsValue = isFormSynced
+    ? watchedContactIds ?? []
+    : fallbackValues.contactIds ?? [];
   const isSmartList = effectiveListType === ContactListType.SMART;
 
   const contactQueryParam = debouncedQuery.trim()
@@ -476,10 +509,9 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
                 control={typedControl}
                 name="type"
                 render={({ field }) => {
-                  // Use list.type as fallback when field.value is empty
-                  const selectValue = !isNewList && list?.type && !field.value
-                    ? list.type
-                    : (field.value || ContactListType.MANUAL);
+                  const selectValue = isFormSynced
+                    ? field.value ?? fallbackListType
+                    : fallbackListType;
 
                   return (
                     <FormItem>
@@ -671,19 +703,18 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    form.reset({
-                      teamId,
-                      name: isNewList ? "" : list?.name ?? "",
-                      description: isNewList ? "" : list?.description || "",
-                      type: isNewList
-                        ? ContactListType.MANUAL
-                        : list?.type ?? ContactListType.MANUAL,
-                      filters: isNewList ? [] : list?.filters ?? [],
-                      contactIds:
-                        !isNewList && list?.type === ContactListType.MANUAL
-                          ? list.contacts.map((contact) => contact.id)
-                          : [],
-                    });
+                    if (isNewList) {
+                      form.reset(newListDefaults);
+                      lastSyncedKeyRef.current = `new-${teamId}`;
+                      return;
+                    }
+
+                    if (list) {
+                      form.reset(buildFormValues(teamId, list));
+                      if (listSyncKey) {
+                        lastSyncedKeyRef.current = listSyncKey;
+                      }
+                    }
                   }}
                   disabled={isSubmitting}
                 >
