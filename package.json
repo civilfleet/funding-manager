@@ -81,7 +81,7 @@
     "typescript": "5.9.3"
   },
   "prisma": {},
-  "packageManager": "yarn@4.9.1",
+  "packageManager": "yarn@4.10.3",
   "resolutions": {
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2"
