@@ -92,6 +92,13 @@ model FundingRequest {
   team                      Teams? @relation(fields: [teamId], references: [id])
   donationAgreement         DonationAgreement[]
   Transaction Transaction[]
+
+  @@index([organizationId])
+  @@index([teamId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([teamId, status])
 }
 
 model File {
@@ -252,6 +259,8 @@ model Contact {
 
   @@index([groupId])
   @@index([teamId, groupId])
+  @@index([teamId, createdAt])
+  @@index([name])
   @@unique([teamId, email])
 }
 
@@ -304,6 +313,8 @@ model ContactAttribute {
   updatedAt     DateTime              @updatedAt @db.Timestamptz(6)
 
   @@index([key])
+  @@index([contactId, key])
+  @@index([stringValue])
   @@unique([contactId, key])
 }
 

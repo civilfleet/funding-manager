@@ -331,18 +331,38 @@ const getFundingRequests = async (
     where.teamId = teamId;
   }
   if (searchQuery) {
-    where.description = {
-      contains: searchQuery,
-    };
-    where.purpose = {
-      contains: searchQuery,
-    };
-    where.refinancingConcept = {
-      contains: searchQuery,
-    };
-    where.sustainability = {
-      contains: searchQuery,
-    };
+    where.OR = [
+      {
+        name: {
+          contains: searchQuery,
+          mode: "insensitive",
+        },
+      },
+      {
+        description: {
+          contains: searchQuery,
+          mode: "insensitive",
+        },
+      },
+      {
+        purpose: {
+          contains: searchQuery,
+          mode: "insensitive",
+        },
+      },
+      {
+        refinancingConcept: {
+          contains: searchQuery,
+          mode: "insensitive",
+        },
+      },
+      {
+        sustainability: {
+          contains: searchQuery,
+          mode: "insensitive",
+        },
+      },
+    ];
   }
   if (status?.length) {
     where.status = {

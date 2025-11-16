@@ -134,37 +134,23 @@ const getTeamContactLists = async (
     },
   });
 
-  const results = await Promise.all(
-    lists.map(async (list) => {
+  // Separate SMART lists from MANUAL lists
+  const smartLists = lists.filter((list) => list.type === ContactListType.SMART);
+  const manualLists = lists.filter(
+    (list) => list.type === ContactListType.MANUAL,
+  );
+
+  // Process smart lists - fetch contacts in parallel batches
+  const smartListResults = await Promise.all(
+    smartLists.map(async (list) => {
       const filters = parseFilters(list.filters as Prisma.JsonValue | null);
-
-      if (list.type === ContactListType.SMART) {
-        const smartContacts = await getTeamContacts(
-          teamId,
-          undefined,
-          userId,
-          filters,
-          roles,
-        );
-
-        return {
-          id: list.id,
-          teamId: list.teamId,
-          name: list.name,
-          description: list.description ?? undefined,
-          type: list.type,
-          filters,
-          contactCount: smartContacts.length,
-          contacts: smartContacts.map((contact) => ({
-            id: contact.id,
-            name: contact.name,
-            email: contact.email ?? null,
-            phone: contact.phone ?? null,
-          })),
-          createdAt: list.createdAt,
-          updatedAt: list.updatedAt,
-        };
-      }
+      const smartContacts = await getTeamContacts(
+        teamId,
+        undefined,
+        userId,
+        filters,
+        roles,
+      );
 
       return {
         id: list.id,
@@ -173,12 +159,12 @@ const getTeamContactLists = async (
         description: list.description ?? undefined,
         type: list.type,
         filters,
-        contactCount: list.contacts.length,
-        contacts: list.contacts.map((c) => ({
-          id: c.contact.id,
-          name: c.contact.name,
-          email: c.contact.email,
-          phone: c.contact.phone,
+        contactCount: smartContacts.length,
+        contacts: smartContacts.map((contact) => ({
+          id: contact.id,
+          name: contact.name,
+          email: contact.email ?? null,
+          phone: contact.phone ?? null,
         })),
         createdAt: list.createdAt,
         updatedAt: list.updatedAt,
@@ -186,7 +172,32 @@ const getTeamContactLists = async (
     }),
   );
 
-  return results;
+  // Process manual lists - no additional queries needed
+  const manualListResults = manualLists.map((list) => {
+    const filters = parseFilters(list.filters as Prisma.JsonValue | null);
+    return {
+      id: list.id,
+      teamId: list.teamId,
+      name: list.name,
+      description: list.description ?? undefined,
+      type: list.type,
+      filters,
+      contactCount: list.contacts.length,
+      contacts: list.contacts.map((c) => ({
+        id: c.contact.id,
+        name: c.contact.name,
+        email: c.contact.email,
+        phone: c.contact.phone,
+      })),
+      createdAt: list.createdAt,
+      updatedAt: list.updatedAt,
+    };
+  });
+
+  // Combine results and sort by name
+  return [...smartListResults, ...manualListResults].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
 };
 
 const getContactListById = async (

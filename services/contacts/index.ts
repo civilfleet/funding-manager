@@ -485,7 +485,6 @@ const getTeamContacts = async (
               mode: Prisma.QueryMode.insensitive,
             },
           };
-        case "name":
         default:
           return {
             name: {
@@ -502,7 +501,6 @@ const getTeamContacts = async (
           return { email: { not: null } };
         case "phone":
           return { phone: { not: null } };
-        case "name":
         default:
           return null;
       }
@@ -514,7 +512,6 @@ const getTeamContacts = async (
           return { NOT: { email: { equals: "" } } };
         case "phone":
           return { NOT: { phone: { equals: "" } } };
-        case "name":
         default:
           return { NOT: { name: { equals: "" } } };
       }
@@ -524,19 +521,12 @@ const getTeamContacts = async (
       switch (fieldName) {
         case "email":
           return {
-            OR: [
-              { email: { equals: null } },
-              { email: { equals: "" } },
-            ],
+            OR: [{ email: { equals: null } }, { email: { equals: "" } }],
           };
         case "phone":
           return {
-            OR: [
-              { phone: { equals: null } },
-              { phone: { equals: "" } },
-            ],
+            OR: [{ phone: { equals: null } }, { phone: { equals: "" } }],
           };
-        case "name":
         default:
           return { name: { equals: "" } };
       }
@@ -821,21 +811,19 @@ const createContact = async (
     });
 
     if (normalizedAttributes.length > 0) {
-      for (const attribute of normalizedAttributes) {
-        await tx.contactAttribute.create({
-          data: {
-            contactId: contact.id,
-            key: attribute.key,
-            type: attribute.type,
-            stringValue: attribute.stringValue,
-            numberValue: attribute.numberValue,
-            dateValue: attribute.dateValue,
-            locationLabel: attribute.locationLabel,
-            latitude: attribute.latitude,
-            longitude: attribute.longitude,
-          },
-        });
-      }
+      await tx.contactAttribute.createMany({
+        data: normalizedAttributes.map((attribute) => ({
+          contactId: contact.id,
+          key: attribute.key,
+          type: attribute.type,
+          stringValue: attribute.stringValue,
+          numberValue: attribute.numberValue,
+          dateValue: attribute.dateValue,
+          locationLabel: attribute.locationLabel,
+          latitude: attribute.latitude,
+          longitude: attribute.longitude,
+        })),
+      });
     }
 
     // Log contact creation
@@ -1136,20 +1124,63 @@ const getTeamContactAttributeKeys = async (
   userId?: string,
   roles: Roles[] = [],
 ) => {
-  const contacts = await getTeamContacts(teamId, undefined, userId, undefined, roles);
+  // Build contact visibility filter
+  const isAdmin = roles.includes(Roles.Admin);
+  let contactWhereInput: Prisma.ContactWhereInput = { teamId };
 
-  const keys = new Set<string>();
+  if (userId && !isAdmin) {
+    await ensureDefaultGroup(teamId);
 
-  contacts.forEach((contact) => {
-    contact.profileAttributes?.forEach((attribute) => {
-      const key = attribute?.key?.trim();
-      if (key) {
-        keys.add(key);
-      }
+    const userGroups = await prisma.userGroup.findMany({
+      where: { userId },
+      include: {
+        group: {
+          select: {
+            id: true,
+            canAccessAllContacts: true,
+          },
+        },
+      },
     });
+
+    const hasAllAccessPermission = userGroups.some(
+      (ug) => ug.group.canAccessAllContacts,
+    );
+
+    if (!hasAllAccessPermission) {
+      const groupIds = userGroups
+        .map((ug) => ug.groupId)
+        .filter((id): id is string => Boolean(id));
+
+      if (groupIds.length > 0) {
+        contactWhereInput = {
+          ...contactWhereInput,
+          OR: [{ groupId: null }, { groupId: { in: groupIds } }],
+        };
+      } else {
+        contactWhereInput = {
+          ...contactWhereInput,
+          groupId: null,
+        };
+      }
+    }
+  }
+
+  // Query distinct attribute keys directly from the attributes table
+  const attributes = await prisma.contactAttribute.findMany({
+    where: {
+      contact: contactWhereInput,
+    },
+    distinct: ["key"],
+    select: {
+      key: true,
+    },
+    orderBy: {
+      key: "asc",
+    },
   });
 
-  return Array.from(keys).sort((a, b) => a.localeCompare(b));
+  return attributes.map((attr) => attr.key).filter((key) => Boolean(key));
 };
 
 export {
