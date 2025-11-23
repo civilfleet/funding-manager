@@ -65,10 +65,13 @@ const getSourceColor = (source: EngagementSource) => {
   }
 };
 
-const getSourceLabel = (source: EngagementSource) => {
+const getSourceLabel = (
+  source: EngagementSource,
+  externalSource?: string,
+) => {
   switch (source) {
     case EngagementSource.EMAIL:
-      return "Email";
+      return externalSource ? `Email - ${externalSource}` : "Email";
     case EngagementSource.PHONE:
       return "Phone";
     case EngagementSource.SMS:
@@ -262,7 +265,7 @@ export default function ContactEngagementHistory({
                           variant="outline"
                           className={`text-xs ${getSourceColor(engagement.source)}`}
                         >
-                          {getSourceLabel(engagement.source)}
+                          {getSourceLabel(engagement.source, engagement.externalSource)}
                         </Badge>
                         {engagement.source === EngagementSource.TODO &&
                           engagement.todoStatus && (
