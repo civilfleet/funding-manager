@@ -346,6 +346,10 @@ export default function ContactEngagementHistory({
 
                     {(() => {
                       const parsed = parseEngagementContent(engagement.message);
+                      const metric =
+                        parsed.details.find(
+                          (d) => d.label.toLowerCase() === "metric",
+                        )?.value ?? undefined;
                       return (
                         <div className="space-y-3">
                           <div className="rounded-lg border shadow-sm bg-white">
@@ -356,6 +360,16 @@ export default function ContactEngagementHistory({
                               <p className="text-xs text-muted-foreground">
                                 To: {parsed.details.find((d) => d.label.toLowerCase().includes("recipient"))?.value || "Unknown"}
                               </p>
+                              {metric && (
+                                <div className="flex items-center gap-2 pt-1">
+                                  <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                    Event
+                                  </span>
+                                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 border border-blue-100">
+                                    {metric}
+                                  </span>
+                                </div>
+                              )}
                             </div>
 
                             <UiSeparator />

@@ -9,6 +9,7 @@ import {
   fetchKlaviyoProfiles,
   maskKlaviyoApiKey,
   testKlaviyoCredentials,
+  fetchKlaviyoEventMetric,
   type KlaviyoEvent,
   type KlaviyoProfile,
 } from "@/lib/klaviyo";
@@ -433,6 +434,26 @@ const createEngagementFromEvent = async ({
       }
     } catch (_error) {
       // Fallback to the original event if detail fetch fails.
+    }
+  }
+
+  if (!enrichedEvent.attributes.metric?.name) {
+    try {
+      const metric = await fetchKlaviyoEventMetric(apiKey, event.id);
+      if (metric?.attributes?.name) {
+        enrichedEvent = {
+          ...enrichedEvent,
+          attributes: {
+            ...enrichedEvent.attributes,
+            metric: {
+              id: metric.id ?? enrichedEvent.attributes.metric?.id,
+              name: metric.attributes.name,
+            },
+          },
+        };
+      }
+    } catch (_error) {
+      // keep existing metric info if fetch fails
     }
   }
 

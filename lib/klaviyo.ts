@@ -46,6 +46,14 @@ export type KlaviyoEvent = {
   };
 };
 
+export type KlaviyoMetric = {
+  id?: string;
+  type?: string;
+  attributes?: {
+    name?: string;
+  };
+};
+
 export type KlaviyoMessageContent = {
   id?: string;
   attributes?: {
@@ -224,6 +232,21 @@ export const fetchKlaviyoEventDetails = async (
       include: "metric,profile",
       "fields[metric]": "name",
       "fields[profile]": "email",
+    },
+  );
+
+  return response.data;
+};
+
+export const fetchKlaviyoEventMetric = async (
+  apiKey: string,
+  eventId: string,
+) => {
+  const response = await requestKlaviyo<KlaviyoMetric>(
+    apiKey,
+    `/events/${eventId}/metric`,
+    {
+      "fields[metric]": "name",
     },
   );
 
