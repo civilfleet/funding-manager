@@ -122,10 +122,7 @@ const resolveEngagementDirection = (metricName?: string) => {
 };
 
 const getEventProperties = (event: KlaviyoEvent) =>
-  event.attributes.properties ??
-  // @ts-expect-error Klaviyo uses event_properties in API responses
-  event.attributes.event_properties ??
-  {};
+  event.attributes.properties ?? event.attributes.event_properties ?? {};
 
 const stripHtml = (html?: string) =>
   typeof html === "string"
@@ -642,10 +639,10 @@ export const syncKlaviyoIntegration = async (
   let contactsUpdated = 0;
   let fallbackContactsCreated = 0;
 
-  const ensureContactForEmail = async (email?: string) => {
+  const ensureContactForEmail = async (email?: string): Promise<string | undefined> => {
     const normalized = normalizeEmail(email);
     if (!normalized) {
-      return null;
+      return undefined;
     }
 
     const cached = emailToContactId.get(normalized);

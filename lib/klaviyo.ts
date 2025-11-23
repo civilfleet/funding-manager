@@ -31,6 +31,7 @@ export type KlaviyoEvent = {
   attributes: {
     timestamp?: string;
     event_properties?: Record<string, unknown>;
+    properties?: Record<string, unknown>;
     metric?: {
       id?: string;
       name?: string;
@@ -90,10 +91,10 @@ export type KlaviyoCampaignMessage = {
     };
   };
 };
-export type KlaviyoCampaignMessageResponse = {
-  data: KlaviyoCampaignMessage;
-  included?: Array<KlaviyoTemplate>;
-};
+export type KlaviyoCampaignMessageResponse = KlaviyoListResponse<
+  KlaviyoCampaignMessage,
+  KlaviyoTemplate
+>;
 
 export type KlaviyoTemplate = {
   id: string;
@@ -106,8 +107,9 @@ export type KlaviyoTemplate = {
   };
 };
 
-type KlaviyoListResponse<T> = {
-  data: T;
+type KlaviyoListResponse<TData, TIncluded = never> = {
+  data: TData;
+  included?: TIncluded[];
   links?: KlaviyoResponseLinks;
 };
 
@@ -135,7 +137,7 @@ const parseNextCursor = (nextLink?: string) => {
   }
 };
 
-export const requestKlaviyo = async <T>(
+export const requestKlaviyo = async <TData, TIncluded = never>(
   apiKey: string,
   path: string,
   searchParams: RequestSearchParams = {},
@@ -172,7 +174,7 @@ export const requestKlaviyo = async <T>(
     );
   }
 
-  return (await response.json()) as KlaviyoListResponse<T>;
+  return (await response.json()) as KlaviyoListResponse<TData, TIncluded>;
 };
 
 export const fetchKlaviyoProfiles = async (
@@ -274,7 +276,10 @@ export const fetchKlaviyoCampaignMessage = async (
   messageId: string,
 ) => {
   try {
-    const response = await requestKlaviyo<KlaviyoCampaignMessageResponse>(
+    const response = await requestKlaviyo<
+      KlaviyoCampaignMessage,
+      KlaviyoTemplate
+    >(
       apiKey,
       `/campaign-messages/${messageId}`,
       {
