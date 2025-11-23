@@ -3,6 +3,9 @@ import prisma from "@/lib/prisma";
 import {
   fetchKlaviyoEmailEvents,
   fetchKlaviyoEventDetails,
+  fetchKlaviyoMessageContent,
+  fetchKlaviyoCampaignMessage,
+  fetchKlaviyoTemplate,
   fetchKlaviyoProfiles,
   maskKlaviyoApiKey,
   testKlaviyoCredentials,
@@ -123,8 +126,50 @@ const getEventProperties = (event: KlaviyoEvent) =>
   event.attributes.event_properties ??
   {};
 
-const buildEngagementContent = (event: KlaviyoEvent, profileId?: string) => {
+const stripHtml = (html?: string) =>
+  typeof html === "string"
+    ? html
+        .replace(/<(br|p|div|section|article)[^>]*>/gi, "\n")
+        .replace(/<\/(p|div|section|article)>/gi, "\n")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+\n/g, "\n")
+        .replace(/\n+\s*\n+/g, "\n\n")
+        .replace(/\s{2,}/g, " ")
+        .trim()
+    : undefined;
+
+const buildEngagementContent = async (
+  event: KlaviyoEvent,
+  profileId: string | undefined,
+  apiKey: string,
+) => {
   const properties = getEventProperties(event);
+  const resolveMessageId = () => {
+    const direct =
+      (properties["$message"] as string | undefined) ||
+      (properties.message_id as string | undefined) ||
+      (properties["$message_interaction"] as string | undefined) ||
+      (properties.message_interaction as string | undefined);
+    if (direct && typeof direct === "string" && direct.trim()) {
+      return direct.trim();
+    }
+    const cohort = properties["$_cohort$message_send_cohort"];
+    if (typeof cohort === "string" && cohort.includes(":")) {
+      const parts = cohort.split(":");
+      const last = parts[parts.length - 1]?.trim();
+      if (last) {
+        return last;
+      }
+    }
+    const eventId = properties["$event_id"] as string | undefined;
+    if (eventId && eventId.includes(":")) {
+      const maybe = eventId.split(":")[0]?.trim();
+      if (maybe) {
+        return maybe;
+      }
+    }
+    return undefined;
+  };
 
   const possibleBodyFields = [
     (properties.body as string | undefined),
@@ -136,7 +181,7 @@ const buildEngagementContent = (event: KlaviyoEvent, profileId?: string) => {
     (value) => typeof value === "string" && value.trim().length > 0,
   );
 
-  const subject =
+  let subject =
     (properties.subject as string | undefined) ||
     (properties.Subject as string | undefined) ||
     (properties["Campaign Name"] as string | undefined) ||
@@ -229,7 +274,11 @@ const buildEngagementContent = (event: KlaviyoEvent, profileId?: string) => {
     if (ignoredKeys.has(key)) {
       return;
     }
-    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    if (
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean"
+    ) {
       const normalized = String(value).trim();
       if (normalized) {
         detailEntries.push([`Additional - ${key}`, normalized]);
@@ -246,6 +295,62 @@ const buildEngagementContent = (event: KlaviyoEvent, profileId?: string) => {
     }
   });
 
+  let enrichedBody = body?.trim();
+  if (!enrichedBody) {
+    const messageId = resolveMessageId();
+    if (messageId) {
+      const campaignMessage = await fetchKlaviyoCampaignMessage(apiKey, messageId);
+      const includedTemplate = campaignMessage?.included?.find(
+        (item) => item.type === "template",
+      );
+      const templateId =
+        includedTemplate?.id ??
+        campaignMessage?.data?.relationships?.template?.data?.id;
+
+      if (includedTemplate?.attributes?.html || includedTemplate?.attributes?.text) {
+        enrichedBody =
+          stripHtml(includedTemplate.attributes?.html ?? undefined) ||
+          (includedTemplate.attributes?.text ?? undefined)?.trim();
+      }
+
+      if (!enrichedBody && templateId) {
+        const template = await fetchKlaviyoTemplate(apiKey, templateId);
+        const templateHtml = template?.attributes?.html ?? undefined;
+        const templateText = template?.attributes?.text ?? undefined;
+        enrichedBody =
+          stripHtml(templateHtml) ||
+          (typeof templateText === "string" && templateText.trim()
+            ? templateText.trim()
+            : undefined);
+      }
+
+      if (!enrichedBody) {
+        const messageContent = await fetchKlaviyoMessageContent(
+          apiKey,
+          messageId,
+        );
+        const htmlBody =
+          messageContent?.attributes?.html_body ??
+          messageContent?.attributes?.html ??
+          messageContent?.attributes?.content_html;
+        const textBody =
+          messageContent?.attributes?.text_body ??
+          messageContent?.attributes?.text ??
+          messageContent?.attributes?.content_text;
+
+        enrichedBody =
+          stripHtml(htmlBody) ||
+          (typeof textBody === "string" && textBody.trim()
+            ? textBody.trim()
+            : undefined);
+
+        if (!subject && messageContent?.attributes?.subject) {
+          subject = messageContent.attributes.subject;
+        }
+      }
+    }
+  }
+
   const detailsText =
     detailEntries.length > 0
       ? detailEntries.map(([label, value]) => `${label}: ${value}`).join("\n")
@@ -261,8 +366,8 @@ const buildEngagementContent = (event: KlaviyoEvent, profileId?: string) => {
           2,
         );
 
-  const message = body?.trim()
-    ? [body.trim(), detailsText].filter(Boolean).join("\n\n")
+  const message = enrichedBody
+    ? [enrichedBody, detailsText].filter(Boolean).join("\n\n")
     : [subject, detailsText].filter(Boolean).join("\n\n");
 
   return {
@@ -272,7 +377,7 @@ const buildEngagementContent = (event: KlaviyoEvent, profileId?: string) => {
 };
 
 const getEmailFromEvent = (event: KlaviyoEvent) => {
-  const properties = event.attributes.properties ?? {};
+  const properties = getEventProperties(event);
   const possibleEmailFields = [
     (properties.email as string | undefined),
     (properties.to as string | undefined),
@@ -331,7 +436,11 @@ const createEngagementFromEvent = async ({
     }
   }
 
-  const { subject, message } = buildEngagementContent(enrichedEvent, profileId);
+  const { subject, message } = await buildEngagementContent(
+    enrichedEvent,
+    profileId,
+    apiKey,
+  );
 
   const rawTimestamp = enrichedEvent.attributes.timestamp;
   const engagedAt = (() => {

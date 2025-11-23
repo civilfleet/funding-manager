@@ -46,6 +46,58 @@ export type KlaviyoEvent = {
   };
 };
 
+export type KlaviyoMessageContent = {
+  id?: string;
+  attributes?: {
+    subject?: string;
+    html_body?: string;
+    text_body?: string;
+    html?: string;
+    text?: string;
+    content_html?: string;
+    content_text?: string;
+  };
+};
+
+export type KlaviyoCampaignMessage = {
+  id: string;
+  type?: string;
+  attributes?: {
+    label?: string;
+    channel?: string;
+    content?: {
+      subject?: string;
+      preview_text?: string;
+      from_email?: string;
+      from_label?: string;
+      reply_to_email?: string;
+    };
+  };
+  relationships?: {
+    template?: {
+      data?: {
+        id?: string;
+        type?: string;
+      } | null;
+    };
+  };
+};
+export type KlaviyoCampaignMessageResponse = {
+  data: KlaviyoCampaignMessage;
+  included?: Array<KlaviyoTemplate>;
+};
+
+export type KlaviyoTemplate = {
+  id: string;
+  type?: string;
+  attributes?: {
+    name?: string | null;
+    editor_type?: string | null;
+    html?: string | null;
+    text?: string | null;
+  };
+};
+
 type KlaviyoListResponse<T> = {
   data: T;
   links?: KlaviyoResponseLinks;
@@ -176,6 +228,59 @@ export const fetchKlaviyoEventDetails = async (
   );
 
   return response.data;
+};
+
+export const fetchKlaviyoMessageContent = async (
+  apiKey: string,
+  messageId: string,
+) => {
+  try {
+    const response = await requestKlaviyo<KlaviyoMessageContent>(
+      apiKey,
+      `/messages/${messageId}/content`,
+    );
+    return response.data;
+  } catch (_error) {
+    // If message content endpoint is not available or fails, return null so caller can fallback.
+    return null;
+  }
+};
+
+export const fetchKlaviyoCampaignMessage = async (
+  apiKey: string,
+  messageId: string,
+) => {
+  try {
+    const response = await requestKlaviyo<KlaviyoCampaignMessageResponse>(
+      apiKey,
+      `/campaign-messages/${messageId}`,
+      {
+        include: "template",
+        "fields[template]": "html,text,name",
+      },
+    );
+    return response;
+  } catch (_error) {
+    return null;
+  }
+};
+
+export const fetchKlaviyoTemplate = async (
+  apiKey: string,
+  templateId: string,
+) => {
+  try {
+    const response = await requestKlaviyo<KlaviyoTemplate>(
+      apiKey,
+      `/templates/${templateId}`,
+      {
+        "fields[template]": "html,text,name",
+      },
+    );
+    return response.data;
+  } catch (_error) {
+    return null;
+  }
 };
 
 export const testKlaviyoCredentials = async (apiKey: string) => {
