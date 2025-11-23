@@ -47,6 +47,21 @@ export default function UserForm({
     },
   });
 
+  const returnPath = teamId
+    ? `/teams/${teamId}/users`
+    : organizationId
+      ? `/organizations/${organizationId}/users`
+      : undefined;
+
+  const handleCancel = () => {
+    form.reset();
+    if (returnPath) {
+      router.push(returnPath);
+    } else {
+      router.back();
+    }
+  };
+
   async function onSubmit(values: z.infer<typeof createUserSchema>) {
     setIsSubmitting(true);
 
@@ -180,7 +195,7 @@ export default function UserForm({
               variant="outline"
               className="mr-2"
               disabled={isSubmitting}
-              onClick={() => form.reset()}
+              onClick={handleCancel}
             >
               Cancel
             </Button>

@@ -256,6 +256,11 @@ const getUsers = async (
     include: teamId
       ? {
           groups: {
+            where: {
+              group: {
+                teamId,
+              },
+            },
             include: {
               group: {
                 select: {
@@ -267,6 +272,53 @@ const getUsers = async (
           },
         }
       : undefined,
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!teamId) {
+    return await prisma.user.findMany({
+      where: {
+        AND: [
+          {
+            OR: ["name", "email", "address", "city", "country"].map((field) => ({
+              [field]: { contains: searchQuery, mode: "insensitive" },
+            })),
+          },
+          ...whereConditions,
+        ],
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  return await prisma.user.findMany({
+    where: {
+      AND: [
+        {
+          OR: ["name", "email", "address", "city", "country"].map((field) => ({
+            [field]: { contains: searchQuery, mode: "insensitive" },
+          })),
+        },
+        ...whereConditions,
+      ],
+    },
+    include: {
+      groups: {
+        where: {
+          group: {
+            teamId,
+          },
+        },
+        include: {
+          group: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 };
