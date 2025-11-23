@@ -30,11 +30,11 @@ export type KlaviyoEvent = {
   type?: string;
   attributes: {
     timestamp?: string;
+    event_properties?: Record<string, unknown>;
     metric?: {
       id?: string;
       name?: string;
     };
-    properties?: Record<string, unknown>;
   };
   relationships?: {
     profile?: {
@@ -147,6 +147,10 @@ export const fetchKlaviyoEmailEvents = async (
       "page[size]": "50",
       "page[cursor]": cursor,
       sort: "-timestamp",
+      "fields[event]": "event_properties,timestamp",
+      include: "metric,profile",
+      "fields[metric]": "name",
+      "fields[profile]": "email",
     },
   );
 
@@ -154,6 +158,24 @@ export const fetchKlaviyoEmailEvents = async (
     events: response.data,
     nextCursor: parseNextCursor(response.links?.next),
   };
+};
+
+export const fetchKlaviyoEventDetails = async (
+  apiKey: string,
+  eventId: string,
+) => {
+  const response = await requestKlaviyo<KlaviyoEvent>(
+    apiKey,
+    `/events/${eventId}`,
+    {
+      "fields[event]": "event_properties,timestamp",
+      include: "metric,profile",
+      "fields[metric]": "name",
+      "fields[profile]": "email",
+    },
+  );
+
+  return response.data;
 };
 
 export const testKlaviyoCredentials = async (apiKey: string) => {

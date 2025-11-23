@@ -13,6 +13,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ContactChangeHistory from "@/components/contact-change-history";
 import ContactEngagementHistory from "@/components/contact-engagement-history";
+import DeleteContactButton from "@/components/forms/delete-contact-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,11 +109,18 @@ export default async function ContactDetailPage({
                     </CardTitle>
                     <CardDescription>Contact Details</CardDescription>
                   </div>
-                  <Button asChild>
-                    <Link href={`/teams/${teamId}/contacts/${id}/edit`}>
-                      Edit Contact
-                    </Link>
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button asChild variant="outline">
+                      <Link href={`/teams/${teamId}/contacts/${id}/edit`}>
+                        Edit Contact
+                      </Link>
+                    </Button>
+                    <DeleteContactButton
+                      teamId={teamId}
+                      contactId={id}
+                      contactName={contact.name}
+                    />
+                  </div>
                 </div>
               </CardHeader>
 
