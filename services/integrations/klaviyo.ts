@@ -125,6 +125,7 @@ const getEventProperties = (event: KlaviyoEvent) =>
 
 const buildEngagementContent = (event: KlaviyoEvent, profileId?: string) => {
   const properties = getEventProperties(event);
+
   const possibleBodyFields = [
     (properties.body as string | undefined),
     (properties.Body as string | undefined),
@@ -144,6 +145,9 @@ const buildEngagementContent = (event: KlaviyoEvent, profileId?: string) => {
     "Email engagement";
 
   const detailEntries: Array<[string, string]> = [];
+  const seenLabels = new Set<string>();
+  const usedPropertyKeys = new Set<string>();
+
   const addDetail = (label: string, value?: unknown) => {
     if (value === undefined || value === null) {
       return;
@@ -154,81 +158,93 @@ const buildEngagementContent = (event: KlaviyoEvent, profileId?: string) => {
       typeof value === "boolean"
     ) {
       const normalized = String(value).trim();
-      if (normalized) {
+      if (normalized && !seenLabels.has(label)) {
+        seenLabels.add(label);
         detailEntries.push([label, normalized]);
       }
       return;
     }
-    // For objects/arrays, include JSON string.
     try {
-      detailEntries.push([label, JSON.stringify(value)]);
+      const serialized = JSON.stringify(value, null, 2);
+      if (serialized && !seenLabels.has(label)) {
+        seenLabels.add(label);
+        detailEntries.push([label, serialized]);
+      }
     } catch {
       // ignore non-serializable
     }
   };
 
-  addDetail("Recipient", properties["Recipient Email Address"]);
-  addDetail("Recipient", properties.recipient);
-  addDetail("Recipient", properties.email);
-  addDetail("Recipient", properties.to_email);
-  addDetail("Recipient", properties.email_address);
-  addDetail("Recipient", properties.to);
-  addDetail("Recipient", properties.from_email);
-  addDetail("Recipient", properties.from);
-  addDetail("Recipient", properties.customer_email);
-  addDetail("Subject", properties.subject ?? properties.Subject);
-  addDetail("Campaign Name", properties["Campaign Name"] ?? properties.campaign_name);
-  addDetail("Inbox Provider", properties["Inbox Provider"]);
-  addDetail("Email Domain", properties["Email Domain"] ?? properties.email_domain ?? properties.domain);
-  addDetail("Message Id", properties.message_id as string | undefined);
-  addDetail("Klaviyo Message", properties["$message"] as string | undefined);
-  addDetail("Metric", event.attributes.metric?.name ?? event.attributes.metric?.id);
+  const addPropertyDetail = (
+    label: string,
+    key?: keyof typeof properties,
+  ) => {
+    if (!key) return;
+    if (Object.prototype.hasOwnProperty.call(properties, key)) {
+      usedPropertyKeys.add(String(key));
+      addDetail(label, properties[key]);
+    }
+  };
+
+  addPropertyDetail("Recipient", "Recipient Email Address");
+  addPropertyDetail("Recipient", "recipient");
+  addPropertyDetail("Recipient", "email");
+  addPropertyDetail("Recipient", "to_email");
+  addPropertyDetail("Recipient", "email_address");
+  addPropertyDetail("Recipient", "to");
+  addPropertyDetail("Recipient", "from_email");
+  addPropertyDetail("Recipient", "from");
+  addPropertyDetail("Recipient", "customer_email");
+
+  addPropertyDetail("Subject", "subject");
+  addPropertyDetail("Subject", "Subject");
+  addPropertyDetail("Campaign Name", "Campaign Name");
+  addPropertyDetail("Campaign Name", "campaign_name");
+  addPropertyDetail("Inbox Provider", "Inbox Provider");
+  addPropertyDetail("Email Domain", "Email Domain");
+  addPropertyDetail("Email Domain", "email_domain");
+  addPropertyDetail("Email Domain", "domain");
+  addPropertyDetail("Message Id", "message_id");
+  addPropertyDetail("Klaviyo Message", "$message");
+
+  addDetail(
+    "Metric",
+    event.attributes.metric?.name ?? event.attributes.metric?.id,
+  );
   addDetail("Event Timestamp", event.attributes.timestamp);
   addDetail("Event Id", event.id);
   addDetail("Profile Id", profileId);
 
-  // Include any remaining primitive properties to show full context
+  const ignoredKeys = new Set([
+    "body",
+    "Body",
+    "preview_text",
+    "subject",
+    "Subject",
+    "$message",
+    ...usedPropertyKeys,
+  ]);
+
   Object.entries(properties).forEach(([key, value]) => {
-    if (["body", "Body", "preview_text", "subject", "Subject", "$message"].includes(key)) {
+    if (ignoredKeys.has(key)) {
       return;
     }
-    if (
-      typeof value === "string" ||
-      typeof value === "number" ||
-      typeof value === "boolean"
-    ) {
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
       const normalized = String(value).trim();
       if (normalized) {
-        detailEntries.push([key, normalized]);
+        detailEntries.push([`Additional - ${key}`, normalized]);
       }
       return;
     }
     try {
       const serialized = JSON.stringify(value, null, 2);
       if (serialized && serialized !== "{}" && serialized !== "[]") {
-        detailEntries.push([`${key} (json)`, serialized]);
+        detailEntries.push([`Additional - ${key}`, serialized]);
       }
     } catch {
-      // ignore non-serializable values
+      // ignore
     }
   });
-
-  try {
-    const rawEventJson = JSON.stringify(
-      {
-        id: event.id,
-        metric: event.attributes.metric,
-        properties,
-        timestamp: event.attributes.timestamp,
-        profileId,
-      },
-      null,
-      2,
-    );
-    detailEntries.push(["Raw Event", rawEventJson]);
-  } catch {
-    // ignore serialization failure
-  }
 
   const detailsText =
     detailEntries.length > 0
