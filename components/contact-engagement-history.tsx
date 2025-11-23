@@ -350,17 +350,11 @@ export default function ContactEngagementHistory({
                         <div className="space-y-3">
                           <div className="rounded-lg border shadow-sm bg-white">
                             <div className="px-4 py-3 space-y-1">
-                              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                                Email message
-                              </p>
                               <h4 className="text-sm font-semibold">
-                                {engagement.subject || "Email"}
+                                Subject: {engagement.subject || "Email"}
                               </h4>
                               <p className="text-xs text-muted-foreground">
                                 To: {parsed.details.find((d) => d.label.toLowerCase().includes("recipient"))?.value || "Unknown"}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Subject: {engagement.subject || "Email"}
                               </p>
                             </div>
 
