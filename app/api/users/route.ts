@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/nodemailer";
+import { APP_NAME } from "@/constants/app";
 import { getAppUrl, getLoginUrl, handlePrismaError } from "@/lib/utils";
 import { createUser, getUsers, getUsersForDonation } from "@/services/users";
 import { Roles } from "@/types";
@@ -65,10 +66,11 @@ export async function POST(req: Request) {
 
     const loginUrl = getLoginUrl();
     const appUrl = getAppUrl();
+    const appName = APP_NAME;
 
     const subject = appUrl
       ? `You're In! Welcome to ${appUrl}.`
-      : "You're In! Welcome.";
+      : `You're In! Welcome to ${appName}.`;
 
     await sendEmail(
       {
@@ -81,6 +83,7 @@ export async function POST(req: Request) {
         email: validatedData.email,
         loginUrl,
         appUrl,
+        appName,
       },
     );
 

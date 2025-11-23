@@ -57,7 +57,9 @@ export function calculateMonthsDuration(
 
 export function getAppUrl(): string {
   const rawUrl =
-    process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "";
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.NEXTAUTH_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
 
   if (!rawUrl) {
     return "";
@@ -79,12 +81,12 @@ export function getAppUrl(): string {
 }
 
 export function getLoginUrl(path = "/"): string {
-  const baseUrl = getAppUrl();
+  const baseUrl =
+    getAppUrl() ||
+    (process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000");
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-
-  if (!baseUrl) {
-    return normalizedPath;
-  }
 
   return `${baseUrl}${normalizedPath}`;
 }

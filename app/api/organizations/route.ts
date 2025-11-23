@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { sendEmail } from "@/lib/nodemailer";
+import { APP_NAME } from "@/constants/app";
 import { getAppUrl, getLoginUrl, handlePrismaError } from "@/lib/utils";
 import {
   createOrUpdateOrganization,
@@ -49,9 +50,10 @@ export async function POST(req: Request) {
     if (organizationData.teamId) {
       const loginUrl = getLoginUrl();
       const appUrl = getAppUrl();
+      const appName = APP_NAME;
       const subject = appUrl
         ? `You're In! Welcome to ${appUrl}.`
-        : "You're In! Welcome.";
+        : `You're In! Welcome to ${appName}.`;
 
       await Promise.all([
         sendEmail(
@@ -65,6 +67,7 @@ export async function POST(req: Request) {
             email: validatedData.email,
             loginUrl,
             appUrl,
+            appName,
           },
         ),
         sendEmail(
@@ -78,6 +81,7 @@ export async function POST(req: Request) {
             email: user?.email,
             loginUrl,
             appUrl,
+            appName,
           },
         ),
       ]);
