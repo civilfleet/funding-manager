@@ -59,6 +59,8 @@ export function getAppUrl(): string {
   const rawUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.NEXTAUTH_URL ??
+    process.env.URL ??
+    process.env.DEPLOY_PRIME_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
 
   if (!rawUrl) {
@@ -83,6 +85,8 @@ export function getAppUrl(): string {
 export function getLoginUrl(path = "/"): string {
   const baseUrl =
     getAppUrl() ||
+    process.env.URL ||
+    process.env.DEPLOY_PRIME_URL ||
     (process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : "http://localhost:3000");
