@@ -19,6 +19,21 @@ export enum Roles {
 export const APP_MODULES = ["CRM", "FUNDING"] as const;
 export type AppModule = (typeof APP_MODULES)[number];
 
+export enum IntegrationProvider {
+  KLAVIYO = "KLAVIYO",
+}
+
+export interface IntegrationConnection {
+  id: string;
+  teamId: string;
+  provider: IntegrationProvider;
+  defaultListId?: string;
+  isEnabled: boolean;
+  lastSyncedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export enum ContactAttributeType {
   STRING = "STRING",
   NUMBER = "NUMBER",
@@ -191,6 +206,8 @@ export interface ContactEngagement {
   teamId: string;
   direction: EngagementDirection;
   source: EngagementSource;
+  externalId?: string;
+  externalSource?: string;
   subject?: string;
   message: string;
   userId?: string;

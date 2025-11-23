@@ -154,6 +154,22 @@ model Teams {
   events       Event[]
   eventRoles   EventRole[]
   groups       Group[]
+  integrationConnections IntegrationConnection[]
+}
+
+model IntegrationConnection {
+  id            String               @id @default(uuid()) @unique
+  teamId        String
+  team          Teams                @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  provider      IntegrationProvider
+  apiKey        String               @db.Text
+  defaultListId String?              @db.VarChar(255)
+  isEnabled     Boolean              @default(true)
+  lastSyncedAt  DateTime?            @db.Timestamptz(6)
+  createdAt     DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime             @updatedAt @db.Timestamptz(6)
+
+  @@unique([teamId, provider])
 }
 
 model User {
@@ -230,6 +246,10 @@ enum ContactAttributeType {
 enum AppModule {
   CRM
   FUNDING
+}
+
+enum IntegrationProvider {
+  KLAVIYO
 }
 
 model Contact {
@@ -548,6 +568,8 @@ model ContactEngagement {
   message     String               @db.Text
   userId      String?              // Team user who sent/received the message
   userName    String?              @db.VarChar(255) // Store name for display even if user deleted
+  externalId  String?              @db.VarChar(255)
+  externalSource String?           @db.VarChar(255)
 
   // Todo-specific fields
   assignedToUserId String?          // User assigned to complete the todo
@@ -564,6 +586,7 @@ model ContactEngagement {
   @@index([engagedAt])
   @@index([assignedToUserId])
   @@index([todoStatus])
+  @@unique([teamId, externalId, externalSource])
 }
 
 enum ChangeAction {

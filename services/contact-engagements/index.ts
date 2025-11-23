@@ -21,6 +21,8 @@ type CreateEngagementInput = {
   todoStatus?: TodoStatus;
   dueDate?: Date;
   engagedAt: Date;
+  externalId?: string;
+  externalSource?: string;
 };
 
 type UpdateEngagementInput = {
@@ -50,6 +52,8 @@ const mapEngagement = (
   message: engagement.message,
   userId: engagement.userId ?? undefined,
   userName: engagement.userName ?? undefined,
+  externalId: engagement.externalId ?? undefined,
+  externalSource: engagement.externalSource ?? undefined,
   assignedToUserId: engagement.assignedToUserId ?? undefined,
   assignedToUserName: engagement.assignedToUserName ?? undefined,
   todoStatus: engagement.todoStatus
@@ -86,6 +90,8 @@ const createEngagement = async (input: CreateEngagementInput) => {
       message: input.message,
       userId: input.userId,
       userName: input.userName,
+      externalId: input.externalId,
+      externalSource: input.externalSource,
       assignedToUserId: input.assignedToUserId,
       assignedToUserName: input.assignedToUserName,
       todoStatus: input.todoStatus,
