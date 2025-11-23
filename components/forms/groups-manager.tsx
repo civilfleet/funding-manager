@@ -37,7 +37,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { APP_MODULES, type AppModule } from "@/types";
+import {
+  APP_MODULES,
+  DEFAULT_TEAM_MODULES,
+  type AppModule,
+} from "@/types";
 import { createGroupSchema } from "@/validations/groups";
 
 type Group = {
@@ -74,11 +78,13 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const MODULE_LABELS: Record<AppModule, string> = {
   CRM: "CRM",
   FUNDING: "Funding",
+  ADMIN: "Admin",
 };
 
 const MODULE_DESCRIPTIONS: Record<AppModule, string> = {
   CRM: "Access contacts, events, and other CRM tools.",
   FUNDING: "Access funding requests, agreements, and financial workflows.",
+  ADMIN: "Manage settings, users, groups, and integrations.",
 };
 
 export default function GroupsManager({ teamId }: GroupsManagerProps) {
@@ -99,9 +105,9 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
     const rawGroups: Group[] = (groupsData?.data || []).map((group: Group) => ({
       ...group,
       modules:
-        group.modules?.length
+        group.modules?.length && group.modules.length > 0
           ? [...group.modules]
-          : [...APP_MODULES],
+          : [...DEFAULT_TEAM_MODULES],
     }));
 
     return rawGroups.sort((a, b) => {
@@ -121,7 +127,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
       description: "",
       canAccessAllContacts: false,
       userIds: [] as string[],
-      modules: [...APP_MODULES],
+      modules: [...DEFAULT_TEAM_MODULES],
     },
   });
 
@@ -138,7 +144,10 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
         description: group.description || "",
         canAccessAllContacts: group.canAccessAllContacts,
         userIds: group.users?.map((u) => u.userId) || [],
-        modules: group.modules ?? [...APP_MODULES],
+        modules:
+          group.modules && group.modules.length > 0
+            ? group.modules
+            : [...DEFAULT_TEAM_MODULES],
       });
     } else {
       setEditingGroup(null);
@@ -148,7 +157,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
         description: "",
         canAccessAllContacts: false,
         userIds: [],
-        modules: [...APP_MODULES],
+        modules: [...DEFAULT_TEAM_MODULES],
       });
     }
     setIsDialogOpen(true);
@@ -408,7 +417,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {editingGroup ? "Edit Group" : "Create Group"}
@@ -547,11 +556,11 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                 )}
               />
 
-              <FormField
-                control={typedControl}
-                name="userIds"
-                render={() => {
-                  if (isEditingDefaultGroup) {
+        <FormField
+          control={typedControl}
+          name="userIds"
+          render={() => {
+            if (isEditingDefaultGroup) {
                     return (
                       <FormItem>
                         <FormLabel>Group Members</FormLabel>
@@ -574,55 +583,79 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                       <FormDescription>
                         Select users who should be part of this group
                       </FormDescription>
-                      <div className="space-y-2 max-h-60 overflow-y-auto border rounded-md p-3">
-                        {users.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">
-                            No users available
-                          </p>
-                        ) : (
-                          users.map((user) => (
-                            <FormField
-                              key={user.id}
-                              control={typedControl}
-                              name="userIds"
-                              render={({ field }) => (
-                                <FormItem
-                                  key={user.id}
-                                  className="flex flex-row items-start space-x-3 space-y-0"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(user.id)}
-                                      onCheckedChange={(checked) => {
-                                        if (checked) {
-                                          field.onChange([
-                                            ...(field.value || []),
-                                            user.id,
-                                          ]);
-                                          return;
-                                        }
+                      <div className="border rounded-md">
+                        <div className="flex items-center gap-3 px-3 py-2 border-b">
+                          <Checkbox
+                            checked={
+                              users.length > 0 &&
+                              (form.watch("userIds") || []).length ===
+                                users.length
+                            }
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                form.setValue(
+                                  "userIds",
+                                  users.map((u) => u.id),
+                                );
+                              } else {
+                                form.setValue("userIds", []);
+                              }
+                            }}
+                          />
+                          <FormLabel className="text-sm font-medium">
+                            Select all users
+                          </FormLabel>
+                        </div>
+                        <div className="divide-y max-h-64 overflow-y-auto">
+                          {users.length === 0 ? (
+                            <p className="text-sm text-muted-foreground px-3 py-2">
+                              No users available
+                            </p>
+                          ) : (
+                            users.map((user) => (
+                              <FormField
+                                key={user.id}
+                                control={typedControl}
+                                name="userIds"
+                                render={({ field }) => (
+                                  <FormItem
+                                    key={user.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0 px-3 py-2"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(user.id)}
+                                        onCheckedChange={(checked) => {
+                                          if (checked) {
+                                            field.onChange([
+                                              ...(field.value || []),
+                                              user.id,
+                                            ]);
+                                            return;
+                                          }
 
-                                        field.onChange(
-                                          (field.value || []).filter(
-                                            (value) => value !== user.id,
-                                          ),
-                                        );
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-normal">
-                                    {user.name || user.email}
-                                    {user.name && (
-                                      <span className="text-muted-foreground text-sm ml-2">
-                                        ({user.email})
-                                      </span>
-                                    )}
-                                  </FormLabel>
-                                </FormItem>
-                              )}
-                            />
-                          ))
-                        )}
+                                          field.onChange(
+                                            (field.value || []).filter(
+                                              (value) => value !== user.id,
+                                            ),
+                                          );
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {user.name || user.email}
+                                      {user.name && (
+                                        <span className="text-muted-foreground text-sm ml-2">
+                                          ({user.email})
+                                        </span>
+                                      )}
+                                    </FormLabel>
+                                  </FormItem>
+                                )}
+                              />
+                            ))
+                          )}
+                        </div>
                       </div>
                       <FormMessage />
                     </FormItem>

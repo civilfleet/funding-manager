@@ -145,6 +145,9 @@ model Teams {
   createdAt    DateTime        @default(now()) @db.Timestamptz(6)
   updatedAt    DateTime        @updatedAt @db.Timestamptz(6)
 
+  ownerId String?
+  owner   User? @relation("TeamOwner", fields: [ownerId], references: [id])
+
   emailTemplates emailTemplates[]
   formSections FormSection[]
 
@@ -189,6 +192,7 @@ model User {
   teams           Teams[]          @relation("TeamUsers") // Many-to-Many relation
   organizations   Organization[]   @relation("OrganizationUsers") // Many-to-Many relation
   groups          UserGroup[]      // Many-to-Many relation through UserGroup
+  ownedTeams      Teams[]          @relation("TeamOwner")
 
   signedAgreements DonationAgreementSignature[]
   donationAgreement DonationAgreement[] @relation("CreatedByRelation")
@@ -246,6 +250,7 @@ enum ContactAttributeType {
 enum AppModule {
   CRM
   FUNDING
+  ADMIN
 }
 
 enum IntegrationProvider {

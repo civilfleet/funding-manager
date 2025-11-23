@@ -1,4 +1,7 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import GroupsManager from "@/components/forms/groups-manager";
+import { getTeamAdminAccess } from "@/services/teams/access";
 
 interface PageProps {
   params: Promise<{
@@ -8,6 +11,19 @@ interface PageProps {
 
 export default async function Page({ params }: PageProps) {
   const { teamId } = await params;
+  const session = await auth();
+  if (!session?.user?.userId) {
+    return redirect("/login");
+  }
+
+  const access = await getTeamAdminAccess(
+    session.user.userId,
+    teamId,
+    session.user.roles,
+  );
+  if (!access.allowed) {
+    return redirect(`/teams/${teamId}`);
+  }
 
   return (
     <div className="p-4">

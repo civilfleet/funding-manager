@@ -36,6 +36,7 @@ export default function UserTable({ teamId, organizationId }: UserTableProps) {
     fetcher,
   );
   const loading = isLoading || !data;
+  const ownerId = data?.ownerId as string | undefined;
 
   if (error) {
     toast({
@@ -73,7 +74,15 @@ export default function UserTable({ teamId, organizationId }: UserTableProps) {
             <Loader className="" />
           </div>
         ) : (
-          <DataTable columns={columns} data={data?.data} />
+          <DataTable
+            columns={columns}
+            data={
+              (data?.data || []).map((user: any) => ({
+                ...user,
+                isOwner: ownerId ? user.id === ownerId : false,
+              })) as any
+            }
+          />
         )}
       </div>
     </div>

@@ -12,7 +12,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { APP_MODULES, type AppModule } from "@/types";
+import { APP_MODULES, DEFAULT_TEAM_MODULES, type AppModule } from "@/types";
 import navigationItems from "./nav-items";
 
 type NavigationKey = keyof typeof navigationItems;
@@ -58,7 +58,7 @@ export function AppSidebar({
       initialTeams.map((team) => ({
         ...team,
         modules:
-          team.modules?.length ? team.modules : [...APP_MODULES],
+          team.modules?.length ? team.modules : [...DEFAULT_TEAM_MODULES],
       })),
     [initialTeams],
   );
@@ -73,7 +73,7 @@ export function AppSidebar({
       return activeTeam.modules;
     }
 
-    return [...APP_MODULES];
+    return [...DEFAULT_TEAM_MODULES];
   }, [activeTeam?.modules]);
 
   const filterNavItemsByModules = React.useCallback(

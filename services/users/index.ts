@@ -1,7 +1,12 @@
 import { omit } from "lodash";
 import prisma from "@/lib/prisma";
 import { ensureDefaultGroup } from "@/services/groups";
-import { APP_MODULES, type AppModule, type Roles } from "@/types";
+import {
+  APP_MODULES,
+  DEFAULT_TEAM_MODULES,
+  type AppModule,
+  type Roles,
+} from "@/types";
 
 export interface User {
   name?: string;
@@ -87,6 +92,7 @@ const getUserCurrent = async (userId: string) => {
           name: true,
 
           email: true,
+          ownerId: true,
         },
       },
     },
@@ -126,7 +132,7 @@ const getUserCurrent = async (userId: string) => {
       const set = modulesByTeam.get(teamId) ?? new Set<AppModule>();
 
       if (!membership.group.modulePermissions.length) {
-        for (const module of APP_MODULES) {
+        for (const module of DEFAULT_TEAM_MODULES) {
           set.add(module);
         }
       } else {
@@ -161,7 +167,7 @@ const getUserCurrent = async (userId: string) => {
           ? group.modulePermissions.map(
               (permission) => permission.module as AppModule,
             )
-          : [...APP_MODULES],
+          : [...DEFAULT_TEAM_MODULES],
       ]),
     );
   }
@@ -169,18 +175,24 @@ const getUserCurrent = async (userId: string) => {
   const teamsWithModules = user.teams.map((team) => {
     const set = modulesByTeam.get(team.id);
 
-    if (set?.size) {
-      return {
-        ...team,
-        modules: Array.from(set),
-      };
-    }
+    const modules = new Set<AppModule>(set ?? []);
 
     const fallback = defaultGroupsByTeam.get(team.id);
+    if (!modules.size && fallback?.length) {
+      fallback.forEach((module) => modules.add(module));
+    }
+
+    if (!modules.size) {
+      DEFAULT_TEAM_MODULES.forEach((module) => modules.add(module));
+    }
+
+    if (team.ownerId === userId) {
+      modules.add("ADMIN");
+    }
 
     return {
       ...team,
-      modules: fallback?.length ? fallback : [...APP_MODULES],
+      modules: Array.from(modules),
     };
   });
 

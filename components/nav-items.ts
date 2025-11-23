@@ -116,16 +116,19 @@ const navItems: {
       title: "Users",
       url: "users",
       icon: BookUser,
+      module: "ADMIN",
     },
     {
       title: "Groups",
       url: "groups",
       icon: UsersRound,
+      module: "ADMIN",
     },
     {
       title: "Settings",
       url: "settings",
       icon: Settings,
+      module: "ADMIN",
     },
   ],
   organization: [

@@ -16,7 +16,8 @@ export enum Roles {
   Admin = "Admin",
 }
 
-export const APP_MODULES = ["CRM", "FUNDING"] as const;
+export const APP_MODULES = ["CRM", "FUNDING", "ADMIN"] as const;
+export const DEFAULT_TEAM_MODULES = ["CRM", "FUNDING"] as const;
 export type AppModule = (typeof APP_MODULES)[number];
 
 export enum IntegrationProvider {
@@ -368,6 +369,7 @@ export interface Teams {
   users: User[];
   contacts?: Contact[];
   modules?: AppModule[];
+  ownerId?: string;
   createdAt: Date;
   updatedAt: Date;
 }

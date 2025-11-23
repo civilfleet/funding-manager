@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import UserTable from "@/components/table/user-table";
 import { Button } from "@/components/ui/button";
 import { BulkInviteUsersDialog } from "@/components/forms/bulk-invite-users";
+import { getTeamAdminAccess } from "@/services/teams/access";
 
 interface PageProps {
   params: Promise<{
@@ -11,6 +14,19 @@ interface PageProps {
 
 export default async function Page({ params }: PageProps) {
   const { teamId } = await params;
+  const session = await auth();
+  if (!session?.user?.userId) {
+    return redirect("/login");
+  }
+
+  const access = await getTeamAdminAccess(
+    session.user.userId,
+    teamId,
+    session.user.roles,
+  );
+  if (!access.allowed) {
+    return redirect(`/teams/${teamId}`);
+  }
 
   return (
     <div className="p-4">

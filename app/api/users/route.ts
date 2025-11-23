@@ -3,6 +3,7 @@ import { sendEmail } from "@/lib/nodemailer";
 import { APP_NAME } from "@/constants/app";
 import { getAppUrl, getLoginUrl, handlePrismaError } from "@/lib/utils";
 import { createUser, getUsers, getUsersForDonation } from "@/services/users";
+import { ensureTeamOwner } from "@/services/teams";
 import { Roles } from "@/types";
 import { createUserSchema } from "@/validations/organizations";
 
@@ -27,8 +28,10 @@ export async function GET(req: Request) {
             searchQuery,
           );
 
+    const ownerId = teamId ? await ensureTeamOwner(teamId) : undefined;
+
     return NextResponse.json(
-      { data },
+      { data, ownerId: ownerId ?? null },
 
       { status: 201 },
     );

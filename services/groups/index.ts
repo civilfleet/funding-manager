@@ -1,6 +1,11 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { APP_MODULES, type AppModule, type Group } from "@/types";
+import {
+  APP_MODULES,
+  DEFAULT_TEAM_MODULES,
+  type AppModule,
+  type Group,
+} from "@/types";
 
 type CreateGroupInput = {
   teamId: string;
@@ -82,7 +87,7 @@ const ensureDefaultGroup = async (
           isDefaultGroup: true,
           canAccessAllContacts: true,
           modulePermissions: {
-            create: APP_MODULES.map((module) => ({ module })),
+            create: DEFAULT_TEAM_MODULES.map((module) => ({ module })),
           },
         },
         include: {
@@ -114,7 +119,7 @@ const ensureDefaultGroup = async (
 
   if (!ensuredDefaultGroup.modulePermissions.length) {
     await client.groupModulePermission.createMany({
-      data: APP_MODULES.map((module) => ({
+      data: DEFAULT_TEAM_MODULES.map((module) => ({
         groupId: ensuredDefaultGroup.id,
         module,
       })),
@@ -199,7 +204,7 @@ const mapGroup = (group: GroupWithDefaults): Group => ({
     ? group.modulePermissions.map(
         (permission) => permission.module as AppModule,
       )
-    : [...APP_MODULES],
+    : [...DEFAULT_TEAM_MODULES],
   createdAt: group.createdAt,
   updatedAt: group.updatedAt,
 });
@@ -517,10 +522,27 @@ const getUserModuleAccess = async (
   userId: string,
   teamId: string,
 ): Promise<AppModule[]> => {
+  const team = await prisma.teams.findUnique({
+    where: { id: teamId },
+    select: { ownerId: true },
+  });
+
   const groups = await getUserGroups(userId, teamId);
 
   if (!groups.length) {
-    return [];
+    const defaultGroup = await ensureDefaultGroup(teamId);
+    const baseModules =
+      defaultGroup.modulePermissions.length > 0
+        ? defaultGroup.modulePermissions.map(
+            (permission) => permission.module as AppModule,
+          )
+        : [...DEFAULT_TEAM_MODULES];
+
+    if (team?.ownerId === userId) {
+      return Array.from(new Set<AppModule>([...baseModules, "ADMIN"]));
+    }
+
+    return baseModules;
   }
 
   const modules = new Set<AppModule>();
@@ -531,17 +553,11 @@ const getUserModuleAccess = async (
     }
   }
 
-  if (modules.size) {
-    return Array.from(modules);
+  if (team?.ownerId === userId) {
+    modules.add("ADMIN");
   }
 
-  const defaultGroup = await ensureDefaultGroup(teamId);
-
-  return defaultGroup.modulePermissions.length
-    ? defaultGroup.modulePermissions.map(
-        (permission) => permission.module as AppModule,
-      )
-    : [...APP_MODULES];
+  return modules.size ? Array.from(modules) : [...DEFAULT_TEAM_MODULES];
 };
 
 export {

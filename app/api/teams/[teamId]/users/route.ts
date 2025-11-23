@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { ensureTeamOwner } from "@/services/teams";
 
 export async function GET(
   _request: Request,
@@ -7,6 +8,8 @@ export async function GET(
 ) {
   try {
     const { teamId } = await params;
+
+    const ownerId = await ensureTeamOwner(teamId);
 
     const users = await prisma.user.findMany({
       where: {
@@ -20,13 +23,19 @@ export async function GET(
         id: true,
         name: true,
         email: true,
+        roles: true,
+        createdAt: true,
+        updatedAt: true,
       },
       orderBy: {
         name: "asc",
       },
     });
 
-    return NextResponse.json({ data: users }, { status: 200 });
+    return NextResponse.json(
+      { data: users, ownerId: ownerId ?? null },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("Error fetching team users:", error);
     return NextResponse.json(

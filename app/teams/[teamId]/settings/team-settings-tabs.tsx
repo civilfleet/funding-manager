@@ -1,5 +1,6 @@
 "use client";
 
+import useSWR from "swr";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import CreateEmailTemplate from "@/components/forms/create-email-template";
@@ -9,10 +10,14 @@ import KlaviyoIntegration from "@/components/forms/klaviyo-integration";
 import StrategicPrioritiesForm from "@/components/forms/strategic-priorities";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import type { EmailTemplate } from "@/types";
 
 interface TeamSettingsTabsProps {
   teamId: string;
+  currentUserId: string;
+  owner: { id: string; name: string | null; email: string } | null;
   templates: EmailTemplate[];
 }
 
@@ -27,10 +32,13 @@ type TabValue = (typeof VALID_TABS)[number];
 
 export default function TeamSettingsTabs({
   teamId,
+  currentUserId,
+  owner,
   templates,
 }: TeamSettingsTabsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   // Get tab from URL or default to "general"
   const tabFromUrl = searchParams.get("tab");
@@ -87,6 +95,18 @@ export default function TeamSettingsTabs({
       </TabsList>
 
       <TabsContent value="general" className="space-y-8">
+        <OwnershipCard
+          teamId={teamId}
+          currentUserId={currentUserId}
+          owner={owner}
+          onSuccess={() => {
+            toast({
+              title: "Ownership updated",
+              description: "Team owner has been updated successfully.",
+            });
+            router.refresh();
+          }}
+        />
         <StrategicPrioritiesForm teamId={teamId} />
       </TabsContent>
 
@@ -112,3 +132,164 @@ export default function TeamSettingsTabs({
     </Tabs>
   );
 }
+
+type OwnershipCardProps = {
+  teamId: string;
+  currentUserId: string;
+  owner: { id: string; name: string | null; email: string } | null;
+  onSuccess: () => void;
+};
+
+const OwnershipCard = ({
+  teamId,
+  currentUserId,
+  owner,
+  onSuccess,
+}: OwnershipCardProps) => {
+  const { toast } = useToast();
+  const [pending, setPending] = useState(false);
+  const [selectedOwnerId, setSelectedOwnerId] = useState(owner?.id ?? "");
+  const [ownerState, setOwnerState] = useState(owner);
+
+  const { data: usersResponse, mutate } = useSWR(
+    `/api/teams/${teamId}/users`,
+    (url: string) => fetch(url).then((res) => res.json()),
+  );
+
+  const users: Array<{ id: string; name: string | null; email: string }> =
+    usersResponse?.data || [];
+  const ownerIdFromApi: string | null = usersResponse?.ownerId ?? null;
+
+  useEffect(() => {
+    if (ownerIdFromApi) {
+      setSelectedOwnerId(ownerIdFromApi);
+      const ownerFromList = users.find((u) => u.id === ownerIdFromApi);
+      if (ownerFromList) {
+        setOwnerState(ownerFromList);
+      }
+    }
+  }, [ownerIdFromApi, users]);
+
+  const isOwner = (ownerIdFromApi || ownerState?.id) === currentUserId;
+  const currentOwner =
+    users.find((u) => u.id === (ownerIdFromApi || ownerState?.id)) ||
+    ownerState ||
+    null;
+
+  const handleTransfer = async () => {
+    if (!isOwner || !selectedOwnerId || selectedOwnerId === currentOwner?.id) {
+      return;
+    }
+    setPending(true);
+    try {
+      const response = await fetch(`/api/teams/${teamId}/owner`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ newOwnerId: selectedOwnerId }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.error || "Failed to transfer ownership");
+      }
+
+      const body = (await response.json()) as {
+        data?: { ownerId?: string };
+      };
+
+      const newOwner =
+        users.find((u) => u.id === body.data?.ownerId) ||
+        users.find((u) => u.id === selectedOwnerId);
+      if (newOwner) {
+        setOwnerState(newOwner);
+      }
+      await mutate();
+      onSuccess();
+    } catch (error) {
+      toast({
+        title: "Unable to transfer ownership",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <Card className="p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Team Ownership</h3>
+          <p className="text-sm text-muted-foreground">
+            Only the owner can transfer ownership. Admins can view the current
+            owner but cannot change it.
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">Current owner</p>
+        <div className="rounded-md border p-3">
+          {currentOwner ? (
+            <div className="flex flex-col">
+              <span className="font-medium">
+                {currentOwner.name || currentOwner.email}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {currentOwner.email}
+              </span>
+            </div>
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              No owner assigned
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">Transfer ownership</p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <select
+            className="w-full sm:w-80 rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={selectedOwnerId}
+            onChange={(event) => setSelectedOwnerId(event.target.value)}
+            disabled={!isOwner || pending || users.length === 0}
+          >
+            <option value="" disabled>
+              Select new owner
+            </option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name || user.email} {user.id === currentUserId ? "(You)" : ""}
+              </option>
+            ))}
+          </select>
+          <Button
+            type="button"
+            onClick={handleTransfer}
+            disabled={
+              !isOwner ||
+              pending ||
+              !selectedOwnerId ||
+              selectedOwnerId === currentOwner?.id
+            }
+          >
+            {pending ? "Transferring..." : "Transfer Ownership"}
+          </Button>
+        </div>
+        {!isOwner && (
+          <p className="text-xs text-muted-foreground">
+            Only the current owner can transfer ownership.
+          </p>
+        )}
+      </div>
+    </Card>
+  );
+};

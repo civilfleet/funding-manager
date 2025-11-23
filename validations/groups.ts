@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { APP_MODULES } from "@/types";
+import { DEFAULT_TEAM_MODULES, APP_MODULES } from "@/types";
 
 export const createGroupSchema = z.object({
   teamId: z.string().uuid(),
@@ -13,7 +13,7 @@ export const createGroupSchema = z.object({
     .transform((value) =>
       value?.length
         ? Array.from(new Set(value))
-        : Array.from(APP_MODULES),
+        : Array.from(DEFAULT_TEAM_MODULES),
     ),
 });
 

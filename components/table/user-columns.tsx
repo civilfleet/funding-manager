@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { Trash2 } from "lucide-react";
+import { Crown, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -32,13 +32,22 @@ const NavigableCell = ({
   </Link>
 );
 
-export const columns: ColumnDef<User>[] = [
+export const columns: ColumnDef<User & { isOwner?: boolean }>[] = [
   {
     accessorKey: "name",
     header: () => <div className="text-left w-36">Name</div>,
     cell: ({ row }) => (
-      <NavigableCell id={row.original.id}>
-        {row.original?.name || "N/A"}
+      <NavigableCell
+        id={row.original.id}
+        className="flex items-center gap-2"
+      >
+        <span>{row.original?.name || "N/A"}</span>
+        {row.original.isOwner ? (
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <Crown className="h-3 w-3" />
+            Owner
+          </Badge>
+        ) : null}
       </NavigableCell>
     ),
   },
