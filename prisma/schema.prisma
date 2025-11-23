@@ -237,6 +237,8 @@ model Contact {
   teamId            String
   team              Teams                @relation(fields: [teamId], references: [id], onDelete: Cascade)
   name              String
+  pronouns          String?             @db.VarChar(120)
+  city              String?             @db.VarChar(255)
   email             String?              @db.VarChar(255)
   phone             String?              @db.VarChar(255)
   groupId           String?              // Optional group for access control

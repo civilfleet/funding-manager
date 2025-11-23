@@ -16,6 +16,8 @@ export type ContactRow = {
   id: string;
   teamId: string;
   name: string;
+  pronouns?: string | null;
+  city?: string | null;
   email?: string | null;
   phone?: string | null;
   profileAttributes: ContactProfileAttribute[];
@@ -105,7 +107,14 @@ const ContactNameCell = ({ contact }: { contact: ContactRow }) => {
       href={`/teams/${teamId}/contacts/${contact.id}`}
       className="font-medium hover:underline"
     >
-      {contact.name}
+      <div className="flex flex-col gap-1">
+        <span>{contact.name}</span>
+        {contact.pronouns && (
+          <span className="text-xs text-muted-foreground">
+            {contact.pronouns}
+          </span>
+        )}
+      </div>
     </Link>
   );
 };
@@ -133,6 +142,13 @@ export const contactColumns: ColumnDef<ContactRow>[] = [
     cell: ({ row }) => <span>{row.original.phone || "—"}</span>,
   },
   {
+    accessorKey: "city",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="City" />
+    ),
+    cell: ({ row }) => <span>{row.original.city || "—"}</span>,
+  },
+  {
     accessorKey: "profileAttributes",
     enableSorting: false,
     header: ({ column }) => (
@@ -157,12 +173,21 @@ export const renderContactCard = (contact: ContactRow, teamId: string) => {
     <Link href={`/teams/${teamId}/contacts/${contact.id}`}>
       <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-3 hover:bg-accent transition-colors cursor-pointer">
         <div>
-          <h3 className="text-base font-semibold">{contact.name}</h3>
-          {(contact.email || contact.phone) && (
-            <p className="text-xs text-muted-foreground">
-              {[contact.email, contact.phone].filter(Boolean).join(" • ")}
-            </p>
-          )}
+          <div className="flex flex-col gap-1">
+            <h3 className="text-base font-semibold">{contact.name}</h3>
+            {contact.pronouns && (
+              <p className="text-xs text-muted-foreground">
+                {contact.pronouns}
+              </p>
+            )}
+            {(contact.email || contact.phone || contact.city) && (
+              <p className="text-xs text-muted-foreground">
+                {[contact.email, contact.phone, contact.city]
+                  .filter(Boolean)
+                  .join(" • ")}
+              </p>
+            )}
+          </div>
         </div>
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground uppercase tracking-wide">

@@ -43,7 +43,7 @@ type FilterOption = {
   type: ContactFilterType;
   label: string;
   allowMultiple?: boolean;
-  field?: "email" | "phone" | "name";
+  field?: "email" | "phone" | "name" | "pronouns" | "city";
 };
 
 const FILTER_OPTIONS: FilterOption[] = [
@@ -65,16 +65,33 @@ const FILTER_OPTIONS: FilterOption[] = [
     label: "Phone",
     allowMultiple: true,
   },
+  {
+    type: "contactField",
+    field: "pronouns",
+    label: "Pronouns",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
+    field: "city",
+    label: "City",
+    allowMultiple: true,
+  },
   { type: "attribute", label: "Attribute", allowMultiple: true },
   { type: "group", label: "Group", allowMultiple: true },
   { type: "eventRole", label: "Event role", allowMultiple: true },
   { type: "createdAt", label: "Created date", allowMultiple: false },
 ];
 
-const CONTACT_FIELD_LABELS: Record<"email" | "phone" | "name", string> = {
+const CONTACT_FIELD_LABELS: Record<
+  "email" | "phone" | "name" | "pronouns" | "city",
+  string
+> = {
   name: "Name",
   email: "Email",
   phone: "Phone",
+  pronouns: "Pronouns",
+  city: "City",
 };
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -300,7 +317,10 @@ export default function ContactTable({ teamId }: ContactTableProps) {
       switch (option.type) {
         case "contactField": {
           const field = option.field ?? "email";
-          const operator = field === "name" ? "contains" : "has";
+          const operator =
+            field === "name" || field === "pronouns" || field === "city"
+              ? "contains"
+              : "has";
           return {
             type: "contactField",
             field,

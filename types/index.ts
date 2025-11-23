@@ -104,6 +104,8 @@ export interface Contact {
   id: string;
   teamId: string;
   name: string;
+  pronouns?: string;
+  city?: string;
   email?: string;
   phone?: string;
   groupId?: string;
@@ -117,7 +119,7 @@ export interface Contact {
 export type ContactFilter =
   | {
       type: "contactField";
-      field: "email" | "phone" | "name";
+      field: "email" | "phone" | "name" | "pronouns" | "city";
       operator: "has" | "missing" | "contains";
       value?: string;
     }

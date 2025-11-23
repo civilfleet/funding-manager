@@ -28,7 +28,7 @@ type FilterOption = {
   type: ContactFilterType;
   label: string;
   allowMultiple?: boolean;
-  field?: "email" | "phone" | "name";
+  field?: "email" | "phone" | "name" | "pronouns" | "city";
 };
 
 const FILTER_OPTIONS: FilterOption[] = [
@@ -50,6 +50,18 @@ const FILTER_OPTIONS: FilterOption[] = [
     label: "Has phone / phone contains…",
     allowMultiple: true,
   },
+  {
+    type: "contactField",
+    field: "pronouns",
+    label: "Has pronouns / pronouns contains…",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
+    field: "city",
+    label: "Has city / city contains…",
+    allowMultiple: true,
+  },
   { type: "attribute", label: "Profile attribute", allowMultiple: true },
   { type: "group", label: "Group membership", allowMultiple: true },
   { type: "eventRole", label: "Event role participation", allowMultiple: true },
@@ -64,10 +76,15 @@ interface ContactListFiltersBuilderProps {
   onChange: (filters: ContactFilter[]) => void;
 }
 
-const CONTACT_FIELD_LABELS: Record<"email" | "phone" | "name", string> = {
+const CONTACT_FIELD_LABELS: Record<
+  "email" | "phone" | "name" | "pronouns" | "city",
+  string
+> = {
   name: "Name",
   email: "Email",
   phone: "Phone",
+  pronouns: "Pronouns",
+  city: "City",
 };
 
 export function ContactListFiltersBuilder({
@@ -115,7 +132,10 @@ export function ContactListFiltersBuilder({
     switch (option.type) {
       case "contactField": {
         const field = option.field ?? "email";
-        const operator = field === "name" ? "contains" : "has";
+        const operator =
+          field === "name" || field === "pronouns" || field === "city"
+            ? "contains"
+            : "has";
         return {
           type: "contactField",
           field,

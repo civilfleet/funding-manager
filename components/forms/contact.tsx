@@ -80,6 +80,8 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           teamId,
           contactId: contact?.id ?? "",
           name: contact?.name ?? "",
+          pronouns: contact?.pronouns ?? "",
+          city: contact?.city ?? "",
           email: contact?.email ?? "",
           phone: contact?.phone ?? "",
           groupId: contact?.groupId ?? undefined,
@@ -89,6 +91,8 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
       : {
           teamId,
           name: "",
+          pronouns: "",
+          city: "",
           email: "",
           phone: "",
           groupId: undefined,
@@ -455,6 +459,40 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                     <FormControl>
                       <Input
                         placeholder="+1 (555) 123-4567"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={typedControl}
+                name="pronouns"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pronouns</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="they/them"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={typedControl}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Berlin"
                         {...field}
                         value={field.value ?? ""}
                       />

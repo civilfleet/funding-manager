@@ -98,7 +98,7 @@ const optionalDateString = z.preprocess(
 const contactFieldFilterSchema = z
   .object({
     type: z.literal("contactField"),
-    field: z.enum(["email", "phone", "name"]),
+    field: z.enum(["email", "phone", "name", "pronouns", "city"]),
     operator: z.enum(["has", "missing", "contains"]),
     value: optionalText(z.string()),
   })
@@ -149,6 +149,8 @@ export const contactFiltersSchema = z.array(contactFilterSchema).default([]);
 export const createContactSchema = z.object({
   teamId: z.string().uuid("Team id must be a valid UUID"),
   name: z.string().min(1, "Name is required"),
+  pronouns: optionalText(z.string()),
+  city: optionalText(z.string()),
   email: requiredEmail,
   phone: optionalText(z.string()),
   profileAttributes: z.array(contactAttributeSchema).default([]),
@@ -166,6 +168,8 @@ export const updateContactSchema = z.object({
   contactId: z.string().uuid("Contact id must be a valid UUID"),
   teamId: z.string().uuid("Team id must be a valid UUID"),
   name: z.string().min(1, "Name is required").optional(),
+  pronouns: optionalText(z.string()),
+  city: optionalText(z.string()),
   email: optionalEmail,
   phone: optionalText(z.string()),
   profileAttributes: z.array(contactAttributeSchema).optional(),

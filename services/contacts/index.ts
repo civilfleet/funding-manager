@@ -17,6 +17,8 @@ import {
 type CreateContactInput = {
   teamId: string;
   name: string;
+  pronouns?: string;
+  city?: string;
   email?: string;
   phone?: string;
   groupId?: string;
@@ -27,6 +29,8 @@ type UpdateContactInput = {
   contactId: string;
   teamId: string;
   name?: string;
+  pronouns?: string;
+  city?: string;
   email?: string;
   phone?: string;
   groupId?: string;
@@ -229,6 +233,8 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
   id: contact.id,
   teamId: contact.teamId,
   name: contact.name,
+  pronouns: contact.pronouns ?? undefined,
+  city: contact.city ?? undefined,
   email: contact.email ?? undefined,
   phone: contact.phone ?? undefined,
   groupId: contact.groupId ?? undefined,
@@ -438,6 +444,8 @@ const getTeamContacts = async (
   if (query) {
     const searchConditions: Prisma.ContactWhereInput[] = [
       { name: { contains: query, mode: "insensitive" } },
+      { pronouns: { contains: query, mode: "insensitive" } },
+      { city: { contains: query, mode: "insensitive" } },
       { email: { contains: query, mode: "insensitive" } },
       { phone: { contains: query, mode: "insensitive" } },
       {
@@ -485,6 +493,20 @@ const getTeamContacts = async (
               mode: Prisma.QueryMode.insensitive,
             },
           };
+        case "pronouns":
+          return {
+            pronouns: {
+              contains: trimmedValue,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          };
+        case "city":
+          return {
+            city: {
+              contains: trimmedValue,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          };
         case "name":
         default:
           return {
@@ -502,6 +524,10 @@ const getTeamContacts = async (
           return { email: { not: null } };
         case "phone":
           return { phone: { not: null } };
+        case "pronouns":
+          return { pronouns: { not: null } };
+        case "city":
+          return { city: { not: null } };
         case "name":
         default:
           return null;
@@ -514,6 +540,10 @@ const getTeamContacts = async (
           return { NOT: { email: { equals: "" } } };
         case "phone":
           return { NOT: { phone: { equals: "" } } };
+        case "pronouns":
+          return { NOT: { pronouns: { equals: "" } } };
+        case "city":
+          return { NOT: { city: { equals: "" } } };
         case "name":
         default:
           return { NOT: { name: { equals: "" } } };
@@ -789,9 +819,11 @@ const createContact = async (
   userId?: string,
   userName?: string,
 ) => {
-  const { teamId, name, email, phone, groupId, profileAttributes } = input;
+  const { teamId, name, pronouns, city, email, phone, groupId, profileAttributes } = input;
   const normalizedAttributes = normalizeAttributes(profileAttributes);
   const trimmedName = name.trim();
+  const normalizedPronouns = pronouns?.trim() || undefined;
+  const normalizedCity = city?.trim() || undefined;
   const normalizedEmail = (email ?? "").trim().toLowerCase();
   if (!normalizedEmail) {
     throw new Error("Email is required");
@@ -814,6 +846,8 @@ const createContact = async (
       data: {
         teamId,
         name: trimmedName,
+        pronouns: normalizedPronouns,
+        city: normalizedCity,
         email: normalizedEmail,
         phone: normalizedPhone,
         groupId,
@@ -880,9 +914,43 @@ const updateContact = async (
   userId?: string,
   userName?: string,
 ) => {
-  const { contactId, teamId, name, email, phone, groupId, profileAttributes } =
-    input;
+  const {
+    contactId,
+    teamId,
+    name,
+    pronouns,
+    city,
+    email,
+    phone,
+    groupId,
+    profileAttributes,
+  } = input;
   const normalizedName = typeof name === "string" ? name.trim() : undefined;
+  const pronounsProvided = Object.prototype.hasOwnProperty.call(
+    input,
+    "pronouns",
+  );
+  const cityProvided = Object.prototype.hasOwnProperty.call(input, "city");
+  const normalizedPronouns = (() => {
+    if (!pronounsProvided) {
+      return undefined;
+    }
+    if (typeof pronouns !== "string") {
+      return null;
+    }
+    const trimmed = pronouns.trim();
+    return trimmed === "" ? null : trimmed;
+  })();
+  const normalizedCity = (() => {
+    if (!cityProvided) {
+      return undefined;
+    }
+    if (typeof city !== "string") {
+      return null;
+    }
+    const trimmed = city.trim();
+    return trimmed === "" ? null : trimmed;
+  })();
   const normalizedEmail =
     email === undefined ? undefined : email.trim().toLowerCase();
   const normalizedPhone = phone === undefined ? undefined : phone.trim();
@@ -917,6 +985,32 @@ const updateContact = async (
         tx,
       );
       updates.name = normalizedName;
+    }
+
+    if (pronounsProvided && normalizedPronouns !== existing.pronouns) {
+      await logFieldUpdate(
+        contactId,
+        "pronouns",
+        existing.pronouns,
+        normalizedPronouns,
+        userId,
+        userName,
+        tx,
+      );
+      updates.pronouns = normalizedPronouns;
+    }
+
+    if (cityProvided && normalizedCity !== existing.city) {
+      await logFieldUpdate(
+        contactId,
+        "city",
+        existing.city,
+        normalizedCity,
+        userId,
+        userName,
+        tx,
+      );
+      updates.city = normalizedCity;
     }
 
     if (normalizedEmail !== undefined && normalizedEmail !== existing.email) {

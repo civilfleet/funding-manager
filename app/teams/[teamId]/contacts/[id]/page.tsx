@@ -128,46 +128,70 @@ export default async function ContactDetailPage({
                       </p>
                     </div>
 
-                    {contact.email || contact.phone ? (
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {contact.email && (
-                          <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-3">
-                            <Mail className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">
-                                Email
-                              </p>
-                              <a
-                                href={`mailto:${contact.email}`}
-                                className="text-base hover:underline"
-                              >
-                                {contact.email}
-                              </a>
+                    {(() => {
+                      const infoItems = [
+                        contact.email && {
+                          icon: Mail,
+                          label: "Email",
+                          value: contact.email,
+                          href: `mailto:${contact.email}`,
+                        },
+                        contact.phone && {
+                          icon: Phone,
+                          label: "Phone",
+                          value: contact.phone,
+                          href: `tel:${contact.phone}`,
+                        },
+                        contact.pronouns && {
+                          icon: Type,
+                          label: "Pronouns",
+                          value: contact.pronouns,
+                        },
+                        contact.city && {
+                          icon: MapPin,
+                          label: "City",
+                          value: contact.city,
+                        },
+                      ].filter(Boolean) as Array<{
+                        icon: typeof Mail;
+                        label: string;
+                        value: string;
+                        href?: string;
+                      }>;
+
+                      if (infoItems.length === 0) {
+                        return (
+                          <p className="rounded-md border border-dashed p-3 text-center text-sm text-muted-foreground">
+                            No contact information available
+                          </p>
+                        );
+                      }
+
+                      return (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {infoItems.map(({ icon: Icon, label, value, href }) => (
+                            <div
+                              key={label}
+                              className="flex items-center gap-3 rounded-md border bg-muted/30 p-3"
+                            >
+                              <Icon className="h-5 w-5 text-muted-foreground" />
+                              <div>
+                                <p className="text-sm font-medium text-muted-foreground">
+                                  {label}
+                                </p>
+                                {href ? (
+                                  <a href={href} className="text-base hover:underline">
+                                    {value}
+                                  </a>
+                                ) : (
+                                  <p className="text-base">{value}</p>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
-                        {contact.phone && (
-                          <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-3">
-                            <Phone className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                              <p className="text-sm font-medium text-muted-foreground">
-                                Phone
-                              </p>
-                              <a
-                                href={`tel:${contact.phone}`}
-                                className="text-base hover:underline"
-                              >
-                                {contact.phone}
-                              </a>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="rounded-md border border-dashed p-3 text-center text-sm text-muted-foreground">
-                        No contact information available
-                      </p>
-                    )}
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </section>
 
                   <section className="space-y-4">
