@@ -171,11 +171,12 @@ const buildEngagementContent = async (
     return undefined;
   };
 
+  const messageId = resolveMessageId();
+
   const possibleBodyFields = [
     (properties.body as string | undefined),
     (properties.Body as string | undefined),
     (properties.preview_text as string | undefined),
-    (properties["$message"] as string | undefined),
   ];
   const body = possibleBodyFields.find(
     (value) => typeof value === "string" && value.trim().length > 0,
@@ -296,58 +297,57 @@ const buildEngagementContent = async (
   });
 
   let enrichedBody = body?.trim();
-  if (!enrichedBody) {
-    const messageId = resolveMessageId();
-    if (messageId) {
-      const campaignMessage = await fetchKlaviyoCampaignMessage(apiKey, messageId);
-      const includedTemplate = campaignMessage?.included?.find(
-        (item) => item.type === "template",
-      );
-      const templateId =
-        includedTemplate?.id ??
-        campaignMessage?.data?.relationships?.template?.data?.id;
+  if (messageId) {
+    const campaignMessage = await fetchKlaviyoCampaignMessage(apiKey, messageId);
+    const includedTemplate = campaignMessage?.included?.find(
+      (item) => item.type === "template",
+    );
+    const templateId =
+      includedTemplate?.id ??
+      campaignMessage?.data?.relationships?.template?.data?.id;
 
-      if (includedTemplate?.attributes?.html || includedTemplate?.attributes?.text) {
-        enrichedBody =
-          stripHtml(includedTemplate.attributes?.html ?? undefined) ||
-          (includedTemplate.attributes?.text ?? undefined)?.trim();
+    if (includedTemplate?.attributes?.html || includedTemplate?.attributes?.text) {
+      enrichedBody =
+        stripHtml(includedTemplate.attributes?.html ?? undefined) ||
+        (includedTemplate.attributes?.text ?? undefined)?.trim() ||
+        enrichedBody;
+    }
+
+    if (!enrichedBody && templateId) {
+      const template = await fetchKlaviyoTemplate(apiKey, templateId);
+      const templateHtml = template?.attributes?.html ?? undefined;
+      const templateText = template?.attributes?.text ?? undefined;
+      enrichedBody =
+        stripHtml(templateHtml) ||
+        (typeof templateText === "string" && templateText.trim()
+          ? templateText.trim()
+          : undefined);
+    }
+
+    if (!enrichedBody) {
+      const messageContent = await fetchKlaviyoMessageContent(apiKey, messageId);
+      const htmlBody =
+        messageContent?.attributes?.html_body ??
+        messageContent?.attributes?.html ??
+        messageContent?.attributes?.content_html;
+      const textBody =
+        messageContent?.attributes?.text_body ??
+        messageContent?.attributes?.text ??
+        messageContent?.attributes?.content_text;
+
+      enrichedBody =
+        stripHtml(htmlBody) ||
+        (typeof textBody === "string" && textBody.trim()
+          ? textBody.trim()
+          : undefined);
+
+      if (!subject && messageContent?.attributes?.subject) {
+        subject = messageContent.attributes.subject;
       }
+    }
 
-      if (!enrichedBody && templateId) {
-        const template = await fetchKlaviyoTemplate(apiKey, templateId);
-        const templateHtml = template?.attributes?.html ?? undefined;
-        const templateText = template?.attributes?.text ?? undefined;
-        enrichedBody =
-          stripHtml(templateHtml) ||
-          (typeof templateText === "string" && templateText.trim()
-            ? templateText.trim()
-            : undefined);
-      }
-
-      if (!enrichedBody) {
-        const messageContent = await fetchKlaviyoMessageContent(
-          apiKey,
-          messageId,
-        );
-        const htmlBody =
-          messageContent?.attributes?.html_body ??
-          messageContent?.attributes?.html ??
-          messageContent?.attributes?.content_html;
-        const textBody =
-          messageContent?.attributes?.text_body ??
-          messageContent?.attributes?.text ??
-          messageContent?.attributes?.content_text;
-
-        enrichedBody =
-          stripHtml(htmlBody) ||
-          (typeof textBody === "string" && textBody.trim()
-            ? textBody.trim()
-            : undefined);
-
-        if (!subject && messageContent?.attributes?.subject) {
-          subject = messageContent.attributes.subject;
-        }
-      }
+    if (!subject && campaignMessage?.data?.attributes?.content?.subject) {
+      subject = campaignMessage.data.attributes.content.subject;
     }
   }
 
