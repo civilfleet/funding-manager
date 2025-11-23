@@ -17,6 +17,12 @@ import { Loader } from "@/components/helper/loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Separator as UiSeparator } from "@/components/ui/separator";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -128,6 +134,46 @@ const getTodoStatusIcon = (status?: TodoStatus) => {
     default:
       return Circle;
   }
+};
+
+type ParsedEngagementContent = {
+  body: string;
+  details: Array<{ label: string; value: string }>;
+  additional: Array<{ label: string; value: string }>;
+};
+
+const parseEngagementContent = (message?: string): ParsedEngagementContent => {
+  if (!message) {
+    return { body: "", details: [], additional: [] };
+  }
+
+  const [firstBlock, ...rest] = message.split(/\n\s*\n/);
+  const body = (firstBlock ?? "").trim();
+  const detailsBlock = rest.join("\n\n").trim();
+
+  const details: Array<{ label: string; value: string }> = [];
+  const additional: Array<{ label: string; value: string }> = [];
+
+  if (detailsBlock) {
+    detailsBlock.split("\n").forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      const [rawLabel, ...rawValue] = trimmed.split(":");
+      const label = rawLabel.trim();
+      const value = rawValue.join(":").trim();
+      if (!label) return;
+      if (label.startsWith("Additional - ")) {
+        additional.push({
+          label: label.replace("Additional - ", ""),
+          value: value || "-",
+        });
+        return;
+      }
+      details.push({ label, value: value || "-" });
+    });
+  }
+
+  return { body, details, additional };
 };
 
 export default function ContactEngagementHistory({
@@ -298,15 +344,82 @@ export default function ContactEngagementHistory({
                       </span>
                     </div>
 
-                    {engagement.subject && (
-                      <h4 className="font-medium text-sm mb-1">
-                        {engagement.subject}
-                      </h4>
-                    )}
+                    {(() => {
+                      const parsed = parseEngagementContent(engagement.message);
+                      return (
+                        <div className="space-y-3">
+                          <div className="rounded-lg border shadow-sm bg-white">
+                            <div className="px-4 py-3 space-y-1">
+                              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Email message
+                              </p>
+                              <h4 className="text-sm font-semibold">
+                                {engagement.subject || "Email"}
+                              </h4>
+                              <p className="text-xs text-muted-foreground">
+                                To: {parsed.details.find((d) => d.label.toLowerCase().includes("recipient"))?.value || "Unknown"}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Subject: {engagement.subject || "Email"}
+                              </p>
+                            </div>
 
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                      {engagement.message}
-                    </p>
+                            <UiSeparator />
+
+                            {parsed.body && (
+                              <div className="bg-muted/40 px-4 py-4">
+                                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                                  Message
+                                </p>
+                                <div className="rounded-md border bg-background px-3 py-3">
+                                  <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                                    {parsed.body}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+
+                            {(() => {
+                              const combinedAdditional = [
+                                ...parsed.details.filter(
+                                  (d) =>
+                                    !d.label.toLowerCase().includes("recipient") &&
+                                    d.label.toLowerCase() !== "subject",
+                                ),
+                                ...parsed.additional,
+                              ];
+                              if (combinedAdditional.length === 0) return null;
+                              return (
+                                <>
+                                  <UiSeparator />
+                                  <div className="px-4 py-3 space-y-3">
+                                    <Collapsible>
+                                      <CollapsibleTrigger asChild>
+                                        <Button variant="outline" size="sm" className="h-8 px-3">
+                                          Show details
+                                        </Button>
+                                      </CollapsibleTrigger>
+                                      <CollapsibleContent className="mt-2 rounded-md border bg-muted/20 px-3 py-2 space-y-2">
+                                        {combinedAdditional.map((item) => (
+                                          <div key={`${engagement.id}-add-${item.label}`}>
+                                            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                              {item.label}
+                                            </p>
+                                            <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                                              {item.value}
+                                            </p>
+                                          </div>
+                                        ))}
+                                      </CollapsibleContent>
+                                    </Collapsible>
+                                  </div>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {engagement.source === EngagementSource.TODO && (
                       <div className="mt-2 flex flex-col gap-1">
