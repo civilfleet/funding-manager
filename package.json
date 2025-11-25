@@ -55,6 +55,7 @@
     "next-auth": "^5.0.0-beta.30",
     "nextjs-toploader": "^3.9.17",
     "nodemailer": "^7.0.10",
+    "quill-delta": "^5.1.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-hook-form": "^7.66.0",
@@ -83,6 +84,7 @@
   "prisma": {},
   "packageManager": "yarn@4.10.3",
   "resolutions": {
+    "@auth/core": "0.41.1",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2"
   }
