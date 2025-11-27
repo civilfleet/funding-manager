@@ -20,6 +20,7 @@ export type ContactRow = {
   city?: string | null;
   email?: string | null;
   phone?: string | null;
+  website?: string | null;
   profileAttributes: ContactProfileAttribute[];
   events?: ContactEvent[];
   createdAt: string | Date;
@@ -28,7 +29,7 @@ export type ContactRow = {
 
 const formatDate = (value?: string | Date | null) => {
   if (!value) {
-    return "—";
+    return "-";
   }
 
   const parsed = value instanceof Date ? value : new Date(value);
@@ -70,10 +71,10 @@ const formatAttributeValue = (attribute: ContactProfileAttribute) => {
         parts.push(`Lng: ${attribute.value.longitude}`);
       }
 
-      return parts.length > 0 ? parts.join(" • ") : "—";
+      return parts.length > 0 ? parts.join(" | ") : "-";
     }
     default:
-      return attribute.value || "—";
+      return attribute.value || "-";
   }
 };
 
@@ -132,21 +133,43 @@ export const contactColumns: ColumnDef<ContactRow>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Email" />
     ),
-    cell: ({ row }) => <span>{row.original.email || "—"}</span>,
+    cell: ({ row }) => <span>{row.original.email || "-"}</span>,
   },
   {
     accessorKey: "phone",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Phone" />
     ),
-    cell: ({ row }) => <span>{row.original.phone || "—"}</span>,
+    cell: ({ row }) => <span>{row.original.phone || "-"}</span>,
+  },
+  {
+    accessorKey: "website",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Website" />
+    ),
+    cell: ({ row }) => {
+      const website = row.original.website;
+      if (!website) {
+        return <span>-</span>;
+      }
+      return (
+        <a
+          href={website}
+          className="text-blue-600 hover:underline"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {website}
+        </a>
+      );
+    },
   },
   {
     accessorKey: "city",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="City" />
     ),
-    cell: ({ row }) => <span>{row.original.city || "—"}</span>,
+    cell: ({ row }) => <span>{row.original.city || "-"}</span>,
   },
   {
     accessorKey: "profileAttributes",
@@ -180,11 +203,14 @@ export const renderContactCard = (contact: ContactRow, teamId: string) => {
                 {contact.pronouns}
               </p>
             )}
-            {(contact.email || contact.phone || contact.city) && (
+            {(contact.email ||
+              contact.phone ||
+              contact.website ||
+              contact.city) && (
               <p className="text-xs text-muted-foreground">
-                {[contact.email, contact.phone, contact.city]
+                {[contact.email, contact.phone, contact.website, contact.city]
                   .filter(Boolean)
-                  .join(" • ")}
+                  .join(" | ")}
               </p>
             )}
           </div>

@@ -120,8 +120,9 @@ export function Combobox({
           </span>
           <div className="flex items-center gap-1">
             {value && allowCustomValue && (
-              <button
-                type="button"
+              <span
+                role="button"
+                tabIndex={0}
                 aria-label={clearLabel}
                 className="flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 onClick={(event) => {
@@ -129,9 +130,17 @@ export function Combobox({
                   onChange("");
                   onBlur?.();
                 }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onChange("");
+                    onBlur?.();
+                  }
+                }}
               >
                 <X className="h-3.5 w-3.5" />
-              </button>
+              </span>
             )}
             <ChevronsUpDown className="ml-1 h-4 w-4 opacity-50" />
           </div>

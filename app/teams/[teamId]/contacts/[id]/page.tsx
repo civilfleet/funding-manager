@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import {
   Calendar,
   CalendarDays,
+  Globe,
   Hash,
   Mail,
   MapPin,
@@ -150,6 +151,13 @@ export default async function ContactDetailPage({
                           value: contact.phone,
                           href: `tel:${contact.phone}`,
                         },
+                        contact.website && {
+                          icon: Globe,
+                          label: "Website",
+                          value: contact.website,
+                          href: contact.website,
+                          newTab: true,
+                        },
                         contact.pronouns && {
                           icon: Type,
                           label: "Pronouns",
@@ -165,6 +173,7 @@ export default async function ContactDetailPage({
                         label: string;
                         value: string;
                         href?: string;
+                        newTab?: boolean;
                       }>;
 
                       if (infoItems.length === 0) {
@@ -177,7 +186,7 @@ export default async function ContactDetailPage({
 
                       return (
                         <div className="grid gap-3 sm:grid-cols-2">
-                          {infoItems.map(({ icon: Icon, label, value, href }) => (
+                          {infoItems.map(({ icon: Icon, label, value, href, newTab }) => (
                             <div
                               key={label}
                               className="flex items-center gap-3 rounded-md border bg-muted/30 p-3"
@@ -188,7 +197,12 @@ export default async function ContactDetailPage({
                                   {label}
                                 </p>
                                 {href ? (
-                                  <a href={href} className="text-base hover:underline">
+                                  <a
+                                    href={href}
+                                    className="text-base hover:underline"
+                                    target={newTab ? "_blank" : undefined}
+                                    rel={newTab ? "noreferrer" : undefined}
+                                  >
                                     {value}
                                   </a>
                                 ) : (

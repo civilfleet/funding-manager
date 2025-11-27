@@ -1,12 +1,9 @@
 "use client";
 
 import { Filter, Plus, Trash2 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import useSWR from "swr";
-import type {
-  ContactFilter,
-  ContactFilterType,
-} from "@/types";
+import type { ContactFilter, ContactFilterType } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,38 +25,44 @@ type FilterOption = {
   type: ContactFilterType;
   label: string;
   allowMultiple?: boolean;
-  field?: "email" | "phone" | "name" | "pronouns" | "city";
+  field?: "email" | "phone" | "name" | "pronouns" | "city" | "website";
 };
 
 const FILTER_OPTIONS: FilterOption[] = [
   {
     type: "contactField",
     field: "name",
-    label: "Name contains…",
+    label: "Name contains...",
     allowMultiple: true,
   },
   {
     type: "contactField",
     field: "email",
-    label: "Has email / email contains…",
+    label: "Has email / email contains...",
     allowMultiple: true,
   },
   {
     type: "contactField",
     field: "phone",
-    label: "Has phone / phone contains…",
+    label: "Has phone / phone contains...",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
+    field: "website",
+    label: "Has website / website contains...",
     allowMultiple: true,
   },
   {
     type: "contactField",
     field: "pronouns",
-    label: "Has pronouns / pronouns contains…",
+    label: "Has pronouns / pronouns contains...",
     allowMultiple: true,
   },
   {
     type: "contactField",
     field: "city",
-    label: "Has city / city contains…",
+    label: "Has city / city contains...",
     allowMultiple: true,
   },
   { type: "attribute", label: "Profile attribute", allowMultiple: true },
@@ -77,7 +80,7 @@ interface ContactListFiltersBuilderProps {
 }
 
 const CONTACT_FIELD_LABELS: Record<
-  "email" | "phone" | "name" | "pronouns" | "city",
+  "email" | "phone" | "name" | "pronouns" | "city" | "website",
   string
 > = {
   name: "Name",
@@ -85,6 +88,7 @@ const CONTACT_FIELD_LABELS: Record<
   phone: "Phone",
   pronouns: "Pronouns",
   city: "City",
+  website: "Website",
 };
 
 export function ContactListFiltersBuilder({
@@ -93,6 +97,16 @@ export function ContactListFiltersBuilder({
   onChange,
 }: ContactListFiltersBuilderProps) {
   const filters = value ?? [];
+  const filterKeyMap = useRef(new WeakMap<ContactFilter, string>());
+
+  const getFilterKey = (filter: ContactFilter) => {
+    let key = filterKeyMap.current.get(filter);
+    if (!key) {
+      key = `filter-${Math.random().toString(36).slice(2, 9)}`;
+      filterKeyMap.current.set(filter, key);
+    }
+    return key;
+  };
 
   const { data: groupsData } = useSWR(
     `/api/groups?teamId=${teamId}`,
@@ -222,7 +236,7 @@ export function ContactListFiltersBuilder({
           <DropdownMenuContent align="end">
             {FILTER_OPTIONS.map((option) => (
               <DropdownMenuItem
-                key={`${option.type}-${option.field ?? "any"}`}
+                key={`${option.type}-${option.field ?? "default"}`}
                 onClick={() => handleAddFilter(option)}
                 disabled={!canAddOption(option)}
               >
@@ -240,12 +254,13 @@ export function ContactListFiltersBuilder({
       ) : (
         <div className="space-y-3">
           {filters.map((filter, index) => {
+            const filterKey = getFilterKey(filter);
             switch (filter.type) {
               case "contactField": {
                 const fieldLabel = CONTACT_FIELD_LABELS[filter.field];
                 return (
                   <div
-                    key={`contact-field-${filter.field}-${index}`}
+                    key={filterKey}
                     className="rounded-md border p-3"
                   >
                     <div className="flex items-center justify-between">
@@ -306,7 +321,7 @@ export function ContactListFiltersBuilder({
               case "attribute":
                 return (
                   <div
-                    key={`attribute-${filter.key || 'empty'}-${filter.operator}-${index}`}
+                    key={filterKey}
                     className="rounded-md border p-3"
                   >
                     <div className="flex items-center justify-between">
@@ -368,7 +383,7 @@ export function ContactListFiltersBuilder({
               case "group":
                 return (
                   <div
-                    key={`group-${filter.groupId || 'empty'}-${index}`}
+                    key={filterKey}
                     className="rounded-md border p-3"
                   >
                     <div className="flex items-center justify-between">
@@ -413,7 +428,7 @@ export function ContactListFiltersBuilder({
               case "eventRole":
                 return (
                   <div
-                    key={`event-role-${filter.eventRoleId || 'empty'}-${index}`}
+                    key={filterKey}
                     className="rounded-md border p-3"
                   >
                     <div className="flex items-center justify-between">
@@ -458,7 +473,7 @@ export function ContactListFiltersBuilder({
               case "createdAt":
                 return (
                   <div
-                    key={`created-at-${filter.from || ''}-${filter.to || ''}-${index}`}
+                    key={filterKey}
                     className="rounded-md border p-3"
                   >
                     <div className="flex items-center justify-between">
@@ -478,11 +493,14 @@ export function ContactListFiltersBuilder({
                     </div>
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1.5">
-                        <label htmlFor={`created-at-from-${index}`} className="text-xs font-medium text-muted-foreground">
+                        <label
+                          htmlFor={`created-at-from-${filterKey}`}
+                          className="text-xs font-medium text-muted-foreground"
+                        >
                           From
                         </label>
                         <Input
-                          id={`created-at-from-${index}`}
+                          id={`created-at-from-${filterKey}`}
                           type="date"
                           value={filter.from ?? ""}
                           onChange={(event) =>
@@ -494,11 +512,14 @@ export function ContactListFiltersBuilder({
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label htmlFor={`created-at-to-${index}`} className="text-xs font-medium text-muted-foreground">
+                        <label
+                          htmlFor={`created-at-to-${filterKey}`}
+                          className="text-xs font-medium text-muted-foreground"
+                        >
                           To
                         </label>
                         <Input
-                          id={`created-at-to-${index}`}
+                          id={`created-at-to-${filterKey}`}
                           type="date"
                           value={filter.to ?? ""}
                           onChange={(event) =>

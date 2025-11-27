@@ -124,6 +124,7 @@ export interface Contact {
   city?: string;
   email?: string;
   phone?: string;
+  website?: string;
   groupId?: string;
   group?: Group;
   profileAttributes: ContactProfileAttribute[];
@@ -135,7 +136,7 @@ export interface Contact {
 export type ContactFilter =
   | {
       type: "contactField";
-      field: "email" | "phone" | "name" | "pronouns" | "city";
+      field: "email" | "phone" | "name" | "pronouns" | "city" | "website";
       operator: "has" | "missing" | "contains";
       value?: string;
     }

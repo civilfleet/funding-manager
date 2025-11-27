@@ -18,6 +18,11 @@ const optionalEmail = z.preprocess(
   z.string().trim().email("Invalid email address").optional(),
 );
 
+const optionalWebsite = z.preprocess(
+  preprocessEmptyString,
+  z.string().trim().url("Invalid website URL").optional(),
+);
+
 const numberValue = z.preprocess((value) => {
   if (typeof value === "string") {
     const trimmed = value.trim();
@@ -83,7 +88,7 @@ const contactAttributeSchema = z.discriminatedUnion("type", [
 const contactFieldFilterSchema = z
   .object({
     type: z.literal("contactField"),
-    field: z.enum(["email", "phone", "name", "pronouns", "city"]),
+    field: z.enum(["email", "phone", "name", "pronouns", "city", "website"]),
     operator: z.enum(["has", "missing", "contains"]),
     value: z.string().optional(),
   })
@@ -138,6 +143,7 @@ export const createContactSchema = z.object({
   city: optionalText(z.string()),
   email: requiredEmail,
   phone: optionalText(z.string()),
+  website: optionalWebsite,
   profileAttributes: z.array(contactAttributeSchema).default([]),
   groupId: z.preprocess(
     preprocessEmptyString,
@@ -157,6 +163,7 @@ export const updateContactSchema = z.object({
   city: optionalText(z.string()),
   email: optionalEmail,
   phone: optionalText(z.string()),
+  website: optionalWebsite,
   profileAttributes: z.array(contactAttributeSchema).optional(),
   groupId: z.preprocess(
     preprocessEmptyString,

@@ -43,7 +43,7 @@ type FilterOption = {
   type: ContactFilterType;
   label: string;
   allowMultiple?: boolean;
-  field?: "email" | "phone" | "name" | "pronouns" | "city";
+  field?: "email" | "phone" | "name" | "pronouns" | "city" | "website";
 };
 
 const FILTER_OPTIONS: FilterOption[] = [
@@ -67,6 +67,12 @@ const FILTER_OPTIONS: FilterOption[] = [
   },
   {
     type: "contactField",
+    field: "website",
+    label: "Website",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
     field: "pronouns",
     label: "Pronouns",
     allowMultiple: true,
@@ -84,7 +90,7 @@ const FILTER_OPTIONS: FilterOption[] = [
 ];
 
 const CONTACT_FIELD_LABELS: Record<
-  "email" | "phone" | "name" | "pronouns" | "city",
+  "email" | "phone" | "name" | "pronouns" | "city" | "website",
   string
 > = {
   name: "Name",
@@ -92,6 +98,7 @@ const CONTACT_FIELD_LABELS: Record<
   phone: "Phone",
   pronouns: "Pronouns",
   city: "City",
+  website: "Website",
 };
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -318,7 +325,9 @@ export default function ContactTable({ teamId }: ContactTableProps) {
         case "contactField": {
           const field = option.field ?? "email";
           const operator =
-            field === "name" || field === "pronouns" || field === "city"
+            field === "name" ||
+            field === "pronouns" ||
+            field === "city"
               ? "contains"
               : "has";
           return {

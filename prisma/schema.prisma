@@ -266,6 +266,7 @@ model Contact {
   city              String?             @db.VarChar(255)
   email             String?              @db.VarChar(255)
   phone             String?              @db.VarChar(255)
+  website           String?             @db.VarChar(255)
   groupId           String?              // Optional group for access control
   group             Group?               @relation(fields: [groupId], references: [id], onDelete: SetNull)
   createdAt         DateTime             @default(now()) @db.Timestamptz(6)

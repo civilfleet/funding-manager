@@ -21,6 +21,7 @@ type CreateContactInput = {
   city?: string;
   email?: string;
   phone?: string;
+  website?: string;
   groupId?: string;
   profileAttributes?: ContactProfileAttribute[];
 };
@@ -33,6 +34,7 @@ type UpdateContactInput = {
   city?: string;
   email?: string;
   phone?: string;
+  website?: string;
   groupId?: string;
   profileAttributes?: ContactProfileAttribute[];
 };
@@ -237,6 +239,7 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
   city: contact.city ?? undefined,
   email: contact.email ?? undefined,
   phone: contact.phone ?? undefined,
+  website: contact.website ?? undefined,
   groupId: contact.groupId ?? undefined,
   group: contact.group ? mapGroup(contact.group) : undefined,
   profileAttributes: contact.attributes
@@ -448,6 +451,7 @@ const getTeamContacts = async (
       { city: { contains: query, mode: "insensitive" } },
       { email: { contains: query, mode: "insensitive" } },
       { phone: { contains: query, mode: "insensitive" } },
+      { website: { contains: query, mode: "insensitive" } },
       {
         attributes: {
           some: {
@@ -507,6 +511,13 @@ const getTeamContacts = async (
               mode: Prisma.QueryMode.insensitive,
             },
           };
+        case "website":
+          return {
+            website: {
+              contains: trimmedValue,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          };
         default:
           return {
             name: {
@@ -527,6 +538,8 @@ const getTeamContacts = async (
           return { pronouns: { not: null } };
         case "city":
           return { city: { not: null } };
+        case "website":
+          return { website: { not: null } };
         default:
           return null;
       }
@@ -542,6 +555,8 @@ const getTeamContacts = async (
           return { NOT: { pronouns: { equals: "" } } };
         case "city":
           return { NOT: { city: { equals: "" } } };
+        case "website":
+          return { NOT: { website: { equals: "" } } };
         default:
           return { NOT: { name: { equals: "" } } };
       }
@@ -561,6 +576,13 @@ const getTeamContacts = async (
             OR: [
               { phone: { equals: null } },
               { phone: { equals: "" } },
+            ],
+          };
+        case "website":
+          return {
+            OR: [
+              { website: { equals: null } },
+              { website: { equals: "" } },
             ],
           };
         default:
@@ -815,7 +837,17 @@ const createContact = async (
   userId?: string,
   userName?: string,
 ) => {
-  const { teamId, name, pronouns, city, email, phone, groupId, profileAttributes } = input;
+  const {
+    teamId,
+    name,
+    pronouns,
+    city,
+    email,
+    phone,
+    website,
+    groupId,
+    profileAttributes,
+  } = input;
   const normalizedAttributes = normalizeAttributes(profileAttributes);
   const trimmedName = name.trim();
   const normalizedPronouns = pronouns?.trim() || undefined;
@@ -825,6 +857,7 @@ const createContact = async (
     throw new Error("Email is required");
   }
   const normalizedPhone = phone ? phone.trim() : undefined;
+  const normalizedWebsite = website?.trim() || undefined;
 
   const existingContact = await prisma.contact.findFirst({
     where: {
@@ -846,6 +879,7 @@ const createContact = async (
         city: normalizedCity,
         email: normalizedEmail,
         phone: normalizedPhone,
+        website: normalizedWebsite,
         groupId,
       },
     });
@@ -918,6 +952,7 @@ const updateContact = async (
     city,
     email,
     phone,
+    website,
     groupId,
     profileAttributes,
   } = input;
@@ -950,6 +985,17 @@ const updateContact = async (
   const normalizedEmail =
     email === undefined ? undefined : email.trim().toLowerCase();
   const normalizedPhone = phone === undefined ? undefined : phone.trim();
+  const websiteProvided = Object.hasOwn(input, "website");
+  const normalizedWebsite = (() => {
+    if (!websiteProvided) {
+      return undefined;
+    }
+    if (typeof website !== "string") {
+      return null;
+    }
+    const trimmed = website.trim();
+    return trimmed === "" ? null : trimmed;
+  })();
 
   return prisma.$transaction(async (tx) => {
     // Get the existing contact
@@ -1049,6 +1095,19 @@ const updateContact = async (
         tx,
       );
       updates.phone = normalizedPhone;
+    }
+
+    if (normalizedWebsite !== undefined && normalizedWebsite !== existing.website) {
+      await logFieldUpdate(
+        contactId,
+        "website",
+        existing.website,
+        normalizedWebsite,
+        userId,
+        userName,
+        tx,
+      );
+      updates.website = normalizedWebsite;
     }
 
     if (groupId !== undefined && groupId !== existing.groupId) {

@@ -84,6 +84,7 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           city: contact?.city ?? "",
           email: contact?.email ?? "",
           phone: contact?.phone ?? "",
+          website: contact?.website ?? "",
           groupId: contact?.groupId ?? undefined,
           profileAttributes: (contact?.profileAttributes ??
             []) as CreateContactFormValues["profileAttributes"],
@@ -95,6 +96,7 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           city: "",
           email: "",
           phone: "",
+          website: "",
           groupId: undefined,
           profileAttributes: [] as CreateContactFormValues["profileAttributes"],
         },
@@ -461,6 +463,24 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                     <FormControl>
                       <Input
                         placeholder="+1 (555) 123-4567"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={typedControl}
+                name="website"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="url"
+                        placeholder="https://example.com"
                         {...field}
                         value={field.value ?? ""}
                       />
