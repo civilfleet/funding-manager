@@ -1,12 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Pencil, Plus, Trash2, Users } from "lucide-react";
+import { AlertCircle, Loader2, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import type { z } from "zod";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -425,7 +426,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
             <DialogDescription>
               {editingGroup
                 ? "Update the group name, description, and members."
-                : "Create a new group and assign users to it."}
+                : "Create a new group and assign users to it. New groups start with the same module permissions as Default Access (CRM + Funding)."}
             </DialogDescription>
           </DialogHeader>
 
@@ -583,6 +584,15 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                       <FormDescription>
                         Select users who should be part of this group
                       </FormDescription>
+                      {!editingGroup && (
+                        <Alert className="mt-2">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertTitle>Users will lose default access</AlertTitle>
+                          <AlertDescription>
+                            When you add users to this group, they will be removed from the Default Access group. Make sure this group has all necessary module permissions.
+                          </AlertDescription>
+                        </Alert>
+                      )}
                       <div className="border rounded-md">
                         <div className="flex items-center gap-3 px-3 py-2 border-b">
                           <Checkbox
