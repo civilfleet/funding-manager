@@ -6,9 +6,9 @@ export const createContactListSchema = z.object({
   teamId: z.string().uuid(),
   name: z.string().min(1, "Name is required").max(255),
   description: z.string().optional(),
-  type: z.nativeEnum(ContactListType).default(ContactListType.MANUAL),
+  type: z.nativeEnum(ContactListType),
   filters: contactFiltersSchema.optional(),
-  contactIds: z.array(z.string().uuid()).default([]),
+  contactIds: z.array(z.string().uuid()),
 });
 
 export const updateContactListSchema = z.object({

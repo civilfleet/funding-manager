@@ -80,27 +80,12 @@ const contactAttributeSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
-const optionalDateString = z.preprocess(
-  preprocessEmptyString,
-  z
-    .string()
-    .refine((value) => {
-      if (typeof value !== "string") {
-        return false;
-      }
-
-      const parsed = Date.parse(value);
-      return !Number.isNaN(parsed);
-    })
-    .optional(),
-);
-
 const contactFieldFilterSchema = z
   .object({
     type: z.literal("contactField"),
     field: z.enum(["email", "phone", "name", "pronouns", "city"]),
     operator: z.enum(["has", "missing", "contains"]),
-    value: optionalText(z.string()),
+    value: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -136,8 +121,8 @@ export const contactFilterSchema = z.discriminatedUnion("type", [
   z
     .object({
       type: z.literal("createdAt"),
-      from: optionalDateString,
-      to: optionalDateString,
+      from: z.string().optional(),
+      to: z.string().optional(),
     })
     .refine((value) => Boolean(value.from) || Boolean(value.to), {
       message: "Provide at least a start or end date",
