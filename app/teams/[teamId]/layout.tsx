@@ -15,7 +15,7 @@ export default async function TeamLayout({
     return redirect("/");
   }
 
-  const [canAccessCrm, canAccessFunding] = await Promise.all([
+  const [canAccessCrm, canAccessFunding, canAccessAdmin] = await Promise.all([
     hasModuleAccess(
       {
         teamId,
@@ -32,9 +32,17 @@ export default async function TeamLayout({
       },
       "FUNDING" satisfies AppModule,
     ),
+    hasModuleAccess(
+      {
+        teamId,
+        userId: session.user?.userId,
+        roles: session.user?.roles,
+      },
+      "ADMIN" satisfies AppModule,
+    ),
   ]);
 
-  if (!canAccessCrm && !canAccessFunding) {
+  if (!canAccessCrm && !canAccessFunding && !canAccessAdmin) {
     return redirect("/");
   }
 

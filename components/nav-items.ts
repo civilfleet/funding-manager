@@ -111,6 +111,8 @@ const navItems: {
     },
     {
       type: "separator",
+      label: "Admin",
+      module: "ADMIN",
     },
     {
       title: "Users",
