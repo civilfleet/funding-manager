@@ -61,7 +61,7 @@ type ContactList = {
   updatedAt: string | Date;
 };
 
-type FormValues = z.input<typeof createContactListSchema>;
+type FormValues = z.infer<typeof createContactListSchema>;
 const buildFormValues = (
   teamId: string,
   source?: ContactList | null,
@@ -118,7 +118,7 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
   );
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(createContactListSchema) as any,
+    resolver: zodResolver(createContactListSchema),
     mode: "onSubmit",
     defaultValues: newListDefaults,
   });
@@ -469,7 +469,7 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={typedControl}
                 name="name"
@@ -562,7 +562,7 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
                         <ContactListFiltersBuilder
                           teamId={teamId}
                           value={(field.value ?? []) as ContactFilter[]}
-                          onChange={(next) => field.onChange(next as any)}
+                          onChange={(next) => field.onChange(next)}
                         />
                       </FormControl>
                       <FormMessage />

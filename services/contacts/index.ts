@@ -507,7 +507,6 @@ const getTeamContacts = async (
               mode: Prisma.QueryMode.insensitive,
             },
           };
-        case "name":
         default:
           return {
             name: {
@@ -528,7 +527,6 @@ const getTeamContacts = async (
           return { pronouns: { not: null } };
         case "city":
           return { city: { not: null } };
-        case "name":
         default:
           return null;
       }
@@ -544,7 +542,6 @@ const getTeamContacts = async (
           return { NOT: { pronouns: { equals: "" } } };
         case "city":
           return { NOT: { city: { equals: "" } } };
-        case "name":
         default:
           return { NOT: { name: { equals: "" } } };
       }
@@ -566,7 +563,6 @@ const getTeamContacts = async (
               { phone: { equals: "" } },
             ],
           };
-        case "name":
         default:
           return { name: { equals: "" } };
       }
@@ -926,11 +922,11 @@ const updateContact = async (
     profileAttributes,
   } = input;
   const normalizedName = typeof name === "string" ? name.trim() : undefined;
-  const pronounsProvided = Object.prototype.hasOwnProperty.call(
+  const pronounsProvided = Object.hasOwn(
     input,
     "pronouns",
   );
-  const cityProvided = Object.prototype.hasOwnProperty.call(input, "city");
+  const cityProvided = Object.hasOwn(input, "city");
   const normalizedPronouns = (() => {
     if (!pronounsProvided) {
       return undefined;

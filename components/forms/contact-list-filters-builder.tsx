@@ -306,7 +306,7 @@ export function ContactListFiltersBuilder({
               case "attribute":
                 return (
                   <div
-                    key={`attribute-${index}`}
+                    key={`attribute-${filter.key || 'empty'}-${filter.operator}-${index}`}
                     className="rounded-md border p-3"
                   >
                     <div className="flex items-center justify-between">
@@ -368,7 +368,7 @@ export function ContactListFiltersBuilder({
               case "group":
                 return (
                   <div
-                    key={`group-${index}`}
+                    key={`group-${filter.groupId || 'empty'}-${index}`}
                     className="rounded-md border p-3"
                   >
                     <div className="flex items-center justify-between">
@@ -413,7 +413,7 @@ export function ContactListFiltersBuilder({
               case "eventRole":
                 return (
                   <div
-                    key={`event-role-${index}`}
+                    key={`event-role-${filter.eventRoleId || 'empty'}-${index}`}
                     className="rounded-md border p-3"
                   >
                     <div className="flex items-center justify-between">
@@ -458,7 +458,7 @@ export function ContactListFiltersBuilder({
               case "createdAt":
                 return (
                   <div
-                    key={`created-at-${index}`}
+                    key={`created-at-${filter.from || ''}-${filter.to || ''}-${index}`}
                     className="rounded-md border p-3"
                   >
                     <div className="flex items-center justify-between">
@@ -478,10 +478,11 @@ export function ContactListFiltersBuilder({
                     </div>
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground">
+                        <label htmlFor={`created-at-from-${index}`} className="text-xs font-medium text-muted-foreground">
                           From
                         </label>
                         <Input
+                          id={`created-at-from-${index}`}
                           type="date"
                           value={filter.from ?? ""}
                           onChange={(event) =>
@@ -493,10 +494,11 @@ export function ContactListFiltersBuilder({
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground">
+                        <label htmlFor={`created-at-to-${index}`} className="text-xs font-medium text-muted-foreground">
                           To
                         </label>
                         <Input
+                          id={`created-at-to-${index}`}
                           type="date"
                           value={filter.to ?? ""}
                           onChange={(event) =>

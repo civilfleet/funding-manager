@@ -35,7 +35,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { FieldType, type FormSection } from "@/types";
+import { FieldType } from "@/types";
 
 const fieldOptionSchema = z.object({
   label: z.string().min(1, "Label is required"),

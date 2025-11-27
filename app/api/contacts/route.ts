@@ -47,7 +47,7 @@ export async function GET(req: Request) {
       try {
         const parsed = JSON.parse(filtersParam);
         filters = contactFiltersSchema.parse(parsed);
-      } catch (error) {
+      } catch (_error) {
         return NextResponse.json(
           { error: "Invalid filters parameter" },
           { status: 400 },

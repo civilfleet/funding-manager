@@ -179,11 +179,15 @@ const getUserCurrent = async (userId: string) => {
 
     const fallback = defaultGroupsByTeam.get(team.id);
     if (!modules.size && fallback?.length) {
-      fallback.forEach((module) => modules.add(module));
+      for (const module of fallback) {
+        modules.add(module);
+      }
     }
 
     if (!modules.size) {
-      DEFAULT_TEAM_MODULES.forEach((module) => modules.add(module));
+      for (const module of DEFAULT_TEAM_MODULES) {
+        modules.add(module);
+      }
     }
 
     if (team.ownerId === userId) {
@@ -284,53 +288,6 @@ const getUsers = async (
           },
         }
       : undefined,
-    orderBy: { createdAt: "desc" },
-  });
-
-  if (!teamId) {
-    return await prisma.user.findMany({
-      where: {
-        AND: [
-          {
-            OR: ["name", "email", "address", "city", "country"].map((field) => ({
-              [field]: { contains: searchQuery, mode: "insensitive" },
-            })),
-          },
-          ...whereConditions,
-        ],
-      },
-      orderBy: { createdAt: "desc" },
-    });
-  }
-
-  return await prisma.user.findMany({
-    where: {
-      AND: [
-        {
-          OR: ["name", "email", "address", "city", "country"].map((field) => ({
-            [field]: { contains: searchQuery, mode: "insensitive" },
-          })),
-        },
-        ...whereConditions,
-      ],
-    },
-    include: {
-      groups: {
-        where: {
-          group: {
-            teamId,
-          },
-        },
-        include: {
-          group: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      },
-    },
     orderBy: { createdAt: "desc" },
   });
 };

@@ -144,14 +144,14 @@ const buildEngagementContent = async (
   const properties = getEventProperties(event);
   const resolveMessageId = () => {
     const direct =
-      (properties["$message"] as string | undefined) ||
+      (properties.$message as string | undefined) ||
       (properties.message_id as string | undefined) ||
-      (properties["$message_interaction"] as string | undefined) ||
+      (properties.$message_interaction as string | undefined) ||
       (properties.message_interaction as string | undefined);
     if (direct && typeof direct === "string" && direct.trim()) {
       return direct.trim();
     }
-    const cohort = properties["$_cohort$message_send_cohort"];
+    const cohort = properties.$_cohort$message_send_cohort;
     if (typeof cohort === "string" && cohort.includes(":")) {
       const parts = cohort.split(":");
       const last = parts[parts.length - 1]?.trim();
@@ -159,8 +159,8 @@ const buildEngagementContent = async (
         return last;
       }
     }
-    const eventId = properties["$event_id"] as string | undefined;
-    if (eventId && eventId.includes(":")) {
+    const eventId = properties.$event_id as string | undefined;
+    if (eventId?.includes(":")) {
       const maybe = eventId.split(":")[0]?.trim();
       if (maybe) {
         return maybe;
@@ -224,7 +224,7 @@ const buildEngagementContent = async (
     key?: keyof typeof properties,
   ) => {
     if (!key) return;
-    if (Object.prototype.hasOwnProperty.call(properties, key)) {
+    if (Object.hasOwn(properties, key)) {
       usedPropertyKeys.add(String(key));
       addDetail(label, properties[key]);
     }

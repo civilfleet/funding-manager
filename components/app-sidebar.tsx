@@ -12,7 +12,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { APP_MODULES, DEFAULT_TEAM_MODULES, type AppModule } from "@/types";
+import { DEFAULT_TEAM_MODULES, type AppModule } from "@/types";
 import navigationItems from "./nav-items";
 
 type NavigationKey = keyof typeof navigationItems;

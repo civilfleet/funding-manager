@@ -130,10 +130,12 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
     const dataKeys = attributeKeysData?.data;
 
     if (Array.isArray(dataKeys)) {
-      dataKeys
+      const filteredKeys = dataKeys
         .map((key: unknown) => (typeof key === "string" ? key.trim() : ""))
-        .filter(Boolean)
-        .forEach((key) => keys.add(key));
+        .filter(Boolean);
+      for (const key of filteredKeys) {
+        keys.add(key);
+      }
     }
 
     (contact?.profileAttributes ?? []).forEach((attribute) => {

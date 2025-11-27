@@ -7,6 +7,7 @@ import { z } from "zod";
 import { DataTable } from "@/components/data-table";
 import { columns } from "@/components/table/user-columns";
 import { useToast } from "@/hooks/use-toast";
+import type { User } from "@/types";
 import ButtonControl from "../helper/button-control";
 import FormInputControl from "../helper/form-input-control";
 import { Loader } from "../helper/loader";
@@ -77,10 +78,10 @@ export default function UserTable({ teamId, organizationId }: UserTableProps) {
           <DataTable
             columns={columns}
             data={
-              (data?.data || []).map((user: any) => ({
+              (data?.data || []).map((user: User) => ({
                 ...user,
                 isOwner: ownerId ? user.id === ownerId : false,
-              })) as any
+              }))
             }
           />
         )}
