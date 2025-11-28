@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ContactListType } from "@/types";
 
 type ContactList = {
@@ -42,6 +44,7 @@ export default function ContactListsManager({
 }: ContactListsManagerProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedListId, setCopiedListId] = useState<string | null>(null);
 
@@ -193,6 +196,72 @@ export default function ContactListsManager({
         ) : lists.length === 0 ? (
           <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
             No lists created yet. Create your first list to get started.
+          </div>
+        ) : isMobile ? (
+          <div className="grid grid-cols-1 gap-3 p-3">
+            {lists.map((list) => (
+              <Card key={list.id}>
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-base">
+                        <Link
+                          href={`/teams/${teamId}/lists/${list.id}`}
+                          className="hover:underline"
+                        >
+                          {list.name}
+                        </Link>
+                      </CardTitle>
+                      <Badge variant="outline" className="mt-1 text-xs uppercase">
+                        {list.type === ContactListType.SMART ? "Smart" : "Manual"}
+                      </Badge>
+                    </div>
+                    <Badge className="flex w-fit items-center gap-1" variant="secondary">
+                      <Users className="h-3 w-3" />
+                      {list.contactCount}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3 pt-0">
+                  <div className="text-sm text-muted-foreground">
+                    {list.description || "No description"}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => handleCopyContacts(list)}
+                      aria-label="Copy contacts"
+                    >
+                      {copiedListId === list.id ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                      Copy
+                    </Button>
+                    <Button asChild variant="ghost" size="sm" className="gap-1">
+                      <Link href={`/teams/${teamId}/lists/${list.id}`}>
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1 text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(list.id, list.name)}
+                      aria-label="Delete list"
+                      disabled={deletingId === list.id}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         ) : (
           <div className="overflow-x-auto">
