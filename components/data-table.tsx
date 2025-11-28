@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -47,7 +48,12 @@ export function DataTable<TData, TValue>({
   onSelectionChange,
   renderBatchActions,
 }: DataTableProps<TData, TValue>) {
-  const [view, setView] = React.useState<"table" | "card">(initialView);
+  const isMobile = useIsMobile();
+  const [view, setView] = React.useState<"table" | "card">(
+    isMobile ? "card" : initialView,
+  );
+  const [desktopView, setDesktopView] =
+    React.useState<"table" | "card">(initialView);
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
@@ -124,28 +130,46 @@ export function DataTable<TData, TValue>({
     }
   }, [selectable, selectedRows, onSelectionChange]);
 
+  React.useEffect(() => {
+    if (isMobile) {
+      setView("card");
+      return;
+    }
+    setView(desktopView);
+  }, [isMobile, desktopView]);
+
+  const effectiveView = isMobile ? "card" : view;
+
   return (
     <div className="w-full">
       <div className="flex items-center justify-between gap-2 p-3">
         <div className="flex-1 min-w-0">{toolbar}</div>
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            size="sm"
-            variant={view === "table" ? "default" : "outline"}
-            onClick={() => setView("table")}
-          >
-            <List className="mr-2" /> Table
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={view === "card" ? "default" : "outline"}
-            onClick={() => setView("card")}
-          >
-            <LayoutGrid className="mr-2" /> Cards
-          </Button>
-        </div>
+        {!isMobile && (
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              size="sm"
+              variant={effectiveView === "table" ? "default" : "outline"}
+              onClick={() => {
+                setView("table");
+                setDesktopView("table");
+              }}
+            >
+              <List className="mr-2" /> Table
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={effectiveView === "card" ? "default" : "outline"}
+              onClick={() => {
+                setView("card");
+                setDesktopView("card");
+              }}
+            >
+              <LayoutGrid className="mr-2" /> Cards
+            </Button>
+          </div>
+        )}
       </div>
       {selectable && selectedRows.length > 0 && renderBatchActions && (
         <div className="flex items-center justify-between gap-3 px-3 pb-2">
@@ -153,7 +177,7 @@ export function DataTable<TData, TValue>({
         </div>
       )}
 
-      {view === "table" ? (
+      {effectiveView === "table" ? (
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
