@@ -431,24 +431,28 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={typedControl}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Group Name *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Finance Team, West Region"
-                        {...field}
-                        value={field.value}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="flex h-full min-h-0 flex-col gap-4 sm:h-full sm:min-h-0"
+            >
+              <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:flex-1 sm:overflow-y-auto">
+                <FormField
+                  control={typedControl}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Group Name *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Finance Team, West Region"
+                          {...field}
+                          value={field.value}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
               <FormField
                 control={typedControl}
@@ -672,6 +676,8 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                   );
                 }}
               />
+
+              </div>
 
               <DialogFooter>
                 <Button
