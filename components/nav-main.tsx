@@ -9,6 +9,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 interface NavItem {
@@ -26,6 +27,13 @@ interface NavItem {
 
 export function NavMain({ items = [] }: { items?: NavItem[] }) {
   const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleNavigate = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   // Extract the subUrl and id from the pathname
   const pathSegments = pathname.split("/").filter(Boolean);
@@ -67,7 +75,7 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
                     tooltip={item.title}
                     isActive={isActive}
                   >
-                    <Link href={fullPath}>
+                    <Link href={fullPath} onClick={handleNavigate}>
                       {item.icon && <item.icon className="size-4" />}
                       <span>{item.title}</span>
                     </Link>
@@ -104,7 +112,7 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
                     tooltip={item.title}
                     isActive={isActive}
                   >
-                    <Link href={fullPath}>
+                    <Link href={fullPath} onClick={handleNavigate}>
                       {item.icon && <item.icon className="size-4" />}
                       <span>{item.title}</span>
                     </Link>
