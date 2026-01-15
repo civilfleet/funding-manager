@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
 import ContactForm from "@/components/forms/contact";
 import { getContactById } from "@/services/contacts";
 
@@ -13,7 +14,9 @@ export default async function EditContactPage({
   params,
 }: EditContactPageProps) {
   const { teamId, id } = await params;
-  const contact = await getContactById(id, teamId);
+  const session = await auth();
+  const userId = session?.user?.userId;
+  const contact = await getContactById(id, teamId, userId);
 
   if (!contact) {
     notFound();

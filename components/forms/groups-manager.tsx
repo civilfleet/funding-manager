@@ -39,6 +39,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
+  CONTACT_SUBMODULE_LABELS,
+  CONTACT_SUBMODULE_FIELDS,
+  CONTACT_SUBMODULES,
+  type ContactSubmodule,
+} from "@/constants/contact-submodules";
+import {
   APP_MODULES,
   DEFAULT_TEAM_MODULES,
   type AppModule,
@@ -51,6 +57,7 @@ type Group = {
   description?: string;
   canAccessAllContacts: boolean;
   modules: AppModule[];
+  contactSubmodules?: ContactSubmodule[];
   isDefaultGroup: boolean;
   users?: Array<{
     userId: string;
@@ -129,6 +136,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
       canAccessAllContacts: false,
       userIds: [] as string[],
       modules: [...DEFAULT_TEAM_MODULES],
+      contactSubmodules: [] as ContactSubmodule[],
     },
   });
 
@@ -149,6 +157,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
           group.modules && group.modules.length > 0
             ? group.modules
             : [...DEFAULT_TEAM_MODULES],
+        contactSubmodules: group.contactSubmodules ?? [],
       });
     } else {
       setEditingGroup(null);
@@ -159,6 +168,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
         canAccessAllContacts: false,
         userIds: [],
         modules: [...DEFAULT_TEAM_MODULES],
+        contactSubmodules: [],
       });
     }
     setIsDialogOpen(true);
@@ -187,6 +197,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
             description: values.description,
             canAccessAllContacts: values.canAccessAllContacts,
             modules: values.modules,
+            contactSubmodules: values.contactSubmodules,
           }),
         });
 
@@ -391,6 +402,11 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                           {MODULE_LABELS[module] ?? module}
                         </Badge>
                       ))}
+                      {(group.contactSubmodules ?? []).map((submodule) => (
+                        <Badge key={submodule} variant="secondary">
+                          {CONTACT_SUBMODULE_LABELS[submodule] ?? submodule}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -453,229 +469,304 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                     </FormItem>
                   )}
                 />
-
-              <FormField
-                control={typedControl}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description (optional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Describe the purpose of this group"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={typedControl}
-                name="modules"
-                render={({ field }) => {
-                  const value = field.value ?? [];
-
-                  const toggleModule = (
-                    module: AppModule,
-                    checked: boolean,
-                  ) => {
-                    if (checked) {
-                      const next = Array.from(new Set([...value, module]));
-                      field.onChange(next);
-                      form.clearErrors("modules");
-                    } else {
-                      const next = value.filter(
-                        (current) => current !== module,
-                      );
-                      if (next.length === 0) {
-                        form.setError("modules", {
-                          type: "manual",
-                          message: "Select at least one module",
-                        });
-                        return;
-                      }
-                      field.onChange(next);
-                    }
-                  };
-
-                  return (
+                <FormField
+                  control={typedControl}
+                  name="description"
+                  render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Enabled Modules</FormLabel>
-                      <FormDescription>
-                        Choose which application modules members of this group
-                        can access.
-                      </FormDescription>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {APP_MODULES.map((module) => (
-                          <div
-                            key={module}
-                            className="flex items-start space-x-3 rounded-md border p-3"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={value.includes(module)}
-                                onCheckedChange={(checked) =>
-                                  toggleModule(module, checked === true)
-                                }
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel className="text-sm font-medium">
-                                {MODULE_LABELS[module]}
-                              </FormLabel>
-                              <p className="text-xs text-muted-foreground">
-                                {MODULE_DESCRIPTIONS[module]}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <FormLabel>Description (optional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Describe the purpose of this group"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
-                  );
-                }}
-              />
+                  )}
+                />
 
-              <FormField
-                control={typedControl}
-                name="canAccessAllContacts"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Can access all contacts</FormLabel>
-                      <FormDescription>
-                        Users in this group will be able to see all contacts,
-                        regardless of their group assignment
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={typedControl}
+                  name="modules"
+                  render={({ field }) => {
+                    const value = field.value ?? [];
 
-        <FormField
-          control={typedControl}
-          name="userIds"
-          render={() => {
-            if (isEditingDefaultGroup) {
+                    const toggleModule = (
+                      module: AppModule,
+                      checked: boolean,
+                    ) => {
+                      if (checked) {
+                        const next = Array.from(new Set([...value, module]));
+                        field.onChange(next);
+                        form.clearErrors("modules");
+                      } else {
+                        const next = value.filter(
+                          (current) => current !== module,
+                        );
+                        if (next.length === 0) {
+                          form.setError("modules", {
+                            type: "manual",
+                            message: "Select at least one module",
+                          });
+                          return;
+                        }
+                        field.onChange(next);
+                      }
+                    };
+
+                    return (
+                      <FormItem>
+                        <FormLabel>Enabled Modules</FormLabel>
+                        <FormDescription>
+                          Choose which application modules members of this group
+                          can access.
+                        </FormDescription>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {APP_MODULES.map((module) => (
+                            <div
+                              key={module}
+                              className="flex items-start space-x-3 rounded-md border p-3"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={value.includes(module)}
+                                  onCheckedChange={(checked) =>
+                                    toggleModule(module, checked === true)
+                                  }
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="text-sm font-medium">
+                                  {MODULE_LABELS[module]}
+                                </FormLabel>
+                                <p className="text-xs text-muted-foreground">
+                                  {MODULE_DESCRIPTIONS[module]}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+
+                <FormField
+                  control={typedControl}
+                  name="contactSubmodules"
+                  render={({ field }) => {
+                    const value = field.value ?? [];
+
+                    const toggleSubmodule = (
+                      submodule: ContactSubmodule,
+                      checked: boolean,
+                    ) => {
+                      if (checked) {
+                        field.onChange(
+                          Array.from(new Set([...value, submodule])),
+                        );
+                      } else {
+                        field.onChange(
+                          value.filter((current) => current !== submodule),
+                        );
+                      }
+                    };
+
+                    return (
+                      <FormItem>
+                        <FormLabel>CRM Submodules</FormLabel>
+                        <FormDescription>
+                          Assign which CRM submodules this group can access.
+                          Supervision fields are only visible to assigned
+                          groups.
+                        </FormDescription>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {CONTACT_SUBMODULES.map((submodule) => {
+                            const isAvailable =
+                              CONTACT_SUBMODULE_FIELDS[submodule].length > 0;
+                            return (
+                              <div
+                                key={submodule}
+                                className="flex items-start space-x-3 rounded-md border p-3"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={value.includes(submodule)}
+                                    onCheckedChange={(checked) =>
+                                      toggleSubmodule(
+                                        submodule,
+                                        checked === true,
+                                      )
+                                    }
+                                    disabled={!isAvailable}
+                                  />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                  <FormLabel className="text-sm font-medium">
+                                    {CONTACT_SUBMODULE_LABELS[submodule]}
+                                  </FormLabel>
+                                  <p className="text-xs text-muted-foreground">
+                                    {isAvailable
+                                      ? "Configure field visibility for this submodule."
+                                      : "No fields configured yet."}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+
+                <FormField
+                  control={typedControl}
+                  name="canAccessAllContacts"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Can access all contacts</FormLabel>
+                        <FormDescription>
+                          Users in this group will be able to see all contacts,
+                          regardless of their group assignment
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={typedControl}
+                  name="userIds"
+                  render={() => {
+                    if (isEditingDefaultGroup) {
+                      return (
+                        <FormItem>
+                          <FormLabel>Group Members</FormLabel>
+                          <FormDescription>
+                            Membership in the default group is managed
+                            automatically. Users without another group
+                            assignment belong here by default.
+                          </FormDescription>
+                          <p className="text-sm text-muted-foreground">
+                            Add someone to another group to remove them from the
+                            default group.
+                          </p>
+                        </FormItem>
+                      );
+                    }
+
                     return (
                       <FormItem>
                         <FormLabel>Group Members</FormLabel>
                         <FormDescription>
-                          Membership in the default group is managed
-                          automatically. Users without another group assignment
-                          belong here by default.
+                          Select users who should be part of this group
                         </FormDescription>
-                        <p className="text-sm text-muted-foreground">
-                          Add someone to another group to remove them from the
-                          default group.
-                        </p>
+                        {!editingGroup && (
+                          <Alert className="mt-2">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>
+                              Users will lose default access
+                            </AlertTitle>
+                            <AlertDescription>
+                              When you add users to this group, they will be
+                              removed from the Default Access group. Make sure
+                              this group has all necessary module permissions.
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        <div className="border rounded-md">
+                          <div className="flex items-center gap-3 px-3 py-2 border-b">
+                            <Checkbox
+                              checked={
+                                users.length > 0 &&
+                                (form.watch("userIds") || []).length ===
+                                  users.length
+                              }
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  form.setValue(
+                                    "userIds",
+                                    users.map((u) => u.id),
+                                  );
+                                } else {
+                                  form.setValue("userIds", []);
+                                }
+                              }}
+                            />
+                            <FormLabel className="text-sm font-medium">
+                              Select all users
+                            </FormLabel>
+                          </div>
+                          <div className="divide-y max-h-64 overflow-y-auto">
+                            {users.length === 0 ? (
+                              <p className="text-sm text-muted-foreground px-3 py-2">
+                                No users available
+                              </p>
+                            ) : (
+                              users.map((user) => (
+                                <FormField
+                                  key={user.id}
+                                  control={typedControl}
+                                  name="userIds"
+                                  render={({ field }) => (
+                                    <FormItem
+                                      key={user.id}
+                                      className="flex flex-row items-start space-x-3 space-y-0 px-3 py-2"
+                                    >
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(
+                                            user.id,
+                                          )}
+                                          onCheckedChange={(checked) => {
+                                            if (checked) {
+                                              field.onChange([
+                                                ...(field.value || []),
+                                                user.id,
+                                              ]);
+                                              return;
+                                            }
+
+                                            field.onChange(
+                                              (field.value || []).filter(
+                                                (value) => value !== user.id,
+                                              ),
+                                            );
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal">
+                                        {user.name || user.email}
+                                        {user.name && (
+                                          <span className="text-muted-foreground text-sm ml-2">
+                                            ({user.email})
+                                          </span>
+                                        )}
+                                      </FormLabel>
+                                    </FormItem>
+                                  )}
+                                />
+                              ))
+                            )}
+                          </div>
+                        </div>
+                        <FormMessage />
                       </FormItem>
                     );
-                  }
-
-                  return (
-                    <FormItem>
-                      <FormLabel>Group Members</FormLabel>
-                      <FormDescription>
-                        Select users who should be part of this group
-                      </FormDescription>
-                      {!editingGroup && (
-                        <Alert className="mt-2">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertTitle>Users will lose default access</AlertTitle>
-                          <AlertDescription>
-                            When you add users to this group, they will be removed from the Default Access group. Make sure this group has all necessary module permissions.
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                      <div className="border rounded-md">
-                        <div className="flex items-center gap-3 px-3 py-2 border-b">
-                          <Checkbox
-                            checked={
-                              users.length > 0 &&
-                              (form.watch("userIds") || []).length ===
-                                users.length
-                            }
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                form.setValue(
-                                  "userIds",
-                                  users.map((u) => u.id),
-                                );
-                              } else {
-                                form.setValue("userIds", []);
-                              }
-                            }}
-                          />
-                          <FormLabel className="text-sm font-medium">
-                            Select all users
-                          </FormLabel>
-                        </div>
-                        <div className="divide-y max-h-64 overflow-y-auto">
-                          {users.length === 0 ? (
-                            <p className="text-sm text-muted-foreground px-3 py-2">
-                              No users available
-                            </p>
-                          ) : (
-                            users.map((user) => (
-                              <FormField
-                                key={user.id}
-                                control={typedControl}
-                                name="userIds"
-                                render={({ field }) => (
-                                  <FormItem
-                                    key={user.id}
-                                    className="flex flex-row items-start space-x-3 space-y-0 px-3 py-2"
-                                  >
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value?.includes(user.id)}
-                                        onCheckedChange={(checked) => {
-                                          if (checked) {
-                                            field.onChange([
-                                              ...(field.value || []),
-                                              user.id,
-                                            ]);
-                                            return;
-                                          }
-
-                                          field.onChange(
-                                            (field.value || []).filter(
-                                              (value) => value !== user.id,
-                                            ),
-                                          );
-                                        }}
-                                      />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">
-                                      {user.name || user.email}
-                                      {user.name && (
-                                        <span className="text-muted-foreground text-sm ml-2">
-                                          ({user.email})
-                                        </span>
-                                      )}
-                                    </FormLabel>
-                                  </FormItem>
-                                )}
-                              />
-                            ))
-                          )}
-                        </div>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
+                  }}
+                />
 
               </div>
 

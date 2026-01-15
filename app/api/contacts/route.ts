@@ -76,10 +76,14 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await auth();
     const payload = await req.json();
     const validated = createContactSchema.parse(payload);
 
-    const contact = await createContact(validated);
+    const userId = session?.user?.userId;
+    const userName = session?.user?.name ?? undefined;
+
+    const contact = await createContact(validated, userId, userName);
 
     return NextResponse.json({ data: contact }, { status: 201 });
   } catch (e) {
@@ -93,10 +97,14 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
+    const session = await auth();
     const payload = await req.json();
     const validated = updateContactSchema.parse(payload);
 
-    const contact = await updateContact(validated);
+    const userId = session?.user?.userId;
+    const userName = session?.user?.name ?? undefined;
+
+    const contact = await updateContact(validated, userId, userName);
 
     return NextResponse.json({ data: contact }, { status: 200 });
   } catch (e) {

@@ -100,43 +100,45 @@ export function Combobox({
         }
       }}
     >
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn(
-            "w-full justify-between truncate",
-            size === "sm" && "h-9 px-3 text-sm",
-            className,
-          )}
-          disabled={disabled}
-        >
-          <span className="truncate">
-            {renderButtonValue ??
-              selectedOption?.label ??
-              (value && allowCustomValue ? value : placeholder)}
-          </span>
-          <div className="flex items-center gap-1">
-            {value && allowCustomValue && (
-              <button
-                type="button"
-                aria-label={clearLabel}
-                className="flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onChange("");
-                  onBlur?.();
-                }}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+      <div className="relative w-full">
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn(
+              "w-full justify-between truncate",
+              size === "sm" && "h-9 px-3 text-sm",
+              value && allowCustomValue && "pr-10",
+              className,
             )}
+            disabled={disabled}
+          >
+            <span className="truncate">
+              {renderButtonValue ??
+                selectedOption?.label ??
+                (value && allowCustomValue ? value : placeholder)}
+            </span>
             <ChevronsUpDown className="ml-1 h-4 w-4 opacity-50" />
-          </div>
-        </Button>
-      </PopoverTrigger>
+          </Button>
+        </PopoverTrigger>
+        {value && allowCustomValue && (
+          <button
+            type="button"
+            aria-label={clearLabel}
+            className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50"
+            onClick={(event) => {
+              event.stopPropagation();
+              onChange("");
+              onBlur?.();
+            }}
+            disabled={disabled}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command>
           <CommandInput

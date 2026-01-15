@@ -32,10 +32,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Combobox } from "@/components/ui/combobox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { type Contact, ContactAttributeType } from "@/types";
+import {
+  ContactAttributeType,
+  ContactGender,
+  ContactRequestPreference,
+  type Contact,
+} from "@/types";
 import {
   createContactSchema,
   updateContactSchema,
@@ -56,6 +62,35 @@ interface ContactFormProps {
 }
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+const formatDateForInput = (value?: Date | string) => {
+  if (!value) return "";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  return date.toISOString().slice(0, 10);
+};
+
+const genderOptions = [
+  { label: "Female", value: ContactGender.FEMALE },
+  { label: "Male", value: ContactGender.MALE },
+  { label: "Non-binary", value: ContactGender.NON_BINARY },
+  { label: "Other", value: ContactGender.OTHER },
+  { label: "Prefer not to answer", value: ContactGender.NO_ANSWER },
+];
+
+const requestPreferenceOptions = [
+  { label: "Yes", value: ContactRequestPreference.YES },
+  { label: "No", value: ContactRequestPreference.NO },
+  { label: "No answer", value: ContactRequestPreference.NO_ANSWER },
+];
+
+const bipocOptions = [
+  { label: "No answer", value: "unspecified" },
+  { label: "Yes", value: "yes" },
+  { label: "No", value: "no" },
+];
 
 export default function ContactForm({ teamId, contact }: ContactFormProps) {
   const router = useRouter();
@@ -81,6 +116,14 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           contactId: contact?.id ?? "",
           name: contact?.name ?? "",
           pronouns: contact?.pronouns ?? "",
+          gender: contact?.gender ?? null,
+          genderRequestPreference: contact?.genderRequestPreference ?? null,
+          isBipoc:
+            contact?.isBipoc === undefined ? null : contact?.isBipoc ?? null,
+          racismRequestPreference: contact?.racismRequestPreference ?? null,
+          otherMargins: contact?.otherMargins ?? "",
+          onboardingDate: formatDateForInput(contact?.onboardingDate),
+          breakUntil: formatDateForInput(contact?.breakUntil),
           city: contact?.city ?? "",
           email: contact?.email ?? "",
           phone: contact?.phone ?? "",
@@ -93,6 +136,13 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           teamId,
           name: "",
           pronouns: "",
+          gender: null,
+          genderRequestPreference: null,
+          isBipoc: null,
+          racismRequestPreference: null,
+          otherMargins: "",
+          onboardingDate: "",
+          breakUntil: "",
           city: "",
           email: "",
           phone: "",
@@ -418,271 +468,496 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
             />
           )}
           <CardContent className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                control={typedControl}
-                name="name"
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>Full name *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Alex Johnson"
-                        {...field}
-                        value={field.value}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={typedControl}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="alex@example.com"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={typedControl}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="+1 (555) 123-4567"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={typedControl}
-                name="website"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="url"
-                        placeholder="https://example.com"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={typedControl}
-                name="pronouns"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Pronouns</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="they/them"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={typedControl}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>City</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Berlin"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={typedControl}
-                name="groupId"
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>Group (optional)</FormLabel>
-                    <Select
-                      onValueChange={(value) =>
-                        field.onChange(value === "none" ? undefined : value)
-                      }
-                      value={field.value || "none"}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="No group" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">No group</SelectItem>
-                        {groups.map((group) => (
-                          <SelectItem key={group.id} value={group.id}>
-                            {group.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <Tabs defaultValue="general" className="w-full">
+              <TabsList className="mb-6 flex flex-wrap">
+                <TabsTrigger value="general">General</TabsTrigger>
+                <TabsTrigger value="supervision">Supervision</TabsTrigger>
+                <TabsTrigger value="events">Events</TabsTrigger>
+                <TabsTrigger value="shop">Shop</TabsTrigger>
+                <TabsTrigger value="attributes">Attributes</TabsTrigger>
+              </TabsList>
 
-            <Separator />
+              <TabsContent value="general" className="space-y-6">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <FormField
+                    control={typedControl}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2 lg:col-span-3">
+                        <FormLabel>Full name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Alex Johnson"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="alex@example.com"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="+1 (555) 123-4567"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="website"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Website</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="url"
+                            placeholder="https://example.com"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="pronouns"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pronouns</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="they/them"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Berlin"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="groupId"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2 lg:col-span-3">
+                        <FormLabel>Group (optional)</FormLabel>
+                        <Select
+                          onValueChange={(value) =>
+                            field.onChange(value === "none" ? undefined : value)
+                          }
+                          value={field.value || "none"}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="No group" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">No group</SelectItem>
+                            {groups.map((group) => (
+                              <SelectItem key={group.id} value={group.id}>
+                                {group.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
 
-            <div className="space-y-4">
-              <div className="flex items-start justify-between gap-2">
+              <TabsContent value="supervision" className="space-y-6">
                 <div>
-                  <h3 className="text-base font-semibold">
-                    Profile attributes
-                  </h3>
+                  <h3 className="text-base font-semibold">Supervision</h3>
                   <p className="text-sm text-muted-foreground">
-                    Capture structured CRM data such as roles, regions, or
-                    lifecycle dates.
+                    Sensitive supervision details only visible to authorized
+                    groups.
                   </p>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addAttribute}
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" /> Add attribute
-                </Button>
-              </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <FormField
+                    control={typedControl}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gender</FormLabel>
+                        <Select
+                          value={field.value ?? "none"}
+                          onValueChange={(value) =>
+                            field.onChange(value === "none" ? null : value)
+                          }
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select gender" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">Not set</SelectItem>
+                            {genderOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="genderRequestPreference"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Request because of gender</FormLabel>
+                        <Select
+                          value={field.value ?? "none"}
+                          onValueChange={(value) =>
+                            field.onChange(
+                              value === "none"
+                                ? null
+                                : (value as ContactRequestPreference),
+                            )
+                          }
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select preference" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">Not set</SelectItem>
+                            {requestPreferenceOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="isBipoc"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>BIPoC</FormLabel>
+                        <Select
+                          value={
+                            field.value === null || field.value === undefined
+                              ? "unspecified"
+                              : field.value
+                                ? "yes"
+                                : "no"
+                          }
+                          onValueChange={(value) => {
+                            if (value === "yes") {
+                              field.onChange(true);
+                            } else if (value === "no") {
+                              field.onChange(false);
+                            } else {
+                              field.onChange(null);
+                            }
+                          }}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select option" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {bipocOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="racismRequestPreference"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Request because of racism experience</FormLabel>
+                        <Select
+                          value={field.value ?? "none"}
+                          onValueChange={(value) =>
+                            field.onChange(
+                              value === "none"
+                                ? null
+                                : (value as ContactRequestPreference),
+                            )
+                          }
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select preference" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">Not set</SelectItem>
+                            {requestPreferenceOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="otherMargins"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2 lg:col-span-3">
+                        <FormLabel>Other margins</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Add other intersectional identities or notes"
+                            {...field}
+                            value={field.value ?? ""}
+                            rows={3}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="onboardingDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Onboarding date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="breakUntil"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Break until</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
 
-              <div className="space-y-4">
-                {fields.length === 0 && (
-                  <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                    No attributes yet. Add one to capture additional context.
+              <TabsContent value="events" className="space-y-4">
+                <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  No Events fields configured yet.
+                </div>
+              </TabsContent>
+
+              <TabsContent value="shop" className="space-y-4">
+                <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  No Shop fields configured yet.
+                </div>
+              </TabsContent>
+
+              <TabsContent value="attributes" className="space-y-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-base font-semibold">
+                      Profile attributes
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Capture structured CRM data such as roles, regions, or
+                      lifecycle dates.
+                    </p>
                   </div>
-                )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addAttribute}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add attribute
+                  </Button>
+                </div>
 
-                {fields.map((field, index) => {
-                  const currentType =
-                    attributes?.[index]?.type ?? ContactAttributeType.STRING;
-                  return (
-                    <div
-                      key={field.id}
-                      className="rounded-md border p-4 space-y-4"
-                    >
-                      <div className="grid gap-3 sm:grid-cols-5">
-                        <FormField
-                          control={typedControl}
-                          name={`profileAttributes.${index}.key`}
-                          render={({ field }) => {
-                            const currentValue =
-                              typeof field.value === "string"
-                                ? field.value
-                                : "";
+                <div className="space-y-4">
+                  {fields.length === 0 && (
+                    <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                      No attributes yet. Add one to capture additional context.
+                    </div>
+                  )}
 
-                            return (
-                              <FormItem className="sm:col-span-2">
-                                <FormLabel>Label *</FormLabel>
-                                <FormControl>
-                                  <Combobox
-                                    value={currentValue}
-                                    onChange={(value) => {
-                                      field.onChange(value);
-                                    }}
-                                    onBlur={field.onBlur}
-                                    placeholder="e.g. Relationship"
-                                    searchPlaceholder="Search or type label..."
-                                    emptyStateText="No labels found."
-                                    options={attributeKeyOptions}
-                                    allowCustomValue
-                                    isLoading={attributeKeysLoading}
-                                  />
-                                </FormControl>
+                  {fields.map((field, index) => {
+                    const currentType =
+                      attributes?.[index]?.type ?? ContactAttributeType.STRING;
+                    return (
+                      <div
+                        key={field.id}
+                        className="rounded-md border p-4 space-y-4"
+                      >
+                        <div className="grid gap-3 sm:grid-cols-5">
+                          <FormField
+                            control={typedControl}
+                            name={`profileAttributes.${index}.key`}
+                            render={({ field }) => {
+                              const currentValue =
+                                typeof field.value === "string"
+                                  ? field.value
+                                  : "";
+
+                              return (
+                                <FormItem className="sm:col-span-2">
+                                  <FormLabel>Label *</FormLabel>
+                                  <FormControl>
+                                    <Combobox
+                                      value={currentValue}
+                                      onChange={(value) => {
+                                        field.onChange(value);
+                                      }}
+                                      onBlur={field.onBlur}
+                                      placeholder="e.g. Relationship"
+                                      searchPlaceholder="Search or type label..."
+                                      emptyStateText="No labels found."
+                                      options={attributeKeyOptions}
+                                      allowCustomValue
+                                      isLoading={attributeKeysLoading}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              );
+                            }}
+                          />
+
+                          <FormField
+                            control={typedControl}
+                            name={`profileAttributes.${index}.type`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Type</FormLabel>
+                                <Select
+                                  value={field.value}
+                                  onValueChange={(
+                                    value: ContactAttributeType,
+                                  ) => {
+                                    field.onChange(value);
+                                    handleTypeChange(index, value);
+                                  }}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {attributeTypes.map((option) => (
+                                      <SelectItem
+                                        key={option.value}
+                                        value={option.value}
+                                      >
+                                        {option.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                                 <FormMessage />
                               </FormItem>
-                            );
-                          }}
-                        />
+                            )}
+                          />
 
-                        <FormField
-                          control={typedControl}
-                          name={`profileAttributes.${index}.type`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Type</FormLabel>
-                              <Select
-                                value={field.value}
-                                onValueChange={(
-                                  value: ContactAttributeType,
-                                ) => {
-                                  field.onChange(value);
-                                  handleTypeChange(index, value);
-                                }}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select type" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {attributeTypes.map((option) => (
-                                    <SelectItem
-                                      key={option.value}
-                                      value={option.value}
-                                    >
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <div className="flex justify-end sm:col-span-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="mt-6 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => remove(index)}
-                            aria-label="Remove attribute"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex justify-end sm:col-span-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="mt-6 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => remove(index)}
+                              aria-label="Remove attribute"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
 
-                      {renderValueField(index, currentType)}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+                        {renderValueField(index, currentType)}
+                      </div>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
 
           <CardFooter className="flex justify-end gap-2 border-t pt-4">

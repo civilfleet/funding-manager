@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { ContactAttributeType } from "@/types";
+import {
+  ContactAttributeType,
+  ContactGender,
+  ContactRequestPreference,
+} from "@/types";
 
 const preprocessEmptyString = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
@@ -21,6 +25,17 @@ const optionalEmail = z.preprocess(
 const optionalWebsite = z.preprocess(
   preprocessEmptyString,
   z.string().trim().url("Invalid website URL").optional(),
+);
+
+const optionalDate = z.preprocess(
+  preprocessEmptyString,
+  z
+    .string()
+    .trim()
+    .refine((value) => !Number.isNaN(Date.parse(value)), {
+      message: "Invalid date",
+    })
+    .optional(),
 );
 
 const numberValue = z.preprocess((value) => {
@@ -138,8 +153,21 @@ export const contactFiltersSchema = z.array(contactFilterSchema).default([]);
 
 export const createContactSchema = z.object({
   teamId: z.string().uuid("Team id must be a valid UUID"),
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().min(1, "Name is required"),
   pronouns: optionalText(z.string()),
+  gender: z.nativeEnum(ContactGender).nullable().optional(),
+  genderRequestPreference: z
+    .nativeEnum(ContactRequestPreference)
+    .nullable()
+    .optional(),
+  isBipoc: z.boolean().nullable().optional(),
+  racismRequestPreference: z
+    .nativeEnum(ContactRequestPreference)
+    .nullable()
+    .optional(),
+  otherMargins: optionalText(z.string()),
+  onboardingDate: optionalDate,
+  breakUntil: optionalDate,
   city: optionalText(z.string()),
   email: requiredEmail,
   phone: optionalText(z.string()),
@@ -160,6 +188,19 @@ export const updateContactSchema = z.object({
   teamId: z.string().uuid("Team id must be a valid UUID"),
   name: z.string().min(1, "Name is required").optional(),
   pronouns: optionalText(z.string()),
+  gender: z.nativeEnum(ContactGender).nullable().optional(),
+  genderRequestPreference: z
+    .nativeEnum(ContactRequestPreference)
+    .nullable()
+    .optional(),
+  isBipoc: z.boolean().nullable().optional(),
+  racismRequestPreference: z
+    .nativeEnum(ContactRequestPreference)
+    .nullable()
+    .optional(),
+  otherMargins: optionalText(z.string()),
+  onboardingDate: optionalDate,
+  breakUntil: optionalDate,
   city: optionalText(z.string()),
   email: optionalEmail,
   phone: optionalText(z.string()),

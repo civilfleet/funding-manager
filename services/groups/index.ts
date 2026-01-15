@@ -1,6 +1,10 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import {
+  CONTACT_SUBMODULE_FIELDS,
+  type ContactSubmodule,
+} from "@/constants/contact-submodules";
+import {
   APP_MODULES,
   DEFAULT_TEAM_MODULES,
   type AppModule,
@@ -14,6 +18,7 @@ type CreateGroupInput = {
   canAccessAllContacts?: boolean;
   userIds?: string[]; // Optional initial users
   modules?: AppModule[];
+  contactSubmodules?: ContactSubmodule[];
 };
 
 type UpdateGroupInput = {
@@ -23,6 +28,7 @@ type UpdateGroupInput = {
   description?: string;
   canAccessAllContacts?: boolean;
   modules?: AppModule[];
+  contactSubmodules?: ContactSubmodule[];
 };
 
 type AddUsersToGroupInput = {
@@ -209,43 +215,131 @@ const mapGroup = (group: GroupWithDefaults): Group => ({
   updatedAt: group.updatedAt,
 });
 
+const getSubmoduleFieldKeys = (submodules: ContactSubmodule[]) => {
+  const keys = new Set<string>();
+  submodules.forEach((submodule) => {
+    CONTACT_SUBMODULE_FIELDS[submodule].forEach((fieldKey) => {
+      keys.add(fieldKey);
+    });
+  });
+  return Array.from(keys);
+};
+
+const getAllSubmoduleFieldKeys = () =>
+  Array.from(
+    new Set(Object.values(CONTACT_SUBMODULE_FIELDS).flat()),
+  );
+
+const computeGroupSubmodules = (
+  fieldKeys: Set<string>,
+): ContactSubmodule[] =>
+  (Object.keys(CONTACT_SUBMODULE_FIELDS) as ContactSubmodule[]).filter(
+    (submodule) => {
+      const requiredKeys = CONTACT_SUBMODULE_FIELDS[submodule];
+      if (!requiredKeys.length) {
+        return false;
+      }
+      return requiredKeys.every((key) => fieldKeys.has(key));
+    },
+  );
+
+const syncContactFieldAccess = async (
+  client: Prisma.TransactionClient,
+  teamId: string,
+  groupId: string,
+  submodules?: ContactSubmodule[],
+) => {
+  if (!submodules) {
+    return;
+  }
+
+  const allSubmoduleKeys = getAllSubmoduleFieldKeys();
+  const selectedKeys = getSubmoduleFieldKeys(submodules);
+
+  if (allSubmoduleKeys.length) {
+    await client.contactFieldAccess.deleteMany({
+      where: {
+        teamId,
+        groupId,
+        fieldKey: { in: allSubmoduleKeys },
+      },
+    });
+  }
+
+  if (selectedKeys.length) {
+    await client.contactFieldAccess.createMany({
+      data: selectedKeys.map((fieldKey) => ({
+        teamId,
+        groupId,
+        fieldKey,
+      })),
+      skipDuplicates: true,
+    });
+  }
+};
+
 const getTeamGroups = async (teamId: string) => {
   await ensureDefaultGroup(teamId);
 
-  const groups = await prisma.group.findMany({
-    where: {
-      teamId,
-    },
-    orderBy: {
-      name: "asc",
-    },
-    include: {
-      modulePermissions: true,
-      users: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
+  const [groups, accessEntries] = await Promise.all([
+    prisma.group.findMany({
+      where: {
+        teamId,
+      },
+      orderBy: {
+        name: "asc",
+      },
+      include: {
+        modulePermissions: true,
+        users: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
             },
           },
         },
       },
-    },
+    }),
+    prisma.contactFieldAccess.findMany({
+      where: { teamId },
+      select: {
+        groupId: true,
+        fieldKey: true,
+      },
+    }),
+  ]);
+
+  const accessByGroup = new Map<string, Set<string>>();
+  accessEntries.forEach((entry) => {
+    const existing = accessByGroup.get(entry.groupId);
+    if (existing) {
+      existing.add(entry.fieldKey);
+      return;
+    }
+    accessByGroup.set(entry.groupId, new Set([entry.fieldKey]));
   });
 
-  return groups.map((group) => ({
-    ...mapGroup(group),
-    users: group.users.map((ug) => ({
-      userId: ug.userId,
-      user: {
-        id: ug.user.id,
-        name: ug.user.name,
-        email: ug.user.email,
-      },
-    })),
-  }));
+  return groups.map((group) => {
+    const fieldKeys = accessByGroup.get(group.id) ?? new Set<string>();
+    const contactSubmodules = computeGroupSubmodules(fieldKeys);
+
+    return {
+      ...mapGroup(group),
+      contactSubmodules,
+      users: group.users.map((ug) => ({
+        userId: ug.userId,
+        user: {
+          id: ug.user.id,
+          name: ug.user.name,
+          email: ug.user.email,
+        },
+      })),
+    };
+  });
 };
 
 const getGroupById = async (groupId: string, teamId: string) => {
@@ -263,7 +357,16 @@ const getGroupById = async (groupId: string, teamId: string) => {
     return null;
   }
 
-  return mapGroup(group);
+  const accessEntries = await prisma.contactFieldAccess.findMany({
+    where: { teamId, groupId },
+    select: { fieldKey: true },
+  });
+  const fieldKeys = new Set(accessEntries.map((entry) => entry.fieldKey));
+
+  return {
+    ...mapGroup(group),
+    contactSubmodules: computeGroupSubmodules(fieldKeys),
+  };
 };
 
 const getGroupWithUsers = async (groupId: string, teamId: string) => {
@@ -292,8 +395,15 @@ const getGroupWithUsers = async (groupId: string, teamId: string) => {
     return null;
   }
 
+  const accessEntries = await prisma.contactFieldAccess.findMany({
+    where: { teamId, groupId },
+    select: { fieldKey: true },
+  });
+  const fieldKeys = new Set(accessEntries.map((entry) => entry.fieldKey));
+
   return {
     ...mapGroup(group),
+    contactSubmodules: computeGroupSubmodules(fieldKeys),
     users: group.users.map((ug) => ({
       id: ug.user.id,
       name: ug.user.name,
@@ -303,8 +413,15 @@ const getGroupWithUsers = async (groupId: string, teamId: string) => {
 };
 
 const createGroup = async (input: CreateGroupInput) => {
-  const { teamId, name, description, canAccessAllContacts, userIds, modules } =
-    input;
+  const {
+    teamId,
+    name,
+    description,
+    canAccessAllContacts,
+    userIds,
+    modules,
+    contactSubmodules,
+  } = input;
 
   const baseModules = modules?.length ? modules : [...DEFAULT_TEAM_MODULES];
   const modulesToAssign: AppModule[] = Array.from(
@@ -339,6 +456,13 @@ const createGroup = async (input: CreateGroupInput) => {
       },
     });
 
+    await syncContactFieldAccess(
+      tx,
+      teamId,
+      created.id,
+      contactSubmodules,
+    );
+
     await ensureDefaultGroup(teamId, tx);
 
     return created;
@@ -348,8 +472,15 @@ const createGroup = async (input: CreateGroupInput) => {
 };
 
 const updateGroup = async (input: UpdateGroupInput) => {
-  const { id, teamId, name, description, canAccessAllContacts, modules } =
-    input;
+  const {
+    id,
+    teamId,
+    name,
+    description,
+    canAccessAllContacts,
+    modules,
+    contactSubmodules,
+  } = input;
 
   const result = await prisma.$transaction(async (tx) => {
     await tx.group.update({
@@ -387,6 +518,8 @@ const updateGroup = async (input: UpdateGroupInput) => {
         });
       }
     }
+
+    await syncContactFieldAccess(tx, teamId, id, contactSubmodules);
 
     await ensureDefaultGroup(teamId, tx);
 

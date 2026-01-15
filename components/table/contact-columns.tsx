@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import {
   ContactAttributeType,
+  ContactGender,
   type ContactEvent,
   type ContactProfileAttribute,
+  ContactRequestPreference,
 } from "@/types";
 
 export type ContactRow = {
@@ -17,6 +19,13 @@ export type ContactRow = {
   teamId: string;
   name: string;
   pronouns?: string | null;
+  gender?: ContactGender | null;
+  genderRequestPreference?: ContactRequestPreference | null;
+  isBipoc?: boolean | null;
+  racismRequestPreference?: ContactRequestPreference | null;
+  otherMargins?: string | null;
+  onboardingDate?: string | Date | null;
+  breakUntil?: string | Date | null;
   city?: string | null;
   email?: string | null;
   phone?: string | null;

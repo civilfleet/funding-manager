@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, type $Enums } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import {
   logContactCreation,
@@ -7,6 +7,8 @@ import {
 import { ensureDefaultGroup, mapGroup } from "@/services/groups";
 import {
   ContactAttributeType,
+  ContactGender,
+  ContactRequestPreference,
   type ContactFilter,
   type ContactLocationValue,
   type ContactProfileAttribute,
@@ -14,10 +16,29 @@ import {
   Roles,
 } from "@/types";
 
+const RESTRICTED_CONTACT_FIELDS = [
+  "gender",
+  "genderRequestPreference",
+  "isBipoc",
+  "racismRequestPreference",
+  "otherMargins",
+  "onboardingDate",
+  "breakUntil",
+] as const;
+
+type RestrictedContactField = (typeof RESTRICTED_CONTACT_FIELDS)[number];
+
 type CreateContactInput = {
   teamId: string;
-  name: string;
+  name?: string;
   pronouns?: string;
+  gender?: ContactGender | null;
+  genderRequestPreference?: ContactRequestPreference | null;
+  isBipoc?: boolean | null;
+  racismRequestPreference?: ContactRequestPreference | null;
+  otherMargins?: string;
+  onboardingDate?: string;
+  breakUntil?: string;
   city?: string;
   email?: string;
   phone?: string;
@@ -31,6 +52,13 @@ type UpdateContactInput = {
   teamId: string;
   name?: string;
   pronouns?: string;
+  gender?: ContactGender | null;
+  genderRequestPreference?: ContactRequestPreference | null;
+  isBipoc?: boolean | null;
+  racismRequestPreference?: ContactRequestPreference | null;
+  otherMargins?: string;
+  onboardingDate?: string;
+  breakUntil?: string;
   city?: string;
   email?: string;
   phone?: string;
@@ -75,6 +103,111 @@ type ContactWithAttributes = Prisma.ContactGetPayload<{
     };
   };
 }>;
+
+const getContactFieldAccessMap = async (teamId: string) => {
+  const entries = await prisma.contactFieldAccess.findMany({
+    where: { teamId },
+    select: {
+      fieldKey: true,
+      groupId: true,
+    },
+  });
+
+  const map = new Map<string, Set<string>>();
+  entries.forEach((entry) => {
+    const existing = map.get(entry.fieldKey);
+    if (existing) {
+      existing.add(entry.groupId);
+      return;
+    }
+    map.set(entry.fieldKey, new Set([entry.groupId]));
+  });
+
+  return map;
+};
+
+const getUserGroupIdsForTeam = async (userId: string, teamId: string) => {
+  const memberships = await prisma.userGroup.findMany({
+    where: {
+      userId,
+      group: {
+        teamId,
+      },
+    },
+    select: {
+      groupId: true,
+    },
+  });
+
+  return memberships.map((membership) => membership.groupId);
+};
+
+const isFieldVisible = (
+  fieldKey: string,
+  accessMap: Map<string, Set<string>>,
+  userGroupIds: string[],
+) => {
+  const allowedGroups = accessMap.get(fieldKey);
+  if (!allowedGroups || allowedGroups.size === 0) {
+    return true;
+  }
+  return userGroupIds.some((groupId) => allowedGroups.has(groupId));
+};
+
+const filterContactByAccess = (
+  contact: ContactType,
+  accessMap: Map<string, Set<string>>,
+  userGroupIds: string[],
+) => {
+  const filtered: ContactType = { ...contact };
+
+  RESTRICTED_CONTACT_FIELDS.forEach((fieldKey) => {
+    if (!isFieldVisible(fieldKey, accessMap, userGroupIds)) {
+      (filtered as Record<RestrictedContactField, unknown>)[fieldKey] =
+        undefined;
+    }
+  });
+
+  filtered.profileAttributes = filtered.profileAttributes.filter((attribute) =>
+    isFieldVisible(attribute.key, accessMap, userGroupIds),
+  );
+
+  return filtered;
+};
+
+const applyContactFieldAccess = async <
+  T extends CreateContactInput | UpdateContactInput,
+>(
+  input: T,
+  userId?: string,
+) => {
+  if (!userId) {
+    return input;
+  }
+
+  const [accessMap, userGroupIds] = await Promise.all([
+    getContactFieldAccessMap(input.teamId),
+    getUserGroupIdsForTeam(userId, input.teamId),
+  ]);
+
+  const sanitized: T = { ...input };
+
+  RESTRICTED_CONTACT_FIELDS.forEach((fieldKey) => {
+    if (Object.hasOwn(sanitized, fieldKey)) {
+      if (!isFieldVisible(fieldKey, accessMap, userGroupIds)) {
+        delete (sanitized as Record<RestrictedContactField, unknown>)[fieldKey];
+      }
+    }
+  });
+
+  if (sanitized.profileAttributes?.length) {
+    sanitized.profileAttributes = sanitized.profileAttributes.filter(
+      (attribute) => isFieldVisible(attribute.key, accessMap, userGroupIds),
+    );
+  }
+
+  return sanitized;
+};
 
 const normalizeAttributes = (
   attributes: ContactProfileAttribute[] = [],
@@ -231,11 +364,31 @@ const toProfileAttribute = (
   }
 };
 
+const mapContactGender = (
+  gender?: $Enums.ContactGender | null,
+): ContactGender | undefined => (gender ? (gender as ContactGender) : undefined);
+
+const mapContactRequestPreference = (
+  preference?: $Enums.ContactRequestPreference | null,
+): ContactRequestPreference | undefined =>
+  preference ? (preference as ContactRequestPreference) : undefined;
+
 const mapContact = (contact: ContactWithAttributes): ContactType => ({
   id: contact.id,
   teamId: contact.teamId,
   name: contact.name,
   pronouns: contact.pronouns ?? undefined,
+  gender: mapContactGender(contact.gender),
+  genderRequestPreference: mapContactRequestPreference(
+    contact.genderRequestPreference,
+  ),
+  isBipoc: contact.isBipoc ?? undefined,
+  racismRequestPreference: mapContactRequestPreference(
+    contact.racismRequestPreference,
+  ),
+  otherMargins: contact.otherMargins ?? undefined,
+  onboardingDate: contact.onboardingDate ?? undefined,
+  breakUntil: contact.breakUntil ?? undefined,
   city: contact.city ?? undefined,
   email: contact.email ?? undefined,
   phone: contact.phone ?? undefined,
@@ -409,8 +562,9 @@ const getTeamContacts = async (
   ];
 
   const isAdmin = roles.includes(Roles.Admin);
+  let userGroupIds: string[] = [];
 
-  if (userId && !isAdmin) {
+  if (userId) {
     const userGroups = await prisma.userGroup.findMany({
       where: { userId },
       include: {
@@ -423,23 +577,27 @@ const getTeamContacts = async (
       },
     });
 
-    const hasAllAccessPermission = userGroups.some(
-      (ug) => ug.group.canAccessAllContacts,
-    );
+    userGroupIds = userGroups.map((ug) => ug.groupId);
 
-    if (!hasAllAccessPermission) {
-      const groupIds = userGroups
-        .map((ug) => ug.groupId)
-        .filter((id): id is string => Boolean(id));
+    if (!isAdmin) {
+      const hasAllAccessPermission = userGroups.some(
+        (ug) => ug.group.canAccessAllContacts,
+      );
 
-      if (groupIds.length > 0) {
-        andConditions.push({
-          OR: [{ groupId: null }, { groupId: { in: groupIds } }],
-        });
-      } else {
-        andConditions.push({
-          groupId: null,
-        });
+      if (!hasAllAccessPermission) {
+        const groupIds = userGroups
+          .map((ug) => ug.groupId)
+          .filter((id): id is string => Boolean(id));
+
+        if (groupIds.length > 0) {
+          andConditions.push({
+            OR: [{ groupId: null }, { groupId: { in: groupIds } }],
+          });
+        } else {
+          andConditions.push({
+            groupId: null,
+          });
+        }
       }
     }
   }
@@ -448,6 +606,7 @@ const getTeamContacts = async (
     const searchConditions: Prisma.ContactWhereInput[] = [
       { name: { contains: query, mode: "insensitive" } },
       { pronouns: { contains: query, mode: "insensitive" } },
+      { otherMargins: { contains: query, mode: "insensitive" } },
       { city: { contains: query, mode: "insensitive" } },
       { email: { contains: query, mode: "insensitive" } },
       { phone: { contains: query, mode: "insensitive" } },
@@ -791,10 +950,18 @@ const getTeamContacts = async (
     },
   });
 
-  return contacts.map(mapContact);
+  const accessMap = await getContactFieldAccessMap(teamId);
+
+  return contacts
+    .map(mapContact)
+    .map((contact) => filterContactByAccess(contact, accessMap, userGroupIds));
 };
 
-const getContactById = async (contactId: string, teamId: string) => {
+const getContactById = async (
+  contactId: string,
+  teamId: string,
+  userId?: string,
+) => {
   const contact = await prisma.contact.findFirst({
     where: {
       id: contactId,
@@ -829,7 +996,16 @@ const getContactById = async (contactId: string, teamId: string) => {
     return null;
   }
 
-  return mapContact(contact);
+  if (!userId) {
+    return mapContact(contact);
+  }
+
+  const [accessMap, userGroupIds] = await Promise.all([
+    getContactFieldAccessMap(teamId),
+    getUserGroupIdsForTeam(userId, teamId),
+  ]);
+
+  return filterContactByAccess(mapContact(contact), accessMap, userGroupIds);
 };
 
 const createContact = async (
@@ -837,20 +1013,48 @@ const createContact = async (
   userId?: string,
   userName?: string,
 ) => {
+  const sanitizedInput = await applyContactFieldAccess(input, userId);
+
   const {
     teamId,
     name,
     pronouns,
+    gender,
+    genderRequestPreference,
+    isBipoc,
+    racismRequestPreference,
+    otherMargins,
+    onboardingDate,
+    breakUntil,
     city,
     email,
     phone,
     website,
     groupId,
     profileAttributes,
-  } = input;
+  } = sanitizedInput;
   const normalizedAttributes = normalizeAttributes(profileAttributes);
-  const trimmedName = name.trim();
+  const trimmedName = name?.trim() ?? "";
+  if (!trimmedName) {
+    throw new Error("Name is required");
+  }
+
   const normalizedPronouns = pronouns?.trim() || undefined;
+  const normalizedGender = gender ?? undefined;
+  const normalizedGenderRequestPreference = genderRequestPreference ?? undefined;
+  const normalizedIsBipoc =
+    typeof isBipoc === "boolean" ? isBipoc : undefined;
+  const normalizedRacismRequestPreference =
+    racismRequestPreference ?? undefined;
+  const normalizedOtherMargins = otherMargins?.trim() || undefined;
+  const normalizedOnboardingDate =
+    onboardingDate && !Number.isNaN(Date.parse(onboardingDate))
+      ? new Date(onboardingDate)
+      : undefined;
+  const normalizedBreakUntil =
+    breakUntil && !Number.isNaN(Date.parse(breakUntil))
+      ? new Date(breakUntil)
+      : undefined;
   const normalizedCity = city?.trim() || undefined;
   const normalizedEmail = (email ?? "").trim().toLowerCase();
   if (!normalizedEmail) {
@@ -876,6 +1080,13 @@ const createContact = async (
         teamId,
         name: trimmedName,
         pronouns: normalizedPronouns,
+        gender: normalizedGender,
+        genderRequestPreference: normalizedGenderRequestPreference,
+        isBipoc: normalizedIsBipoc,
+        racismRequestPreference: normalizedRacismRequestPreference,
+        otherMargins: normalizedOtherMargins,
+        onboardingDate: normalizedOnboardingDate,
+        breakUntil: normalizedBreakUntil,
         city: normalizedCity,
         email: normalizedEmail,
         phone: normalizedPhone,
@@ -944,18 +1155,27 @@ const updateContact = async (
   userId?: string,
   userName?: string,
 ) => {
+  const sanitizedInput = await applyContactFieldAccess(input, userId);
+
   const {
     contactId,
     teamId,
     name,
     pronouns,
+    gender,
+    genderRequestPreference,
+    isBipoc,
+    racismRequestPreference,
+    otherMargins,
+    onboardingDate,
+    breakUntil,
     city,
     email,
     phone,
     website,
     groupId,
     profileAttributes,
-  } = input;
+  } = sanitizedInput;
   const normalizedName = typeof name === "string" ? name.trim() : undefined;
   const pronounsProvided = Object.hasOwn(
     input,
@@ -981,6 +1201,71 @@ const updateContact = async (
     }
     const trimmed = city.trim();
     return trimmed === "" ? null : trimmed;
+  })();
+  const genderProvided = Object.hasOwn(input, "gender");
+  const normalizedGender = genderProvided ? gender ?? null : undefined;
+  const genderRequestPreferenceProvided = Object.hasOwn(
+    input,
+    "genderRequestPreference",
+  );
+  const normalizedGenderRequestPreference = genderRequestPreferenceProvided
+    ? genderRequestPreference ?? null
+    : undefined;
+  const bipocProvided = Object.hasOwn(input, "isBipoc");
+  const normalizedIsBipoc = (() => {
+    if (!bipocProvided) {
+      return undefined;
+    }
+    if (typeof isBipoc === "boolean") {
+      return isBipoc;
+    }
+    return null;
+  })();
+  const racismPreferenceProvided = Object.hasOwn(
+    input,
+    "racismRequestPreference",
+  );
+  const normalizedRacismRequestPreference = racismPreferenceProvided
+    ? racismRequestPreference ?? null
+    : undefined;
+  const otherMarginsProvided = Object.hasOwn(input, "otherMargins");
+  const normalizedOtherMargins = (() => {
+    if (!otherMarginsProvided) {
+      return undefined;
+    }
+    if (typeof otherMargins !== "string") {
+      return null;
+    }
+    const trimmed = otherMargins.trim();
+    return trimmed === "" ? null : trimmed;
+  })();
+  const onboardingProvided = Object.hasOwn(input, "onboardingDate");
+  const normalizedOnboardingDate = (() => {
+    if (!onboardingProvided) {
+      return undefined;
+    }
+    if (!onboardingDate) {
+      return null;
+    }
+    const parsed = new Date(onboardingDate);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new Error("Invalid onboarding date");
+    }
+    return parsed;
+  })();
+  const breakUntilProvided = Object.hasOwn(input, "breakUntil");
+  const normalizedBreakUntil = (() => {
+    if (!breakUntilProvided) {
+      return undefined;
+    }
+    if (!breakUntil) {
+      return null;
+    }
+    const parsed = new Date(breakUntil);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new Error("Invalid break until date");
+    }
+    return parsed;
   })();
   const normalizedEmail =
     email === undefined ? undefined : email.trim().toLowerCase();
@@ -1040,6 +1325,119 @@ const updateContact = async (
         tx,
       );
       updates.pronouns = normalizedPronouns;
+    }
+
+    if (genderProvided && normalizedGender !== existing.gender) {
+      await logFieldUpdate(
+        contactId,
+        "gender",
+        existing.gender,
+        normalizedGender,
+        userId,
+        userName,
+        tx,
+      );
+      updates.gender = normalizedGender;
+    }
+
+    if (
+      genderRequestPreferenceProvided &&
+      normalizedGenderRequestPreference !== existing.genderRequestPreference
+    ) {
+      await logFieldUpdate(
+        contactId,
+        "genderRequestPreference",
+        existing.genderRequestPreference,
+        normalizedGenderRequestPreference,
+        userId,
+        userName,
+        tx,
+      );
+      updates.genderRequestPreference = normalizedGenderRequestPreference;
+    }
+
+    if (bipocProvided && normalizedIsBipoc !== existing.isBipoc) {
+      await logFieldUpdate(
+        contactId,
+        "isBipoc",
+        existing.isBipoc,
+        normalizedIsBipoc,
+        userId,
+        userName,
+        tx,
+      );
+      updates.isBipoc = normalizedIsBipoc;
+    }
+
+    if (
+      racismPreferenceProvided &&
+      normalizedRacismRequestPreference !== existing.racismRequestPreference
+    ) {
+      await logFieldUpdate(
+        contactId,
+        "racismRequestPreference",
+        existing.racismRequestPreference,
+        normalizedRacismRequestPreference,
+        userId,
+        userName,
+        tx,
+      );
+      updates.racismRequestPreference = normalizedRacismRequestPreference;
+    }
+
+    if (otherMarginsProvided && normalizedOtherMargins !== existing.otherMargins) {
+      await logFieldUpdate(
+        contactId,
+        "otherMargins",
+        existing.otherMargins,
+        normalizedOtherMargins,
+        userId,
+        userName,
+        tx,
+      );
+      updates.otherMargins = normalizedOtherMargins;
+    }
+
+    if (onboardingProvided) {
+      const existingValue = existing.onboardingDate
+        ? existing.onboardingDate.toISOString()
+        : null;
+      const normalizedValue = normalizedOnboardingDate
+        ? normalizedOnboardingDate.toISOString()
+        : null;
+      if (existingValue !== normalizedValue) {
+        await logFieldUpdate(
+          contactId,
+          "onboardingDate",
+          existing.onboardingDate,
+          normalizedOnboardingDate,
+          userId,
+          userName,
+          tx,
+        );
+        updates.onboardingDate = normalizedOnboardingDate;
+      }
+    }
+
+    if (breakUntilProvided) {
+      const existingValue = existing.breakUntil
+        ? existing.breakUntil.toISOString()
+        : null;
+      const normalizedValue = normalizedBreakUntil
+        ? normalizedBreakUntil.toISOString()
+        : null;
+      if (existingValue !== normalizedValue) {
+        await logFieldUpdate(
+          contactId,
+          "breakUntil",
+          existing.breakUntil,
+          normalizedBreakUntil,
+          userId,
+          userName,
+          tx,
+        );
+        updates.breakUntil = normalizedBreakUntil;
+      }
     }
 
     if (cityProvided && normalizedCity !== existing.city) {

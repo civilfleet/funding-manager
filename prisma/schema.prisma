@@ -157,6 +157,7 @@ model Teams {
   eventRoles   EventRole[]
   groups       Group[]
   integrationConnections IntegrationConnection[]
+  contactFieldAccesses ContactFieldAccess[]
 }
 
 model IntegrationConnection {
@@ -256,12 +257,33 @@ enum IntegrationProvider {
   KLAVIYO
 }
 
+enum ContactGender {
+  FEMALE
+  MALE
+  NON_BINARY
+  OTHER
+  NO_ANSWER
+}
+
+enum ContactRequestPreference {
+  YES
+  NO
+  NO_ANSWER
+}
+
 model Contact {
   id                String               @id @default(uuid()) @unique
   teamId            String
   team              Teams                @relation(fields: [teamId], references: [id], onDelete: Cascade)
   name              String
   pronouns          String?             @db.VarChar(120)
+  gender            ContactGender?
+  genderRequestPreference  ContactRequestPreference?
+  isBipoc           Boolean?
+  racismRequestPreference  ContactRequestPreference?
+  otherMargins      String?             @db.Text
+  onboardingDate    DateTime?            @db.Timestamptz(6)
+  breakUntil        DateTime?            @db.Timestamptz(6)
   city              String?             @db.VarChar(255)
   email             String?              @db.VarChar(255)
   phone             String?              @db.VarChar(255)
@@ -332,6 +354,20 @@ model ContactAttribute {
 
   @@index([key])
   @@unique([contactId, key])
+}
+
+model ContactFieldAccess {
+  id        String   @id @default(uuid()) @unique
+  teamId    String
+  team      Teams    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  fieldKey  String   @db.VarChar(255)
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([teamId, fieldKey, groupId])
+  @@index([teamId, fieldKey])
+  @@index([groupId])
 }
 
 
@@ -632,6 +668,7 @@ model Group {
 
   users       UserGroup[]
   contacts    Contact[]
+  contactFieldAccesses ContactFieldAccess[]
 
   @@unique([teamId, name])
   @@index([teamId])

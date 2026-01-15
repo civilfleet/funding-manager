@@ -1,3 +1,5 @@
+import type { ContactSubmodule } from "@/constants/contact-submodules";
+
 export interface BankDetails {
   id: string;
   bankName: string;
@@ -22,6 +24,20 @@ export type AppModule = (typeof APP_MODULES)[number];
 
 export enum IntegrationProvider {
   KLAVIYO = "KLAVIYO",
+}
+
+export enum ContactGender {
+  FEMALE = "FEMALE",
+  MALE = "MALE",
+  NON_BINARY = "NON_BINARY",
+  OTHER = "OTHER",
+  NO_ANSWER = "NO_ANSWER",
+}
+
+export enum ContactRequestPreference {
+  YES = "YES",
+  NO = "NO",
+  NO_ANSWER = "NO_ANSWER",
 }
 
 export interface IntegrationConnection {
@@ -106,6 +122,7 @@ export interface Group {
   canAccessAllContacts: boolean;
   isDefaultGroup: boolean;
   modules: AppModule[];
+  contactSubmodules?: ContactSubmodule[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -121,6 +138,13 @@ export interface Contact {
   teamId: string;
   name: string;
   pronouns?: string;
+  gender?: ContactGender;
+  genderRequestPreference?: ContactRequestPreference;
+  isBipoc?: boolean;
+  racismRequestPreference?: ContactRequestPreference;
+  otherMargins?: string;
+  onboardingDate?: Date;
+  breakUntil?: Date;
   city?: string;
   email?: string;
   phone?: string;

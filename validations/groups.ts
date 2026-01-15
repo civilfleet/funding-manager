@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CONTACT_SUBMODULES } from "@/constants/contact-submodules";
 import { DEFAULT_TEAM_MODULES, APP_MODULES } from "@/types";
 
 export const createGroupSchema = z.object({
@@ -15,6 +16,7 @@ export const createGroupSchema = z.object({
         ? Array.from(new Set(value))
         : Array.from(DEFAULT_TEAM_MODULES),
     ),
+  contactSubmodules: z.array(z.enum(CONTACT_SUBMODULES)).optional(),
 });
 
 export type CreateGroupInput = z.infer<typeof createGroupSchema>;
@@ -27,6 +29,10 @@ export const updateGroupSchema = z.object({
   canAccessAllContacts: z.boolean().optional(),
   modules: z
     .array(z.enum(APP_MODULES))
+    .optional()
+    .transform((value) => (value ? Array.from(new Set(value)) : undefined)),
+  contactSubmodules: z
+    .array(z.enum(CONTACT_SUBMODULES))
     .optional()
     .transform((value) => (value ? Array.from(new Set(value)) : undefined)),
 });

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
 import ContactChangeHistory from "@/components/contact-change-history";
 import ContactEngagementHistory from "@/components/contact-engagement-history";
 import DeleteContactButton from "@/components/forms/delete-contact-button";
@@ -25,7 +26,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getContactById } from "@/services/contacts";
-import { ContactAttributeType } from "@/types";
+import {
+  ContactAttributeType,
+  ContactGender,
+  ContactRequestPreference,
+} from "@/types";
 
 interface ContactDetailPageProps {
   params: Promise<{
@@ -86,11 +91,62 @@ const getAttributeIcon = (type: ContactAttributeType) => {
   }
 };
 
+const formatGender = (gender?: ContactGender | null) => {
+  switch (gender) {
+    case ContactGender.FEMALE:
+      return "Female";
+    case ContactGender.MALE:
+      return "Male";
+    case ContactGender.NON_BINARY:
+      return "Non-binary";
+    case ContactGender.OTHER:
+      return "Other";
+    case ContactGender.NO_ANSWER:
+      return "No answer";
+    default:
+      return undefined;
+  }
+};
+
+const formatPreference = (preference?: ContactRequestPreference | null) => {
+  switch (preference) {
+    case ContactRequestPreference.YES:
+      return "Yes";
+    case ContactRequestPreference.NO:
+      return "No";
+    case ContactRequestPreference.NO_ANSWER:
+      return "No answer";
+    default:
+      return undefined;
+  }
+};
+
+const formatBipoc = (value?: boolean | null) => {
+  if (value === true) {
+    return "Yes";
+  }
+  if (value === false) {
+    return "No";
+  }
+  return undefined;
+};
+
+const formatDateValue = (value?: Date) => {
+  if (!value) return undefined;
+  try {
+    return format(new Date(value), "PPP");
+  } catch {
+    return undefined;
+  }
+};
+
 export default async function ContactDetailPage({
   params,
 }: ContactDetailPageProps) {
   const { teamId, id } = await params;
-  const contact = await getContactById(id, teamId);
+  const session = await auth();
+  const userId = session?.user?.userId;
+  const contact = await getContactById(id, teamId, userId);
 
   if (!contact) {
     notFound();
@@ -138,6 +194,21 @@ export default async function ContactDetailPage({
                     </div>
 
                     {(() => {
+                      const formattedGender = formatGender(contact.gender);
+                      const formattedGenderPreference = formatPreference(
+                        contact.genderRequestPreference,
+                      );
+                      const formattedBipoc = formatBipoc(contact.isBipoc);
+                      const formattedRacismPreference = formatPreference(
+                        contact.racismRequestPreference,
+                      );
+                      const formattedOtherMargins = contact.otherMargins?.trim();
+                      const formattedOnboardingDate = formatDateValue(
+                        contact.onboardingDate,
+                      );
+                      const formattedBreakUntil = formatDateValue(
+                        contact.breakUntil,
+                      );
                       const infoItems = [
                         contact.email && {
                           icon: Mail,
@@ -162,6 +233,41 @@ export default async function ContactDetailPage({
                           icon: Type,
                           label: "Pronouns",
                           value: contact.pronouns,
+                        },
+                        formattedGender && {
+                          icon: Users,
+                          label: "Gender",
+                          value: formattedGender,
+                        },
+                        formattedGenderPreference && {
+                          icon: Hash,
+                          label: "Request because of gender",
+                          value: formattedGenderPreference,
+                        },
+                        formattedBipoc && {
+                          icon: Users,
+                          label: "BIPoC",
+                          value: formattedBipoc,
+                        },
+                        formattedRacismPreference && {
+                          icon: Hash,
+                          label: "Request because of racism experience",
+                          value: formattedRacismPreference,
+                        },
+                        formattedOtherMargins && {
+                          icon: Type,
+                          label: "Other margins",
+                          value: formattedOtherMargins,
+                        },
+                        formattedOnboardingDate && {
+                          icon: Calendar,
+                          label: "Onboarding date",
+                          value: formattedOnboardingDate,
+                        },
+                        formattedBreakUntil && {
+                          icon: Calendar,
+                          label: "Break until",
+                          value: formattedBreakUntil,
                         },
                         contact.city && {
                           icon: MapPin,
