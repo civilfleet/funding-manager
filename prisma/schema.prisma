@@ -293,6 +293,7 @@ model Contact {
   createdAt         DateTime             @default(now()) @db.Timestamptz(6)
   updatedAt         DateTime             @updatedAt @db.Timestamptz(6)
   attributes        ContactAttribute[]
+  socialLinks       ContactSocialLink[]
   events            EventContact[]
   registrations     EventRegistration[]
   engagements       ContactEngagement[]
@@ -302,6 +303,19 @@ model Contact {
   @@index([groupId])
   @@index([teamId, groupId])
   @@unique([teamId, email])
+}
+
+model ContactSocialLink {
+  id        String   @id @default(uuid()) @unique
+  contactId String
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  platform  String   @db.VarChar(50)
+  handle    String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@unique([contactId, platform])
+  @@index([contactId])
 }
 
 enum ContactListType {

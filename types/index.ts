@@ -149,12 +149,18 @@ export interface Contact {
   email?: string;
   phone?: string;
   website?: string;
+  socialLinks: ContactSocialLink[];
   groupId?: string;
   group?: Group;
   profileAttributes: ContactProfileAttribute[];
   events?: ContactEvent[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface ContactSocialLink {
+  platform: string;
+  handle: string;
 }
 
 export type ContactFilter =

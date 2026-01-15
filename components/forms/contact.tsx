@@ -96,6 +96,15 @@ const bipocOptions = [
   { label: "No", value: "no" },
 ];
 
+const socialPlatformOptions = [
+  { label: "Instagram", value: "instagram" },
+  { label: "Facebook", value: "facebook" },
+  { label: "X (Twitter)", value: "x" },
+  { label: "LinkedIn", value: "linkedin" },
+  { label: "TikTok", value: "tiktok" },
+  { label: "YouTube", value: "youtube" },
+];
+
 export default function ContactForm({ teamId, contact }: ContactFormProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -139,6 +148,10 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           email: contact?.email ?? "",
           phone: contact?.phone ?? "",
           website: contact?.website ?? "",
+          socialLinks: contact?.socialLinks?.map((link) => ({
+            platform: link.platform,
+            handle: link.handle,
+          })) ?? [],
           groupId: contact?.groupId ?? undefined,
           profileAttributes: (contact?.profileAttributes ??
             []) as CreateContactFormValues["profileAttributes"],
@@ -158,6 +171,7 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           email: "",
           phone: "",
           website: "",
+          socialLinks: [],
           groupId: undefined,
           profileAttributes: [] as CreateContactFormValues["profileAttributes"],
         },
@@ -174,6 +188,14 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: "profileAttributes",
+  });
+  const {
+    fields: socialFields,
+    append: appendSocial,
+    remove: removeSocial,
+  } = useFieldArray({
+    control,
+    name: "socialLinks",
   });
 
   const attributeTypes = useMemo(
@@ -246,6 +268,13 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
       type: ContactAttributeType.STRING,
       value: "",
     } as CreateContactFormValues["profileAttributes"][number]);
+  };
+
+  const addSocialLink = () => {
+    appendSocial({
+      platform: "",
+      handle: "",
+    } as CreateContactFormValues["socialLinks"][number]);
   };
 
   const onSubmit = async (
@@ -630,6 +659,101 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                       </FormItem>
                     )}
                   />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-semibold">Social profiles</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Add social media handles or profile URLs.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addSocialLink}
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" /> Add profile
+                    </Button>
+                  </div>
+
+                  {socialFields.length === 0 ? (
+                    <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                      No social profiles added yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {socialFields.map((field, index) => (
+                        <div
+                          key={field.id}
+                          className="rounded-md border p-4 space-y-4"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="grid flex-1 gap-3 sm:grid-cols-2">
+                              <FormField
+                                control={typedControl}
+                                name={`socialLinks.${index}.platform`}
+                                render={({ field }) => {
+                                  const currentValue =
+                                    typeof field.value === "string"
+                                      ? field.value
+                                      : "";
+                                  return (
+                                    <FormItem>
+                                      <FormLabel>Platform</FormLabel>
+                                      <FormControl>
+                                        <Combobox
+                                          value={currentValue}
+                                          onChange={(value) => {
+                                            field.onChange(value);
+                                          }}
+                                          onBlur={field.onBlur}
+                                          placeholder="Select platform"
+                                          searchPlaceholder="Search platform..."
+                                          emptyStateText="No platforms found."
+                                          options={socialPlatformOptions}
+                                          allowCustomValue
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  );
+                                }}
+                              />
+                              <FormField
+                                control={typedControl}
+                                name={`socialLinks.${index}.handle`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Handle or URL</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder="@username or https://..."
+                                        {...field}
+                                        value={field.value ?? ""}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeSocial(index)}
+                              aria-label="Remove social profile"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 

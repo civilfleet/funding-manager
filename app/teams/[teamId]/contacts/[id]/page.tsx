@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import {
+  AtSign,
   Calendar,
   CalendarDays,
   Globe,
@@ -88,6 +89,49 @@ const getAttributeIcon = (type: ContactAttributeType) => {
       return MapPin;
     default:
       return Type;
+  }
+};
+
+const SOCIAL_PLATFORM_LABELS: Record<string, string> = {
+  instagram: "Instagram",
+  facebook: "Facebook",
+  x: "X",
+  twitter: "X",
+  linkedin: "LinkedIn",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+};
+
+const formatSocialPlatform = (platform: string) =>
+  SOCIAL_PLATFORM_LABELS[platform.toLowerCase()] ?? platform;
+
+const buildSocialHref = (platform: string, handle: string) => {
+  const trimmed = handle.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  const normalizedHandle = trimmed.replace(/^@/, "");
+  const key = platform.toLowerCase();
+  switch (key) {
+    case "instagram":
+      return `https://instagram.com/${normalizedHandle}`;
+    case "facebook":
+      return `https://facebook.com/${normalizedHandle}`;
+    case "x":
+    case "twitter":
+      return `https://x.com/${normalizedHandle}`;
+    case "linkedin":
+      return `https://www.linkedin.com/in/${normalizedHandle}`;
+    case "tiktok":
+      return `https://www.tiktok.com/@${normalizedHandle}`;
+    case "youtube":
+      return `https://www.youtube.com/${normalizedHandle}`;
+    default:
+      return undefined;
   }
 };
 
@@ -209,6 +253,17 @@ export default async function ContactDetailPage({
                       const formattedBreakUntil = formatDateValue(
                         contact.breakUntil,
                       );
+                      const socialItems = contact.socialLinks.map((link) => {
+                        const label = formatSocialPlatform(link.platform);
+                        const href = buildSocialHref(link.platform, link.handle);
+                        return {
+                          icon: AtSign,
+                          label,
+                          value: link.handle,
+                          href,
+                          newTab: Boolean(href),
+                        };
+                      });
                       const infoItems = [
                         contact.email && {
                           icon: Mail,
@@ -274,6 +329,7 @@ export default async function ContactDetailPage({
                           label: "City",
                           value: contact.city,
                         },
+                        ...socialItems,
                       ].filter(Boolean) as Array<{
                         icon: typeof Mail;
                         label: string;

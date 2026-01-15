@@ -11,6 +11,7 @@ import {
   ContactRequestPreference,
   type ContactFilter,
   type ContactLocationValue,
+  type ContactSocialLink,
   type ContactProfileAttribute,
   type Contact as ContactType,
   Roles,
@@ -43,6 +44,7 @@ type CreateContactInput = {
   email?: string;
   phone?: string;
   website?: string;
+  socialLinks?: ContactSocialLink[];
   groupId?: string;
   profileAttributes?: ContactProfileAttribute[];
 };
@@ -63,6 +65,7 @@ type UpdateContactInput = {
   email?: string;
   phone?: string;
   website?: string;
+  socialLinks?: ContactSocialLink[];
   groupId?: string;
   profileAttributes?: ContactProfileAttribute[];
 };
@@ -81,6 +84,7 @@ type NormalizedAttribute = {
 type ContactWithAttributes = Prisma.ContactGetPayload<{
   include: {
     attributes: true;
+    socialLinks: true;
     group: {
       include: {
         modulePermissions: true;
@@ -307,6 +311,32 @@ const normalizeAttributes = (
   return normalized;
 };
 
+const normalizeSocialLinks = (links: ContactSocialLink[] = []) => {
+  const seenPlatforms = new Set<string>();
+  const normalized: ContactSocialLink[] = [];
+
+  links.forEach((link) => {
+    const platform = link.platform.trim();
+    const handle = link.handle.trim();
+    if (!platform || !handle) {
+      return;
+    }
+
+    const key = platform.toLowerCase();
+    if (seenPlatforms.has(key)) {
+      return;
+    }
+    seenPlatforms.add(key);
+
+    normalized.push({
+      platform: key,
+      handle,
+    });
+  });
+
+  return normalized;
+};
+
 const toProfileAttribute = (
   attribute: ContactWithAttributes["attributes"][number],
 ): ContactProfileAttribute | null => {
@@ -393,6 +423,10 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
   email: contact.email ?? undefined,
   phone: contact.phone ?? undefined,
   website: contact.website ?? undefined,
+  socialLinks: contact.socialLinks.map((link) => ({
+    platform: link.platform,
+    handle: link.handle,
+  })),
   groupId: contact.groupId ?? undefined,
   group: contact.group ? mapGroup(contact.group) : undefined,
   profileAttributes: contact.attributes
@@ -924,6 +958,7 @@ const getTeamContacts = async (
     where,
     include: {
       attributes: true,
+      socialLinks: true,
       group: {
         include: {
           modulePermissions: true,
@@ -969,6 +1004,7 @@ const getContactById = async (
     },
     include: {
       attributes: true,
+      socialLinks: true,
       group: {
         include: {
           modulePermissions: true,
@@ -1030,10 +1066,12 @@ const createContact = async (
     email,
     phone,
     website,
+    socialLinks,
     groupId,
     profileAttributes,
   } = sanitizedInput;
   const normalizedAttributes = normalizeAttributes(profileAttributes);
+  const normalizedSocialLinks = normalizeSocialLinks(socialLinks);
   const trimmedName = name?.trim() ?? "";
   if (!trimmedName) {
     throw new Error("Name is required");
@@ -1113,6 +1151,16 @@ const createContact = async (
       }
     }
 
+    if (normalizedSocialLinks.length > 0) {
+      await tx.contactSocialLink.createMany({
+        data: normalizedSocialLinks.map((link) => ({
+          contactId: contact.id,
+          platform: link.platform,
+          handle: link.handle,
+        })),
+      });
+    }
+
     // Log contact creation
     await logContactCreation(contact.id, userId, userName, tx, {
       source: "manual",
@@ -1123,6 +1171,7 @@ const createContact = async (
       where: { id: contact.id },
       include: {
         attributes: true,
+        socialLinks: true,
         group: {
           include: {
             modulePermissions: true,
@@ -1175,6 +1224,7 @@ const updateContact = async (
     website,
     groupId,
     profileAttributes,
+    socialLinks,
   } = sanitizedInput;
   const normalizedName = typeof name === "string" ? name.trim() : undefined;
   const pronounsProvided = Object.hasOwn(
@@ -1281,6 +1331,10 @@ const updateContact = async (
     const trimmed = website.trim();
     return trimmed === "" ? null : trimmed;
   })();
+  const socialLinksProvided = Object.hasOwn(input, "socialLinks");
+  const normalizedSocialLinks = socialLinksProvided
+    ? normalizeSocialLinks(socialLinks)
+    : [];
 
   return prisma.$transaction(async (tx) => {
     // Get the existing contact
@@ -1291,6 +1345,7 @@ const updateContact = async (
       },
       include: {
         attributes: true,
+        socialLinks: true,
       },
     });
 
@@ -1508,6 +1563,68 @@ const updateContact = async (
       updates.website = normalizedWebsite;
     }
 
+    if (socialLinksProvided) {
+      const existingLinks = new Map(
+        existing.socialLinks.map((link) => [link.platform, link]),
+      );
+      const nextLinks = new Map(
+        normalizedSocialLinks.map((link) => [link.platform, link]),
+      );
+
+      for (const [platform, link] of existingLinks) {
+        if (!nextLinks.has(platform)) {
+          await logFieldUpdate(
+            contactId,
+            `socialLink.${platform}`,
+            link.handle,
+            null,
+            userId,
+            userName,
+            tx,
+          );
+          await tx.contactSocialLink.delete({
+            where: { id: link.id },
+          });
+        }
+      }
+
+      for (const [platform, link] of nextLinks) {
+        const existingLink = existingLinks.get(platform);
+        if (!existingLink) {
+          await logFieldUpdate(
+            contactId,
+            `socialLink.${platform}`,
+            null,
+            link.handle,
+            userId,
+            userName,
+            tx,
+          );
+          await tx.contactSocialLink.create({
+            data: {
+              contactId,
+              platform: link.platform,
+              handle: link.handle,
+            },
+          });
+        } else if (existingLink.handle !== link.handle) {
+          await logFieldUpdate(
+            contactId,
+            `socialLink.${platform}`,
+            existingLink.handle,
+            link.handle,
+            userId,
+            userName,
+            tx,
+          );
+          await tx.contactSocialLink.update({
+            where: { id: existingLink.id },
+            data: { handle: link.handle },
+          });
+        }
+      }
+    }
+
     if (groupId !== undefined && groupId !== existing.groupId) {
       await logFieldUpdate(
         contactId,
@@ -1638,6 +1755,7 @@ const updateContact = async (
       where: { id: contactId },
       include: {
         attributes: true,
+        socialLinks: true,
         group: {
           include: {
             modulePermissions: true,

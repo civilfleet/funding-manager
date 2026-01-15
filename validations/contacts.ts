@@ -100,6 +100,11 @@ const contactAttributeSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
+const contactSocialLinkSchema = z.object({
+  platform: z.string().trim().min(1, "Platform is required").max(50),
+  handle: z.string().trim().min(1, "Handle is required").max(255),
+});
+
 const contactFieldFilterSchema = z
   .object({
     type: z.literal("contactField"),
@@ -172,6 +177,7 @@ export const createContactSchema = z.object({
   email: requiredEmail,
   phone: optionalText(z.string()),
   website: optionalWebsite,
+  socialLinks: z.array(contactSocialLinkSchema).default([]),
   profileAttributes: z.array(contactAttributeSchema).default([]),
   groupId: z.preprocess(
     preprocessEmptyString,
@@ -205,6 +211,7 @@ export const updateContactSchema = z.object({
   email: optionalEmail,
   phone: optionalText(z.string()),
   website: optionalWebsite,
+  socialLinks: z.array(contactSocialLinkSchema).optional(),
   profileAttributes: z.array(contactAttributeSchema).optional(),
   groupId: z.preprocess(
     preprocessEmptyString,
