@@ -9,11 +9,13 @@ import {
   Clock,
   MessageSquare,
   Plus,
+  StickyNote,
 } from "lucide-react";
 import { useState } from "react";
 import useSWR from "swr";
 import ContactEngagementForm from "@/components/forms/contact-engagement";
 import { Loader } from "@/components/helper/loader";
+import { CONTACT_SUBMODULE_LABELS } from "@/constants/contact-submodules";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,6 +68,8 @@ const getSourceColor = (source: EngagementSource) => {
       return "bg-pink-100 text-pink-800 border-pink-200";
     case EngagementSource.TODO:
       return "bg-amber-100 text-amber-800 border-amber-200";
+    case EngagementSource.NOTE:
+      return "bg-emerald-100 text-emerald-800 border-emerald-200";
     default:
       return "bg-gray-100 text-gray-800 border-gray-200";
   }
@@ -88,6 +92,8 @@ const getSourceLabel = (
       return "Event";
     case EngagementSource.TODO:
       return "Todo";
+    case EngagementSource.NOTE:
+      return "Note";
     case EngagementSource.OTHER:
       return "Other";
     default:
@@ -283,6 +289,10 @@ export default function ContactEngagementHistory({
                             );
                           })()}
                         </div>
+                    ) : engagement.source === EngagementSource.NOTE ? (
+                      <div className="rounded-full p-2 bg-emerald-100">
+                        <StickyNote className="h-4 w-4 text-emerald-600" />
+                      </div>
                     ) : (
                       <div
                         className={`rounded-full p-2 ${
@@ -322,7 +332,19 @@ export default function ContactEngagementHistory({
                               {getTodoStatusLabel(engagement.todoStatus)}
                             </Badge>
                           )}
-                        {engagement.source !== EngagementSource.TODO && (
+                        {engagement.source === EngagementSource.NOTE &&
+                          engagement.restrictedToSubmodule && (
+                            <Badge variant="outline" className="text-xs">
+                              Restricted:{" "}
+                              {
+                                CONTACT_SUBMODULE_LABELS[
+                                  engagement.restrictedToSubmodule
+                                ]
+                              }
+                            </Badge>
+                          )}
+                        {engagement.source !== EngagementSource.TODO &&
+                          engagement.source !== EngagementSource.NOTE && (
                           <Badge
                             variant={
                               engagement.direction ===
@@ -340,94 +362,128 @@ export default function ContactEngagementHistory({
                         )}
                       </div>
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {format(new Date(engagement.engagedAt), "PPp")}
+                        {format(
+                          new Date(
+                            engagement.source === EngagementSource.NOTE
+                              ? engagement.createdAt
+                              : engagement.engagedAt,
+                          ),
+                          "PPp",
+                        )}
                       </span>
                     </div>
 
-                    {(() => {
-                      const parsed = parseEngagementContent(engagement.message);
-                      const metric =
-                        parsed.details.find(
-                          (d) => d.label.toLowerCase() === "metric",
-                        )?.value ?? undefined;
-                      return (
-                        <div className="space-y-3">
-                          <div className="rounded-lg border shadow-sm bg-white">
-                            <div className="px-4 py-3 space-y-1">
-                              <h4 className="text-sm font-semibold">
-                                Subject: {engagement.subject || "Email"}
-                              </h4>
-                              <p className="text-xs text-muted-foreground">
-                                To: {parsed.details.find((d) => d.label.toLowerCase().includes("recipient"))?.value || "Unknown"}
-                              </p>
-                              {metric && (
-                                <div className="flex items-center gap-2 pt-1">
-                                  <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                    Event
-                                  </span>
-                                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 border border-blue-100">
-                                    {metric}
-                                  </span>
+                    {engagement.source === EngagementSource.NOTE ? (
+                      <div className="rounded-lg border bg-emerald-50/40 px-4 py-4 space-y-2">
+                        <h4 className="text-sm font-semibold">
+                          {engagement.subject || "Internal note"}
+                        </h4>
+                        <div className="rounded-md border bg-background px-3 py-3">
+                          <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                            {engagement.message}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      (() => {
+                        const parsed = parseEngagementContent(
+                          engagement.message,
+                        );
+                        const metric =
+                          parsed.details.find(
+                            (d) => d.label.toLowerCase() === "metric",
+                          )?.value ?? undefined;
+                        return (
+                          <div className="space-y-3">
+                            <div className="rounded-lg border shadow-sm bg-white">
+                              <div className="px-4 py-3 space-y-1">
+                                <h4 className="text-sm font-semibold">
+                                  Subject: {engagement.subject || "Email"}
+                                </h4>
+                                <p className="text-xs text-muted-foreground">
+                                  To:{" "}
+                                  {parsed.details.find((d) =>
+                                    d.label.toLowerCase().includes("recipient"),
+                                  )?.value || "Unknown"}
+                                </p>
+                                {metric && (
+                                  <div className="flex items-center gap-2 pt-1">
+                                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                      Event
+                                    </span>
+                                    <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 border border-blue-100">
+                                      {metric}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <UiSeparator />
+
+                              {parsed.body && (
+                                <div className="bg-muted/40 px-4 py-4">
+                                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                                    Message
+                                  </p>
+                                  <div className="rounded-md border bg-background px-3 py-3">
+                                    <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                                      {parsed.body}
+                                    </p>
+                                  </div>
                                 </div>
                               )}
+
+                              {(() => {
+                                const combinedAdditional = [
+                                  ...parsed.details.filter(
+                                    (d) =>
+                                      !d.label
+                                        .toLowerCase()
+                                        .includes("recipient") &&
+                                      d.label.toLowerCase() !== "subject",
+                                  ),
+                                  ...parsed.additional,
+                                ];
+                                if (combinedAdditional.length === 0)
+                                  return null;
+                                return (
+                                  <>
+                                    <UiSeparator />
+                                    <div className="px-4 py-3 space-y-3">
+                                      <Collapsible>
+                                        <CollapsibleTrigger asChild>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 px-3"
+                                          >
+                                            Show details
+                                          </Button>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent className="mt-2 rounded-md border bg-muted/20 px-3 py-2 space-y-2">
+                                          {combinedAdditional.map((item) => (
+                                            <div
+                                              key={`${engagement.id}-add-${item.label}`}
+                                            >
+                                              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                                {item.label}
+                                              </p>
+                                              <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                                                {item.value}
+                                              </p>
+                                            </div>
+                                          ))}
+                                        </CollapsibleContent>
+                                      </Collapsible>
+                                    </div>
+                                  </>
+                                );
+                              })()}
                             </div>
-
-                            <UiSeparator />
-
-                            {parsed.body && (
-                              <div className="bg-muted/40 px-4 py-4">
-                                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                                  Message
-                                </p>
-                                <div className="rounded-md border bg-background px-3 py-3">
-                                  <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                                    {parsed.body}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-
-                            {(() => {
-                              const combinedAdditional = [
-                                ...parsed.details.filter(
-                                  (d) =>
-                                    !d.label.toLowerCase().includes("recipient") &&
-                                    d.label.toLowerCase() !== "subject",
-                                ),
-                                ...parsed.additional,
-                              ];
-                              if (combinedAdditional.length === 0) return null;
-                              return (
-                                <>
-                                  <UiSeparator />
-                                  <div className="px-4 py-3 space-y-3">
-                                    <Collapsible>
-                                      <CollapsibleTrigger asChild>
-                                        <Button variant="outline" size="sm" className="h-8 px-3">
-                                          Show details
-                                        </Button>
-                                      </CollapsibleTrigger>
-                                      <CollapsibleContent className="mt-2 rounded-md border bg-muted/20 px-3 py-2 space-y-2">
-                                        {combinedAdditional.map((item) => (
-                                          <div key={`${engagement.id}-add-${item.label}`}>
-                                            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                              {item.label}
-                                            </p>
-                                            <p className="text-sm text-foreground whitespace-pre-wrap break-words">
-                                              {item.value}
-                                            </p>
-                                          </div>
-                                        ))}
-                                      </CollapsibleContent>
-                                    </Collapsible>
-                                  </div>
-                                </>
-                              );
-                            })()}
                           </div>
-                        </div>
-                      );
-                    })()}
+                        );
+                      })()
+                    )}
 
                     {engagement.source === EngagementSource.TODO && (
                       <div className="mt-2 flex flex-col gap-1">
@@ -446,7 +502,8 @@ export default function ContactEngagementHistory({
 
                     {engagement.userName && (
                       <p className="text-xs text-muted-foreground mt-2">
-                        {engagement.source === EngagementSource.TODO
+                        {engagement.source === EngagementSource.TODO ||
+                        engagement.source === EngagementSource.NOTE
                           ? "Created by"
                           : "By"}
                         : {engagement.userName}

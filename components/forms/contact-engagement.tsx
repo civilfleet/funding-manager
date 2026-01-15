@@ -3,11 +3,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
 
+import {
+  CONTACT_SUBMODULE_LABELS,
+  CONTACT_SUBMODULES,
+  type ContactSubmodule,
+} from "@/constants/contact-submodules";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -38,13 +43,14 @@ const engagementSchema = z.object({
     EngagementDirection.OUTBOUND,
   ]),
   source: z.enum([
-    EngagementSource.EMAIL,
-    EngagementSource.PHONE,
-    EngagementSource.SMS,
-    EngagementSource.MEETING,
-    EngagementSource.EVENT,
-    EngagementSource.TODO,
-    EngagementSource.OTHER,
+  EngagementSource.EMAIL,
+  EngagementSource.PHONE,
+  EngagementSource.SMS,
+  EngagementSource.MEETING,
+  EngagementSource.EVENT,
+  EngagementSource.TODO,
+  EngagementSource.NOTE,
+  EngagementSource.OTHER,
   ]),
   subject: z.string().optional(),
   message: z.string().min(1, "Message is required"),
@@ -52,6 +58,7 @@ const engagementSchema = z.object({
     message: "Invalid date format",
   }),
   assignedToUserId: z.string().optional(),
+  restrictedToSubmodule: z.enum(CONTACT_SUBMODULES).optional(),
   todoStatus: z
     .enum([
       TodoStatus.PENDING,
@@ -91,6 +98,12 @@ export default function ContactEngagementForm({
 
   const { data: usersData } = useSWR(`/api/teams/${teamId}/users`, fetcher);
   const teamUsers = usersData?.data || [];
+  const { data: submodulesData } = useSWR(
+    `/api/contacts/submodules?teamId=${teamId}`,
+    fetcher,
+  );
+  const availableSubmodules = (submodulesData?.data ||
+    []) as ContactSubmodule[];
 
   const form = useForm<EngagementFormValues>({
     resolver: zodResolver(engagementSchema),
@@ -106,6 +119,14 @@ export default function ContactEngagementForm({
 
   const selectedSource = form.watch("source");
   const isTodo = selectedSource === EngagementSource.TODO;
+  const isNote = selectedSource === EngagementSource.NOTE;
+  const showEngagedAt = !isTodo && !isNote;
+
+  useEffect(() => {
+    if (isNote) {
+      form.setValue("direction", EngagementDirection.OUTBOUND);
+    }
+  }, [form, isNote]);
 
   const onSubmit = async (values: EngagementFormValues) => {
     try {
@@ -126,6 +147,10 @@ export default function ContactEngagementForm({
           contactId,
           teamId,
           ...values,
+          engagedAt: isNote ? formatDateForInput(new Date()) : values.engagedAt,
+          restrictedToSubmodule: isNote
+            ? values.restrictedToSubmodule
+            : undefined,
           userId: session?.user?.id,
           userName: session?.user?.name || session?.user?.email,
           assignedToUserName: assignedUser?.name || assignedUser?.email,
@@ -138,10 +163,16 @@ export default function ContactEngagementForm({
       }
 
       toast({
-        title: isTodo ? "Todo created" : "Engagement recorded",
+        title: isTodo
+          ? "Todo created"
+          : isNote
+            ? "Note added"
+            : "Engagement recorded",
         description: isTodo
           ? "Internal todo has been successfully created."
-          : "Contact engagement has been successfully recorded.",
+          : isNote
+            ? "Contact note has been successfully recorded."
+            : "Contact engagement has been successfully recorded.",
       });
 
       form.reset({
@@ -153,6 +184,7 @@ export default function ContactEngagementForm({
         todoStatus: TodoStatus.PENDING,
         assignedToUserId: undefined,
         dueDate: undefined,
+        restrictedToSubmodule: undefined,
       });
 
       if (onSuccess) {
@@ -176,31 +208,33 @@ export default function ContactEngagementForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="direction"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Direction *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select direction" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value={EngagementDirection.OUTBOUND}>
-                      Outbound (Sent to contact)
-                    </SelectItem>
-                    <SelectItem value={EngagementDirection.INBOUND}>
-                      Inbound (Received from contact)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {!isNote && (
+            <FormField
+              control={form.control}
+              name="direction"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Direction *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select direction" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value={EngagementDirection.OUTBOUND}>
+                        Outbound (Sent to contact)
+                      </SelectItem>
+                      <SelectItem value={EngagementDirection.INBOUND}>
+                        Inbound (Received from contact)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}
@@ -231,6 +265,9 @@ export default function ContactEngagementForm({
                     <SelectItem value={EngagementSource.TODO}>
                       Internal Todo
                     </SelectItem>
+                    <SelectItem value={EngagementSource.NOTE}>
+                      Internal Note
+                    </SelectItem>
                     <SelectItem value={EngagementSource.OTHER}>
                       Other
                     </SelectItem>
@@ -242,7 +279,7 @@ export default function ContactEngagementForm({
           />
         </div>
 
-        {!isTodo && (
+        {showEngagedAt && (
           <FormField
             control={form.control}
             name="engagedAt"
@@ -350,17 +387,58 @@ export default function ContactEngagementForm({
           />
         )}
 
+        {isNote && (
+          <FormField
+            control={form.control}
+            name="restrictedToSubmodule"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Visibility</FormLabel>
+                <Select
+                  onValueChange={(value) =>
+                    field.onChange(value === "all" ? undefined : value)
+                  }
+                  value={field.value || "all"}
+                  disabled={availableSubmodules.length === 0}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select visibility" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="all">Visible to all users</SelectItem>
+                    {availableSubmodules.map((submodule) => (
+                      <SelectItem key={submodule} value={submodule}>
+                        {CONTACT_SUBMODULE_LABELS[submodule]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  {availableSubmodules.length === 0
+                    ? "No submodule access available for restrictions."
+                    : "Optionally restrict this note to a contact submodule."}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         <FormField
           control={form.control}
           name="subject"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Subject</FormLabel>
+              <FormLabel>{isNote ? "Title" : "Subject"}</FormLabel>
               <FormControl>
                 <Input
                   placeholder={
                     isTodo
                       ? "e.g., Follow up with contact"
+                      : isNote
+                        ? "e.g., Quick note about the contact"
                       : "e.g., Follow-up on funding request"
                   }
                   {...field}
@@ -369,6 +447,8 @@ export default function ContactEngagementForm({
               <FormDescription>
                 {isTodo
                   ? "Optional title for the todo"
+                  : isNote
+                    ? "Optional title for this note"
                   : "Optional subject or title for the engagement"}
               </FormDescription>
               <FormMessage />
@@ -381,12 +461,16 @@ export default function ContactEngagementForm({
           name="message"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{isTodo ? "Description" : "Message"} *</FormLabel>
+              <FormLabel>
+                {isTodo ? "Description" : isNote ? "Note" : "Message"} *
+              </FormLabel>
               <FormControl>
                 <Textarea
                   placeholder={
                     isTodo
                       ? "Describe what needs to be done..."
+                      : isNote
+                        ? "Write your internal note..."
                       : "Enter details about this engagement..."
                   }
                   className="min-h-24"
@@ -396,6 +480,8 @@ export default function ContactEngagementForm({
               <FormDescription>
                 {isTodo
                   ? "Describe the todo task and any relevant details"
+                  : isNote
+                    ? "This note is internal and visible based on the selected visibility."
                   : "Describe the content or outcome of this engagement"}
               </FormDescription>
               <FormMessage />
@@ -416,10 +502,16 @@ export default function ContactEngagementForm({
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isTodo ? "Creating..." : "Recording..."}
+                {isTodo
+                  ? "Creating..."
+                  : isNote
+                    ? "Saving..."
+                    : "Recording..."}
               </>
             ) : isTodo ? (
               "Create Todo"
+            ) : isNote ? (
+              "Add Note"
             ) : (
               "Record Engagement"
             )}

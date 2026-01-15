@@ -602,6 +602,7 @@ enum EngagementSource {
   MEETING
   EVENT
   TODO
+  NOTE
   OTHER
 }
 
@@ -610,6 +611,12 @@ enum TodoStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+enum ContactSubmodule {
+  SUPERVISION
+  EVENTS
+  SHOP
 }
 
 model ContactEngagement {
@@ -625,6 +632,7 @@ model ContactEngagement {
   userName    String?              @db.VarChar(255) // Store name for display even if user deleted
   externalId  String?              @db.VarChar(255)
   externalSource String?           @db.VarChar(255)
+  restrictedToSubmodule ContactSubmodule?
 
   // Todo-specific fields
   assignedToUserId String?          // User assigned to complete the todo

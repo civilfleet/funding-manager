@@ -222,6 +222,7 @@ export enum EngagementSource {
   MEETING = "MEETING",
   EVENT = "EVENT",
   TODO = "TODO",
+  NOTE = "NOTE",
   OTHER = "OTHER",
 }
 
@@ -240,6 +241,7 @@ export interface ContactEngagement {
   source: EngagementSource;
   externalId?: string;
   externalSource?: string;
+  restrictedToSubmodule?: ContactSubmodule;
   subject?: string;
   message: string;
   userId?: string;

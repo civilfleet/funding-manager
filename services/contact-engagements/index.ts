@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import type { ContactSubmodule } from "@/constants/contact-submodules";
 import type {
   ContactEngagement,
   EngagementDirection,
@@ -23,6 +24,7 @@ type CreateEngagementInput = {
   engagedAt: Date;
   externalId?: string;
   externalSource?: string;
+  restrictedToSubmodule?: ContactSubmodule;
 };
 
 type UpdateEngagementInput = {
@@ -34,6 +36,7 @@ type UpdateEngagementInput = {
   assignedToUserName?: string;
   todoStatus?: TodoStatus;
   dueDate?: Date;
+  restrictedToSubmodule?: ContactSubmodule | null;
 };
 
 type ContactEngagementWithDefaults = Prisma.ContactEngagementGetPayload<
@@ -54,6 +57,7 @@ const mapEngagement = (
   userName: engagement.userName ?? undefined,
   externalId: engagement.externalId ?? undefined,
   externalSource: engagement.externalSource ?? undefined,
+  restrictedToSubmodule: engagement.restrictedToSubmodule ?? undefined,
   assignedToUserId: engagement.assignedToUserId ?? undefined,
   assignedToUserName: engagement.assignedToUserName ?? undefined,
   todoStatus: engagement.todoStatus
@@ -65,11 +69,26 @@ const mapEngagement = (
   updatedAt: engagement.updatedAt,
 });
 
-const getContactEngagements = async (contactId: string, teamId: string) => {
+const getContactEngagements = async (
+  contactId: string,
+  teamId: string,
+  allowedSubmodules?: ContactSubmodule[],
+) => {
+  const submoduleFilters: Prisma.ContactEngagementWhereInput[] = [
+    { restrictedToSubmodule: null },
+  ];
+
+  if (allowedSubmodules && allowedSubmodules.length > 0) {
+    submoduleFilters.push({
+      restrictedToSubmodule: { in: allowedSubmodules },
+    });
+  }
+
   const engagements = await prisma.contactEngagement.findMany({
     where: {
       contactId,
       teamId,
+      OR: submoduleFilters,
     },
     orderBy: {
       engagedAt: "desc",
@@ -92,6 +111,7 @@ const createEngagement = async (input: CreateEngagementInput) => {
       userName: input.userName,
       externalId: input.externalId,
       externalSource: input.externalSource,
+      restrictedToSubmodule: input.restrictedToSubmodule,
       assignedToUserId: input.assignedToUserId,
       assignedToUserName: input.assignedToUserName,
       todoStatus: input.todoStatus,
