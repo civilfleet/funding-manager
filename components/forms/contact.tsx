@@ -480,7 +480,7 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           )}
           <CardContent className="space-y-6">
             <Tabs defaultValue="general" className="w-full">
-              <TabsList className="mb-6 flex flex-wrap">
+              <TabsList className="mb-6 mt-4 flex flex-wrap">
                 <TabsTrigger value="general">General</TabsTrigger>
                 {canAccessSubmodule("SUPERVISION") && (
                   <TabsTrigger value="supervision">Supervision</TabsTrigger>
