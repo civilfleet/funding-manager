@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import type { Session } from "next-auth";
 import { auth } from "@/auth";
 import {
   CONTACT_SUBMODULE_FIELDS,
@@ -15,9 +16,7 @@ import {
 } from "@/services/contact-engagements";
 import { EngagementDirection, EngagementSource, Roles, TodoStatus } from "@/types";
 
-const resolveUserId = async (
-  session: Awaited<ReturnType<typeof auth>>,
-) => {
+const resolveUserId = async (session: Session | null) => {
   let userId = session?.user?.userId ?? undefined;
 
   if (!userId && session?.user?.email) {
