@@ -37,6 +37,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
+  CONTACT_SUBMODULES,
+  type ContactSubmodule,
+} from "@/constants/contact-submodules";
+import {
   ContactAttributeType,
   ContactGender,
   ContactRequestPreference,
@@ -103,8 +107,15 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
     teamId ? `/api/contacts/attribute-keys?teamId=${teamId}` : null,
     fetcher,
   );
+  const { data: submodulesData } = useSWR(
+    teamId ? `/api/contacts/submodules?teamId=${teamId}` : null,
+    fetcher,
+  );
 
   const groups: Group[] = groupsData?.data || [];
+  const allowedSubmodules: ContactSubmodule[] = submodulesData?.data || [];
+  const canAccessSubmodule = (submodule: ContactSubmodule) =>
+    allowedSubmodules.includes(submodule);
 
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(
@@ -471,9 +482,15 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
             <Tabs defaultValue="general" className="w-full">
               <TabsList className="mb-6 flex flex-wrap">
                 <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="supervision">Supervision</TabsTrigger>
-                <TabsTrigger value="events">Events</TabsTrigger>
-                <TabsTrigger value="shop">Shop</TabsTrigger>
+                {canAccessSubmodule("SUPERVISION") && (
+                  <TabsTrigger value="supervision">Supervision</TabsTrigger>
+                )}
+                {canAccessSubmodule("EVENTS") && (
+                  <TabsTrigger value="events">Events</TabsTrigger>
+                )}
+                {canAccessSubmodule("SHOP") && (
+                  <TabsTrigger value="shop">Shop</TabsTrigger>
+                )}
                 <TabsTrigger value="attributes">Attributes</TabsTrigger>
               </TabsList>
 
@@ -616,220 +633,240 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                 </div>
               </TabsContent>
 
-              <TabsContent value="supervision" className="space-y-6">
-                <div>
-                  <h3 className="text-base font-semibold">Supervision</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Sensitive supervision details only visible to authorized
-                    groups.
-                  </p>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <FormField
-                    control={typedControl}
-                    name="gender"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Gender</FormLabel>
-                        <Select
-                          value={field.value ?? "none"}
-                          onValueChange={(value) =>
-                            field.onChange(value === "none" ? null : value)
-                          }
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select gender" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="none">Not set</SelectItem>
-                            {genderOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={typedControl}
-                    name="genderRequestPreference"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Request because of gender</FormLabel>
-                        <Select
-                          value={field.value ?? "none"}
-                          onValueChange={(value) =>
-                            field.onChange(
-                              value === "none"
-                                ? null
-                                : (value as ContactRequestPreference),
-                            )
-                          }
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select preference" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="none">Not set</SelectItem>
-                            {requestPreferenceOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={typedControl}
-                    name="isBipoc"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>BIPoC</FormLabel>
-                        <Select
-                          value={
-                            field.value === null || field.value === undefined
-                              ? "unspecified"
-                              : field.value
-                                ? "yes"
-                                : "no"
-                          }
-                          onValueChange={(value) => {
-                            if (value === "yes") {
-                              field.onChange(true);
-                            } else if (value === "no") {
-                              field.onChange(false);
-                            } else {
-                              field.onChange(null);
+              {canAccessSubmodule("SUPERVISION") && (
+                <TabsContent value="supervision" className="space-y-6">
+                  <div>
+                    <h3 className="text-base font-semibold">Supervision</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Sensitive supervision details only visible to authorized
+                      groups.
+                    </p>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <FormField
+                      control={typedControl}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gender</FormLabel>
+                          <Select
+                            value={field.value ?? "none"}
+                            onValueChange={(value) =>
+                              field.onChange(value === "none" ? null : value)
                             }
-                          }}
-                        >
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select gender" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="none">Not set</SelectItem>
+                              {genderOptions.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={typedControl}
+                      name="genderRequestPreference"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Request because of gender</FormLabel>
+                          <Select
+                            value={field.value ?? "none"}
+                            onValueChange={(value) =>
+                              field.onChange(
+                                value === "none"
+                                  ? null
+                                  : (value as ContactRequestPreference),
+                              )
+                            }
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select preference" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="none">Not set</SelectItem>
+                              {requestPreferenceOptions.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={typedControl}
+                      name="isBipoc"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>BIPoC</FormLabel>
+                          <Select
+                            value={
+                              field.value === null || field.value === undefined
+                                ? "unspecified"
+                                : field.value
+                                  ? "yes"
+                                  : "no"
+                            }
+                            onValueChange={(value) => {
+                              if (value === "yes") {
+                                field.onChange(true);
+                              } else if (value === "no") {
+                                field.onChange(false);
+                              } else {
+                                field.onChange(null);
+                              }
+                            }}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select option" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {bipocOptions.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={typedControl}
+                      name="racismRequestPreference"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Request because of racism experience
+                          </FormLabel>
+                          <Select
+                            value={field.value ?? "none"}
+                            onValueChange={(value) =>
+                              field.onChange(
+                                value === "none"
+                                  ? null
+                                  : (value as ContactRequestPreference),
+                              )
+                            }
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select preference" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="none">Not set</SelectItem>
+                              {requestPreferenceOptions.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={typedControl}
+                      name="otherMargins"
+                      render={({ field }) => (
+                        <FormItem className="sm:col-span-2 lg:col-span-3">
+                          <FormLabel>Other margins</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select option" />
-                            </SelectTrigger>
+                            <Textarea
+                              placeholder="Add other intersectional identities or notes"
+                              {...field}
+                              value={field.value ?? ""}
+                              rows={3}
+                            />
                           </FormControl>
-                          <SelectContent>
-                            {bipocOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={typedControl}
-                    name="racismRequestPreference"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Request because of racism experience</FormLabel>
-                        <Select
-                          value={field.value ?? "none"}
-                          onValueChange={(value) =>
-                            field.onChange(
-                              value === "none"
-                                ? null
-                                : (value as ContactRequestPreference),
-                            )
-                          }
-                        >
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={typedControl}
+                      name="onboardingDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Onboarding date</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select preference" />
-                            </SelectTrigger>
+                            <Input
+                              type="date"
+                              {...field}
+                              value={field.value ?? ""}
+                            />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="none">Not set</SelectItem>
-                            {requestPreferenceOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={typedControl}
-                    name="otherMargins"
-                    render={({ field }) => (
-                      <FormItem className="sm:col-span-2 lg:col-span-3">
-                        <FormLabel>Other margins</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Add other intersectional identities or notes"
-                            {...field}
-                            value={field.value ?? ""}
-                            rows={3}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={typedControl}
-                    name="onboardingDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Onboarding date</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={typedControl}
-                    name="breakUntil"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Break until</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </TabsContent>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={typedControl}
+                      name="breakUntil"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Break until</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              value={field.value ?? ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
+              )}
 
-              <TabsContent value="events" className="space-y-4">
-                <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                  No Events fields configured yet.
-                </div>
-              </TabsContent>
+              {canAccessSubmodule("EVENTS") && (
+                <TabsContent value="events" className="space-y-4">
+                  <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                    No Events fields configured yet.
+                  </div>
+                </TabsContent>
+              )}
 
-              <TabsContent value="shop" className="space-y-4">
-                <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                  No Shop fields configured yet.
-                </div>
-              </TabsContent>
+              {canAccessSubmodule("SHOP") && (
+                <TabsContent value="shop" className="space-y-4">
+                  <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                    No Shop fields configured yet.
+                  </div>
+                </TabsContent>
+              )}
 
               <TabsContent value="attributes" className="space-y-4">
                 <div className="flex items-start justify-between gap-2">
