@@ -1,5 +1,4 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { truncate } from "lodash";
 import { MoreHorizontal } from "lucide-react";
 import { DonationAgreementStatusBadge } from "@/components/helper/status-badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { DonationAgreement } from "@/types";
+
+const truncateText = (value?: string, maxLength = 20) => {
+  if (!value) return "";
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength - 3)}...`;
+};
 
 export const columns: ColumnDef<DonationAgreement>[] = [
   {
@@ -41,10 +46,7 @@ export const columns: ColumnDef<DonationAgreement>[] = [
     header: () => <div className="text-left w-36">Funding Request</div>,
     cell: ({ row }) => (
       <div className="text-left">
-        {truncate(row.original?.fundingRequest?.name, {
-          length: 20,
-          omission: "...",
-        }) || "N/A"}
+        {truncateText(row.original?.fundingRequest?.name, 20) || "N/A"}
       </div>
     ),
   },

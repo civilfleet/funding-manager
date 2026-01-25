@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import {
-  CONTACT_SUBMODULE_FIELDS,
-  CONTACT_SUBMODULES,
-  type ContactSubmodule,
-} from "@/constants/contact-submodules";
 import prisma from "@/lib/prisma";
+import { getAllowedContactSubmodules } from "@/services/contacts";
 import { handlePrismaError } from "@/lib/utils";
 
 export async function GET(req: Request) {
@@ -35,59 +31,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ data: [] }, { status: 200 });
     }
 
-    const [accessEntries, userGroups] = await Promise.all([
-      prisma.contactFieldAccess.findMany({
-        where: { teamId },
-        select: {
-          fieldKey: true,
-          groupId: true,
-        },
-      }),
-      prisma.userGroup.findMany({
-        where: {
-          userId,
-          group: {
-            teamId,
-          },
-        },
-        select: {
-          groupId: true,
-        },
-      }),
-    ]);
-
-    const accessMap = new Map<string, Set<string>>();
-    accessEntries.forEach((entry) => {
-      const existing = accessMap.get(entry.fieldKey);
-      if (existing) {
-        existing.add(entry.groupId);
-        return;
-      }
-      accessMap.set(entry.fieldKey, new Set([entry.groupId]));
-    });
-
-    const userGroupIds = new Set(userGroups.map((group) => group.groupId));
-
-    const isFieldVisible = (fieldKey: string) => {
-      const allowedGroups = accessMap.get(fieldKey);
-      if (!allowedGroups || allowedGroups.size === 0) {
-        return true;
-      }
-      for (const groupId of userGroupIds) {
-        if (allowedGroups.has(groupId)) {
-          return true;
-        }
-      }
-      return false;
-    };
-
-    const allowedSubmodules = CONTACT_SUBMODULES.filter((submodule) => {
-      const fields = CONTACT_SUBMODULE_FIELDS[submodule];
-      if (!fields.length) {
-        return false;
-      }
-      return fields.some((fieldKey) => isFieldVisible(fieldKey));
-    }) as ContactSubmodule[];
+    const allowedSubmodules = await getAllowedContactSubmodules(
+      teamId,
+      userId,
+    );
 
     return NextResponse.json({ data: allowedSubmodules }, { status: 200 });
   } catch (error) {

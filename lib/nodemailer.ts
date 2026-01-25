@@ -12,17 +12,26 @@ const transporter = nodemailer.createTransport({
 // Log the email provider being used
 console.info(`[mail] Email provider configured: ${mailProvider}`);
 
+const templateCache = new Map<string, handlebars.TemplateDelegate>();
+
 const compileTemplate = (
   templateName: string,
   data: Record<string, unknown>,
 ) => {
+  const cached = templateCache.get(templateName);
+  if (cached) {
+    return cached(data);
+  }
+
   const filePath = path.join(
     process.cwd(),
     "templates",
     `${templateName}.handlebars`,
   );
   const source = fs.readFileSync(filePath, "utf-8");
-  return handlebars.compile(source)(data);
+  const compiled = handlebars.compile(source);
+  templateCache.set(templateName, compiled);
+  return compiled(data);
 };
 
 async function sendEmail(

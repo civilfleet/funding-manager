@@ -1,4 +1,3 @@
-import get from "lodash/get";
 import useSWR from "swr";
 import {
   Select,
@@ -24,6 +23,23 @@ type DataSelectBoxProps = {
 type Option = {
   id: string | number;
   [key: string]: unknown;
+};
+
+const getValue = (option: Option, path: string, fallback: unknown) => {
+  if (!path) return fallback;
+  const parts = path.split(".");
+  let current: unknown = option;
+  for (const part of parts) {
+    if (!current || typeof current !== "object") {
+      return fallback;
+    }
+    const record = current as Record<string, unknown>;
+    if (!(part in record)) {
+      return fallback;
+    }
+    current = record[part];
+  }
+  return current ?? fallback;
 };
 
 export function DataSelectBox({
@@ -59,8 +75,8 @@ export function DataSelectBox({
         <SelectGroup>
           <SelectLabel>{label}</SelectLabel>
           {options?.map((option) => {
-            const optionValue = get(option, attribute, "Not Available");
-            const optionId = get(option, targetKey, "Not Available");
+            const optionValue = getValue(option, attribute, "Not Available");
+            const optionId = getValue(option, targetKey, "Not Available");
 
             return (
               <SelectItem key={String(optionId)} value={String(optionId)}>

@@ -29,7 +29,7 @@ export async function PUT(
       session?.user?.userId as string,
     );
 
-    sendEmail(
+    await sendEmail(
       {
         to: response?.FundingRequest?.organization?.team?.email as string,
         subject: `${response.FundingRequest?.organization.name} Uploaded ${data?.type}`,

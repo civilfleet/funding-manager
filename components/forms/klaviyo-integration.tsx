@@ -2,6 +2,7 @@
 
 import { AlertTriangle, CheckCircle2, Loader2, PlugZap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,6 @@ export default function KlaviyoIntegration({
 }: KlaviyoIntegrationProps) {
   const { toast } = useToast();
 
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -68,38 +68,45 @@ export default function KlaviyoIntegration({
     string | undefined
   >();
 
+  const fetcher = async (url: string) => {
+    const response = await fetch(url);
+    const json = await response.json();
+    if (!response.ok) {
+      throw new Error(json?.error || response.statusText);
+    }
+    return (json?.data || null) as KlaviyoIntegrationResponse | null;
+  };
+
+  const {
+    data: integrationData,
+    error: integrationError,
+    isLoading,
+    mutate,
+  } = useSWR(`/api/teams/${teamId}/integrations/klaviyo`, fetcher);
+
   useEffect(() => {
-    const fetchIntegration = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(
-          `/api/teams/${teamId}/integrations/klaviyo`,
-        );
-        const json = await response.json();
-        const data = (json?.data || null) as KlaviyoIntegrationResponse | null;
+    if (!integrationData) {
+      return;
+    }
+    setIsEnabled(integrationData.isEnabled ?? true);
+    setDefaultListId(integrationData.defaultListId ?? "");
+    setHasApiKey(Boolean(integrationData.hasApiKey));
+    setApiKeyPreview(integrationData.apiKeyPreview ?? "");
+    setLastSyncedAt(integrationData.lastSyncedAt);
+    setConnectionMessage(integrationData.connectionMessage);
+    setConnectionVerified(Boolean(integrationData.connectionVerified));
+  }, [integrationData]);
 
-        if (data) {
-          setIsEnabled(data.isEnabled ?? true);
-          setDefaultListId(data.defaultListId ?? "");
-          setHasApiKey(Boolean(data.hasApiKey));
-          setApiKeyPreview(data.apiKeyPreview ?? "");
-          setLastSyncedAt(data.lastSyncedAt);
-          setConnectionMessage(data.connectionMessage);
-          setConnectionVerified(Boolean(data.connectionVerified));
-        }
-      } catch (error) {
-        toast({
-          title: "Unable to load Klaviyo integration",
-          description: (error as Error).message,
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchIntegration();
-  }, [teamId, toast]);
+  useEffect(() => {
+    if (!integrationError) {
+      return;
+    }
+    toast({
+      title: "Unable to load Klaviyo integration",
+      description: integrationError.message,
+      variant: "destructive",
+    });
+  }, [integrationError, toast]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -126,6 +133,7 @@ export default function KlaviyoIntegration({
       }
 
       const data = json.data as KlaviyoIntegrationResponse;
+      mutate(data, { revalidate: false });
       setHasApiKey(Boolean(data.hasApiKey));
       setApiKeyPreview(data.apiKeyPreview ?? "");
       setLastSyncedAt(data.lastSyncedAt);

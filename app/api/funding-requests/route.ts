@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     const { fundingRequest, user, organization } =
       await createFundingRequest(validatedData);
 
-    sendEmail(
+    await sendEmail(
       {
         to: organization.team?.email as string,
         subject: `New Funding Request from ${organization.name}`,

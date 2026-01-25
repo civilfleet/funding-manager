@@ -14,13 +14,13 @@ export async function GET(req: Request) {
     const teamId = searchParams.get("teamId") || "";
     const fundingRequestId = searchParams.get("fundingRequestId") || "";
     const organizationId = searchParams.get("organizationId") || "";
-    const data =
+    const dataPromise =
       fundingRequestId && teamId
-        ? await getUsersForDonation({
+        ? getUsersForDonation({
             teamId,
             fundingRequestId,
           })
-        : await getUsers(
+        : getUsers(
             {
               teamId: teamId || undefined,
               organizationId: organizationId || undefined,
@@ -28,7 +28,12 @@ export async function GET(req: Request) {
             searchQuery,
           );
 
-    const ownerId = teamId ? await ensureTeamOwner(teamId) : undefined;
+    const ownerPromise = teamId ? ensureTeamOwner(teamId) : undefined;
+
+    const [data, ownerId] = await Promise.all([
+      dataPromise,
+      ownerPromise ?? Promise.resolve(undefined),
+    ]);
 
     return NextResponse.json(
       { data, ownerId: ownerId ?? null },

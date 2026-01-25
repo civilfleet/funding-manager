@@ -46,7 +46,7 @@ export async function PUT(
         );
       }
 
-      sendEmail(
+      await sendEmail(
         {
           to: fundingRequest?.organization?.email as string,
           subject: emailTemplate?.subject || `Funding Request Status Updated`,

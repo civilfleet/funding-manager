@@ -1,4 +1,3 @@
-import _ from "lodash";
 import prisma from "@/lib/prisma";
 import { ensureDefaultGroup } from "@/services/groups";
 import { Roles } from "@/types";
@@ -17,7 +16,8 @@ const getTeamsByRoles = async (_roles: string[] | null) => {
 const createTeam = async (teamData: CreateTeamInput) => {
   const TeamUser = teamData.user;
 
-  const sanitizedTeamData = _.omit(teamData, ["user"]);
+  const { user: _user, ...sanitizedTeamData } = teamData;
+  void _user;
 
   const query = {
     data: {
