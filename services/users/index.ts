@@ -1,4 +1,3 @@
-import { omit } from "lodash";
 import prisma from "@/lib/prisma";
 import { ensureDefaultGroup } from "@/services/groups";
 import {
@@ -23,7 +22,7 @@ export interface User {
 }
 
 const getAdminUser = async (userId: string) => {
-  const user = await prisma.user.findUnique({
+  const userPromise = prisma.user.findUnique({
     where: {
       id: userId,
     },
@@ -39,20 +38,26 @@ const getAdminUser = async (userId: string) => {
       roles: true,
     },
   });
-  const teams = await prisma.teams.findMany({
+  const teamsPromise = prisma.teams.findMany({
     select: {
       id: true,
       name: true,
       email: true,
     },
   });
-  const organizations = await prisma.organization.findMany({
+  const organizationsPromise = prisma.organization.findMany({
     select: {
       id: true,
       name: true,
       email: true,
     },
   });
+
+  const [user, teams, organizations] = await Promise.all([
+    userPromise,
+    teamsPromise,
+    organizationsPromise,
+  ]);
 
   return {
     ...user,
@@ -104,28 +109,46 @@ const getUserCurrent = async (userId: string) => {
 
   const teamIds = user.teams.map((team) => team.id);
   const modulesByTeam = new Map<string, Set<AppModule>>();
+  let defaultGroups: Array<{
+    teamId: string;
+    modulePermissions: Array<{ module: string }>;
+  }> = [];
 
   if (teamIds.length > 0) {
     await Promise.all(teamIds.map((id) => ensureDefaultGroup(id)));
 
-    const memberships = await prisma.userGroup.findMany({
-      where: {
-        userId,
-        group: {
+    const [memberships, defaultGroupsResult] = await Promise.all([
+      prisma.userGroup.findMany({
+        where: {
+          userId,
+          group: {
+            teamId: {
+              in: teamIds,
+            },
+          },
+        },
+        include: {
+          group: {
+            select: {
+              teamId: true,
+              modulePermissions: true,
+            },
+          },
+        },
+      }),
+      prisma.group.findMany({
+        where: {
           teamId: {
             in: teamIds,
           },
+          isDefaultGroup: true,
         },
-      },
-      include: {
-        group: {
-          select: {
-            teamId: true,
-            modulePermissions: true,
-          },
+        include: {
+          modulePermissions: true,
         },
-      },
-    });
+      }),
+    ]);
+    defaultGroups = defaultGroupsResult;
 
     for (const membership of memberships) {
       const teamId = membership.group.teamId;
@@ -148,18 +171,6 @@ const getUserCurrent = async (userId: string) => {
   let defaultGroupsByTeam: Map<string, AppModule[]> = new Map();
 
   if (teamIds.length > 0) {
-    const defaultGroups = await prisma.group.findMany({
-      where: {
-        teamId: {
-          in: teamIds,
-        },
-        isDefaultGroup: true,
-      },
-      include: {
-        modulePermissions: true,
-      },
-    });
-
     defaultGroupsByTeam = new Map(
       defaultGroups.map((group) => [
         group.teamId,
@@ -384,9 +395,12 @@ const createUser = async (user: User) => {
     return updatedUser;
   }
 
+  const { organizationId: _organizationId, teamId: _teamId, ...userData } = user;
+  void _organizationId;
+  void _teamId;
   const newUser = await prisma.user.create({
     data: {
-      ...omit(user, ["organizationId", "teamId"]),
+      ...userData,
       ...connectOrganizations,
       ...connectTeams,
       fundingRequests: undefined,

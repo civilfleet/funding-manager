@@ -6,9 +6,14 @@ import {
 } from "@/services/contact-change-logs";
 import { ensureDefaultGroup, mapGroup } from "@/services/groups";
 import {
+  CONTACT_SUBMODULE_FIELDS,
+  CONTACT_SUBMODULES,
+  type ContactSubmodule,
+} from "@/constants/contact-submodules";
+import {
   ContactAttributeType,
-  ContactGender,
-  ContactRequestPreference,
+  type ContactGender,
+  type ContactRequestPreference,
   type ContactFilter,
   type ContactLocationValue,
   type ContactSocialLink,
@@ -156,6 +161,30 @@ const isFieldVisible = (
     return true;
   }
   return userGroupIds.some((groupId) => allowedGroups.has(groupId));
+};
+
+const getAllowedContactSubmodules = async (
+  teamId: string,
+  userId?: string,
+): Promise<ContactSubmodule[]> => {
+  if (!userId) {
+    return [];
+  }
+
+  const [accessMap, userGroupIds] = await Promise.all([
+    getContactFieldAccessMap(teamId),
+    getUserGroupIdsForTeam(userId, teamId),
+  ]);
+
+  return CONTACT_SUBMODULES.filter((submodule) => {
+    const fields = CONTACT_SUBMODULE_FIELDS[submodule];
+    if (!fields.length) {
+      return false;
+    }
+    return fields.some((fieldKey) =>
+      isFieldVisible(fieldKey, accessMap, userGroupIds),
+    );
+  });
 };
 
 const filterContactByAccess = (
@@ -1820,6 +1849,7 @@ const getTeamContactAttributeKeys = async (
 export {
   getTeamContacts,
   getContactById,
+  getAllowedContactSubmodules,
   createContact,
   updateContact,
   deleteContacts,

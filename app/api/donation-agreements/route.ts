@@ -1,4 +1,3 @@
-import { omit } from "lodash";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { sendEmail } from "@/lib/nodemailer";
@@ -38,32 +37,36 @@ export async function POST(req: Request) {
 
     const validatedData =
       createDonationAgreementSchema.parse(donationAgreement);
+    const { user: _user, ...agreementData } = validatedData;
+    void _user;
     const { agreement, users } = await createDonationAgreement(
       {
-        ...omit(validatedData, "user", "teamId"),
+        ...agreementData,
         users: validatedData.users ?? [],
       },
       session?.user.userId as string,
       donationAgreement?.teamId,
     );
 
-    users?.forEach(async (user) => {
-      await sendEmail(
-        {
-          to: user.email,
-          subject: "Donation Agreement",
-          template: "donation-agreement",
-        },
-        {
-          user: user.name,
-          requestName: agreement.fundingRequest.name,
-          organizationName: agreement?.organization?.name,
-          agreementLink: `${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${agreement.file.id}`,
-          supportEmail: agreement?.team?.email,
-          teamName: agreement?.team?.name,
-        },
-      );
-    });
+    await Promise.all(
+      (users ?? []).map((user) =>
+        sendEmail(
+          {
+            to: user.email,
+            subject: "Donation Agreement",
+            template: "donation-agreement",
+          },
+          {
+            user: user.name,
+            requestName: agreement.fundingRequest.name,
+            organizationName: agreement?.organization?.name,
+            agreementLink: `${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${agreement.file.id}`,
+            supportEmail: agreement?.team?.email,
+            teamName: agreement?.team?.name,
+          },
+        ),
+      ),
+    );
 
     return NextResponse.json(
       {

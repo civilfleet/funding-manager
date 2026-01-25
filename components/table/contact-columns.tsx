@@ -8,10 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import {
   ContactAttributeType,
-  ContactGender,
+  type ContactGender,
   type ContactEvent,
   type ContactProfileAttribute,
-  ContactRequestPreference,
+  type ContactRequestPreference,
 } from "@/types";
 
 export type ContactRow = {

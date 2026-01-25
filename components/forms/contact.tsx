@@ -36,10 +36,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import {
-  CONTACT_SUBMODULES,
-  type ContactSubmodule,
-} from "@/constants/contact-submodules";
+import type { ContactSubmodule } from "@/constants/contact-submodules";
 import {
   ContactAttributeType,
   ContactGender,

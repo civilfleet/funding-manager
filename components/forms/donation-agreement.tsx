@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, CheckCircle2, Loader2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -34,11 +35,19 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
   const searchParams = useSearchParams();
   const fundingRequestId = searchParams.get("fundingRequestId");
 
+  const fetcher = async (url: string) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch funding request: ${response.statusText}`,
+      );
+    }
+    const { data } = await response.json();
+    return data as FundingRequest;
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [_fundingRequestDetail, setFundingRequestDetail] =
-    useState<FundingRequest | null>(null);
   const [users, setUsers] = useState<string[]>([]);
 
   const form = useForm<z.infer<typeof schema>>({
@@ -76,46 +85,29 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
     setUsers(users.filter((u) => u !== userToRemove));
   };
 
-  // Fetch funding request details when component mounts or fundingRequestId changes
+  const {
+    error: fundingRequestError,
+    isLoading,
+  } = useSWR(
+    fundingRequestId ? `/api/funding-requests/${fundingRequestId}` : null,
+    fetcher,
+  );
+
   useEffect(() => {
-    if (!fundingRequestId) {
-      setFundingRequestDetail(null);
-      return;
+    if (fundingRequestId) {
+      form.setValue("fundingRequestId", fundingRequestId);
     }
-
-    const fetchFundingRequestDetail = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `/api/funding-requests/${fundingRequestId}`,
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch funding request: ${response.statusText}`,
-          );
-        }
-
-        const { data } = await response.json();
-        setFundingRequestDetail(data);
-        form.setValue("fundingRequestId", fundingRequestId);
-      } catch (error) {
-        console.error("Error fetching funding request detail:", error);
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Failed to load funding request details",
-        );
-        setFundingRequestDetail(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchFundingRequestDetail();
   }, [fundingRequestId, form]);
+
+  useEffect(() => {
+    if (fundingRequestError) {
+      setError(
+        fundingRequestError instanceof Error
+          ? fundingRequestError.message
+          : "Failed to load funding request details",
+      );
+    }
+  }, [fundingRequestError]);
 
   async function onSubmit(values: z.infer<typeof schema>) {
     if (users.length === 0) {
@@ -351,7 +343,6 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
               onClick={() => {
                 form.reset();
                 setUsers([]);
-                setFundingRequestDetail(null);
                 setError(null);
               }}
               disabled={isSubmitting}
