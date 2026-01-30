@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Save, X } from "lucide-react";
+import { Download, Loader2, Save, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -426,6 +426,40 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
 
   const currentListType = effectiveListType;
   const currentContactsCount = list?.contacts.length ?? 0;
+  const handleExportEmails = () => {
+    if (!list?.contacts?.length) {
+      toast({
+        title: "No contacts to export",
+        description: "Add contacts with email addresses to export.",
+      });
+      return;
+    }
+
+    const emails = Array.from(
+      new Set(
+        list.contacts
+          .map((contact) => contact.email?.trim())
+          .filter((email): email is string => Boolean(email)),
+      ),
+    );
+
+    if (emails.length === 0) {
+      toast({
+        title: "No emails to export",
+        description: "Contacts in this list don't have email addresses.",
+      });
+      return;
+    }
+
+    const csvContent = ["email", ...emails].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${list.name.replace(/\s+/g, "-").toLowerCase()}-emails.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6">
@@ -448,6 +482,10 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
                   ? "Smart list"
                   : "Manual list"}
               </Badge>
+              <Button variant="outline" size="sm" onClick={handleExportEmails}>
+                <Download className="mr-2 h-4 w-4" />
+                Export emails
+              </Button>
             </>
           )}
           <Button asChild variant="outline">
@@ -769,24 +807,36 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
                     className="flex items-center justify-between rounded-md border p-3"
                   >
                     <div>
-                      <p className="font-medium">{contact.name}</p>
+                      <Link
+                        href={`/teams/${teamId}/contacts/${contact.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {contact.name}
+                      </Link>
                       <p className="text-sm text-muted-foreground">
                         {[contact.email, contact.phone]
                           .filter(Boolean)
                           .join(" • ")}
                       </p>
                     </div>
-                    {list?.type === ContactListType.MANUAL && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveContact(contact.id)}
-                        disabled={isSubmitting}
-                      >
-                        <X className="h-4 w-4" />
-                        <span className="sr-only">Remove contact</span>
+                    <div className="flex items-center gap-2">
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/teams/${teamId}/contacts/${contact.id}/edit`}>
+                          Edit
+                        </Link>
                       </Button>
-                    )}
+                      {list?.type === ContactListType.MANUAL && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveContact(contact.id)}
+                          disabled={isSubmitting}
+                        >
+                          <X className="h-4 w-4" />
+                          <span className="sr-only">Remove contact</span>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

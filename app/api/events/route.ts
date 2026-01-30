@@ -8,6 +8,10 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const teamId = searchParams.get("teamId");
     const query = searchParams.get("query") || "";
+    const eventTypeId = searchParams.get("eventTypeId");
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+    const state = searchParams.get("state");
 
     if (!teamId) {
       return NextResponse.json(
@@ -16,7 +20,12 @@ export async function GET(req: Request) {
       );
     }
 
-    const events = await getTeamEvents(teamId, query || undefined);
+    const events = await getTeamEvents(teamId, query || undefined, {
+      eventTypeId: eventTypeId || undefined,
+      from: from || undefined,
+      to: to || undefined,
+      state: state || undefined,
+    });
     return NextResponse.json({ data: events }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);

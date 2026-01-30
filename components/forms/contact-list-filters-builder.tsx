@@ -25,7 +25,18 @@ type FilterOption = {
   type: ContactFilterType;
   label: string;
   allowMultiple?: boolean;
-  field?: "email" | "phone" | "name" | "pronouns" | "city" | "website";
+  field?:
+    | "email"
+    | "phone"
+    | "signal"
+    | "name"
+    | "pronouns"
+    | "address"
+    | "postalCode"
+    | "state"
+    | "city"
+    | "country"
+    | "website";
 };
 
 const FILTER_OPTIONS: FilterOption[] = [
@@ -49,6 +60,12 @@ const FILTER_OPTIONS: FilterOption[] = [
   },
   {
     type: "contactField",
+    field: "signal",
+    label: "Has Signal / Signal contains...",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
     field: "website",
     label: "Has website / website contains...",
     allowMultiple: true,
@@ -61,8 +78,32 @@ const FILTER_OPTIONS: FilterOption[] = [
   },
   {
     type: "contactField",
+    field: "address",
+    label: "Has address / address contains...",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
+    field: "postalCode",
+    label: "Has postal code / postal code contains...",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
+    field: "state",
+    label: "Has state / state contains...",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
     field: "city",
     label: "Has city / city contains...",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
+    field: "country",
+    label: "Has country / country contains...",
     allowMultiple: true,
   },
   { type: "attribute", label: "Profile attribute", allowMultiple: true },
@@ -80,14 +121,29 @@ interface ContactListFiltersBuilderProps {
 }
 
 const CONTACT_FIELD_LABELS: Record<
-  "email" | "phone" | "name" | "pronouns" | "city" | "website",
+  | "email"
+  | "phone"
+  | "signal"
+  | "name"
+  | "pronouns"
+  | "address"
+  | "postalCode"
+  | "state"
+  | "city"
+  | "country"
+  | "website",
   string
 > = {
   name: "Name",
   email: "Email",
   phone: "Phone",
+  signal: "Signal",
   pronouns: "Pronouns",
+  address: "Address",
+  postalCode: "Postal code",
+  state: "State",
   city: "City",
+  country: "Country",
   website: "Website",
 };
 

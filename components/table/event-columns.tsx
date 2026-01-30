@@ -8,14 +8,29 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 
 export type EventRow = {
   id: string;
   teamId: string;
+  eventType?: {
+    id: string;
+    name: string;
+    color?: string;
+  };
   title: string;
   slug?: string;
   description?: string;
   location?: string;
+  isOnline?: boolean;
+  expectedGuests?: number;
+  hasRemuneration?: boolean;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  state?: string;
+  timeZone?: string;
+  merchNeeded?: boolean;
   startDate: string | Date;
   endDate?: string | Date;
   isPublic: boolean;
@@ -220,6 +235,33 @@ export const eventColumns: ColumnDef<EventRow>[] = [
     cell: ({ row }) => <EventTitleCell event={row.original} />,
   },
   {
+    accessorKey: "eventType",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Type" />
+    ),
+    cell: ({ row }) => {
+      const type = row.original.eventType;
+      if (!type) {
+        return <span className="text-muted-foreground">—</span>;
+      }
+      return (
+        <Badge
+          variant="outline"
+          className="text-xs"
+          style={type.color ? { borderColor: type.color, color: type.color } : {}}
+        >
+          {type.color && (
+            <span
+              className="mr-1 inline-block h-2 w-2 rounded-full"
+              style={{ backgroundColor: type.color }}
+            />
+          )}
+          {type.name}
+        </Badge>
+      );
+    },
+  },
+  {
     accessorKey: "location",
     header: "Location",
     cell: ({ row }) => <span>{row.original.location || "—"}</span>,
@@ -263,6 +305,25 @@ export const renderEventCard = (event: EventRow) => {
             </Badge>
           )}
         </div>
+        {event.eventType && (
+          <Badge
+            variant="outline"
+            className="mt-2 text-xs"
+            style={
+              event.eventType.color
+                ? { borderColor: event.eventType.color, color: event.eventType.color }
+                : {}
+            }
+          >
+            {event.eventType.color && (
+              <span
+                className="mr-1 inline-block h-2 w-2 rounded-full"
+                style={{ backgroundColor: event.eventType.color }}
+              />
+            )}
+            {event.eventType.name}
+          </Badge>
+        )}
         {event.description && (
           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
             {event.description}
@@ -274,6 +335,14 @@ export const renderEventCard = (event: EventRow) => {
         {event.location && (
           <p className="text-muted-foreground">
             <span className="font-medium">Location:</span> {event.location}
+          </p>
+        )}
+        {!event.isOnline && (event.address || event.city || event.postalCode) && (
+          <p className="text-muted-foreground">
+            <span className="font-medium">Address:</span>{" "}
+            {[event.address, event.postalCode, event.city, event.state]
+              .filter(Boolean)
+              .join(", ")}
           </p>
         )}
         <p className="text-muted-foreground">

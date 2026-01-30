@@ -90,12 +90,32 @@ export interface EventRole {
   updatedAt: Date;
 }
 
+export interface EventType {
+  id: string;
+  teamId: string;
+  name: string;
+  color?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Event {
   id: string;
   teamId: string;
+  eventTypeId?: string;
+  eventType?: EventType;
   title: string;
   description?: string;
   location?: string;
+  isOnline?: boolean;
+  expectedGuests?: number;
+  hasRemuneration?: boolean;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  state?: string;
+  timeZone?: string;
+  merchNeeded?: boolean;
   startDate: Date;
   endDate?: Date;
   createdAt: Date;
@@ -145,9 +165,14 @@ export interface Contact {
   otherMargins?: string;
   onboardingDate?: Date;
   breakUntil?: Date;
+  address?: string;
+  postalCode?: string;
+  state?: string;
   city?: string;
+  country?: string;
   email?: string;
   phone?: string;
+  signal?: string;
   website?: string;
   socialLinks: ContactSocialLink[];
   groupId?: string;
@@ -166,7 +191,18 @@ export interface ContactSocialLink {
 export type ContactFilter =
   | {
       type: "contactField";
-      field: "email" | "phone" | "name" | "pronouns" | "city" | "website";
+      field:
+        | "email"
+        | "phone"
+        | "signal"
+        | "name"
+        | "pronouns"
+        | "address"
+        | "postalCode"
+        | "state"
+        | "city"
+        | "country"
+        | "website";
       operator: "has" | "missing" | "contains";
       value?: string;
     }

@@ -26,9 +26,14 @@ export type ContactRow = {
   otherMargins?: string | null;
   onboardingDate?: string | Date | null;
   breakUntil?: string | Date | null;
+  address?: string | null;
+  postalCode?: string | null;
+  state?: string | null;
   city?: string | null;
+  country?: string | null;
   email?: string | null;
   phone?: string | null;
+  signal?: string | null;
   website?: string | null;
   profileAttributes: ContactProfileAttribute[];
   events?: ContactEvent[];
@@ -152,6 +157,13 @@ export const contactColumns: ColumnDef<ContactRow>[] = [
     cell: ({ row }) => <span>{row.original.phone || "-"}</span>,
   },
   {
+    accessorKey: "signal",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Signal" />
+    ),
+    cell: ({ row }) => <span>{row.original.signal || "-"}</span>,
+  },
+  {
     accessorKey: "website",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Website" />
@@ -179,6 +191,22 @@ export const contactColumns: ColumnDef<ContactRow>[] = [
       <DataTableColumnHeader column={column} title="City" />
     ),
     cell: ({ row }) => <span>{row.original.city || "-"}</span>,
+  },
+  {
+    accessorKey: "address",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Address" />
+    ),
+    cell: ({ row }) => {
+      const parts = [
+        row.original.address,
+        row.original.postalCode,
+        row.original.city,
+        row.original.state,
+        row.original.country,
+      ].filter(Boolean);
+      return <span>{parts.length ? parts.join(", ") : "-"}</span>;
+    },
   },
   {
     accessorKey: "profileAttributes",
@@ -214,10 +242,25 @@ export const renderContactCard = (contact: ContactRow, teamId: string) => {
             )}
             {(contact.email ||
               contact.phone ||
+              contact.signal ||
               contact.website ||
-              contact.city) && (
+              contact.city ||
+              contact.address ||
+              contact.postalCode ||
+              contact.state ||
+              contact.country) && (
               <p className="text-xs text-muted-foreground">
-                {[contact.email, contact.phone, contact.website, contact.city]
+                {[
+                  contact.email,
+                  contact.phone,
+                  contact.signal,
+                  contact.website,
+                  contact.address,
+                  contact.postalCode,
+                  contact.city,
+                  contact.state,
+                  contact.country,
+                ]
                   .filter(Boolean)
                   .join(" | ")}
               </p>

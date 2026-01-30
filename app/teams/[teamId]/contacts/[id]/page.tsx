@@ -7,6 +7,7 @@ import {
   Hash,
   Mail,
   MapPin,
+  MessageCircle,
   Phone,
   Type,
   Users,
@@ -216,6 +217,15 @@ export default async function ContactDetailPage({
   const formattedOtherMargins = contact.otherMargins?.trim();
   const formattedOnboardingDate = formatDateValue(contact.onboardingDate);
   const formattedBreakUntil = formatDateValue(contact.breakUntil);
+  const formattedAddress = [
+    contact.address,
+    contact.postalCode,
+    contact.city,
+    contact.state,
+    contact.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   const socialItems = contact.socialLinks.map((link) => {
     const label = formatSocialPlatform(link.platform);
@@ -242,6 +252,11 @@ export default async function ContactDetailPage({
       value: contact.phone,
       href: `tel:${contact.phone}`,
     },
+    contact.signal && {
+      icon: MessageCircle,
+      label: "Signal",
+      value: contact.signal,
+    },
     contact.website && {
       icon: Globe,
       label: "Website",
@@ -254,10 +269,10 @@ export default async function ContactDetailPage({
       label: "Pronouns",
       value: contact.pronouns,
     },
-    contact.city && {
+    formattedAddress && {
       icon: MapPin,
-      label: "City",
-      value: contact.city,
+      label: "Address",
+      value: formattedAddress,
     },
     ...socialItems,
   ].filter(Boolean) as Array<{

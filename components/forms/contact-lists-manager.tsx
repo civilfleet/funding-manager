@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Loader2, Pencil, Plus, Trash2, Users } from "lucide-react";
+import { Check, Copy, Download, Loader2, Pencil, Plus, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -8,6 +8,13 @@ import useSWR from "swr";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -26,6 +33,7 @@ type ContactList = {
   description?: string;
   type: ContactListType;
   contactCount: number;
+  updatedAt: string | Date;
   contacts: {
     id: string;
     name: string | null;
@@ -47,6 +55,7 @@ export default function ContactListsManager({
   const isMobile = useIsMobile();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedListId, setCopiedListId] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<string>("updated-desc");
 
   const { data: listsData, mutate } = useSWR(
     `/api/contact-lists?teamId=${teamId}`,
@@ -57,6 +66,30 @@ export default function ContactListsManager({
     () => (listsData?.data as ContactList[]) || [],
     [listsData],
   );
+  const sortedLists = useMemo(() => {
+    const sortable = [...lists];
+    switch (sortKey) {
+      case "name-asc":
+        return sortable.sort((a, b) => a.name.localeCompare(b.name));
+      case "name-desc":
+        return sortable.sort((a, b) => b.name.localeCompare(a.name));
+      case "count-desc":
+        return sortable.sort((a, b) => b.contactCount - a.contactCount);
+      case "count-asc":
+        return sortable.sort((a, b) => a.contactCount - b.contactCount);
+      case "updated-asc":
+        return sortable.sort(
+          (a, b) =>
+            new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
+        );
+      case "updated-desc":
+      default:
+        return sortable.sort(
+          (a, b) =>
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+        );
+    }
+  }, [lists, sortKey]);
   const isLoading = !listsData;
 
   const handleDelete = async (listId: string, listName: string) => {
@@ -170,6 +203,37 @@ export default function ContactListsManager({
     }
   };
 
+  const buildEmailExport = (list: ContactList) => {
+    const emails = Array.from(
+      new Set(
+        list.contacts
+          .map((contact) => contact.email?.trim())
+          .filter((email): email is string => Boolean(email)),
+      ),
+    );
+
+    return emails.length > 0 ? ["email", ...emails].join("\n") : "";
+  };
+
+  const handleExportEmails = (list: ContactList) => {
+    const csvContent = buildEmailExport(list);
+    if (!csvContent) {
+      toast({
+        title: "No emails to export",
+        description: "Add contacts with email addresses to export.",
+      });
+      return;
+    }
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${list.name.replace(/\s+/g, "-").toLowerCase()}-emails.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -179,12 +243,27 @@ export default function ContactListsManager({
             Organize your contacts for targeted communication and outreach.
           </p>
         </div>
-        <Button asChild>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={sortKey} onValueChange={setSortKey}>
+            <SelectTrigger className="w-[190px]">
+              <SelectValue placeholder="Sort lists" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="updated-desc">Updated (newest)</SelectItem>
+              <SelectItem value="updated-asc">Updated (oldest)</SelectItem>
+              <SelectItem value="name-asc">Name (A–Z)</SelectItem>
+              <SelectItem value="name-desc">Name (Z–A)</SelectItem>
+              <SelectItem value="count-desc">Contacts (high → low)</SelectItem>
+              <SelectItem value="count-asc">Contacts (low → high)</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button asChild>
           <Link href={`/teams/${teamId}/lists/new`}>
             <Plus className="mr-2 h-4 w-4" />
             Add list
           </Link>
-        </Button>
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border bg-card">
@@ -193,13 +272,13 @@ export default function ContactListsManager({
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Loading lists...
           </div>
-        ) : lists.length === 0 ? (
+        ) : sortedLists.length === 0 ? (
           <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
             No lists created yet. Create your first list to get started.
           </div>
         ) : isMobile ? (
           <div className="grid grid-cols-1 gap-3 p-3">
-            {lists.map((list) => (
+            {sortedLists.map((list) => (
               <Card key={list.id}>
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
@@ -241,6 +320,16 @@ export default function ContactListsManager({
                       )}
                       Copy
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => handleExportEmails(list)}
+                      aria-label="Export emails"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export
+                    </Button>
                     <Button asChild variant="ghost" size="sm" className="gap-1">
                       <Link href={`/teams/${teamId}/lists/${list.id}`}>
                         <Pencil className="h-4 w-4" />
@@ -275,7 +364,7 @@ export default function ContactListsManager({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {lists.map((list) => (
+                {sortedLists.map((list) => (
                   <TableRow key={list.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -319,6 +408,15 @@ export default function ContactListsManager({
                           ) : (
                             <Copy className="h-4 w-4" />
                           )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleExportEmails(list)}
+                          aria-label="Export emails"
+                          title="Export emails"
+                        >
+                          <Download className="h-4 w-4" />
                         </Button>
                         <Button
                           asChild

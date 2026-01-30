@@ -6,6 +6,20 @@ const preprocessEmptyString = (value: unknown) =>
 const optionalText = (schema: z.ZodString) =>
   z.preprocess(preprocessEmptyString, schema.optional());
 
+const numberValue = z.preprocess((value) => {
+  if (value === "" || value === undefined || value === null) {
+    return undefined;
+  }
+  if (typeof value === "number") {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? value : parsed;
+  }
+  return value;
+}, z.number().finite());
+
 const eventContactSchema = z.object({
   contactId: z.string().uuid("Contact id must be a valid UUID"),
   roleIds: z.array(z.string().uuid("Role id must be a valid UUID")).default([]),
@@ -17,6 +31,25 @@ export const createEventSchema = z.object({
   slug: optionalText(z.string()),
   description: optionalText(z.string()),
   location: optionalText(z.string()),
+  eventTypeId: z.preprocess(
+    preprocessEmptyString,
+    z.string().uuid("Event type id must be a valid UUID").optional(),
+  ),
+  isOnline: z
+    .preprocess((val) => val === true || val === "true", z.boolean())
+    .default(false),
+  expectedGuests: numberValue.optional(),
+  hasRemuneration: z
+    .preprocess((val) => val === true || val === "true", z.boolean())
+    .default(false),
+  address: optionalText(z.string()),
+  city: optionalText(z.string()),
+  postalCode: optionalText(z.string()),
+  state: optionalText(z.string()),
+  timeZone: optionalText(z.string()),
+  merchNeeded: z
+    .preprocess((val) => val === true || val === "true", z.boolean())
+    .default(false),
   startDate: z
     .string()
     .min(1, "Start date is required")
@@ -45,6 +78,25 @@ export const updateEventSchema = z.object({
   slug: optionalText(z.string()),
   description: optionalText(z.string()),
   location: optionalText(z.string()),
+  eventTypeId: z.preprocess(
+    preprocessEmptyString,
+    z.string().uuid("Event type id must be a valid UUID").optional(),
+  ),
+  isOnline: z
+    .preprocess((val) => val === true || val === "true", z.boolean())
+    .default(false),
+  expectedGuests: numberValue.optional(),
+  hasRemuneration: z
+    .preprocess((val) => val === true || val === "true", z.boolean())
+    .default(false),
+  address: optionalText(z.string()),
+  city: optionalText(z.string()),
+  postalCode: optionalText(z.string()),
+  state: optionalText(z.string()),
+  timeZone: optionalText(z.string()),
+  merchNeeded: z
+    .preprocess((val) => val === true || val === "true", z.boolean())
+    .default(false),
   startDate: z
     .string()
     .min(1, "Start date is required")

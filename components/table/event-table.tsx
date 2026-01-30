@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
@@ -17,6 +17,13 @@ import {
 } from "@/components/table/event-columns";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 interface EventTableProps {
@@ -27,6 +34,10 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const querySchema = z.object({
   query: z.string(),
+  eventTypeId: z.string().optional(),
+  state: z.string().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
 });
 
 export default function EventTable({ teamId }: EventTableProps) {
@@ -35,13 +46,51 @@ export default function EventTable({ teamId }: EventTableProps) {
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
-    defaultValues: { query: "" },
+    defaultValues: {
+      query: "",
+      eventTypeId: "all",
+      state: "",
+      from: "",
+      to: "",
+    },
   });
 
   const query = form.watch("query");
+  const eventTypeId = form.watch("eventTypeId");
+  const stateFilter = form.watch("state");
+  const fromDate = form.watch("from");
+  const toDate = form.watch("to");
+
+  useEffect(() => {
+    form.register("eventTypeId");
+  }, [form]);
+
+  const { data: eventTypesData } = useSWR(
+    `/api/event-types?teamId=${teamId}`,
+    fetcher,
+  );
+  const eventTypes = eventTypesData?.data || [];
+
+  const filtersQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    if (eventTypeId && eventTypeId !== "all") {
+      params.set("eventTypeId", eventTypeId);
+    }
+    if (stateFilter?.trim()) {
+      params.set("state", stateFilter.trim());
+    }
+    if (fromDate) {
+      params.set("from", fromDate);
+    }
+    if (toDate) {
+      params.set("to", toDate);
+    }
+    const stringified = params.toString();
+    return stringified ? `&${stringified}` : "";
+  }, [eventTypeId, stateFilter, fromDate, toDate]);
 
   const { data, error, isLoading, mutate } = useSWR(
-    `/api/events?teamId=${teamId}&query=${encodeURIComponent(query)}`,
+    `/api/events?teamId=${teamId}&query=${encodeURIComponent(query)}${filtersQuery}`,
     fetcher,
   );
 
@@ -63,6 +112,16 @@ export default function EventTable({ teamId }: EventTableProps) {
 
   const handleSubmit = (values: z.infer<typeof querySchema>) => {
     form.setValue("query", values.query);
+  };
+
+  const handleResetFilters = () => {
+    form.reset({
+      query: "",
+      eventTypeId: "all",
+      state: "",
+      from: "",
+      to: "",
+    });
   };
 
   const handleDeleteSelected = async (
@@ -120,14 +179,47 @@ export default function EventTable({ teamId }: EventTableProps) {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="flex w-full max-w-md"
+          className="flex flex-wrap items-end gap-3"
         >
           <FormInputControl
             form={form}
             name="query"
             placeholder="Search events"
           />
-          <ButtonControl type="submit" label="Search" className="ml-2" />
+          <FormInputControl
+            form={form}
+            name="state"
+            placeholder="State"
+          />
+          <FormInputControl form={form} name="from" placeholder="From" type="date" />
+          <FormInputControl form={form} name="to" placeholder="To" type="date" />
+          <div className="min-w-[200px]">
+            <Select
+              onValueChange={(value) => form.setValue("eventTypeId", value)}
+              value={form.getValues("eventTypeId") || "all"}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Event type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                {eventTypes.map((type: { id: string; name: string }) => (
+                  <SelectItem key={type.id} value={type.id}>
+                    {type.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <ButtonControl type="submit" label="Search" />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleResetFilters}
+          >
+            Reset
+          </Button>
         </form>
       </Form>
 

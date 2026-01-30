@@ -17,6 +17,16 @@ type CreateEventInput = {
   slug?: string;
   description?: string;
   location?: string;
+  eventTypeId?: string;
+  isOnline?: boolean;
+  expectedGuests?: number;
+  hasRemuneration?: boolean;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  state?: string;
+  timeZone?: string;
+  merchNeeded?: boolean;
   startDate: string;
   endDate?: string;
   isPublic?: boolean;
@@ -30,6 +40,16 @@ type UpdateEventInput = {
   slug?: string;
   description?: string;
   location?: string;
+  eventTypeId?: string;
+  isOnline?: boolean;
+  expectedGuests?: number;
+  hasRemuneration?: boolean;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  state?: string;
+  timeZone?: string;
+  merchNeeded?: boolean;
   startDate: string;
   endDate?: string;
   isPublic?: boolean;
@@ -38,6 +58,7 @@ type UpdateEventInput = {
 
 type EventWithContacts = Prisma.EventGetPayload<{
   include: {
+    eventType: true;
     contacts: {
       include: {
         contact: true;
@@ -54,10 +75,26 @@ type EventWithContacts = Prisma.EventGetPayload<{
 type EventType = {
   id: string;
   teamId: string;
+  eventTypeId?: string;
+  eventType?: {
+    id: string;
+    teamId: string;
+    name: string;
+    color?: string;
+  };
   title: string;
   slug?: string;
   description?: string;
   location?: string;
+  isOnline?: boolean;
+  expectedGuests?: number;
+  hasRemuneration?: boolean;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  state?: string;
+  timeZone?: string;
+  merchNeeded?: boolean;
   startDate: Date;
   endDate?: Date;
   isPublic: boolean;
@@ -90,10 +127,28 @@ const ensureSlug = (raw: string, fallback: string) => {
 const mapEvent = (event: EventWithContacts): EventType => ({
   id: event.id,
   teamId: event.teamId,
+  eventTypeId: event.eventTypeId ?? undefined,
+  eventType: event.eventType
+    ? {
+        id: event.eventType.id,
+        teamId: event.eventType.teamId,
+        name: event.eventType.name,
+        color: event.eventType.color ?? undefined,
+      }
+    : undefined,
   title: event.title,
   slug: event.slug ?? undefined,
   description: event.description ?? undefined,
   location: event.location ?? undefined,
+  isOnline: event.isOnline,
+  expectedGuests: event.expectedGuests ?? undefined,
+  hasRemuneration: event.hasRemuneration,
+  address: event.address ?? undefined,
+  city: event.city ?? undefined,
+  postalCode: event.postalCode ?? undefined,
+  state: event.state ?? undefined,
+  timeZone: event.timeZone ?? undefined,
+  merchNeeded: event.merchNeeded,
   startDate: event.startDate,
   endDate: event.endDate ?? undefined,
   isPublic: event.isPublic,
@@ -111,15 +166,58 @@ const mapEvent = (event: EventWithContacts): EventType => ({
     })),
   })),
 });
-export const getTeamEvents = async (teamId: string, query?: string) => {
+type EventFilters = {
+  eventTypeId?: string;
+  from?: string;
+  to?: string;
+  state?: string;
+};
+
+export const getTeamEvents = async (
+  teamId: string,
+  query?: string,
+  filters: EventFilters = {},
+) => {
   const where: Prisma.EventWhereInput = {
     teamId,
   };
+  if (filters.eventTypeId) {
+    where.eventTypeId = filters.eventTypeId;
+  }
+
+  if (filters.state) {
+    where.state = {
+      contains: filters.state,
+      mode: "insensitive",
+    };
+  }
+
+  if (filters.from || filters.to) {
+    const range: Prisma.DateTimeFilter = {};
+    if (filters.from && !Number.isNaN(Date.parse(filters.from))) {
+      range.gte = new Date(filters.from);
+    }
+    if (filters.to && !Number.isNaN(Date.parse(filters.to))) {
+      const parsed = new Date(filters.to);
+      if (filters.to.length === 10) {
+        parsed.setHours(23, 59, 59, 999);
+      }
+      range.lte = parsed;
+    }
+    if (Object.keys(range).length > 0) {
+      where.startDate = range;
+    }
+  }
+
   if (query) {
     where.OR = [
       { title: { contains: query, mode: "insensitive" } },
       { description: { contains: query, mode: "insensitive" } },
       { location: { contains: query, mode: "insensitive" } },
+      { address: { contains: query, mode: "insensitive" } },
+      { city: { contains: query, mode: "insensitive" } },
+      { postalCode: { contains: query, mode: "insensitive" } },
+      { state: { contains: query, mode: "insensitive" } },
       {
         contacts: {
           some: {
@@ -134,6 +232,7 @@ export const getTeamEvents = async (teamId: string, query?: string) => {
   const events = await prisma.event.findMany({
     where,
     include: {
+      eventType: true,
       contacts: {
         include: {
           contact: true,
@@ -158,6 +257,7 @@ export const getEventById = async (eventId: string, teamId: string) => {
       teamId,
     },
     include: {
+      eventType: true,
       contacts: {
         include: {
           contact: true,
@@ -182,6 +282,16 @@ export const createEvent = async (input: CreateEventInput) => {
     slug,
     description,
     location,
+    eventTypeId,
+    isOnline = false,
+    expectedGuests,
+    hasRemuneration = false,
+    address,
+    city,
+    postalCode,
+    state,
+    timeZone,
+    merchNeeded = false,
     startDate,
     endDate,
     isPublic = false,
@@ -204,6 +314,16 @@ export const createEvent = async (input: CreateEventInput) => {
         slug: eventSlug,
         description,
         location,
+        eventTypeId: eventTypeId ?? null,
+        isOnline,
+        expectedGuests: typeof expectedGuests === "number" ? expectedGuests : null,
+        hasRemuneration,
+        address: address?.trim() || null,
+        city: city?.trim() || null,
+        postalCode: postalCode?.trim() || null,
+        state: state?.trim() || null,
+        timeZone: timeZone?.trim() || null,
+        merchNeeded,
         startDate: new Date(startDate),
         endDate: endDate ? new Date(endDate) : null,
         isPublic,
@@ -255,6 +375,7 @@ export const createEvent = async (input: CreateEventInput) => {
     const created = await tx.event.findUniqueOrThrow({
       where: { id: event.id },
       include: {
+        eventType: true,
         contacts: {
           include: {
             contact: true,
@@ -278,6 +399,16 @@ export const updateEvent = async (input: UpdateEventInput) => {
     slug,
     description,
     location,
+    eventTypeId,
+    isOnline,
+    expectedGuests,
+    hasRemuneration,
+    address,
+    city,
+    postalCode,
+    state,
+    timeZone,
+    merchNeeded,
     startDate,
     endDate,
     isPublic,
@@ -304,6 +435,7 @@ export const updateEvent = async (input: UpdateEventInput) => {
     } else if (!eventSlug) {
       eventSlug = ensureSlug("", title);
     }
+    const expectedGuestsProvided = Object.hasOwn(input, "expectedGuests");
     const event = await tx.event.update({
       where: { id },
       data: {
@@ -311,6 +443,22 @@ export const updateEvent = async (input: UpdateEventInput) => {
         slug: eventSlug,
         description,
         location,
+        eventTypeId: eventTypeId ?? null,
+        isOnline: isOnline !== undefined ? isOnline : existingEvent.isOnline,
+        expectedGuests: expectedGuestsProvided
+          ? expectedGuests ?? null
+          : existingEvent.expectedGuests,
+        hasRemuneration:
+          hasRemuneration !== undefined
+            ? hasRemuneration
+            : existingEvent.hasRemuneration,
+        address: address === undefined ? existingEvent.address : address,
+        city: city === undefined ? existingEvent.city : city,
+        postalCode: postalCode === undefined ? existingEvent.postalCode : postalCode,
+        state: state === undefined ? existingEvent.state : state,
+        timeZone: timeZone === undefined ? existingEvent.timeZone : timeZone,
+        merchNeeded:
+          merchNeeded !== undefined ? merchNeeded : existingEvent.merchNeeded,
         startDate: new Date(startDate),
         endDate: endDate ? new Date(endDate) : null,
         isPublic: isPublic !== undefined ? isPublic : existingEvent.isPublic,
@@ -365,6 +513,7 @@ export const updateEvent = async (input: UpdateEventInput) => {
     const updated = await tx.event.findUniqueOrThrow({
       where: { id: event.id },
       include: {
+        eventType: true,
         contacts: {
           include: {
             contact: true,
@@ -406,6 +555,16 @@ export const getPublicEventBySlug = async (teamId: string, slug: string) => {
       slug: true,
       description: true,
       location: true,
+      eventTypeId: true,
+      isOnline: true,
+      expectedGuests: true,
+      hasRemuneration: true,
+      address: true,
+      city: true,
+      postalCode: true,
+      state: true,
+      timeZone: true,
+      merchNeeded: true,
       startDate: true,
       endDate: true,
       team: {

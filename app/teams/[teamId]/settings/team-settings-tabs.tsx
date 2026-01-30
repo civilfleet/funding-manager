@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import CreateEmailTemplate from "@/components/forms/create-email-template";
 import EventRolesManager from "@/components/forms/event-roles-manager";
+import EventTypesManager from "@/components/forms/event-types-manager";
 import FormConfigurationManager from "@/components/forms/form-configuration-manager";
 import KlaviyoIntegration from "@/components/forms/klaviyo-integration";
 import StrategicPrioritiesForm from "@/components/forms/strategic-priorities";
@@ -25,6 +26,7 @@ const VALID_TABS = [
   "general",
   "email-templates",
   "form-configuration",
+  "event-types",
   "event-roles",
   "integrations",
 ] as const;
@@ -84,12 +86,13 @@ export default function TeamSettingsTabs({
       onValueChange={handleTabChange}
       className="space-y-8"
     >
-      <TabsList className="grid w-full grid-cols-5">
+      <TabsList className="grid w-full grid-cols-6">
         <TabsTrigger value="general">General Settings</TabsTrigger>
         <TabsTrigger value="email-templates">Email Templates</TabsTrigger>
         <TabsTrigger value="form-configuration">
           Funding Request Form
         </TabsTrigger>
+        <TabsTrigger value="event-types">Event Types</TabsTrigger>
         <TabsTrigger value="event-roles">Event Roles</TabsTrigger>
         <TabsTrigger value="integrations">Integrations</TabsTrigger>
       </TabsList>
@@ -120,6 +123,10 @@ export default function TeamSettingsTabs({
 
       <TabsContent value="form-configuration" className="space-y-8">
         <FormConfigurationManager teamId={teamId} />
+      </TabsContent>
+
+      <TabsContent value="event-types" className="space-y-8">
+        <EventTypesManager teamId={teamId} />
       </TabsContent>
 
       <TabsContent value="event-roles" className="space-y-8">

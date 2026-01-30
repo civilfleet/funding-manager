@@ -1,5 +1,5 @@
 import Link from "next/link";
-import EventTable from "@/components/table/event-table";
+import EventsView from "@/components/events/events-view";
 import { Button } from "@/components/ui/button";
 
 interface EventsPageProps {
@@ -23,7 +23,7 @@ export default async function EventsPage({ params }: EventsPageProps) {
         </Link>
       </div>
 
-      <EventTable teamId={teamId} />
+      <EventsView teamId={teamId} />
     </div>
   );
 }

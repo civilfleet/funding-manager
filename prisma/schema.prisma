@@ -155,6 +155,7 @@ model Teams {
   contactLists ContactList[]
   events       Event[]
   eventRoles   EventRole[]
+  eventTypes   EventType[]
   groups       Group[]
   integrationConnections IntegrationConnection[]
   contactFieldAccesses ContactFieldAccess[]
@@ -284,9 +285,14 @@ model Contact {
   otherMargins      String?             @db.Text
   onboardingDate    DateTime?            @db.Timestamptz(6)
   breakUntil        DateTime?            @db.Timestamptz(6)
+  address           String?             @db.VarChar(255)
+  postalCode        String?             @db.VarChar(255)
+  state             String?             @db.VarChar(255)
   city              String?             @db.VarChar(255)
+  country           String?             @db.VarChar(255)
   email             String?              @db.VarChar(255)
   phone             String?              @db.VarChar(255)
+  signal            String?              @db.VarChar(255)
   website           String?             @db.VarChar(255)
   groupId           String?              // Optional group for access control
   group             Group?               @relation(fields: [groupId], references: [id], onDelete: SetNull)
@@ -518,10 +524,21 @@ model Event {
   id            String              @id @default(uuid()) @unique
   teamId        String
   team          Teams               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  eventTypeId   String?
+  eventType     EventType?          @relation(fields: [eventTypeId], references: [id], onDelete: SetNull)
   title         String              @db.VarChar(255)
   slug          String?             @db.VarChar(255)
   description   String?             @db.Text
   location      String?             @db.VarChar(255)
+  isOnline      Boolean             @default(false)
+  expectedGuests Int?
+  hasRemuneration Boolean            @default(false)
+  address       String?             @db.VarChar(255)
+  city          String?             @db.VarChar(255)
+  postalCode    String?             @db.VarChar(255)
+  state         String?             @db.VarChar(255)
+  timeZone      String?             @db.VarChar(255)
+  merchNeeded   Boolean             @default(false)
   startDate     DateTime            @db.Timestamptz(6)
   endDate       DateTime?           @db.Timestamptz(6)
   isPublic      Boolean             @default(false)
@@ -533,6 +550,20 @@ model Event {
   @@unique([teamId, slug])
   @@index([teamId])
   @@index([slug])
+}
+
+model EventType {
+  id        String    @id @default(uuid()) @unique
+  teamId    String
+  team      Teams     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name      String    @db.VarChar(255)
+  color     String?   @db.VarChar(50)
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  events    Event[]
+
+  @@unique([teamId, name])
+  @@index([teamId])
 }
 
 model EventContact {

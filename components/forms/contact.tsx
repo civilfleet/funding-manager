@@ -141,9 +141,14 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           otherMargins: contact?.otherMargins ?? "",
           onboardingDate: formatDateForInput(contact?.onboardingDate),
           breakUntil: formatDateForInput(contact?.breakUntil),
+          address: contact?.address ?? "",
+          postalCode: contact?.postalCode ?? "",
+          state: contact?.state ?? "",
           city: contact?.city ?? "",
+          country: contact?.country ?? "",
           email: contact?.email ?? "",
           phone: contact?.phone ?? "",
+          signal: contact?.signal ?? "",
           website: contact?.website ?? "",
           socialLinks: contact?.socialLinks?.map((link) => ({
             platform: link.platform,
@@ -164,9 +169,14 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
           otherMargins: "",
           onboardingDate: "",
           breakUntil: "",
+          address: "",
+          postalCode: "",
+          state: "",
           city: "",
+          country: "",
           email: "",
           phone: "",
+          signal: "",
           website: "",
           socialLinks: [],
           groupId: undefined,
@@ -576,6 +586,23 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                   />
                   <FormField
                     control={typedControl}
+                    name="signal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Signal</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Signal handle or number"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
                     name="website"
                     render={({ field }) => (
                       <FormItem>
@@ -611,6 +638,57 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                   />
                   <FormField
                     control={typedControl}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2 lg:col-span-3">
+                        <FormLabel>Street address</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Example Street 12"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="postalCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Postal code</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="10115"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Baden-Württemberg"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
                     name="city"
                     render={({ field }) => (
                       <FormItem>
@@ -618,6 +696,23 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                         <FormControl>
                           <Input
                             placeholder="Berlin"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={typedControl}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Country</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Germany"
                             {...field}
                             value={field.value ?? ""}
                           />

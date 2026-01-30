@@ -43,7 +43,18 @@ type FilterOption = {
   type: ContactFilterType;
   label: string;
   allowMultiple?: boolean;
-  field?: "email" | "phone" | "name" | "pronouns" | "city" | "website";
+  field?:
+    | "email"
+    | "phone"
+    | "signal"
+    | "name"
+    | "pronouns"
+    | "address"
+    | "postalCode"
+    | "state"
+    | "city"
+    | "country"
+    | "website";
 };
 
 const FILTER_OPTIONS: FilterOption[] = [
@@ -67,6 +78,12 @@ const FILTER_OPTIONS: FilterOption[] = [
   },
   {
     type: "contactField",
+    field: "signal",
+    label: "Signal",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
     field: "website",
     label: "Website",
     allowMultiple: true,
@@ -79,8 +96,32 @@ const FILTER_OPTIONS: FilterOption[] = [
   },
   {
     type: "contactField",
+    field: "address",
+    label: "Address",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
+    field: "postalCode",
+    label: "Postal code",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
+    field: "state",
+    label: "State",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
     field: "city",
     label: "City",
+    allowMultiple: true,
+  },
+  {
+    type: "contactField",
+    field: "country",
+    label: "Country",
     allowMultiple: true,
   },
   { type: "attribute", label: "Attribute", allowMultiple: true },
@@ -90,14 +131,29 @@ const FILTER_OPTIONS: FilterOption[] = [
 ];
 
 const CONTACT_FIELD_LABELS: Record<
-  "email" | "phone" | "name" | "pronouns" | "city" | "website",
+  | "email"
+  | "phone"
+  | "signal"
+  | "name"
+  | "pronouns"
+  | "address"
+  | "postalCode"
+  | "state"
+  | "city"
+  | "country"
+  | "website",
   string
 > = {
   name: "Name",
   email: "Email",
   phone: "Phone",
+  signal: "Signal",
   pronouns: "Pronouns",
+  address: "Address",
+  postalCode: "Postal code",
+  state: "State",
   city: "City",
+  country: "Country",
   website: "Website",
 };
 

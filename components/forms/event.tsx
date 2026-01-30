@@ -42,6 +42,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { generateSlug } from "@/lib/slug";
@@ -56,10 +63,24 @@ interface EventFormProps {
   rightRailAppend?: ReactNode;
   event?: {
     id: string;
+    eventTypeId?: string;
+    eventType?: {
+      id: string;
+      name: string;
+      color?: string;
+    };
     title: string;
     slug?: string;
     description?: string;
     location?: string;
+    isOnline?: boolean;
+    expectedGuests?: number;
+    hasRemuneration?: boolean;
+    address?: string;
+    city?: string;
+    postalCode?: string;
+    timeZone?: string;
+    merchNeeded?: boolean;
     startDate: Date;
     endDate?: Date;
     isPublic: boolean;
@@ -142,6 +163,12 @@ export default function EventForm({
   );
   const availableRoles = rolesData?.data || [];
 
+  const { data: eventTypesData } = useSWR(
+    `/api/event-types?teamId=${teamId}`,
+    fetcher,
+  );
+  const eventTypes = eventTypesData?.data || [];
+
   type FormValues = CreateEventFormValues | UpdateEventFormValues;
 
   const formResolver = useMemo<Resolver<FormValues>>(
@@ -158,10 +185,20 @@ export default function EventForm({
       ? ({
           id: event.id,
           teamId,
+          eventTypeId: event?.eventTypeId ?? "",
           title: event?.title || "",
           slug: event?.slug || "",
           description: event?.description || "",
           location: event?.location || "",
+          isOnline: event?.isOnline ?? false,
+          expectedGuests: event?.expectedGuests ?? undefined,
+          hasRemuneration: event?.hasRemuneration ?? false,
+          address: event?.address || "",
+          city: event?.city || "",
+          postalCode: event?.postalCode || "",
+          state: event?.state || "",
+          timeZone: event?.timeZone || "",
+          merchNeeded: event?.merchNeeded ?? false,
           startDate: formatDateForInput(event?.startDate) || "",
           endDate: formatDateForInput(event?.endDate) || "",
           isPublic: event?.isPublic ?? false,
@@ -173,10 +210,20 @@ export default function EventForm({
         } satisfies UpdateEventFormValues)
       : ({
           teamId,
+          eventTypeId: "",
           title: "",
           slug: "",
           description: "",
           location: "",
+          isOnline: false,
+          expectedGuests: undefined,
+          hasRemuneration: false,
+          address: "",
+          city: "",
+          postalCode: "",
+          state: "",
+          timeZone: "",
+          merchNeeded: false,
           startDate: "",
           endDate: "",
           isPublic: false,
@@ -284,6 +331,7 @@ export default function EventForm({
     [slugValue],
   );
   const isPublicValue = watch("isPublic");
+  const isOnlineValue = watch("isOnline");
 
   const slugSuggestion = useMemo(() => generateSlug(titleValue), [titleValue]);
   const slugDirty = Boolean(formState.dirtyFields.slug);
@@ -545,6 +593,57 @@ export default function EventForm({
 
                   <FormField
                     control={typedControl}
+                    name="eventTypeId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Event type</FormLabel>
+                        <Select
+                          onValueChange={(value) =>
+                            field.onChange(value === "none" ? "" : value)
+                          }
+                          value={field.value || "none"}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">No type</SelectItem>
+                            {eventTypes.map(
+                              (type: { id: string; name: string }) => (
+                                <SelectItem key={type.id} value={type.id}>
+                                  {type.name}
+                                </SelectItem>
+                              ),
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={typedControl}
+                    name="timeZone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Time zone</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Europe/Berlin"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={typedControl}
                     name="location"
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
@@ -560,6 +659,102 @@ export default function EventForm({
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={typedControl}
+                    name="isOnline"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="cursor-pointer">
+                            Online event
+                          </FormLabel>
+                          <p className="text-sm text-muted-foreground">
+                            Mark this event as online-only.
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  {!isOnlineValue && (
+                    <>
+                      <FormField
+                        control={typedControl}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem className="sm:col-span-2">
+                            <FormLabel>Street address</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Example Street 12"
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={typedControl}
+                        name="postalCode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Postal code</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="10115"
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={typedControl}
+                        name="state"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>State</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Baden-Württemberg"
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={typedControl}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>City</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Berlin"
+                                {...field}
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
 
                   <FormField
                     control={typedControl}
@@ -593,6 +788,72 @@ export default function EventForm({
                           />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={typedControl}
+                    name="expectedGuests"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expected guests</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={0}
+                            placeholder="0"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={typedControl}
+                    name="hasRemuneration"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="cursor-pointer">
+                            Remuneration offered
+                          </FormLabel>
+                          <p className="text-sm text-muted-foreground">
+                            Track if costs or honorarium apply.
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={typedControl}
+                    name="merchNeeded"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="cursor-pointer">
+                            Merch needed
+                          </FormLabel>
+                          <p className="text-sm text-muted-foreground">
+                            Mark if merch should be ordered or sold.
+                          </p>
+                        </div>
                       </FormItem>
                     )}
                   />

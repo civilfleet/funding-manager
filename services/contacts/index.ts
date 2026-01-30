@@ -45,9 +45,14 @@ type CreateContactInput = {
   otherMargins?: string;
   onboardingDate?: string;
   breakUntil?: string;
+  address?: string;
+  postalCode?: string;
+  state?: string;
   city?: string;
+  country?: string;
   email?: string;
   phone?: string;
+  signal?: string;
   website?: string;
   socialLinks?: ContactSocialLink[];
   groupId?: string;
@@ -66,9 +71,14 @@ type UpdateContactInput = {
   otherMargins?: string;
   onboardingDate?: string;
   breakUntil?: string;
+  address?: string;
+  postalCode?: string;
+  state?: string;
   city?: string;
+  country?: string;
   email?: string;
   phone?: string;
+  signal?: string;
   website?: string;
   socialLinks?: ContactSocialLink[];
   groupId?: string;
@@ -448,9 +458,14 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
   otherMargins: contact.otherMargins ?? undefined,
   onboardingDate: contact.onboardingDate ?? undefined,
   breakUntil: contact.breakUntil ?? undefined,
+  address: contact.address ?? undefined,
+  postalCode: contact.postalCode ?? undefined,
+  state: contact.state ?? undefined,
   city: contact.city ?? undefined,
+  country: contact.country ?? undefined,
   email: contact.email ?? undefined,
   phone: contact.phone ?? undefined,
+  signal: contact.signal ?? undefined,
   website: contact.website ?? undefined,
   socialLinks: contact.socialLinks.map((link) => ({
     platform: link.platform,
@@ -557,9 +572,18 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
     ) => ({
       id: event.id,
       teamId: event.teamId,
+      eventTypeId: event.eventTypeId ?? undefined,
       title: event.title,
       description: event.description ?? undefined,
       location: event.location ?? undefined,
+      isOnline: event.isOnline,
+      expectedGuests: event.expectedGuests ?? undefined,
+      hasRemuneration: event.hasRemuneration,
+      address: event.address ?? undefined,
+      city: event.city ?? undefined,
+      postalCode: event.postalCode ?? undefined,
+      timeZone: event.timeZone ?? undefined,
+      merchNeeded: event.merchNeeded,
       startDate: event.startDate,
       endDate: event.endDate ?? undefined,
       createdAt: event.createdAt,
@@ -670,9 +694,14 @@ const getTeamContacts = async (
       { name: { contains: query, mode: "insensitive" } },
       { pronouns: { contains: query, mode: "insensitive" } },
       { otherMargins: { contains: query, mode: "insensitive" } },
+      { address: { contains: query, mode: "insensitive" } },
+      { postalCode: { contains: query, mode: "insensitive" } },
+      { state: { contains: query, mode: "insensitive" } },
       { city: { contains: query, mode: "insensitive" } },
+      { country: { contains: query, mode: "insensitive" } },
       { email: { contains: query, mode: "insensitive" } },
       { phone: { contains: query, mode: "insensitive" } },
+      { signal: { contains: query, mode: "insensitive" } },
       { website: { contains: query, mode: "insensitive" } },
       {
         attributes: {
@@ -719,6 +748,13 @@ const getTeamContacts = async (
               mode: Prisma.QueryMode.insensitive,
             },
           };
+        case "signal":
+          return {
+            signal: {
+              contains: trimmedValue,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          };
         case "pronouns":
           return {
             pronouns: {
@@ -726,9 +762,37 @@ const getTeamContacts = async (
               mode: Prisma.QueryMode.insensitive,
             },
           };
+        case "address":
+          return {
+            address: {
+              contains: trimmedValue,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          };
+        case "postalCode":
+          return {
+            postalCode: {
+              contains: trimmedValue,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          };
+        case "state":
+          return {
+            state: {
+              contains: trimmedValue,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          };
         case "city":
           return {
             city: {
+              contains: trimmedValue,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          };
+        case "country":
+          return {
+            country: {
               contains: trimmedValue,
               mode: Prisma.QueryMode.insensitive,
             },
@@ -756,10 +820,20 @@ const getTeamContacts = async (
           return { email: { not: null } };
         case "phone":
           return { phone: { not: null } };
+        case "signal":
+          return { signal: { not: null } };
         case "pronouns":
           return { pronouns: { not: null } };
+        case "address":
+          return { address: { not: null } };
+        case "postalCode":
+          return { postalCode: { not: null } };
+        case "state":
+          return { state: { not: null } };
         case "city":
           return { city: { not: null } };
+        case "country":
+          return { country: { not: null } };
         case "website":
           return { website: { not: null } };
         default:
@@ -773,10 +847,20 @@ const getTeamContacts = async (
           return { NOT: { email: { equals: "" } } };
         case "phone":
           return { NOT: { phone: { equals: "" } } };
+        case "signal":
+          return { NOT: { signal: { equals: "" } } };
         case "pronouns":
           return { NOT: { pronouns: { equals: "" } } };
+        case "address":
+          return { NOT: { address: { equals: "" } } };
+        case "postalCode":
+          return { NOT: { postalCode: { equals: "" } } };
+        case "state":
+          return { NOT: { state: { equals: "" } } };
         case "city":
           return { NOT: { city: { equals: "" } } };
+        case "country":
+          return { NOT: { country: { equals: "" } } };
         case "website":
           return { NOT: { website: { equals: "" } } };
         default:
@@ -798,6 +882,55 @@ const getTeamContacts = async (
             OR: [
               { phone: { equals: null } },
               { phone: { equals: "" } },
+            ],
+          };
+        case "pronouns":
+          return {
+            OR: [
+              { pronouns: { equals: null } },
+              { pronouns: { equals: "" } },
+            ],
+          };
+        case "signal":
+          return {
+            OR: [
+              { signal: { equals: null } },
+              { signal: { equals: "" } },
+            ],
+          };
+        case "address":
+          return {
+            OR: [
+              { address: { equals: null } },
+              { address: { equals: "" } },
+            ],
+          };
+        case "postalCode":
+          return {
+            OR: [
+              { postalCode: { equals: null } },
+              { postalCode: { equals: "" } },
+            ],
+          };
+        case "state":
+          return {
+            OR: [
+              { state: { equals: null } },
+              { state: { equals: "" } },
+            ],
+          };
+        case "city":
+          return {
+            OR: [
+              { city: { equals: null } },
+              { city: { equals: "" } },
+            ],
+          };
+        case "country":
+          return {
+            OR: [
+              { country: { equals: null } },
+              { country: { equals: "" } },
             ],
           };
         case "website":
@@ -1091,9 +1224,14 @@ const createContact = async (
     otherMargins,
     onboardingDate,
     breakUntil,
+    address,
+    postalCode,
+    state,
     city,
+    country,
     email,
     phone,
+    signal,
     website,
     socialLinks,
     groupId,
@@ -1122,12 +1260,17 @@ const createContact = async (
     breakUntil && !Number.isNaN(Date.parse(breakUntil))
       ? new Date(breakUntil)
       : undefined;
+  const normalizedAddress = address?.trim() || undefined;
+  const normalizedPostalCode = postalCode?.trim() || undefined;
+  const normalizedState = state?.trim() || undefined;
   const normalizedCity = city?.trim() || undefined;
+  const normalizedCountry = country?.trim() || undefined;
   const normalizedEmail = (email ?? "").trim().toLowerCase();
   if (!normalizedEmail) {
     throw new Error("Email is required");
   }
   const normalizedPhone = phone ? phone.trim() : undefined;
+  const normalizedSignal = signal ? signal.trim() : undefined;
   const normalizedWebsite = website?.trim() || undefined;
 
   const existingContact = await prisma.contact.findFirst({
@@ -1154,9 +1297,14 @@ const createContact = async (
         otherMargins: normalizedOtherMargins,
         onboardingDate: normalizedOnboardingDate,
         breakUntil: normalizedBreakUntil,
+        address: normalizedAddress,
+        postalCode: normalizedPostalCode,
+        state: normalizedState,
         city: normalizedCity,
+        country: normalizedCountry,
         email: normalizedEmail,
         phone: normalizedPhone,
+        signal: normalizedSignal,
         website: normalizedWebsite,
         groupId,
       },
@@ -1247,9 +1395,14 @@ const updateContact = async (
     otherMargins,
     onboardingDate,
     breakUntil,
+    address,
+    postalCode,
+    state,
     city,
+    country,
     email,
     phone,
+    signal,
     website,
     groupId,
     profileAttributes,
@@ -1260,7 +1413,11 @@ const updateContact = async (
     input,
     "pronouns",
   );
+  const addressProvided = Object.hasOwn(input, "address");
+  const postalCodeProvided = Object.hasOwn(input, "postalCode");
+  const stateProvided = Object.hasOwn(input, "state");
   const cityProvided = Object.hasOwn(input, "city");
+  const countryProvided = Object.hasOwn(input, "country");
   const normalizedPronouns = (() => {
     if (!pronounsProvided) {
       return undefined;
@@ -1271,6 +1428,36 @@ const updateContact = async (
     const trimmed = pronouns.trim();
     return trimmed === "" ? null : trimmed;
   })();
+  const normalizedAddress = (() => {
+    if (!addressProvided) {
+      return undefined;
+    }
+    if (typeof address !== "string") {
+      return null;
+    }
+    const trimmed = address.trim();
+    return trimmed === "" ? null : trimmed;
+  })();
+  const normalizedPostalCode = (() => {
+    if (!postalCodeProvided) {
+      return undefined;
+    }
+    if (typeof postalCode !== "string") {
+      return null;
+    }
+    const trimmed = postalCode.trim();
+    return trimmed === "" ? null : trimmed;
+  })();
+  const normalizedState = (() => {
+    if (!stateProvided) {
+      return undefined;
+    }
+    if (typeof state !== "string") {
+      return null;
+    }
+    const trimmed = state.trim();
+    return trimmed === "" ? null : trimmed;
+  })();
   const normalizedCity = (() => {
     if (!cityProvided) {
       return undefined;
@@ -1279,6 +1466,16 @@ const updateContact = async (
       return null;
     }
     const trimmed = city.trim();
+    return trimmed === "" ? null : trimmed;
+  })();
+  const normalizedCountry = (() => {
+    if (!countryProvided) {
+      return undefined;
+    }
+    if (typeof country !== "string") {
+      return null;
+    }
+    const trimmed = country.trim();
     return trimmed === "" ? null : trimmed;
   })();
   const genderProvided = Object.hasOwn(input, "gender");
@@ -1349,6 +1546,7 @@ const updateContact = async (
   const normalizedEmail =
     email === undefined ? undefined : email.trim().toLowerCase();
   const normalizedPhone = phone === undefined ? undefined : phone.trim();
+  const normalizedSignal = signal === undefined ? undefined : signal.trim();
   const websiteProvided = Object.hasOwn(input, "website");
   const normalizedWebsite = (() => {
     if (!websiteProvided) {
@@ -1524,6 +1722,45 @@ const updateContact = async (
       }
     }
 
+    if (addressProvided && normalizedAddress !== existing.address) {
+      await logFieldUpdate(
+        contactId,
+        "address",
+        existing.address,
+        normalizedAddress,
+        userId,
+        userName,
+        tx,
+      );
+      updates.address = normalizedAddress;
+    }
+
+    if (postalCodeProvided && normalizedPostalCode !== existing.postalCode) {
+      await logFieldUpdate(
+        contactId,
+        "postalCode",
+        existing.postalCode,
+        normalizedPostalCode,
+        userId,
+        userName,
+        tx,
+      );
+      updates.postalCode = normalizedPostalCode;
+    }
+
+    if (stateProvided && normalizedState !== existing.state) {
+      await logFieldUpdate(
+        contactId,
+        "state",
+        existing.state,
+        normalizedState,
+        userId,
+        userName,
+        tx,
+      );
+      updates.state = normalizedState;
+    }
+
     if (cityProvided && normalizedCity !== existing.city) {
       await logFieldUpdate(
         contactId,
@@ -1535,6 +1772,19 @@ const updateContact = async (
         tx,
       );
       updates.city = normalizedCity;
+    }
+
+    if (countryProvided && normalizedCountry !== existing.country) {
+      await logFieldUpdate(
+        contactId,
+        "country",
+        existing.country,
+        normalizedCountry,
+        userId,
+        userName,
+        tx,
+      );
+      updates.country = normalizedCountry;
     }
 
     if (normalizedEmail !== undefined && normalizedEmail !== existing.email) {
@@ -1577,6 +1827,19 @@ const updateContact = async (
         tx,
       );
       updates.phone = normalizedPhone;
+    }
+
+    if (normalizedSignal !== undefined && normalizedSignal !== existing.signal) {
+      await logFieldUpdate(
+        contactId,
+        "signal",
+        existing.signal,
+        normalizedSignal,
+        userId,
+        userName,
+        tx,
+      );
+      updates.signal = normalizedSignal;
     }
 
     if (normalizedWebsite !== undefined && normalizedWebsite !== existing.website) {
