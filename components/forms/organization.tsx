@@ -1,11 +1,18 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import Alert from "@/components/helper/alert";
 import { Form } from "@/components/ui/form";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import {
   createOrganizationSchema,
@@ -21,6 +28,33 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/card";
+import { Checkbox } from "../ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+
+type OrganizationType = {
+  id: string;
+  name: string;
+  color?: string;
+  schema?: Array<{
+    key: string;
+    label: string;
+    type: "STRING" | "NUMBER" | "DATE" | "BOOLEAN" | "SELECT" | "MULTISELECT";
+    required?: boolean;
+    options?: Array<{ label: string; value: string }>;
+  }>;
+};
+
+type ContactOption = {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+};
 
 type Organization = {
   id: string;
@@ -36,6 +70,10 @@ type Organization = {
   articlesOfAssociation?: string;
   taxID?: string;
   isFilledByOrg: boolean;
+  orgTypeId?: string;
+  profileData?: Record<string, unknown>;
+  contactPersonId?: string;
+  contactPerson?: { id: string; name?: string; email?: string };
   logo?: string;
   Files?: {
     type: string;
@@ -64,6 +102,24 @@ export default function OrganizationForm({ data }: { data: Organization }) {
   const { toast } = useToast();
   const [isUpdate] = useState(!!data?.email);
   const schema = isUpdate ? updateOrganizationSchema : createOrganizationSchema;
+  const teamId = data?.teamId;
+
+  const fetcher = (url: string) => fetch(url).then((res) => res.json());
+  const { data: orgTypesData } = useSWR(
+    teamId ? `/api/organization-types?teamId=${teamId}` : null,
+    fetcher,
+  );
+  const { data: contactsData } = useSWR(
+    teamId ? `/api/contacts?teamId=${teamId}&query=` : null,
+    fetcher,
+  );
+
+  const orgTypes: OrganizationType[] = orgTypesData?.data || [];
+  const contacts: ContactOption[] = contactsData?.data || [];
+
+  const orgTypeMap = useMemo(() => {
+    return new Map(orgTypes.map((type) => [type.id, type]));
+  }, [orgTypes]);
 
   // Helper function to check if a field is filled
   const isFieldFilled = (value: string | undefined): boolean => {
@@ -81,6 +137,9 @@ export default function OrganizationForm({ data }: { data: Organization }) {
       country: data?.country || "",
       postalCode: data?.postalCode || "",
       website: data?.website || "",
+      orgTypeId: data?.orgTypeId || "",
+      profileData: (data?.profileData as Record<string, unknown>) || {},
+      contactPersonId: data?.contactPersonId || "",
       taxExemptionCertificate:
         data?.Files?.find((file) => file.type === "TAX_EXEMPTION_CERTIFICATE")
           ?.url || "",
@@ -102,6 +161,34 @@ export default function OrganizationForm({ data }: { data: Organization }) {
       },
     },
   });
+
+  const selectedOrgTypeId = form.watch("orgTypeId");
+  const selectedType = useMemo(() => {
+    if (!selectedOrgTypeId) {
+      return null;
+    }
+    return orgTypeMap.get(selectedOrgTypeId as string) || null;
+  }, [orgTypeMap, selectedOrgTypeId]);
+
+  useEffect(() => {
+    const schema = selectedType?.schema || [];
+    if (!schema.length) {
+      return;
+    }
+
+    const current = form.getValues("profileData") || {};
+    const next = { ...current };
+    let changed = false;
+    schema.forEach((field) => {
+      if (!(field.key in next)) {
+        next[field.key] = field.type === "MULTISELECT" ? [] : "";
+        changed = true;
+      }
+    });
+    if (changed) {
+      form.setValue("profileData", next, { shouldDirty: true });
+    }
+  }, [form, selectedType]);
 
   async function onSubmit(values: z.infer<typeof schema>) {
     try {
@@ -169,12 +256,64 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   placeholder="Organization name"
                   isFilled={isFieldFilled(data?.name)}
                 />
+                <FormField
+                  control={form.control}
+                  name="orgTypeId"
+                  render={({ field }) => (
+                    <div>
+                      <Select
+                        onValueChange={(value) =>
+                          field.onChange(value === "none" ? "" : value)
+                        }
+                        value={field.value || "none"}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Organization type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No type</SelectItem>
+                          {orgTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.id}>
+                              {type.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                />
                 <FormInputControl
                   form={form}
                   disabled={!!data?.email}
                   name="email"
                   placeholder="Email address"
                   isFilled={isFieldFilled(data?.email)}
+                />
+                <FormField
+                  control={form.control}
+                  name="contactPersonId"
+                  render={({ field }) => (
+                    <div>
+                      <Select
+                        onValueChange={(value) =>
+                          field.onChange(value === "none" ? "" : value)
+                        }
+                        value={field.value || "none"}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Contact person" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No contact person</SelectItem>
+                          {contacts.map((contact) => (
+                            <SelectItem key={contact.id} value={contact.id}>
+                              {contact.name || contact.email || "Unnamed"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 />
                 <FormInputControl
                   form={form}
@@ -214,6 +353,142 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                   isFilled={isFieldFilled(data?.website)}
                 />
               </div>
+              {selectedType?.schema && selectedType.schema.length > 0 && (
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold">Organization Details</h4>
+                  <CardDescription>
+                    Custom fields for this organization type.
+                  </CardDescription>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {selectedType.schema.map((field) => (
+                      <FormField
+                        key={field.key}
+                        control={form.control}
+                        name={`profileData.${field.key}` as const}
+                        rules={
+                          field.required
+                            ? { required: `${field.label} is required` }
+                            : undefined
+                        }
+                        render={({ field: formField }) => {
+                          if (field.type === "BOOLEAN") {
+                            return (
+                              <div className="flex items-start gap-3 rounded-md border p-4">
+                                <Checkbox
+                                  checked={Boolean(formField.value)}
+                                  onCheckedChange={(checked) =>
+                                    formField.onChange(Boolean(checked))
+                                  }
+                                />
+                                <div className="space-y-1">
+                                  <div className="text-sm font-medium">
+                                    {field.label}
+                                    {field.required && (
+                                      <span className="ml-1 text-destructive">
+                                        *
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          if (field.type === "SELECT") {
+                            return (
+                              <div className="space-y-2">
+                                <div className="text-sm font-medium">
+                                  {field.label}
+                                  {field.required && (
+                                    <span className="ml-1 text-destructive">
+                                      *
+                                    </span>
+                                  )}
+                                </div>
+                                <Select
+                                  onValueChange={formField.onChange}
+                                  value={(formField.value as string) || ""}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {(field.options || []).map((option) => (
+                                      <SelectItem
+                                        key={option.value}
+                                        value={option.value}
+                                      >
+                                        {option.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            );
+                          }
+
+                          if (field.type === "MULTISELECT") {
+                            return (
+                              <div className="space-y-2">
+                                <div className="text-sm font-medium">
+                                  {field.label}
+                                  {field.required && (
+                                    <span className="ml-1 text-destructive">
+                                      *
+                                    </span>
+                                  )}
+                                </div>
+                                <Input
+                                  placeholder="Comma-separated values"
+                                  value={
+                                    Array.isArray(formField.value)
+                                      ? formField.value.join(", ")
+                                      : (formField.value as string) || ""
+                                  }
+                                  onChange={(event) =>
+                                    formField.onChange(
+                                      event.target.value
+                                        .split(",")
+                                        .map((value) => value.trim())
+                                        .filter(Boolean),
+                                    )
+                                  }
+                                />
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <FormItem>
+                              <FormLabel>
+                                {field.label}
+                                {field.required && (
+                                  <span className="ml-1 text-destructive">*</span>
+                                )}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type={
+                                    field.type === "NUMBER"
+                                      ? "number"
+                                      : field.type === "DATE"
+                                        ? "date"
+                                        : "text"
+                                  }
+                                  placeholder={field.label}
+                                  {...formField}
+                                  value={formField.value ?? ""}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
                 <h4 className="text-lg font-semibold">Tax Details</h4>
                 <CardDescription>
