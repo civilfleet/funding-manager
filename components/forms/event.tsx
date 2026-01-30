@@ -79,6 +79,7 @@ interface EventFormProps {
     address?: string;
     city?: string;
     postalCode?: string;
+    state?: string;
     timeZone?: string;
     merchNeeded?: boolean;
     startDate: Date;
