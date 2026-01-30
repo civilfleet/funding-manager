@@ -19,6 +19,16 @@ export type OrganizationColumns = {
   website?: string;
   taxID?: string;
   isFilledByOrg: boolean;
+  orgType?: {
+    id: string;
+    name: string;
+    color?: string;
+  };
+  contactPerson?: {
+    id: string;
+    name?: string;
+    email?: string;
+  };
   user?: {
     email: string;
   };
@@ -121,6 +131,48 @@ export const columns = (
       return (
         <div className="text-left font-medium">
           {row.original.team?.name || "N/A"}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "orgType.name",
+    header: () => <div className="text-left w-24">Type</div>,
+    cell: ({ row }) => {
+      const type = row.original.orgType;
+      if (!type) {
+        return <div className="text-left text-muted-foreground">N/A</div>;
+      }
+      return (
+        <div className="text-left">
+          <Badge
+            variant="outline"
+            className="text-xs"
+            style={type.color ? { borderColor: type.color, color: type.color } : {}}
+          >
+            {type.color && (
+              <span
+                className="mr-1 inline-block h-2 w-2 rounded-full"
+                style={{ backgroundColor: type.color }}
+              />
+            )}
+            {type.name}
+          </Badge>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "contactPerson",
+    header: () => <div className="text-left w-24">Contact person</div>,
+    cell: ({ row }) => {
+      const contact = row.original.contactPerson;
+      if (!contact) {
+        return <div className="text-left text-muted-foreground">N/A</div>;
+      }
+      return (
+        <div className="text-left font-medium">
+          {contact.name || contact.email || "Unnamed"}
         </div>
       );
     },

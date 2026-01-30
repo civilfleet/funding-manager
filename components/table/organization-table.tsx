@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 import { z } from "zod";
 import { DataTable } from "@/components/data-table";
@@ -12,6 +13,7 @@ import {
 } from "@/components/table/organization-columns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -24,6 +26,14 @@ import { useToast } from "@/hooks/use-toast";
 import ButtonControl from "../helper/button-control";
 import FormInputControl from "../helper/form-input-control";
 import { Loader } from "../helper/loader";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Trash2, Plus } from "lucide-react";
 
 const querySchema = z.object({
   query: z.string(),
@@ -34,10 +44,25 @@ interface IOrganizationProps {
   teamId?: string;
 }
 
+type FieldFilter = {
+  key: string;
+  operator:
+    | "contains"
+    | "equals"
+    | "gt"
+    | "lt"
+    | "before"
+    | "after"
+    | "isTrue"
+    | "isFalse";
+  value?: string;
+};
+
 export default function OrganizationTable({ teamId }: IOrganizationProps) {
   const { toast } = useToast();
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
+  const [fieldFilters, setFieldFilters] = useState<FieldFilter[]>([]);
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
@@ -46,8 +71,67 @@ export default function OrganizationTable({ teamId }: IOrganizationProps) {
 
   const query = form.watch("query"); // Get current query value
 
+  const { data: orgTypesData } = useSWR(
+    teamId ? `/api/organization-types?teamId=${teamId}` : null,
+    fetcher,
+  );
+  const orgTypes = orgTypesData?.data || [];
+
+  const fieldOptions = useMemo(() => {
+    const map = new Map<
+      string,
+      { key: string; label: string; type: string }
+    >();
+    orgTypes.forEach((type: { schema?: Array<{ key: string; label: string; type: string }> }) => {
+      (type.schema || []).forEach((field) => {
+        if (!map.has(field.key)) {
+          map.set(field.key, field);
+        }
+      });
+    });
+    return Array.from(map.values());
+  }, [orgTypes]);
+
+  const operatorOptions = useMemo(() => {
+    return {
+      STRING: [
+        { value: "contains", label: "contains" },
+        { value: "equals", label: "equals" },
+      ],
+      SELECT: [
+        { value: "equals", label: "equals" },
+        { value: "contains", label: "contains" },
+      ],
+      MULTISELECT: [
+        { value: "contains", label: "contains" },
+        { value: "equals", label: "equals" },
+      ],
+      NUMBER: [
+        { value: "equals", label: "equals" },
+        { value: "gt", label: "greater than" },
+        { value: "lt", label: "less than" },
+      ],
+      DATE: [
+        { value: "equals", label: "equals" },
+        { value: "before", label: "before" },
+        { value: "after", label: "after" },
+      ],
+      BOOLEAN: [
+        { value: "isTrue", label: "is true" },
+        { value: "isFalse", label: "is false" },
+      ],
+    } as Record<string, Array<{ value: FieldFilter["operator"]; label: string }>>;
+  }, []);
+
+  const filtersQuery = useMemo(() => {
+    if (!fieldFilters.length) {
+      return "";
+    }
+    return `&filters=${encodeURIComponent(JSON.stringify(fieldFilters.map((filter) => ({ type: "field", ...filter }))))}`;
+  }, [fieldFilters]);
+
   const { data, error, isLoading, mutate } = useSWR(
-    `/api/organizations?${isAdmin ? "" : `teamId=${teamId}&`}query=${query}`,
+    `/api/organizations?${isAdmin ? "" : `teamId=${teamId}&`}query=${query}${filtersQuery}`,
     fetcher,
   );
   const loading = isLoading || !data;
@@ -86,6 +170,144 @@ export default function OrganizationTable({ teamId }: IOrganizationProps) {
           />
         </form>
       </Form>
+
+      {fieldOptions.length > 0 && (
+        <div className="rounded-md border p-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">Field filters</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setFieldFilters((prev) => [
+                  ...prev,
+                  {
+                    key: fieldOptions[0].key,
+                    operator: "contains",
+                    value: "",
+                  },
+                ])
+              }
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add filter
+            </Button>
+          </div>
+          {fieldFilters.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No field filters applied.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {fieldFilters.map((filter, index) => {
+                const selectedField = fieldOptions.find(
+                  (option) => option.key === filter.key,
+                );
+                const fieldType = selectedField?.type || "STRING";
+                const operatorsForField =
+                  operatorOptions[fieldType] || operatorOptions.STRING;
+                const operatorValues = operatorsForField.map((op) => op.value);
+                if (!operatorValues.includes(filter.operator)) {
+                  setFieldFilters((prev) =>
+                    prev.map((item, i) =>
+                      i === index
+                        ? { ...item, operator: operatorsForField[0].value }
+                        : item,
+                    ),
+                  );
+                }
+                return (
+                  <div
+                    key={`${filter.key}-${index}`}
+                    className="flex flex-wrap items-center gap-2"
+                  >
+                    <Select
+                      onValueChange={(value) =>
+                        setFieldFilters((prev) =>
+                          prev.map((item, i) =>
+                            i === index ? { ...item, key: value } : item,
+                          ),
+                        )
+                      }
+                      value={filter.key}
+                    >
+                      <SelectTrigger className="min-w-[200px]">
+                        <SelectValue placeholder="Field" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fieldOptions.map((option) => (
+                          <SelectItem key={option.key} value={option.key}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      onValueChange={(value) =>
+                        setFieldFilters((prev) =>
+                          prev.map((item, i) =>
+                            i === index
+                              ? { ...item, operator: value as FieldFilter["operator"] }
+                              : item,
+                          ),
+                        )
+                      }
+                      value={filter.operator}
+                    >
+                      <SelectTrigger className="min-w-[160px]">
+                        <SelectValue placeholder="Operator" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {operatorsForField.map((op) => (
+                          <SelectItem key={op.value} value={op.value}>
+                            {op.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {filter.operator !== "isTrue" &&
+                      filter.operator !== "isFalse" && (
+                        <Input
+                          className="min-w-[200px]"
+                          placeholder="Value"
+                          type={fieldType === "NUMBER" ? "number" : fieldType === "DATE" ? "date" : "text"}
+                          value={filter.value ?? ""}
+                          onChange={(event) =>
+                            setFieldFilters((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? { ...item, value: event.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        setFieldFilters((prev) =>
+                          prev.filter((_, i) => i !== index),
+                        )
+                      }
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    {selectedField?.type && (
+                      <span className="text-xs text-muted-foreground">
+                        {selectedField.type}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       <div
         className="my-2 flex h-full grow items-center justify-center rounded-md border p-2 sm:p-4"

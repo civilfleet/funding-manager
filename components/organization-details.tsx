@@ -11,6 +11,7 @@ import {
   Globe,
   Mail,
   MapPin,
+  User,
   Phone,
 } from "lucide-react";
 import Link from "next/link";
@@ -156,6 +157,16 @@ export default function OrganizationDetails({
                       className="flex-1"
                     />
                   </div>
+                  {organization.orgType && (
+                    <div className="flex items-start space-x-2">
+                      <Building className="h-4 w-4 mt-1 text-muted-foreground" />
+                      <DetailItem
+                        label="Organization Type"
+                        value={organization.orgType.name}
+                        className="flex-1"
+                      />
+                    </div>
+                  )}
 
                   <div className="flex items-start space-x-2">
                     <Globe className="h-4 w-4 mt-1 text-muted-foreground" />
@@ -192,6 +203,20 @@ export default function OrganizationDetails({
                       />
                     </div>
                   </div>
+                  {organization.contactPerson && (
+                    <div className="flex items-start space-x-2">
+                      <User className="h-4 w-4 mt-1 text-muted-foreground" />
+                      <DetailItem
+                        label="Contact person"
+                        value={
+                          organization.contactPerson.name ||
+                          organization.contactPerson.email ||
+                          "Unnamed"
+                        }
+                        className="flex-1"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>

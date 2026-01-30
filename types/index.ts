@@ -407,6 +407,11 @@ export interface Organization {
   website?: string;
   taxID?: string;
   isFilledByOrg: boolean;
+  orgTypeId?: string;
+  orgType?: OrganizationType;
+  profileData?: Record<string, unknown>;
+  contactPersonId?: string;
+  contactPerson?: Contact;
   bankDetailsId?: string;
   managers: Manager[];
   users: User[];
@@ -419,6 +424,56 @@ export interface Organization {
   createdAt: Date;
   updatedAt: Date;
   Files?: File[]; // This is a relation
+}
+
+export interface OrganizationType {
+  id: string;
+  teamId: string;
+  name: string;
+  color?: string;
+  schema?: OrganizationTypeField[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface OrganizationEngagement {
+  id: string;
+  organizationId: string;
+  teamId: string;
+  type: string;
+  note?: string;
+  engagedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type OrganizationFieldType =
+  | "STRING"
+  | "NUMBER"
+  | "DATE"
+  | "BOOLEAN"
+  | "SELECT"
+  | "MULTISELECT";
+
+export interface OrganizationTypeField {
+  key: string;
+  label: string;
+  type: OrganizationFieldType;
+  required?: boolean;
+  options?: Array<{ label: string; value: string }>;
+}
+
+export interface OrganizationFieldValue {
+  id: string;
+  organizationId: string;
+  key: string;
+  type: OrganizationFieldType | string;
+  stringValue?: string | null;
+  numberValue?: number | null;
+  dateValue?: Date | null;
+  booleanValue?: boolean | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Teams {

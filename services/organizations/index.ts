@@ -1,6 +1,7 @@
-import { Roles } from "@prisma/client";
+import { Prisma, Roles } from "@prisma/client";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import type { OrganizationFieldFilter } from "@/validations/organization-filters";
 
 type Organization = {
   name?: string;
@@ -15,6 +16,9 @@ type Organization = {
   articlesOfAssociation?: string;
   logo?: string;
   taxID?: string;
+  orgTypeId?: string;
+  profileData?: Record<string, unknown>;
+  contactPersonId?: string;
   teamId?: string;
   isFilledByOrg: boolean;
   bankDetails?: {
@@ -32,6 +36,113 @@ type Organization = {
     city?: string;
     country?: string;
   };
+};
+
+const syncOrganizationFieldValues = async (
+  tx: typeof prisma,
+  organizationId: string,
+  orgTypeId: string | null | undefined,
+  profileData: Record<string, unknown> | undefined,
+) => {
+  if (!orgTypeId) {
+    await tx.organizationFieldValue.deleteMany({
+      where: { organizationId },
+    });
+    return;
+  }
+
+  const orgType = await tx.organizationType.findFirst({
+    where: { id: orgTypeId },
+    select: { schema: true },
+  });
+  const schema = (orgType?.schema as Array<{
+    key: string;
+    type: string;
+  }>) ?? [];
+
+  const keys = new Set(schema.map((field) => field.key));
+
+  await tx.organizationFieldValue.deleteMany({
+    where: {
+      organizationId,
+      key: { notIn: Array.from(keys) },
+    },
+  });
+
+  for (const field of schema) {
+    const rawValue = profileData?.[field.key];
+    const data: {
+      key: string;
+      type: string;
+      stringValue?: string | null;
+      numberValue?: number | null;
+      dateValue?: Date | null;
+      booleanValue?: boolean | null;
+    } = {
+      key: field.key,
+      type: field.type,
+    };
+
+    switch (field.type) {
+      case "NUMBER": {
+        const parsed =
+          typeof rawValue === "number"
+            ? rawValue
+            : typeof rawValue === "string"
+              ? Number(rawValue)
+              : undefined;
+        data.numberValue = Number.isFinite(parsed) ? parsed : null;
+        break;
+      }
+      case "DATE": {
+        if (typeof rawValue === "string" && rawValue) {
+          const parsed = new Date(rawValue);
+          data.dateValue = Number.isNaN(parsed.getTime()) ? null : parsed;
+        } else {
+          data.dateValue = null;
+        }
+        break;
+      }
+      case "BOOLEAN": {
+        data.booleanValue =
+          typeof rawValue === "boolean"
+            ? rawValue
+            : rawValue === "true"
+              ? true
+              : rawValue === "false"
+                ? false
+                : null;
+        break;
+      }
+      case "SELECT":
+      case "MULTISELECT":
+      case "STRING":
+      default: {
+        if (Array.isArray(rawValue)) {
+          data.stringValue = rawValue.join(", ");
+        } else if (rawValue === undefined || rawValue === null) {
+          data.stringValue = null;
+        } else {
+          data.stringValue = String(rawValue);
+        }
+        break;
+      }
+    }
+
+    await tx.organizationFieldValue.upsert({
+      where: {
+        organizationId_key: {
+          organizationId,
+          key: field.key,
+        },
+      },
+      update: data,
+      create: {
+        organizationId,
+        ...data,
+      },
+    });
+  }
 };
 
 const createOrUpdateOrganization = async (formData: Organization) => {
@@ -101,6 +212,9 @@ const createOrUpdateOrganization = async (formData: Organization) => {
       website: formData.website,
       taxID: formData.taxID,
       isFilledByOrg: formData.isFilledByOrg,
+      orgTypeId: formData.orgTypeId ?? null,
+      profileData: formData.profileData ?? undefined,
+      contactPersonId: formData.contactPersonId ?? null,
       ...(bankDetail && { bankDetails: { connect: { id: bankDetail.id } } }),
       ...(orgUser && {
         users: { connect: { id: orgUser.id } },
@@ -120,6 +234,13 @@ const createOrUpdateOrganization = async (formData: Organization) => {
           where: { email: formData.email },
           data: organizationData,
         });
+
+    await syncOrganizationFieldValues(
+      prisma,
+      organization.id,
+      organizationData.orgTypeId ?? null,
+      organizationData.profileData as Record<string, unknown> | undefined,
+    );
 
     // Batch file creation
     if (user?.id) {
@@ -179,6 +300,9 @@ const updateOrganization = async (formData: Organization, id: string) => {
       website: formData.website,
       taxID: formData.taxID,
       isFilledByOrg: formData.isFilledByOrg,
+      orgTypeId: formData.orgTypeId ?? null,
+      profileData: formData.profileData ?? undefined,
+      contactPersonId: formData.contactPersonId ?? null,
       bankDetails: {
         update: {
           accountHolder: formData.bankDetails?.accountHolder,
@@ -189,6 +313,13 @@ const updateOrganization = async (formData: Organization, id: string) => {
       },
     },
   });
+
+  await syncOrganizationFieldValues(
+    prisma,
+    id,
+    formData.orgTypeId ?? null,
+    formData.profileData ?? undefined,
+  );
   return updatedOrganization;
 };
 
@@ -199,6 +330,13 @@ const getOrganizationById = async (id: string) => {
     },
     include: {
       bankDetails: true,
+      orgType: true,
+      contactPerson: true,
+      engagements: {
+        orderBy: {
+          engagedAt: "desc",
+        },
+      },
       Files: {
         select: {
           id: true,
@@ -230,6 +368,13 @@ const getOrganizationByEmail = async (email: string) => {
     },
     include: {
       bankDetails: true,
+      orgType: true,
+      contactPerson: true,
+      engagements: {
+        orderBy: {
+          engagedAt: "desc",
+        },
+      },
       Files: {
         select: {
           id: true,
@@ -266,10 +411,102 @@ const getOrganizationByEmail = async (email: string) => {
   }
 };
 
-const getOrganizations = async (searchQuery: string, teamId: string) => {
+const getOrganizations = async (
+  searchQuery: string,
+  teamId: string,
+  filters: OrganizationFieldFilter[] = [],
+) => {
+  const fieldFilters = filters.filter((filter) => filter.type === "field");
+  const andClauses: Prisma.OrganizationWhereInput[] = [];
+
+  fieldFilters.forEach((filter) => {
+    const key = filter.key.trim();
+    if (!key) {
+      return;
+    }
+    const value = filter.value?.trim();
+
+    const base: Prisma.OrganizationFieldValueWhereInput = {
+      key: { equals: key },
+    };
+
+    switch (filter.operator) {
+      case "contains":
+        if (!value) return;
+        andClauses.push({
+          fieldValues: {
+            some: {
+              ...base,
+              stringValue: { contains: value, mode: "insensitive" },
+            },
+          },
+        });
+        return;
+      case "equals":
+        if (!value) return;
+        andClauses.push({
+          fieldValues: {
+            some: {
+              ...base,
+              OR: [
+                { stringValue: { equals: value, mode: "insensitive" } },
+                { numberValue: { equals: Number(value) } },
+              ],
+            },
+          },
+        });
+        return;
+      case "gt":
+      case "lt":
+        if (!value) return;
+        andClauses.push({
+          fieldValues: {
+            some: {
+              ...base,
+              numberValue: {
+                [filter.operator === "gt" ? "gt" : "lt"]: Number(value),
+              },
+            },
+          },
+        });
+        return;
+      case "before":
+      case "after":
+        if (!value) return;
+        andClauses.push({
+          fieldValues: {
+            some: {
+              ...base,
+              dateValue: {
+                [filter.operator === "before" ? "lt" : "gt"]: new Date(value),
+              },
+            },
+          },
+        });
+        return;
+      case "isTrue":
+        andClauses.push({
+          fieldValues: {
+            some: { ...base, booleanValue: { equals: true } },
+          },
+        });
+        return;
+      case "isFalse":
+        andClauses.push({
+          fieldValues: {
+            some: { ...base, booleanValue: { equals: false } },
+          },
+        });
+        return;
+      default:
+        return;
+    }
+  });
+
   const organization = await prisma.organization.findMany({
     where: {
       ...(teamId ? { teamId } : {}),
+      ...(andClauses.length ? { AND: andClauses } : {}),
       OR: [
         { name: { contains: searchQuery, mode: "insensitive" } },
         { email: { contains: searchQuery, mode: "insensitive" } },
@@ -283,6 +520,8 @@ const getOrganizations = async (searchQuery: string, teamId: string) => {
     },
     include: {
       bankDetails: true,
+      orgType: true,
+      contactPerson: true,
       users: true,
       team: {
         select: {

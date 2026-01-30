@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import CreateEmailTemplate from "@/components/forms/create-email-template";
 import EventRolesManager from "@/components/forms/event-roles-manager";
 import EventTypesManager from "@/components/forms/event-types-manager";
+import OrganizationTypesManager from "@/components/forms/organization-types-manager";
 import FormConfigurationManager from "@/components/forms/form-configuration-manager";
 import KlaviyoIntegration from "@/components/forms/klaviyo-integration";
 import StrategicPrioritiesForm from "@/components/forms/strategic-priorities";
@@ -28,6 +29,7 @@ const VALID_TABS = [
   "form-configuration",
   "event-types",
   "event-roles",
+  "organization-types",
   "integrations",
 ] as const;
 type TabValue = (typeof VALID_TABS)[number];
@@ -86,7 +88,7 @@ export default function TeamSettingsTabs({
       onValueChange={handleTabChange}
       className="space-y-8"
     >
-      <TabsList className="grid w-full grid-cols-6">
+      <TabsList className="grid w-full grid-cols-7">
         <TabsTrigger value="general">General Settings</TabsTrigger>
         <TabsTrigger value="email-templates">Email Templates</TabsTrigger>
         <TabsTrigger value="form-configuration">
@@ -94,6 +96,7 @@ export default function TeamSettingsTabs({
         </TabsTrigger>
         <TabsTrigger value="event-types">Event Types</TabsTrigger>
         <TabsTrigger value="event-roles">Event Roles</TabsTrigger>
+        <TabsTrigger value="organization-types">Organization Types</TabsTrigger>
         <TabsTrigger value="integrations">Integrations</TabsTrigger>
       </TabsList>
 
@@ -131,6 +134,10 @@ export default function TeamSettingsTabs({
 
       <TabsContent value="event-roles" className="space-y-8">
         <EventRolesManager teamId={teamId} />
+      </TabsContent>
+
+      <TabsContent value="organization-types" className="space-y-8">
+        <OrganizationTypesManager teamId={teamId} />
       </TabsContent>
 
       <TabsContent value="integrations" className="space-y-8">

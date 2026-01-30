@@ -20,6 +20,11 @@ model Organization {
   taxID                   String?      @db.VarChar(255)
   isFilledByOrg           Boolean      @default(false)
   bankDetailsId           String?      @unique
+  orgTypeId               String?
+  orgType                 OrganizationType? @relation(fields: [orgTypeId], references: [id], onDelete: SetNull)
+  profileData             Json?
+  contactPersonId         String?
+  contactPerson           Contact?   @relation("OrganizationContactPerson", fields: [contactPersonId], references: [id], onDelete: SetNull)
   users                   User[] @relation("OrganizationUsers") // Many-to-Many relation
   teamId                  String?     
   team                    Teams?              @relation(fields: [teamId], references: [id])   
@@ -27,6 +32,8 @@ model Organization {
   fundingRequests         FundingRequest[]                
   Files                   File[]                    
   donationAgreements      DonationAgreement[]
+  engagements             OrganizationEngagement[]
+  fieldValues             OrganizationFieldValue[]
   
 
   createdAt               DateTime    @default(now()) @db.Timestamptz(6) 
@@ -137,6 +144,7 @@ model Teams {
   bankDetailsId String?        @unique
   bankDetails   BankDetails?   @relation(fields: [bankDetailsId], references: [id])
   organizations Organization[]
+  organizationTypes OrganizationType[]
 
   users     User[] @relation("TeamUsers") // Many-to-Many relation
   fundingRequests    FundingRequest[]
@@ -159,6 +167,57 @@ model Teams {
   groups       Group[]
   integrationConnections IntegrationConnection[]
   contactFieldAccesses ContactFieldAccess[]
+  organizationEngagements OrganizationEngagement[]
+}
+
+model OrganizationType {
+  id        String   @id @default(uuid()) @unique
+  teamId    String
+  team      Teams    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name      String   @db.VarChar(255)
+  color     String?  @db.VarChar(50)
+  schema    Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  organizations Organization[]
+
+  @@unique([teamId, name])
+  @@index([teamId])
+}
+
+model OrganizationEngagement {
+  id          String   @id @default(uuid()) @unique
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teamId      String
+  team        Teams    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  type        String   @db.VarChar(100)
+  note        String?  @db.Text
+  engagedAt   DateTime @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([organizationId])
+  @@index([teamId])
+  @@index([engagedAt])
+}
+
+model OrganizationFieldValue {
+  id             String   @id @default(uuid()) @unique
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  key            String   @db.VarChar(255)
+  type           String   @db.VarChar(50)
+  stringValue    String?  @db.Text
+  numberValue    Decimal?
+  dateValue      DateTime? @db.Timestamptz(6)
+  booleanValue   Boolean?
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @db.Timestamptz(6)
+
+  @@unique([organizationId, key])
+  @@index([key])
+  @@index([organizationId])
 }
 
 model IntegrationConnection {
@@ -305,6 +364,7 @@ model Contact {
   engagements       ContactEngagement[]
   changeLogs        ContactChangeLog[]
   lists             ContactListMember[]
+  organizationsAsContactPerson Organization[] @relation("OrganizationContactPerson")
 
   @@index([groupId])
   @@index([teamId, groupId])

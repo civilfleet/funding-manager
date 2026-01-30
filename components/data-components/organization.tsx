@@ -6,6 +6,7 @@ import useSWR from "swr";
 import OrganizationForm from "@/components/forms/organization";
 import { Loader } from "@/components/helper/loader";
 import OrganizationDetails from "@/components/organization-details";
+import OrganizationEngagements from "@/components/organization-engagements";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { Roles } from "@/types";
@@ -116,7 +117,15 @@ export default function OrganizationData({
             fundingRequests={fundingRequestsData?.data}
           />
         ) : (
-          <OrganizationForm data={organizationData?.data} />
+          <div className="space-y-6">
+            <OrganizationForm data={organizationData?.data} />
+            {organizationData?.data?.teamId && (
+              <OrganizationEngagements
+                organizationId={organizationId}
+                teamId={organizationData.data.teamId}
+              />
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -11,14 +11,19 @@ import {
   createOrganizationSchema,
   updateOrganizationSchema,
 } from "@/validations/organizations";
+import { organizationFiltersSchema } from "@/validations/organization-filters";
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const searchQuery = searchParams.get("query") || "";
     const teamId = searchParams.get("teamId") || "";
+    const filtersParam = searchParams.get("filters");
+    const parsedFilters = filtersParam
+      ? organizationFiltersSchema.parse(JSON.parse(filtersParam))
+      : [];
 
-    const data = await getOrganizations(searchQuery, teamId);
+    const data = await getOrganizations(searchQuery, teamId, parsedFilters);
 
     return NextResponse.json(
       {
