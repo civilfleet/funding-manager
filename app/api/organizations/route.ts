@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { sendEmail } from "@/lib/nodemailer";
 import { APP_NAME } from "@/constants/app";
@@ -48,8 +49,12 @@ export async function POST(req: Request) {
       .and(z.object({ teamId: z.string().uuid() }))
       .and(z.object({ isFilledByOrg: z.boolean() }))
       .parse({ ...organizationData });
+    const normalizedData = {
+      ...validatedData,
+      profileData: validatedData.profileData as Prisma.InputJsonValue | undefined,
+    };
     const { organization, user } =
-      await createOrUpdateOrganization(validatedData);
+      await createOrUpdateOrganization(normalizedData);
 
     // if teamId is provided, it means the organization is created by a team
     if (organizationData.teamId) {
@@ -115,7 +120,11 @@ export async function PUT(req: Request) {
     const validatedData = updateOrganizationSchema
       .and(z.object({ isFilledByOrg: z.boolean() }))
       .parse({ ...organization });
-    await createOrUpdateOrganization(validatedData);
+    const normalizedData = {
+      ...validatedData,
+      profileData: validatedData.profileData as Prisma.InputJsonValue | undefined,
+    };
+    await createOrUpdateOrganization(normalizedData);
     return NextResponse.json(
       {
         message: "success",

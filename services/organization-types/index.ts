@@ -5,7 +5,7 @@ type CreateOrganizationTypeInput = {
   teamId: string;
   name: string;
   color?: string;
-  schema?: Record<string, unknown>;
+  schema?: Prisma.InputJsonValue;
 };
 
 type UpdateOrganizationTypeInput = {
@@ -13,7 +13,7 @@ type UpdateOrganizationTypeInput = {
   teamId: string;
   name: string;
   color?: string;
-  schema?: Record<string, unknown>;
+  schema?: Prisma.InputJsonValue;
 };
 
 type OrganizationTypeModel = {
@@ -21,7 +21,7 @@ type OrganizationTypeModel = {
   teamId: string;
   name: string;
   color?: string;
-  schema?: Record<string, unknown>;
+  schema?: Prisma.JsonValue;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -33,7 +33,7 @@ const mapOrganizationType = (
   teamId: orgType.teamId,
   name: orgType.name,
   color: orgType.color ?? undefined,
-  schema: (orgType.schema as Array<Record<string, unknown>>) ?? undefined,
+  schema: (orgType.schema as Prisma.JsonValue) ?? undefined,
   createdAt: orgType.createdAt,
   updatedAt: orgType.updatedAt,
 });

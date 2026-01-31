@@ -19,6 +19,7 @@ import {
   updateOrganizationSchema,
 } from "@/validations/organizations";
 import FileUpload from "../file-uploader";
+import Alert from "../helper/alert";
 import ButtonControl from "../helper/button-control";
 import FormInputControl from "../helper/form-input-control";
 import {
@@ -29,6 +30,7 @@ import {
   CardTitle,
 } from "../ui/card";
 import { Checkbox } from "../ui/checkbox";
+import { Input } from "../ui/input";
 import {
   Select,
   SelectContent,
@@ -477,7 +479,12 @@ export default function OrganizationForm({ data }: { data: Organization }) {
                                   }
                                   placeholder={field.label}
                                   {...formField}
-                                  value={formField.value ?? ""}
+                                  value={
+                                    typeof formField.value === "string" ||
+                                    typeof formField.value === "number"
+                                      ? formField.value
+                                      : ""
+                                  }
                                 />
                               </FormControl>
                               <FormMessage />

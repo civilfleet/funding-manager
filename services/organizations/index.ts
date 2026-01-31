@@ -17,7 +17,7 @@ type Organization = {
   logo?: string;
   taxID?: string;
   orgTypeId?: string;
-  profileData?: Record<string, unknown>;
+  profileData?: Prisma.InputJsonValue;
   contactPersonId?: string;
   teamId?: string;
   isFilledByOrg: boolean;
@@ -39,7 +39,7 @@ type Organization = {
 };
 
 const syncOrganizationFieldValues = async (
-  tx: typeof prisma,
+  tx: Prisma.TransactionClient,
   organizationId: string,
   orgTypeId: string | null | undefined,
   profileData: Record<string, unknown> | undefined,
@@ -202,6 +202,8 @@ const createOrUpdateOrganization = async (formData: Organization) => {
     }
 
     // Common organization data
+    const profileData =
+      formData.profileData === undefined ? undefined : formData.profileData;
     const organizationData = {
       name: formData.name,
       address: formData.address,
@@ -212,9 +214,7 @@ const createOrUpdateOrganization = async (formData: Organization) => {
       website: formData.website,
       taxID: formData.taxID,
       isFilledByOrg: formData.isFilledByOrg,
-      orgTypeId: formData.orgTypeId ?? null,
-      profileData: formData.profileData ?? undefined,
-      contactPersonId: formData.contactPersonId ?? null,
+      profileData,
       ...(bankDetail && { bankDetails: { connect: { id: bankDetail.id } } }),
       ...(orgUser && {
         users: { connect: { id: orgUser.id } },
@@ -224,22 +224,38 @@ const createOrUpdateOrganization = async (formData: Organization) => {
     // Organization update/create logic
     const organization = formData.teamId
       ? await prisma.organization.create({
-          data: {
-            ...organizationData,
-            email: formData.email.toLowerCase(),
-            team: { connect: { id: formData.teamId } },
-          },
-        })
+        data: {
+          ...organizationData,
+          email: formData.email.toLowerCase(),
+          team: { connect: { id: formData.teamId } },
+          ...(formData.orgTypeId
+            ? { orgType: { connect: { id: formData.orgTypeId } } }
+            : {}),
+          ...(formData.contactPersonId
+            ? { contactPerson: { connect: { id: formData.contactPersonId } } }
+            : {}),
+        },
+      })
       : await prisma.organization.update({
           where: { email: formData.email },
-          data: organizationData,
+          data: {
+            ...organizationData,
+            orgType: formData.orgTypeId
+              ? { connect: { id: formData.orgTypeId } }
+              : { disconnect: true },
+            contactPerson: formData.contactPersonId
+              ? { connect: { id: formData.contactPersonId } }
+              : { disconnect: true },
+          },
         });
 
     await syncOrganizationFieldValues(
       prisma,
       organization.id,
-      organizationData.orgTypeId ?? null,
-      organizationData.profileData as Record<string, unknown> | undefined,
+      formData.orgTypeId ?? null,
+      typeof profileData === "object" && profileData !== null && !Array.isArray(profileData)
+        ? (profileData as Record<string, unknown>)
+        : undefined,
     );
 
     // Batch file creation
@@ -300,9 +316,13 @@ const updateOrganization = async (formData: Organization, id: string) => {
       website: formData.website,
       taxID: formData.taxID,
       isFilledByOrg: formData.isFilledByOrg,
-      orgTypeId: formData.orgTypeId ?? null,
       profileData: formData.profileData ?? undefined,
-      contactPersonId: formData.contactPersonId ?? null,
+      orgType: formData.orgTypeId
+        ? { connect: { id: formData.orgTypeId } }
+        : { disconnect: true },
+      contactPerson: formData.contactPersonId
+        ? { connect: { id: formData.contactPersonId } }
+        : { disconnect: true },
       bankDetails: {
         update: {
           accountHolder: formData.bankDetails?.accountHolder,
@@ -318,7 +338,11 @@ const updateOrganization = async (formData: Organization, id: string) => {
     prisma,
     id,
     formData.orgTypeId ?? null,
-    formData.profileData ?? undefined,
+    typeof formData.profileData === "object" &&
+      formData.profileData !== null &&
+      !Array.isArray(formData.profileData)
+      ? (formData.profileData as Record<string, unknown>)
+      : undefined,
   );
   return updatedOrganization;
 };

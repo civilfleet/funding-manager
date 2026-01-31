@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import useSWR from "swr";
 import type { z } from "zod";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +68,14 @@ const FIELD_TYPE_OPTIONS = [
   { value: "MULTISELECT", label: "Multi-select" },
 ] as const;
 
+type OrganizationTypeField = {
+  key: string;
+  label: string;
+  type: (typeof FIELD_TYPE_OPTIONS)[number]["value"];
+  required?: boolean;
+  options?: Array<{ label: string; value: string }>;
+};
+
 const parseOptions = (value: string) =>
   value
     .split(",")
@@ -98,8 +106,8 @@ export default function OrganizationTypesManager({
 
   const types: OrganizationType[] = typesData?.data || [];
 
-  const form = useForm({
-    resolver: zodResolver(createOrganizationTypeSchema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(createOrganizationTypeSchema) as Resolver<FormValues>,
     defaultValues: {
       teamId,
       name: "",
@@ -391,15 +399,10 @@ function OrganizationTypeFieldsEditor({
 }) {
   const { control, watch, setValue } = form;
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const fields = (watch("schema") as Array<{
-    key: string;
-    label: string;
-    type: string;
-    required?: boolean;
-    options?: Array<{ label: string; value: string }>;
-  }>) || [];
+  const fields =
+    (watch("schema") as OrganizationTypeField[] | undefined) || [];
 
-  const updateField = (index: number, update: Partial<(typeof fields)[number]>) => {
+  const updateField = (index: number, update: Partial<OrganizationTypeField>) => {
     const next = [...fields];
     next[index] = { ...next[index], ...update };
     setValue("schema", next, { shouldDirty: true });
@@ -499,7 +502,7 @@ function OrganizationTypeFieldsEditor({
                   <Select
                     value={field.type}
                     onValueChange={(value) =>
-                      updateField(index, { type: value })
+                      updateField(index, { type: value as OrganizationTypeField["type"] })
                     }
                   >
                     <SelectTrigger>
