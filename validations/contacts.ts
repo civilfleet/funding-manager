@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ContactFilter } from "@/types";
 import {
   ContactAttributeType,
   ContactGender,
@@ -144,17 +145,33 @@ const attributeFilterSchema = z.object({
   value: z.string().trim().min(1, "Attribute value is required"),
 });
 
-export const contactFilterSchema = z.discriminatedUnion("type", [
-  contactFieldFilterSchema,
-  attributeFilterSchema,
-  z.object({
-    type: z.literal("group"),
-    groupId: z.string().uuid("Group id must be a valid UUID"),
+const distanceFilterSchema = z.object({
+  type: z.literal("distance"),
+  postalCode: z.string().trim().min(1, "Postal code is required"),
+  countryCode: z
+    .string()
+    .trim()
+    .length(2, "Country code must be a 2-letter ISO code"),
+  radiusKm: z
+    .coerce.number()
+    .finite()
+    .min(1, "Radius must be greater than 0")
+    .max(2000),
+});
+
+export const contactFilterSchema: z.ZodType<ContactFilter> =
+  z.discriminatedUnion("type", [
+    contactFieldFilterSchema,
+    attributeFilterSchema,
+    z.object({
+      type: z.literal("group"),
+      groupId: z.string().uuid("Group id must be a valid UUID"),
   }),
   z.object({
     type: z.literal("eventRole"),
     eventRoleId: z.string().uuid("Event role id must be a valid UUID"),
   }),
+  distanceFilterSchema,
   z
     .object({
       type: z.literal("createdAt"),
@@ -164,9 +181,11 @@ export const contactFilterSchema = z.discriminatedUnion("type", [
     .refine((value) => Boolean(value.from) || Boolean(value.to), {
       message: "Provide at least a start or end date",
     }),
-]);
+  ]);
 
-export const contactFiltersSchema = z.array(contactFilterSchema).default([]);
+export const contactFiltersSchema: z.ZodType<ContactFilter[]> = z
+  .array(contactFilterSchema)
+  .default([]);
 
 export const createContactSchema = z.object({
   teamId: z.string().uuid("Team id must be a valid UUID"),

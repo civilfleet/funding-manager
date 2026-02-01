@@ -61,7 +61,7 @@ type ContactList = {
   updatedAt: string | Date;
 };
 
-type FormValues = z.infer<typeof createContactListSchema>;
+type FormValues = z.input<typeof createContactListSchema>;
 const buildFormValues = (
   teamId: string,
   source?: ContactList | null,
@@ -171,9 +171,9 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
 
   const watchedFilters = form.watch("filters");
   const watchedContactIds = form.watch("contactIds");
-  const filtersValue = isFormSynced
+  const filtersValue: ContactFilter[] = (isFormSynced
     ? watchedFilters ?? []
-    : fallbackValues.filters ?? [];
+    : fallbackValues.filters ?? []) as ContactFilter[];
   const contactIdsValue = isFormSynced
     ? watchedContactIds ?? []
     : fallbackValues.contactIds ?? [];
