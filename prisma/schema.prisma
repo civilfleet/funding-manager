@@ -349,6 +349,9 @@ model Contact {
   state             String?             @db.VarChar(255)
   city              String?             @db.VarChar(255)
   country           String?             @db.VarChar(255)
+  countryCode       String?             @db.Char(2)
+  latitude          Decimal?            @db.Decimal(9, 6)
+  longitude         Decimal?            @db.Decimal(9, 6)
   email             String?              @db.VarChar(255)
   phone             String?              @db.VarChar(255)
   signal            String?              @db.VarChar(255)
@@ -369,6 +372,25 @@ model Contact {
   @@index([groupId])
   @@index([teamId, groupId])
   @@unique([teamId, email])
+}
+
+model PostalCodeCentroid {
+  countryCode String   @db.Char(2)
+  postalCode  String   @db.VarChar(32)
+  placeName   String?  @db.VarChar(255)
+  admin1      String?  @db.VarChar(255)
+  admin1Code  String?  @db.VarChar(50)
+  admin2      String?  @db.VarChar(255)
+  admin2Code  String?  @db.VarChar(50)
+  admin3      String?  @db.VarChar(255)
+  admin3Code  String?  @db.VarChar(50)
+  latitude    Decimal? @db.Decimal(9, 6)
+  longitude   Decimal? @db.Decimal(9, 6)
+  accuracy    Int?
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@id([countryCode, postalCode])
+  @@index([postalCode])
 }
 
 model ContactSocialLink {

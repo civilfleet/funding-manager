@@ -36,6 +36,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { EUROPEAN_COUNTRY_OPTIONS } from "@/lib/countries";
 import type { ContactSubmodule } from "@/constants/contact-submodules";
 import {
   ContactAttributeType,
@@ -101,6 +102,8 @@ const socialPlatformOptions = [
   { label: "TikTok", value: "tiktok" },
   { label: "YouTube", value: "youtube" },
 ];
+
+const countryOptions = EUROPEAN_COUNTRY_OPTIONS;
 
 export default function ContactForm({ teamId, contact }: ContactFormProps) {
   const router = useRouter();
@@ -710,13 +713,33 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Country</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Germany"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
+                        <Select
+                          onValueChange={(value) =>
+                            field.onChange(value === "none" ? "" : value)
+                          }
+                          value={field.value || "none"}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select country" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">Select country</SelectItem>
+                            {!countryOptions.some(
+                              (option) => option.value === (field.value ?? ""),
+                            ) && field.value ? (
+                              <SelectItem value={field.value}>
+                                {field.value} (custom)
+                              </SelectItem>
+                            ) : null}
+                            {countryOptions.map((option) => (
+                              <SelectItem key={option.code} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

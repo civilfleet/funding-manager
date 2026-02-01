@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Filter, Loader2, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
@@ -34,6 +35,15 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import type { ContactFilter, ContactFilterType } from "@/types";
+
+const ContactMap = dynamic(() => import("@/components/contacts/contact-map"), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+      Loading map…
+    </div>
+  ),
+});
 
 interface ContactTableProps {
   teamId: string;
@@ -127,6 +137,7 @@ const FILTER_OPTIONS: FilterOption[] = [
   { type: "attribute", label: "Attribute", allowMultiple: true },
   { type: "group", label: "Group", allowMultiple: true },
   { type: "eventRole", label: "Event role", allowMultiple: true },
+  { type: "distance", label: "Within distance of postal code", allowMultiple: false },
   { type: "createdAt", label: "Created date", allowMultiple: false },
 ];
 
@@ -181,6 +192,11 @@ const isFilterComplete = (filter: ContactFilter) => {
       return Boolean(filter.eventRoleId);
     case "createdAt":
       return Boolean(filter.from) || Boolean(filter.to);
+    case "distance":
+      return Boolean(filter.postalCode?.trim()) &&
+        Boolean(filter.countryCode?.trim()) &&
+        Number.isFinite(filter.radiusKm) &&
+        Number(filter.radiusKm) > 0;
     default:
       return true;
   }
@@ -420,6 +436,13 @@ export default function ContactTable({ teamId }: ContactTableProps) {
           };
         case "createdAt":
           return { type: "createdAt" };
+        case "distance":
+          return {
+            type: "distance",
+            postalCode: "",
+            countryCode: "",
+            radiusKm: 50,
+          };
         default:
           return {
             type: "contactField",
@@ -510,6 +533,17 @@ export default function ContactTable({ teamId }: ContactTableProps) {
             return `Created before ${filter.to}`;
           }
           return "Created date";
+        }
+        case "distance": {
+          const postal = filter.postalCode?.trim();
+          const country = filter.countryCode?.trim();
+          const radius = Number.isFinite(filter.radiusKm)
+            ? `${filter.radiusKm}km`
+            : "radius";
+          if (postal && country) {
+            return `Within ${radius} of ${postal} (${country})`;
+          }
+          return "Within distance";
         }
         default:
           return "Filter";
@@ -755,6 +789,53 @@ export default function ContactTable({ teamId }: ContactTableProps) {
             </div>
           </div>
         );
+      case "distance":
+        return (
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              placeholder="Postal code"
+              value={filter.postalCode}
+              onChange={(event) => {
+                const nextValue = event.currentTarget.value;
+                updateFilter(index, (current) =>
+                  current.type === "distance"
+                    ? { ...current, postalCode: nextValue }
+                    : current,
+                );
+              }}
+              className="w-36"
+            />
+            <Input
+              placeholder="Country code (e.g. DE)"
+              value={filter.countryCode}
+              onChange={(event) => {
+                const nextValue = event.currentTarget.value;
+                updateFilter(index, (current) =>
+                  current.type === "distance"
+                    ? { ...current, countryCode: nextValue.toUpperCase() }
+                    : current,
+                );
+              }}
+              className="w-40"
+            />
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              placeholder="Radius (km)"
+              value={Number.isFinite(filter.radiusKm) ? filter.radiusKm : ""}
+              onChange={(event) => {
+                const nextValue = event.currentTarget.value;
+                updateFilter(index, (current) =>
+                  current.type === "distance"
+                    ? { ...current, radiusKm: Number(nextValue) }
+                    : current,
+                );
+              }}
+              className="w-32"
+            />
+          </div>
+        );
       default:
         return null;
     }
@@ -868,6 +949,7 @@ export default function ContactTable({ teamId }: ContactTableProps) {
             columns={contactColumns}
             data={contacts}
             renderCard={renderCard}
+            renderMap={() => <ContactMap contacts={contacts} />}
             initialView="table"
             selectable
             renderBatchActions={({ selectedRows, clearSelection }) => (

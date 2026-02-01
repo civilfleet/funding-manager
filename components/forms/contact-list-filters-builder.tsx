@@ -109,6 +109,7 @@ const FILTER_OPTIONS: FilterOption[] = [
   { type: "attribute", label: "Profile attribute", allowMultiple: true },
   { type: "group", label: "Group membership", allowMultiple: true },
   { type: "eventRole", label: "Event role participation", allowMultiple: true },
+  { type: "distance", label: "Within distance of postal code", allowMultiple: false },
   { type: "createdAt", label: "Created date range", allowMultiple: false },
 ];
 
@@ -233,6 +234,13 @@ export function ContactListFiltersBuilder({
       case "createdAt":
         return {
           type: "createdAt",
+        };
+      case "distance":
+        return {
+          type: "distance",
+          postalCode: "",
+          countryCode: "",
+          radiusKm: 50,
         };
       default:
         return {
@@ -587,6 +595,67 @@ export function ContactListFiltersBuilder({
                         />
                       </div>
                     </div>
+                  </div>
+                );
+              case "distance":
+                return (
+                  <div
+                    key={filterKey}
+                    className="rounded-md border p-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <Badge variant="outline">Distance</Badge>
+                        <span>Within radius</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeFilter(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Remove filter</span>
+                      </Button>
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                      <Input
+                        placeholder="Postal code"
+                        value={filter.postalCode}
+                        onChange={(event) =>
+                          updateFilter(index, {
+                            ...filter,
+                            postalCode: event.target.value,
+                          })
+                        }
+                      />
+                      <Input
+                        placeholder="Country code (e.g. DE)"
+                        value={filter.countryCode}
+                        onChange={(event) =>
+                          updateFilter(index, {
+                            ...filter,
+                            countryCode: event.target.value.toUpperCase(),
+                          })
+                        }
+                      />
+                      <Input
+                        type="number"
+                        min={1}
+                        step={1}
+                        placeholder="Radius (km)"
+                        value={Number.isFinite(filter.radiusKm) ? filter.radiusKm : ""}
+                        onChange={(event) =>
+                          updateFilter(index, {
+                            ...filter,
+                            radiusKm: Number(event.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Uses postal-code centroids; results are approximate.
+                    </p>
                   </div>
                 );
               default:

@@ -170,6 +170,9 @@ export interface Contact {
   state?: string;
   city?: string;
   country?: string;
+  countryCode?: string;
+  latitude?: number;
+  longitude?: number;
   email?: string;
   phone?: string;
   signal?: string;
@@ -224,6 +227,12 @@ export type ContactFilter =
       type: "createdAt";
       from?: string;
       to?: string;
+    }
+  | {
+      type: "distance";
+      postalCode: string;
+      countryCode: string;
+      radiusKm: number;
     };
 
 export type ContactFilterType = ContactFilter["type"];

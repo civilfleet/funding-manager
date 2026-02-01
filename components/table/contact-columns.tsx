@@ -31,6 +31,8 @@ export type ContactRow = {
   state?: string | null;
   city?: string | null;
   country?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   email?: string | null;
   phone?: string | null;
   signal?: string | null;

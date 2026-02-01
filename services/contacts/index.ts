@@ -1,5 +1,7 @@
 import { Prisma, type $Enums } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { normalizeCountryCode } from "@/lib/countries";
+import { normalizePostalCode } from "@/lib/geo";
 import {
   logContactCreation,
   logFieldUpdate,
@@ -33,6 +35,29 @@ const RESTRICTED_CONTACT_FIELDS = [
 ] as const;
 
 type RestrictedContactField = (typeof RESTRICTED_CONTACT_FIELDS)[number];
+
+const resolvePostalCentroid = async (
+  tx: Prisma.TransactionClient,
+  countryCode?: string,
+  postalCode?: string,
+) => {
+  if (!countryCode || !postalCode) {
+    return null;
+  }
+
+  return tx.postalCodeCentroid.findUnique({
+    where: {
+      countryCode_postalCode: {
+        countryCode,
+        postalCode,
+      },
+    },
+    select: {
+      latitude: true,
+      longitude: true,
+    },
+  });
+};
 
 type CreateContactInput = {
   teamId: string;
@@ -463,6 +488,9 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
   state: contact.state ?? undefined,
   city: contact.city ?? undefined,
   country: contact.country ?? undefined,
+  countryCode: contact.countryCode ?? undefined,
+  latitude: contact.latitude ? contact.latitude.toNumber() : undefined,
+  longitude: contact.longitude ? contact.longitude.toNumber() : undefined,
   email: contact.email ?? undefined,
   phone: contact.phone ?? undefined,
   signal: contact.signal ?? undefined,
@@ -1113,6 +1141,66 @@ const getTeamContacts = async (
     }
   }
 
+  const distanceFilters = resolvedFilters.filter(
+    (filter): filter is Extract<ContactFilter, { type: "distance" }> =>
+      filter.type === "distance",
+  );
+
+  for (const filter of distanceFilters) {
+    const normalizedPostal = normalizePostalCode(filter.postalCode);
+    const normalizedCountry = normalizeCountryCode(filter.countryCode) ??
+      normalizeCountryCode(filter.countryCode.toUpperCase());
+    const radiusKm = Number(filter.radiusKm);
+
+    if (!normalizedPostal || !normalizedCountry || !Number.isFinite(radiusKm)) {
+      andConditions.push({ id: { equals: "__none__" } });
+      continue;
+    }
+
+    const centroid = await prisma.postalCodeCentroid.findUnique({
+      where: {
+        countryCode_postalCode: {
+          countryCode: normalizedCountry,
+          postalCode: normalizedPostal,
+        },
+      },
+      select: {
+        latitude: true,
+        longitude: true,
+      },
+    });
+
+    if (!centroid?.latitude || !centroid?.longitude) {
+      andConditions.push({ id: { equals: "__none__" } });
+      continue;
+    }
+
+    const radiusMeters = radiusKm * 1000;
+
+    const nearby = await prisma.$queryRaw<{ id: string }[]>(
+      Prisma.sql`
+        SELECT "id"
+        FROM "Contact"
+        WHERE "teamId" = ${teamId}
+          AND "latitude" IS NOT NULL
+          AND "longitude" IS NOT NULL
+          AND ST_DWithin(
+            geography(ST_MakePoint("longitude", "latitude")),
+            geography(ST_MakePoint(${centroid.longitude}, ${centroid.latitude})),
+            ${radiusMeters}
+          )
+      `,
+    );
+
+    const nearbyIds = nearby.map((row) => row.id);
+    if (!nearbyIds.length) {
+      andConditions.push({ id: { equals: "__none__" } });
+      continue;
+    }
+
+    andConditions.push({ id: { in: nearbyIds } });
+  }
+
   const where: Prisma.ContactWhereInput =
     andConditions.length === 1 ? andConditions[0] : { AND: andConditions };
 
@@ -1261,10 +1349,11 @@ const createContact = async (
       ? new Date(breakUntil)
       : undefined;
   const normalizedAddress = address?.trim() || undefined;
-  const normalizedPostalCode = postalCode?.trim() || undefined;
+  const normalizedPostalCode = normalizePostalCode(postalCode);
   const normalizedState = state?.trim() || undefined;
   const normalizedCity = city?.trim() || undefined;
   const normalizedCountry = country?.trim() || undefined;
+  const normalizedCountryCode = normalizeCountryCode(normalizedCountry);
   const normalizedEmail = (email ?? "").trim().toLowerCase();
   if (!normalizedEmail) {
     throw new Error("Email is required");
@@ -1285,6 +1374,12 @@ const createContact = async (
   }
 
   return prisma.$transaction(async (tx) => {
+    const centroid = await resolvePostalCentroid(
+      tx,
+      normalizedCountryCode,
+      normalizedPostalCode,
+    );
+
     const contact = await tx.contact.create({
       data: {
         teamId,
@@ -1302,6 +1397,9 @@ const createContact = async (
         state: normalizedState,
         city: normalizedCity,
         country: normalizedCountry,
+        countryCode: normalizedCountryCode ?? null,
+        latitude: centroid?.latitude ?? null,
+        longitude: centroid?.longitude ?? null,
         email: normalizedEmail,
         phone: normalizedPhone,
         signal: normalizedSignal,
@@ -1445,8 +1543,8 @@ const updateContact = async (
     if (typeof postalCode !== "string") {
       return null;
     }
-    const trimmed = postalCode.trim();
-    return trimmed === "" ? null : trimmed;
+    const normalized = normalizePostalCode(postalCode);
+    return normalized ?? null;
   })();
   const normalizedState = (() => {
     if (!stateProvided) {
@@ -1477,6 +1575,15 @@ const updateContact = async (
     }
     const trimmed = country.trim();
     return trimmed === "" ? null : trimmed;
+  })();
+  const normalizedCountryCode = (() => {
+    if (!countryProvided) {
+      return undefined;
+    }
+    if (normalizedCountry === null) {
+      return null;
+    }
+    return normalizeCountryCode(normalizedCountry ?? undefined) ?? null;
   })();
   const genderProvided = Object.hasOwn(input, "gender");
   const normalizedGender = genderProvided ? gender ?? null : undefined;
@@ -1785,6 +1892,29 @@ const updateContact = async (
         tx,
       );
       updates.country = normalizedCountry;
+    }
+
+    if (countryProvided && normalizedCountryCode !== existing.countryCode) {
+      updates.countryCode = normalizedCountryCode;
+    }
+
+    if (postalCodeProvided || countryProvided) {
+      const lookupPostalCode =
+        postalCodeProvided ? normalizedPostalCode ?? undefined : existing.postalCode ?? undefined;
+      const lookupCountryCode =
+        (countryProvided ? normalizedCountryCode ?? undefined : existing.countryCode ?? undefined) ??
+        normalizeCountryCode(
+          countryProvided ? normalizedCountry ?? undefined : existing.country ?? undefined,
+        );
+
+      const centroid = await resolvePostalCentroid(
+        tx,
+        lookupCountryCode,
+        normalizePostalCode(lookupPostalCode),
+      );
+
+      updates.latitude = centroid?.latitude ?? null;
+      updates.longitude = centroid?.longitude ?? null;
     }
 
     if (normalizedEmail !== undefined && normalizedEmail !== existing.email) {

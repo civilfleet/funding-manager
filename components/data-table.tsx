@@ -9,7 +9,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { LayoutGrid, List } from "lucide-react";
+import { LayoutGrid, List, Map } from "lucide-react";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +28,8 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   renderCard?: (item: TData) => React.ReactNode;
-  initialView?: "table" | "card";
+  renderMap?: (items: TData[]) => React.ReactNode;
+  initialView?: "table" | "card" | "map";
   toolbar?: React.ReactNode;
   selectable?: boolean;
   onSelectionChange?: (selectedRows: TData[]) => void;
@@ -42,6 +43,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   renderCard,
+  renderMap,
   initialView = "table",
   toolbar,
   selectable = false,
@@ -49,11 +51,14 @@ export function DataTable<TData, TValue>({
   renderBatchActions,
 }: DataTableProps<TData, TValue>) {
   const isMobile = useIsMobile();
-  const [view, setView] = React.useState<"table" | "card">(
-    isMobile ? "card" : initialView,
+  const resolvedInitialView =
+    !renderMap && initialView === "map" ? "table" : initialView;
+  const [view, setView] = React.useState<"table" | "card" | "map">(
+    isMobile ? "card" : resolvedInitialView,
   );
-  const [desktopView, setDesktopView] =
-    React.useState<"table" | "card">(initialView);
+  const [desktopView, setDesktopView] = React.useState<"table" | "card" | "map">(
+    resolvedInitialView,
+  );
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
@@ -139,6 +144,7 @@ export function DataTable<TData, TValue>({
   }, [isMobile, desktopView]);
 
   const effectiveView = isMobile ? "card" : view;
+  const showMapToggle = Boolean(renderMap);
 
   return (
     <div className="w-full">
@@ -168,6 +174,19 @@ export function DataTable<TData, TValue>({
             >
               <LayoutGrid className="mr-2" /> Cards
             </Button>
+            {showMapToggle && (
+              <Button
+                type="button"
+                size="sm"
+                variant={effectiveView === "map" ? "default" : "outline"}
+                onClick={() => {
+                  setView("map");
+                  setDesktopView("map");
+                }}
+              >
+                <Map className="mr-2" /> Map
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -226,6 +245,16 @@ export function DataTable<TData, TValue>({
             )}
           </TableBody>
         </Table>
+      ) : effectiveView === "map" ? (
+        <div className="p-3">
+          {renderMap ? (
+            renderMap(data)
+          ) : (
+            <div className="rounded-md border p-6 text-center text-sm text-muted-foreground">
+              Map view is unavailable.
+            </div>
+          )}
+        </div>
       ) : hasRows ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-3">
           {table.getRowModel().rows.map((row) => (
