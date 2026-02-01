@@ -179,7 +179,7 @@ const mapEvent = (event: EventWithContacts): EventType => ({
       color: r.eventRole.color ?? undefined,
     })),
   })),
-  lists: (event.lists ?? []).map((item) => ({
+  lists: event.lists.map((item) => ({
     id: item.list.id,
     name: item.list.name,
     description: item.list.description ?? undefined,
