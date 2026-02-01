@@ -96,6 +96,11 @@ interface EventFormProps {
         color?: string;
       }>;
     }>;
+    lists?: Array<{
+      id: string;
+      name: string;
+      description?: string;
+    }>;
   };
 }
 
@@ -106,6 +111,13 @@ type ContactSummary = {
   name: string;
   email?: string;
   phone?: string;
+};
+
+type ContactListSummary = {
+  id: string;
+  name: string;
+  description?: string;
+  contactCount?: number;
 };
 
 const formatDateForInput = (date?: Date) => {
@@ -155,6 +167,7 @@ export default function EventForm({
   const [contactSearchOpen, setContactSearchOpen] = useState(false);
   const [contactSearchTerm, setContactSearchTerm] = useState("");
   const [debouncedContactSearch, setDebouncedContactSearch] = useState("");
+  const [listSearchTerm, setListSearchTerm] = useState("");
 
   const isEditMode = !!event;
 
@@ -169,6 +182,12 @@ export default function EventForm({
     fetcher,
   );
   const eventTypes = eventTypesData?.data || [];
+
+  const { data: listsData } = useSWR(
+    `/api/contact-lists?teamId=${teamId}`,
+    fetcher,
+  );
+  const lists: ContactListSummary[] = listsData?.data || [];
 
   type FormValues = CreateEventFormValues | UpdateEventFormValues;
 
@@ -208,6 +227,7 @@ export default function EventForm({
               contactId: c.id,
               roleIds: c.roles.map((r) => r.id),
             })) || [],
+          listIds: event?.lists?.map((list) => list.id) || [],
         } satisfies UpdateEventFormValues)
       : ({
           teamId,
@@ -229,6 +249,7 @@ export default function EventForm({
           endDate: "",
           isPublic: false,
           contacts: [],
+          listIds: [],
         } satisfies CreateEventFormValues),
   });
 
@@ -472,6 +493,28 @@ export default function EventForm({
       c.contactId === contactId ? { ...c, roleIds: newRoles } : c,
     );
     setValue("contacts", newContacts, { shouldDirty: true });
+  };
+
+  const selectedListIds = form.watch("listIds") || [];
+  const filteredLists = useMemo(() => {
+    const term = listSearchTerm.trim().toLowerCase();
+    if (!term) {
+      return lists;
+    }
+    return lists.filter((list) =>
+      [list.name, list.description]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(term),
+    );
+  }, [listSearchTerm, lists]);
+
+  const toggleListSelection = (listId: string) => {
+    const next = selectedListIds.includes(listId)
+      ? selectedListIds.filter((id) => id !== listId)
+      : [...selectedListIds, listId];
+    setValue("listIds", next, { shouldDirty: true });
   };
 
   const onSubmit = async (
@@ -1249,6 +1292,62 @@ export default function EventForm({
                         </div>
                       )}
                     </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="w-full shadow-sm">
+          <CardHeader className="border-b pb-3">
+            <CardTitle>Linked Lists</CardTitle>
+            <CardDescription>
+              Attach contact lists to this event for grouped outreach.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-4">
+            <Input
+              value={listSearchTerm}
+              onChange={(event) => setListSearchTerm(event.target.value)}
+              placeholder="Search lists..."
+            />
+            {lists.length === 0 ? (
+              <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                No contact lists available yet.
+              </div>
+            ) : filteredLists.length === 0 ? (
+              <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                No lists match your search.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredLists.map((list) => {
+                  const isSelected = selectedListIds.includes(list.id);
+                  return (
+                    <label
+                      key={list.id}
+                      className="flex items-start gap-3 rounded-md border p-3 text-sm hover:bg-muted/30"
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleListSelection(list.id)}
+                        className="mt-1"
+                      />
+                      <div className="space-y-1">
+                        <p className="font-medium">{list.name}</p>
+                        {list.description && (
+                          <p className="text-xs text-muted-foreground">
+                            {list.description}
+                          </p>
+                        )}
+                        {typeof list.contactCount === "number" && (
+                          <p className="text-xs text-muted-foreground">
+                            {list.contactCount} contact
+                            {list.contactCount === 1 ? "" : "s"}
+                          </p>
+                        )}
+                      </div>
+                    </label>
                   );
                 })}
               </div>

@@ -33,6 +33,7 @@ type CreateEventInput = {
   endDate?: string;
   isPublic?: boolean;
   contacts?: EventContactInput[];
+  listIds?: string[];
 };
 
 type UpdateEventInput = {
@@ -56,6 +57,7 @@ type UpdateEventInput = {
   endDate?: string;
   isPublic?: boolean;
   contacts?: EventContactInput[];
+  listIds?: string[];
 };
 
 type EventWithContacts = Prisma.EventGetPayload<{
@@ -69,6 +71,11 @@ type EventWithContacts = Prisma.EventGetPayload<{
             eventRole: true;
           };
         };
+      };
+    };
+    lists: {
+      include: {
+        list: true;
       };
     };
   };
@@ -112,6 +119,11 @@ type EventType = {
       name: string;
       color?: string;
     }>;
+  }>;
+  lists: Array<{
+    id: string;
+    name: string;
+    description?: string;
   }>;
 };
 
@@ -166,6 +178,11 @@ const mapEvent = (event: EventWithContacts): EventType => ({
       name: r.eventRole.name,
       color: r.eventRole.color ?? undefined,
     })),
+  })),
+  lists: (event.lists ?? []).map((item) => ({
+    id: item.list.id,
+    name: item.list.name,
+    description: item.list.description ?? undefined,
   })),
 });
 type EventFilters = {
@@ -282,6 +299,11 @@ export const getTeamEvents = async (
           },
         },
       },
+      lists: {
+        include: {
+          list: true,
+        },
+      },
     },
     orderBy: {
       startDate: "desc",
@@ -305,6 +327,11 @@ export const getEventById = async (eventId: string, teamId: string) => {
               eventRole: true,
             },
           },
+        },
+      },
+      lists: {
+        include: {
+          list: true,
         },
       },
     },
@@ -335,6 +362,7 @@ export const createEvent = async (input: CreateEventInput) => {
     endDate,
     isPublic = false,
     contacts = [],
+    listIds = [],
   } = input;
   return prisma.$transaction(async (tx) => {
     const eventSlug = ensureSlug(slug ?? "", title);
@@ -411,6 +439,24 @@ export const createEvent = async (input: CreateEventInput) => {
         }
       }
     }
+    if (listIds.length > 0) {
+      const validLists = await tx.contactList.findMany({
+        where: {
+          id: { in: listIds },
+          teamId,
+        },
+        select: { id: true },
+      });
+      const validListIds = validLists.map((list) => list.id);
+      if (validListIds.length > 0) {
+        await tx.eventList.createMany({
+          data: validListIds.map((listId) => ({
+            eventId: event.id,
+            listId,
+          })),
+        });
+      }
+    }
     const created = await tx.event.findUniqueOrThrow({
       where: { id: event.id },
       include: {
@@ -423,6 +469,11 @@ export const createEvent = async (input: CreateEventInput) => {
                 eventRole: true,
               },
             },
+          },
+        },
+        lists: {
+          include: {
+            list: true,
           },
         },
       },
@@ -452,6 +503,7 @@ export const updateEvent = async (input: UpdateEventInput) => {
     endDate,
     isPublic,
     contacts = [],
+    listIds = [],
   } = input;
   return prisma.$transaction(async (tx) => {
     const existingEvent = await tx.event.findFirst({
@@ -549,6 +601,27 @@ export const updateEvent = async (input: UpdateEventInput) => {
         }
       }
     }
+    await tx.eventList.deleteMany({
+      where: { eventId: id },
+    });
+    if (listIds.length > 0) {
+      const validLists = await tx.contactList.findMany({
+        where: {
+          id: { in: listIds },
+          teamId,
+        },
+        select: { id: true },
+      });
+      const validListIds = validLists.map((list) => list.id);
+      if (validListIds.length > 0) {
+        await tx.eventList.createMany({
+          data: validListIds.map((listId) => ({
+            eventId: event.id,
+            listId,
+          })),
+        });
+      }
+    }
     const updated = await tx.event.findUniqueOrThrow({
       where: { id: event.id },
       include: {
@@ -561,6 +634,11 @@ export const updateEvent = async (input: UpdateEventInput) => {
                 eventRole: true,
               },
             },
+          },
+        },
+        lists: {
+          include: {
+            list: true,
           },
         },
       },

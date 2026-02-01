@@ -422,6 +422,7 @@ model ContactList {
   createdAt   DateTime            @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime            @updatedAt @db.Timestamptz(6)
   contacts    ContactListMember[]
+  events      EventList[]
 
   @@index([teamId])
 }
@@ -627,11 +628,24 @@ model Event {
   createdAt     DateTime            @default(now()) @db.Timestamptz(6)
   updatedAt     DateTime            @updatedAt @db.Timestamptz(6)
   contacts      EventContact[]
+  lists         EventList[]
   registrations EventRegistration[]
 
   @@unique([teamId, slug])
   @@index([teamId])
   @@index([slug])
+}
+
+model EventList {
+  eventId   String
+  listId    String
+  event     Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  list      ContactList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now()) @db.Timestamptz(6)
+
+  @@id([eventId, listId])
+  @@index([eventId])
+  @@index([listId])
 }
 
 model EventType {

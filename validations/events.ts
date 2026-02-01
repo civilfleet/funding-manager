@@ -67,6 +67,7 @@ export const createEventSchema = z.object({
     .preprocess((val) => val === true || val === "true", z.boolean())
     .default(false),
   contacts: z.array(eventContactSchema).default([]),
+  listIds: z.array(z.string().uuid("List id must be a valid UUID")).default([]),
 });
 
 export type CreateEventInput = z.infer<typeof createEventSchema>;
@@ -114,6 +115,7 @@ export const updateEventSchema = z.object({
     .preprocess((val) => val === true || val === "true", z.boolean())
     .default(false),
   contacts: z.array(eventContactSchema).default([]),
+  listIds: z.array(z.string().uuid("List id must be a valid UUID")).default([]),
 });
 
 export type UpdateEventInput = z.infer<typeof updateEventSchema>;

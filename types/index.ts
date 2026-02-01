@@ -118,6 +118,11 @@ export interface Event {
   merchNeeded?: boolean;
   startDate: Date;
   endDate?: Date;
+  lists?: Array<{
+    id: string;
+    name: string;
+    description?: string;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
