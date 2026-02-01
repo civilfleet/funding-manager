@@ -1,5 +1,7 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { normalizeCountryCode } from "@/lib/countries";
+import { normalizePostalCode } from "@/lib/geo";
 import { generateSlug } from "@/lib/slug";
 import {
   logContactCreation,
@@ -171,6 +173,43 @@ type EventFilters = {
   from?: string;
   to?: string;
   state?: string;
+};
+
+type PublicEventFilters = {
+  query?: string;
+  eventTypeId?: string;
+  from?: string;
+  to?: string;
+  state?: string;
+  isOnline?: boolean;
+  postalCode?: string;
+  countryCode?: string;
+  radiusKm?: number;
+};
+
+type PublicEventListItem = {
+  id: string;
+  teamId: string;
+  title: string;
+  slug?: string;
+  description?: string;
+  location?: string;
+  isOnline?: boolean;
+  expectedGuests?: number;
+  hasRemuneration?: boolean;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  state?: string;
+  timeZone?: string;
+  merchNeeded?: boolean;
+  startDate: Date;
+  endDate?: Date;
+  eventType?: {
+    id: string;
+    name: string;
+    color?: string;
+  };
 };
 
 export const getTeamEvents = async (
@@ -539,6 +578,202 @@ export const deleteEvents = async (teamId: string, ids: string[]) => {
       teamId,
     },
   });
+};
+
+const buildPublicEventWhere = (
+  teamId: string,
+  filters: PublicEventFilters,
+  eventIds?: string[],
+) => {
+  const where: Prisma.EventWhereInput = {
+    teamId,
+    isPublic: true,
+  };
+
+  if (filters.eventTypeId) {
+    where.eventTypeId = filters.eventTypeId;
+  }
+
+  if (typeof filters.isOnline === "boolean") {
+    where.isOnline = filters.isOnline;
+  }
+
+  if (filters.state) {
+    where.state = {
+      contains: filters.state,
+      mode: "insensitive",
+    };
+  }
+
+  if (filters.from || filters.to) {
+    const range: Prisma.DateTimeFilter = {};
+    if (filters.from && !Number.isNaN(Date.parse(filters.from))) {
+      range.gte = new Date(filters.from);
+    }
+    if (filters.to && !Number.isNaN(Date.parse(filters.to))) {
+      const parsed = new Date(filters.to);
+      if (filters.to.length === 10) {
+        parsed.setHours(23, 59, 59, 999);
+      }
+      range.lte = parsed;
+    }
+    if (Object.keys(range).length > 0) {
+      where.startDate = range;
+    }
+  }
+
+  if (filters.query) {
+    where.OR = [
+      { title: { contains: filters.query, mode: "insensitive" } },
+      { description: { contains: filters.query, mode: "insensitive" } },
+      { location: { contains: filters.query, mode: "insensitive" } },
+      { address: { contains: filters.query, mode: "insensitive" } },
+      { city: { contains: filters.query, mode: "insensitive" } },
+      { postalCode: { contains: filters.query, mode: "insensitive" } },
+      { state: { contains: filters.query, mode: "insensitive" } },
+      { eventType: { name: { contains: filters.query, mode: "insensitive" } } },
+    ];
+  }
+
+  if (eventIds) {
+    where.id = { in: eventIds };
+  }
+
+  return where;
+};
+
+const getPublicEventIdsWithinRadius = async (
+  teamId: string,
+  postalCode?: string,
+  countryCode?: string,
+  radiusKm?: number,
+) => {
+  const normalizedPostal = normalizePostalCode(postalCode);
+  const normalizedCountry = normalizeCountryCode(countryCode);
+  const radius = typeof radiusKm === "number" ? radiusKm : Number(radiusKm);
+
+  if (!normalizedPostal || !normalizedCountry || !Number.isFinite(radius)) {
+    return null;
+  }
+
+  const radiusMeters = radius * 1000;
+
+  const nearby = await prisma.$queryRaw<{ id: string }[]>(
+    Prisma.sql`
+      WITH origin AS (
+        SELECT "latitude", "longitude"
+        FROM "PostalCodeCentroid"
+        WHERE "countryCode" = ${normalizedCountry}
+          AND "postalCode" = ${normalizedPostal}
+        LIMIT 1
+      )
+      SELECT e."id"
+      FROM "Event" e
+      JOIN "PostalCodeCentroid" pc
+        ON pc."countryCode" = ${normalizedCountry}
+       AND pc."postalCode" = e."postalCode"
+      CROSS JOIN origin
+      WHERE e."teamId" = ${teamId}
+        AND e."isPublic" = true
+        AND e."postalCode" IS NOT NULL
+        AND pc."latitude" IS NOT NULL
+        AND pc."longitude" IS NOT NULL
+        AND ST_DWithin(
+          geography(ST_MakePoint(pc."longitude", pc."latitude")),
+          geography(ST_MakePoint(origin."longitude", origin."latitude")),
+          ${radiusMeters}
+        )
+    `,
+  );
+
+  return nearby.map((row) => row.id);
+};
+
+export const getPublicEvents = async (
+  teamId: string,
+  filters: PublicEventFilters,
+  page = 1,
+  pageSize = 12,
+) => {
+  const safePageSize = Math.min(Math.max(pageSize, 1), 50);
+  const safePage = Math.max(page, 1);
+
+  let eventIds: string[] | undefined;
+  if (filters.postalCode && filters.countryCode && filters.radiusKm) {
+    const nearbyIds = await getPublicEventIdsWithinRadius(
+      teamId,
+      filters.postalCode,
+      filters.countryCode,
+      filters.radiusKm,
+    );
+    if (nearbyIds && nearbyIds.length === 0) {
+      return {
+        items: [] as PublicEventListItem[],
+        total: 0,
+        page: safePage,
+        pageSize: safePageSize,
+      };
+    }
+    if (nearbyIds) {
+      eventIds = nearbyIds;
+    }
+  }
+
+  const where = buildPublicEventWhere(teamId, filters, eventIds);
+
+  const [total, events] = await Promise.all([
+    prisma.event.count({ where }),
+    prisma.event.findMany({
+      where,
+      select: {
+        id: true,
+        teamId: true,
+        title: true,
+        slug: true,
+        description: true,
+        location: true,
+        isOnline: true,
+        expectedGuests: true,
+        hasRemuneration: true,
+        address: true,
+        city: true,
+        postalCode: true,
+        state: true,
+        timeZone: true,
+        merchNeeded: true,
+        startDate: true,
+        endDate: true,
+        eventType: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+      },
+      orderBy: {
+        startDate: "desc",
+      },
+      skip: (safePage - 1) * safePageSize,
+      take: safePageSize,
+    }),
+  ]);
+
+  return {
+    items: events.map((event) => ({
+      ...event,
+      eventType: event.eventType
+        ? {
+            id: event.eventType.id,
+            name: event.eventType.name,
+            color: event.eventType.color ?? undefined,
+          }
+        : undefined,
+    })),
+    total,
+    page: safePage,
+    pageSize: safePageSize,
+  };
 };
 // Get a public event by slug (for public registration pages)
 export const getPublicEventBySlug = async (teamId: string, slug: string) => {

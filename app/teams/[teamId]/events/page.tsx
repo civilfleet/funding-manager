@@ -1,5 +1,6 @@
 import Link from "next/link";
 import EventsView from "@/components/events/events-view";
+import PublicEventsLinkButton from "@/components/events/public-events-link-button";
 import { Button } from "@/components/ui/button";
 
 interface EventsPageProps {
@@ -18,9 +19,12 @@ export default async function EventsPage({ params }: EventsPageProps) {
             Manage events and track contact participation for your team.
           </p>
         </div>
-        <Link href="events/create">
-          <Button type="button">Add event</Button>
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <PublicEventsLinkButton teamId={teamId} />
+          <Link href="events/create">
+            <Button type="button">Add event</Button>
+          </Link>
+        </div>
       </div>
 
       <EventsView teamId={teamId} />
