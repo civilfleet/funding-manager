@@ -19,6 +19,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -669,6 +670,9 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                             value={field.value ?? ""}
                           />
                         </FormControl>
+                        <FormDescription>
+                          Used together with country to place the contact on the map.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -740,6 +744,9 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                             ))}
                           </SelectContent>
                         </Select>
+                        <FormDescription>
+                          Combine with postal code to enable map and distance filters.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

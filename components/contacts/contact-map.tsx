@@ -99,8 +99,9 @@ export default function ContactMap({ contacts }: ContactMapProps) {
   if (points.length === 0) {
     return (
       <Card className="flex min-h-[360px] items-center justify-center border-dashed">
-        <div className="text-center text-sm text-muted-foreground">
-          No contacts with location data yet.
+        <div className="space-y-2 text-center text-sm text-muted-foreground">
+          <div>No contacts with location data yet.</div>
+          <div>Add postal code and country on a contact to show them here.</div>
         </div>
       </Card>
     );
