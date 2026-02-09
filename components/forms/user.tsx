@@ -19,6 +19,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -136,11 +137,12 @@ export default function UserForm({
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="John Doe"
+                            placeholder="Full name"
                             {...field}
                             value={field.value || ""}
                           />
                         </FormControl>
+                        <FormDescription>e.g., John Doe</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -154,12 +156,15 @@ export default function UserForm({
                         <FormLabel>Email Address</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="john.doe@example.com"
+                            placeholder="Email address"
                             type="email"
                             {...field}
                             value={field.value || ""}
                           />
                         </FormControl>
+                        <FormDescription>
+                          e.g., john.doe@example.com
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -173,11 +178,14 @@ export default function UserForm({
                         <FormLabel>Phone Number</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="+1 (555) 123-4567"
+                            placeholder="Phone number"
                             {...field}
                             value={field.value || ""}
                           />
                         </FormControl>
+                        <FormDescription>
+                          e.g., +1 (555) 123-4567
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

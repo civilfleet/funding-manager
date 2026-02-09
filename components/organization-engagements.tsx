@@ -18,6 +18,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -137,9 +138,12 @@ export default function OrganizationEngagements({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Type</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Workshop, support request, meeting" {...field} />
+                    <FormControl>
+                    <Input placeholder="Type of engagement" {...field} />
                   </FormControl>
+                  <FormDescription>
+                    e.g., Workshop, support request, meeting
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

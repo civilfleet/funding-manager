@@ -544,11 +544,12 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                         <FormLabel>Full name</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Alex Johnson"
+                            placeholder="Full name"
                             {...field}
                             value={field.value ?? ""}
                           />
                         </FormControl>
+                        <FormDescription>e.g., Alex Johnson</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -562,11 +563,12 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                         <FormControl>
                           <Input
                             type="email"
-                            placeholder="alex@example.com"
+                            placeholder="Email address"
                             {...field}
                             value={field.value ?? ""}
                           />
                         </FormControl>
+                        <FormDescription>e.g., alex@example.com</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -579,11 +581,14 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                         <FormLabel>Phone</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="+1 (555) 123-4567"
+                            placeholder="Phone number"
                             {...field}
                             value={field.value ?? ""}
                           />
                         </FormControl>
+                        <FormDescription>
+                          e.g., +1 (555) 123-4567
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -614,11 +619,14 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                         <FormControl>
                           <Input
                             type="url"
-                            placeholder="https://example.com"
+                            placeholder="Website"
                             {...field}
                             value={field.value ?? ""}
                           />
                         </FormControl>
+                        <FormDescription>
+                          e.g., https://example.com
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -631,11 +639,12 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                         <FormLabel>Pronouns</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="they/them"
+                            placeholder="Pronouns"
                             {...field}
                             value={field.value ?? ""}
                           />
                         </FormControl>
+                        <FormDescription>e.g., they/them</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -648,11 +657,14 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                         <FormLabel>Street address</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Example Street 12"
+                            placeholder="Street address"
                             {...field}
                             value={field.value ?? ""}
                           />
                         </FormControl>
+                        <FormDescription>
+                          e.g., Example Street 12
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -665,13 +677,14 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                         <FormLabel>Postal code</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="10115"
+                            placeholder="Postal code"
                             {...field}
                             value={field.value ?? ""}
                           />
                         </FormControl>
                         <FormDescription>
                           Used together with country to place the contact on the map.
+                          Example: 10115
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -685,11 +698,14 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                         <FormLabel>State</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Baden-Württemberg"
+                            placeholder="State"
                             {...field}
                             value={field.value ?? ""}
                           />
                         </FormControl>
+                        <FormDescription>
+                          e.g., Baden-Württemberg
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -702,11 +718,12 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
                         <FormLabel>City</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Berlin"
+                            placeholder="City"
                             {...field}
                             value={field.value ?? ""}
                           />
                         </FormControl>
+                        <FormDescription>e.g., Berlin</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

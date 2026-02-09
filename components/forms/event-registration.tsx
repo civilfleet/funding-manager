@@ -128,9 +128,10 @@ export default function EventRegistrationForm({
         <Input
           id="name"
           {...register("name")}
-          placeholder="John Doe"
+          placeholder="Full name"
           className="mt-1"
         />
+        <p className="mt-1 text-xs text-muted-foreground">e.g., John Doe</p>
         {errors.name && (
           <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
         )}
@@ -144,9 +145,12 @@ export default function EventRegistrationForm({
           id="email"
           type="email"
           {...register("email")}
-          placeholder="john@example.com"
+          placeholder="Email address"
           className="mt-1"
         />
+        <p className="mt-1 text-xs text-muted-foreground">
+          e.g., john@example.com
+        </p>
         {errors.email && (
           <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
         )}
@@ -158,9 +162,12 @@ export default function EventRegistrationForm({
           id="phone"
           type="tel"
           {...register("phone")}
-          placeholder="+1 234 567 8900"
+          placeholder="Phone number"
           className="mt-1"
         />
+        <p className="mt-1 text-xs text-muted-foreground">
+          e.g., +1 234 567 8900
+        </p>
         {errors.phone && (
           <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
         )}

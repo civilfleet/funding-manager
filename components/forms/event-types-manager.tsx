@@ -27,6 +27,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -291,8 +292,9 @@ export default function EventTypesManager({ teamId }: EventTypesManagerProps) {
                   <FormItem>
                     <FormLabel>Type name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Workshop" {...field} />
+                      <Input placeholder="Type name" {...field} />
                     </FormControl>
+                    <FormDescription>e.g., Workshop</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -305,8 +307,9 @@ export default function EventTypesManager({ teamId }: EventTypesManagerProps) {
                   <FormItem>
                     <FormLabel>Color (optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="#22c55e" {...field} />
+                      <Input placeholder="Hex color" {...field} />
                     </FormControl>
+                    <FormDescription>e.g., #22c55e</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

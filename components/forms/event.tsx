@@ -625,11 +625,14 @@ export default function EventForm({
                         <FormLabel>Title *</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Annual Fundraising Gala"
+                            placeholder="Event title"
                             {...field}
                             value={field.value}
                           />
                         </FormControl>
+                        <FormDescription>
+                          e.g., Annual Fundraising Gala
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -676,11 +679,12 @@ export default function EventForm({
                         <FormLabel>Time zone</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Europe/Berlin"
+                            placeholder="Time zone"
                             {...field}
                             value={field.value ?? ""}
                           />
                         </FormControl>
+                        <FormDescription>e.g., Europe/Berlin</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -694,11 +698,14 @@ export default function EventForm({
                         <FormLabel>Location</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Convention Center, Main Hall"
+                            placeholder="Location"
                             {...field}
                             value={field.value ?? ""}
                           />
                         </FormControl>
+                        <FormDescription>
+                          e.g., Convention Center, Main Hall
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -737,11 +744,14 @@ export default function EventForm({
                             <FormLabel>Street address</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Example Street 12"
+                                placeholder="Street address"
                                 {...field}
                                 value={field.value ?? ""}
                               />
                             </FormControl>
+                            <FormDescription>
+                              e.g., Example Street 12
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -754,11 +764,12 @@ export default function EventForm({
                             <FormLabel>Postal code</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="10115"
+                                placeholder="Postal code"
                                 {...field}
                                 value={field.value ?? ""}
                               />
                             </FormControl>
+                            <FormDescription>e.g., 10115</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -771,11 +782,14 @@ export default function EventForm({
                             <FormLabel>State</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Baden-Württemberg"
+                                placeholder="State"
                                 {...field}
                                 value={field.value ?? ""}
                               />
                             </FormControl>
+                            <FormDescription>
+                              e.g., Baden-Württemberg
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -788,11 +802,12 @@ export default function EventForm({
                             <FormLabel>City</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Berlin"
+                                placeholder="City"
                                 {...field}
                                 value={field.value ?? ""}
                               />
                             </FormControl>
+                            <FormDescription>e.g., Berlin</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
