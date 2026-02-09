@@ -358,6 +358,7 @@ export default async function ContactDetailPage({
                 <Tabs defaultValue="general" className="w-full">
                   <TabsList className="mb-6 mt-4 flex flex-wrap">
                     <TabsTrigger value="general">General</TabsTrigger>
+                    <TabsTrigger value="engagements">Engagements</TabsTrigger>
                     {showSupervisionTab && (
                       <TabsTrigger value="supervision">Supervision</TabsTrigger>
                     )}
@@ -503,17 +504,20 @@ export default async function ContactDetailPage({
                     </TabsContent>
                   )}
 
+                  <TabsContent value="engagements" className="space-y-6">
+                    <ContactEngagementHistory
+                      contactId={id}
+                      teamId={teamId}
+                      currentUser={{
+                        id: session?.user?.userId ?? null,
+                        name: session?.user?.name ?? null,
+                        email: session?.user?.email ?? null,
+                      }}
+                    />
+                  </TabsContent>
+
                   {showEventsTab && (
                     <TabsContent value="events" className="space-y-6">
-                      <ContactEngagementHistory
-                        contactId={id}
-                        teamId={teamId}
-                        currentUser={{
-                          id: session?.user?.userId ?? null,
-                          name: session?.user?.name ?? null,
-                          email: session?.user?.email ?? null,
-                        }}
-                      />
                       <Card className="w-full shadow-sm">
                         <CardHeader className="border-b pb-3">
                           <div className="flex items-center gap-2">
