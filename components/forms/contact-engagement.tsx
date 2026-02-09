@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
@@ -76,6 +75,11 @@ interface ContactEngagementFormProps {
   contactId: string;
   teamId: string;
   onSuccess?: () => void;
+  currentUser?: {
+    id?: string | null;
+    name?: string | null;
+    email?: string | null;
+  };
 }
 
 const formatDateForInput = (date: Date = new Date()) => {
@@ -91,9 +95,9 @@ export default function ContactEngagementForm({
   contactId,
   teamId,
   onSuccess,
+  currentUser,
 }: ContactEngagementFormProps) {
   const { toast } = useToast();
-  const { data: session } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: usersData } = useSWR(`/api/teams/${teamId}/users`, fetcher);
@@ -151,8 +155,8 @@ export default function ContactEngagementForm({
           restrictedToSubmodule: isNote
             ? values.restrictedToSubmodule
             : undefined,
-          userId: session?.user?.id,
-          userName: session?.user?.name || session?.user?.email,
+          userId: currentUser?.id,
+          userName: currentUser?.name || currentUser?.email,
           assignedToUserName: assignedUser?.name || assignedUser?.email,
         }),
       });

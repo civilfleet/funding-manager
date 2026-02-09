@@ -1,5 +1,6 @@
 import HybridFundingRequestForm from "@/components/forms/hybrid-funding-request-form";
 import prisma from "@/lib/prisma";
+import { auth } from "@/auth";
 
 export default async function Page({
   params,
@@ -7,6 +8,7 @@ export default async function Page({
   params: Promise<{ organizationId: string }>;
 }) {
   const id = (await params).organizationId as string;
+  const session = await auth();
 
   // Get the organization's team to load the correct form configuration
   const organization = await prisma.organization.findUnique({
@@ -29,6 +31,7 @@ export default async function Page({
       <HybridFundingRequestForm
         organizationId={id}
         teamId={organization?.teamId || undefined}
+        userEmail={session?.user?.email ?? null}
       />
     </div>
   );

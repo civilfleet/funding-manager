@@ -3,7 +3,6 @@ import "./globals.css";
 import "leaflet/dist/leaflet.css";
 
 import { Inter } from "next/font/google";
-import { SessionProvider } from "next-auth/react";
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "@/components/ui/toaster";
 import { APP_NAME } from "@/constants/app";
@@ -24,12 +23,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <NextTopLoader color="#2563eb" showSpinner={false} />
-        <SessionProvider>
-          <main>
-            <div className=" w-full">{children}</div>
-          </main>
-          <Toaster />
-        </SessionProvider>
+        <main>
+          <div className=" w-full">{children}</div>
+        </main>
+        <Toaster />
       </body>
     </html>
   );

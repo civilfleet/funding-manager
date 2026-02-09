@@ -47,9 +47,11 @@ export type OrganizationColumns = {
 function OrganizationActions({
   organization,
   mutate,
+  basePath,
 }: {
   organization: OrganizationColumns;
   mutate: () => void;
+  basePath: string;
 }) {
   const { toast } = useToast();
   const _router = useRouter();
@@ -87,7 +89,7 @@ function OrganizationActions({
 
   return (
     <div className="flex gap-2">
-      <Link href={`organizations/${organization.id}`}>
+      <Link href={`${basePath}/${organization.id}`}>
         <Button variant="outline" size="sm">
           Edit
         </Button>
@@ -101,6 +103,7 @@ function OrganizationActions({
 
 export const columns = (
   mutate: () => void,
+  basePath: string,
 ): ColumnDef<OrganizationColumns>[] => [
   {
     accessorKey: "name",
@@ -276,7 +279,11 @@ export const columns = (
     id: "actions",
     cell: ({ row }) => {
       return (
-        <OrganizationActions organization={row.original} mutate={mutate} />
+        <OrganizationActions
+          organization={row.original}
+          mutate={mutate}
+          basePath={basePath}
+        />
       );
     },
   },

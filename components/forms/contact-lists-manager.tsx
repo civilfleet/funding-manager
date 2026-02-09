@@ -258,7 +258,7 @@ export default function ContactListsManager({
             </SelectContent>
           </Select>
           <Button asChild>
-          <Link href={`/teams/${teamId}/lists/new`}>
+          <Link href={`/teams/${teamId}/crm/lists/new`}>
             <Plus className="mr-2 h-4 w-4" />
             Add list
           </Link>
@@ -285,7 +285,7 @@ export default function ContactListsManager({
                     <div>
                       <CardTitle className="text-base">
                         <Link
-                          href={`/teams/${teamId}/lists/${list.id}`}
+                          href={`/teams/${teamId}/crm/lists/${list.id}`}
                           className="hover:underline"
                         >
                           {list.name}
@@ -331,7 +331,7 @@ export default function ContactListsManager({
                       Export
                     </Button>
                     <Button asChild variant="ghost" size="sm" className="gap-1">
-                      <Link href={`/teams/${teamId}/lists/${list.id}`}>
+                      <Link href={`/teams/${teamId}/crm/lists/${list.id}`}>
                         <Pencil className="h-4 w-4" />
                         Edit
                       </Link>
@@ -369,7 +369,7 @@ export default function ContactListsManager({
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         <Link
-                          href={`/teams/${teamId}/lists/${list.id}`}
+                          href={`/teams/${teamId}/crm/lists/${list.id}`}
                           className="hover:underline"
                         >
                           {list.name}
@@ -424,7 +424,7 @@ export default function ContactListsManager({
                           size="icon"
                           aria-label="Edit list"
                         >
-                          <Link href={`/teams/${teamId}/lists/${list.id}`}>
+                          <Link href={`/teams/${teamId}/crm/lists/${list.id}`}>
                             <Pencil className="h-4 w-4" />
                           </Link>
                         </Button>

@@ -13,13 +13,38 @@ export const CopyRegistrationLinkButton = ({
 }: CopyRegistrationLinkButtonProps) => {
   const { toast } = useToast();
 
-  const handleCopyRegistrationLink = () => {
+  const handleCopyRegistrationLink = async () => {
     const registrationLink = `${window.location.origin}/public/${teamId}/register`;
-    navigator.clipboard.writeText(registrationLink);
-    toast({
-      title: "Success",
-      description: "Registration link copied to clipboard",
-    });
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(registrationLink);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = registrationLink;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "absolute";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+
+      toast({
+        title: "Success",
+        description: "Registration link copied to clipboard",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to copy registration link",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

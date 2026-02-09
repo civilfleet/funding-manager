@@ -320,9 +320,9 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
 
       if (shouldExit) {
         if (isEditMode && contact?.id) {
-          router.push(`/teams/${teamId}/contacts/${contact.id}`);
+          router.push(`/teams/${teamId}/crm/contacts/${contact.id}`);
         } else {
-          router.push(`/teams/${teamId}/contacts`);
+          router.push(`/teams/${teamId}/crm/contacts`);
         }
       }
       router.refresh();

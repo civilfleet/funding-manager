@@ -121,7 +121,7 @@ const ContactNameCell = ({ contact }: { contact: ContactRow }) => {
 
   return (
     <Link
-      href={`/teams/${teamId}/contacts/${contact.id}`}
+      href={`/teams/${teamId}/crm/contacts/${contact.id}`}
       className="font-medium hover:underline"
     >
       <div className="flex flex-col gap-1">
@@ -232,7 +232,7 @@ export const contactColumns: ColumnDef<ContactRow>[] = [
 
 export const renderContactCard = (contact: ContactRow, teamId: string) => {
   return (
-    <Link href={`/teams/${teamId}/contacts/${contact.id}`}>
+    <Link href={`/teams/${teamId}/crm/contacts/${contact.id}`}>
       <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-3 hover:bg-accent transition-colors cursor-pointer">
         <div>
           <div className="flex flex-col gap-1">

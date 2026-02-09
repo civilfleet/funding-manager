@@ -6,8 +6,10 @@ import FundingRequestDetails from "../funding-request-details";
 
 export default function FundingRequestData({
   fundingRequestId,
+  isTeam = false,
 }: {
   fundingRequestId: string;
+  isTeam?: boolean;
 }) {
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
   const { data, isLoading, mutate } = useSWR(
@@ -22,7 +24,11 @@ export default function FundingRequestData({
   };
 
   return !isLoading && fundingRequest ? (
-    <FundingRequestDetails data={fundingRequest} refreshData={refreshData} />
+    <FundingRequestDetails
+      data={fundingRequest}
+      refreshData={refreshData}
+      isTeam={isTeam}
+    />
   ) : (
     <div className="flex justify-center items-center h-64">
       <Loader className="" />

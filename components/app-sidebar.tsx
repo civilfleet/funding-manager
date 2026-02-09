@@ -1,6 +1,5 @@
 "use client";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import * as React from "react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -12,7 +11,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { DEFAULT_TEAM_MODULES, type AppModule } from "@/types";
+import { DEFAULT_TEAM_MODULES, type AppModule, type Roles } from "@/types";
 import navigationItems from "./nav-items";
 
 type NavigationKey = keyof typeof navigationItems;
@@ -28,15 +27,21 @@ type AppSidebarProps = {
     modules?: AppModule[];
   }>;
   organizations?: Array<{ id: string; name: string; email: string }>;
+  user?: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    roles?: Roles[];
+  };
 } & Omit<React.ComponentProps<typeof Sidebar>, "teams" | "organizations">;
 
 export function AppSidebar({
   navItems,
   teams: initialTeams = [],
   organizations: initialOrganizations = [],
+  user,
   ...sidebarProps
 }: AppSidebarProps) {
-  const { data: session } = useSession();
   const pathname = usePathname();
 
   // Extract the active ID and type from the URL
@@ -150,6 +155,7 @@ export function AppSidebar({
           teams={teams}
           activeId={activeId}
           activeType={activeType}
+          userRoles={user?.roles}
         />
       </SidebarHeader>
 
@@ -159,9 +165,9 @@ export function AppSidebar({
       <SidebarFooter>
         <NavUser
           user={{
-            name: session?.user?.name || "",
-            email: session?.user?.email || "",
-            image: session?.user?.image || "",
+            name: user?.name || "",
+            email: user?.email || "",
+            image: user?.image || "",
           }}
         />
       </SidebarFooter>

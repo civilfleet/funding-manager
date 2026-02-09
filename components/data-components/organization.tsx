@@ -1,6 +1,5 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import OrganizationForm from "@/components/forms/organization";
@@ -9,19 +8,17 @@ import OrganizationDetails from "@/components/organization-details";
 import OrganizationEngagements from "@/components/organization-engagements";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Roles } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function OrganizationData({
   organizationId,
+  isAdminOrTeam = false,
 }: {
   organizationId: string;
+  isAdminOrTeam?: boolean;
 }) {
-  const { data: session } = useSession();
-  const isAdminOrTeam =
-    session?.user.roles?.includes(Roles.Admin) ||
-    session?.user.roles?.includes(Roles.Team);
+  const allowManagement = isAdminOrTeam;
 
   const {
     data: organizationData,
@@ -86,7 +83,7 @@ export default function OrganizationData({
   return (
     <div className=" px-5 py-8 mx-auto">
       <div className=" p-6">
-        {isAdminOrTeam && (
+        {allowManagement && (
           <div className="flex justify-between items-center mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
             <div className="flex flex-col">
               <h3 className="text-base font-semibold text-gray-800">
@@ -111,7 +108,7 @@ export default function OrganizationData({
           </div>
         )}
 
-        {isFilledByOrg && !isAdminOrTeam ? (
+        {isFilledByOrg && !allowManagement ? (
           <OrganizationDetails
             organization={organizationData?.data}
             fundingRequests={fundingRequestsData?.data}

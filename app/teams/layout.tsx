@@ -41,6 +41,7 @@ export default async function RootLayout({
           navItems={"team"}
           teams={teams}
           organizations={organizations}
+          user={session.user}
         />
         <SidebarInset>
           <div className="flex min-h-svh flex-1 flex-col">

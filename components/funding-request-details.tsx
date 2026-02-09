@@ -1,26 +1,22 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import OrganizationView from "@/components/funding-request/organization-view";
 import FundingRequestOverview from "@/components/funding-request/overview";
 import TransactionTable from "@/components/table/transaction-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { type FundingRequest, Roles } from "../types";
+import { type FundingRequest } from "../types";
 import FundingRequestHeader from "./funding-request/header";
 import { FileList } from "./helper/file-list";
 
 export default function FundingRequestDetail({
   data,
   refreshData,
+  isTeam = false,
 }: {
   data: FundingRequest;
   refreshData: () => void;
+  isTeam?: boolean;
 }) {
-  const { data: session } = useSession();
-  const isTeam =
-    session?.user?.roles?.includes(Roles.Team) ||
-    session?.user?.roles?.includes(Roles.Admin);
-
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Status Header */}

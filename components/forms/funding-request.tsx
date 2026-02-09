@@ -11,7 +11,6 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -45,12 +44,13 @@ import FileUpload from "../file-uploader";
 
 export default function FundingRequest({
   organizationId,
+  userEmail,
 }: {
   organizationId: string;
+  userEmail?: string | null;
 }) {
   const router = useRouter();
   const { toast } = useToast();
-  const { data: session } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,7 +86,7 @@ export default function FundingRequest({
   async function onSubmit(
     values: z.infer<typeof legacyCreateFundingRequestSchema>,
   ) {
-    if (!session?.user?.email) {
+    if (!userEmail) {
       toast({
         title: "Authentication Error",
         description: "You must be logged in to submit a funding request",
@@ -107,7 +107,7 @@ export default function FundingRequest({
         body: JSON.stringify({
           ...values,
           organizationId,
-          submittedBy: session.user.email,
+          submittedBy: userEmail,
         }),
       });
 

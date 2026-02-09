@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle, CreditCard, Download, Upload } from "lucide-react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -34,13 +33,16 @@ import DetailItem from "../helper/detail-item";
 export default function SignDonationAgreement({
   data: initialData,
   teamId,
+  userId,
+  userRoles,
 }: {
   data: DonationAgreement;
   teamId?: string;
+  userId?: string | null;
+  userRoles?: Roles[];
 }) {
   const { toast } = useToast();
-  const { data: session } = useSession();
-  const isAdmin = session?.user?.roles?.includes(Roles.Admin);
+  const isAdmin = userRoles?.includes(Roles.Admin);
 
   const [data, setData] = useState<DonationAgreement>(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,6 +76,15 @@ export default function SignDonationAgreement({
   };
 
   async function onSubmit(values: z.infer<typeof schema>) {
+    if (!isAdmin && !userId) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to sign this agreement.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const response = await fetch(`/api/donation-agreements/${data.id}`, {
@@ -84,7 +95,7 @@ export default function SignDonationAgreement({
         body: JSON.stringify({
           ...values,
           id: data.id,
-          userId: isAdmin ? selectedUserId : session?.user.userId,
+          userId: isAdmin ? selectedUserId : userId,
         }),
       });
       if (!response.ok) {

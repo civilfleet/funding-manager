@@ -122,7 +122,7 @@ const EventTitleCell = ({ event }: { event: EventRow }) => {
 
   return (
     <Link
-      href={`/teams/${teamId}/events/${event.id}`}
+      href={`/teams/${teamId}/crm/events/${event.id}`}
       className="font-medium hover:underline"
     >
       {event.title}

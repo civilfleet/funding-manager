@@ -10,7 +10,6 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -77,15 +76,16 @@ const withFileIds = (files: Array<Partial<FundingFile>>): FundingFile[] =>
 interface DynamicFundingRequestProps {
   organizationId: string;
   teamId?: string;
+  userEmail?: string | null;
 }
 
 export default function DynamicFundingRequest({
   organizationId,
   teamId,
+  userEmail,
 }: DynamicFundingRequestProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { data: session } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -524,7 +524,7 @@ export default function DynamicFundingRequest({
   };
 
   async function onSubmit(values: Record<string, unknown>) {
-    if (!session?.user?.email) {
+    if (!userEmail) {
       toast({
         title: "Authentication Error",
         description: "You must be logged in to submit a funding request",
@@ -545,7 +545,7 @@ export default function DynamicFundingRequest({
         body: JSON.stringify({
           ...values,
           organizationId,
-          submittedBy: session.user.email,
+          submittedBy: userEmail,
         }),
       });
 

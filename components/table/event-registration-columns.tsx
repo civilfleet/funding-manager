@@ -40,7 +40,7 @@ const RegistrantCell = ({
   return (
     <div className="flex flex-col">
       <Link
-        href={`/teams/${teamId}/contacts/${registration.contactId}`}
+        href={`/teams/${teamId}/crm/contacts/${registration.contactId}`}
         className="font-medium text-primary hover:underline"
       >
         {displayName}

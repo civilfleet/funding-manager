@@ -52,6 +52,11 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 interface ContactEngagementHistoryProps {
   contactId: string;
   teamId: string;
+  currentUser?: {
+    id?: string | null;
+    name?: string | null;
+    email?: string | null;
+  };
 }
 
 const getSourceColor = (source: EngagementSource) => {
@@ -185,6 +190,7 @@ const parseEngagementContent = (message?: string): ParsedEngagementContent => {
 export default function ContactEngagementHistory({
   contactId,
   teamId,
+  currentUser,
 }: ContactEngagementHistoryProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -230,6 +236,7 @@ export default function ContactEngagementHistory({
                 contactId={contactId}
                 teamId={teamId}
                 onSuccess={handleSuccess}
+                currentUser={currentUser}
               />
             </DialogContent>
           </Dialog>

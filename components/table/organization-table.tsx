@@ -42,6 +42,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 interface IOrganizationProps {
   teamId?: string;
+  basePath?: string;
 }
 
 type FieldFilter = {
@@ -58,11 +59,15 @@ type FieldFilter = {
   value?: string;
 };
 
-export default function OrganizationTable({ teamId }: IOrganizationProps) {
+export default function OrganizationTable({
+  teamId,
+  basePath,
+}: IOrganizationProps) {
   const { toast } = useToast();
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
   const [fieldFilters, setFieldFilters] = useState<FieldFilter[]>([]);
+  const resolvedBasePath = (basePath ?? pathname).replace(/\/$/, "");
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
@@ -319,7 +324,7 @@ export default function OrganizationTable({ teamId }: IOrganizationProps) {
         ) : (
           <div className="w-full overflow-x-auto">
             <DataTable
-              columns={columns(mutate)}
+              columns={columns(mutate, resolvedBasePath)}
               data={data?.data}
               initialView="table"
               renderCard={(org: OrganizationColumns) => (
@@ -397,7 +402,7 @@ export default function OrganizationTable({ teamId }: IOrganizationProps) {
                     </div>
                   </CardContent>
                   <CardFooter className="justify-end gap-2">
-                    <Link href={`organizations/${org.id}`}>
+                    <Link href={`${resolvedBasePath}/${org.id}`}>
                       <Button size="sm" variant="outline">
                         View
                       </Button>

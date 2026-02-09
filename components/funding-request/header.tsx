@@ -195,7 +195,7 @@ export default function FundingRequestHeader({
                   variant="outline"
                   onClick={() =>
                     router.push(
-                      `/teams/${teamId}/donation-agreements/create?fundingRequestId=${data.id}`,
+                      `/teams/${teamId}/funding/donation-agreements/create?fundingRequestId=${data.id}`,
                     )
                   }
                   className="w-full sm:w-auto"
@@ -218,7 +218,7 @@ export default function FundingRequestHeader({
                     );
                   } else {
                     router.push(
-                      `/teams/${teamId}/donation-agreements/${data?.donationAgreement?.[0]?.id}`,
+                      `/teams/${teamId}/funding/donation-agreements/${data?.donationAgreement?.[0]?.id}`,
                     );
                   }
                 }}

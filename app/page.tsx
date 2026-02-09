@@ -27,11 +27,11 @@ export default async function LoginPage() {
         const modules = primaryTeam?.modules ?? [];
 
         if (modules.includes("FUNDING")) {
-          return redirect(`/teams/${primaryTeam.id}/organizations`);
+          return redirect(`/teams/${primaryTeam.id}/funding/organizations`);
         }
 
         if (modules.includes("CRM")) {
-          return redirect(`/teams/${primaryTeam.id}/contacts`);
+          return redirect(`/teams/${primaryTeam.id}/crm/contacts`);
         }
 
         return redirect(`/teams/${primaryTeam.id}`);

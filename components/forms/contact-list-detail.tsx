@@ -287,7 +287,7 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
           title: "List created",
           description: `${values.name} has been created.`,
         });
-        router.push(`/teams/${teamId}/lists/${data.id}`);
+        router.push(`/teams/${teamId}/crm/lists/${data.id}`);
         router.refresh();
         return;
       }
@@ -412,7 +412,7 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
         </CardHeader>
         <CardContent>
           <Button asChild>
-            <Link href={`/teams/${teamId}/lists`}>Back to Lists</Link>
+            <Link href={`/teams/${teamId}/crm/lists`}>Back to Lists</Link>
           </Button>
         </CardContent>
       </Card>
@@ -489,7 +489,7 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
             </>
           )}
           <Button asChild variant="outline">
-            <Link href={`/teams/${teamId}/lists`}>Back to Lists</Link>
+            <Link href={`/teams/${teamId}/crm/lists`}>Back to Lists</Link>
           </Button>
         </div>
       </div>
@@ -808,7 +808,7 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
                   >
                     <div>
                       <Link
-                        href={`/teams/${teamId}/contacts/${contact.id}`}
+                        href={`/teams/${teamId}/crm/contacts/${contact.id}`}
                         className="font-medium hover:underline"
                       >
                         {contact.name}
@@ -821,7 +821,7 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
                     </div>
                     <div className="flex items-center gap-2">
                       <Button asChild variant="outline" size="sm">
-                        <Link href={`/teams/${teamId}/contacts/${contact.id}/edit`}>
+                        <Link href={`/teams/${teamId}/crm/contacts/${contact.id}/edit`}>
                           Edit
                         </Link>
                       </Button>

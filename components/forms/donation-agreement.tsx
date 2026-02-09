@@ -153,7 +153,7 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
 
       // Redirect to view page
       router.push(
-        `/teams/${teamId}/donation-agreements/${createdAgreement?.id}`,
+        `/teams/${teamId}/funding/donation-agreements/${createdAgreement?.id}`,
       );
     } catch (error) {
       setError(

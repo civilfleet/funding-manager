@@ -2,7 +2,6 @@
 
 import { ChevronsUpDown, GalleryVerticalEnd, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 
 import {
   DropdownMenu,
@@ -33,16 +32,17 @@ export function TeamSwitcher({
   teams,
   activeId,
   activeType,
+  userRoles,
 }: {
   organizations: SwitcherItem[];
   teams: SwitcherItem[];
   activeId: string | null;
   activeType: "team" | "organization" | "admin" | null;
+  userRoles?: Roles[];
 }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
-  const { data: session } = useSession();
-  const isAdmin = session?.user?.roles?.includes(Roles.Admin);
+  const isAdmin = userRoles?.includes(Roles.Admin);
 
   const activeItem =
     activeType === "team"

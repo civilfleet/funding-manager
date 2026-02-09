@@ -42,6 +42,7 @@ export default async function RootLayout({
           navItems={"admin"}
           teams={teams}
           organizations={organizations}
+          user={session.user}
         />
         <SidebarInset>
           <div className="flex items-center gap-2 border-b p-4">

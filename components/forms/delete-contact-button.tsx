@@ -53,7 +53,7 @@ export default function DeleteContactButton({
         variant: "default",
       });
 
-      router.replace(`/teams/${teamId}/contacts`);
+      router.replace(`/teams/${teamId}/crm/contacts`);
       router.refresh();
     } catch (error) {
       toast({

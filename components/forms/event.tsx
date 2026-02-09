@@ -559,7 +559,7 @@ export default function EventForm({
         description: `${values.title} has been ${isEditMode ? "updated" : "added"}.`,
       });
 
-      router.push(`/teams/${teamId}/events`);
+      router.push(`/teams/${teamId}/crm/events`);
       router.refresh();
     } catch (error) {
       console.error("Event submission catch:", error);

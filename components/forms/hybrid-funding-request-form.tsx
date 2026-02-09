@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -60,15 +59,16 @@ const createUploadedFile = (fileUrl: string): UploadedFile => ({
 interface HybridFundingRequestFormProps {
   organizationId: string;
   teamId?: string;
+  userEmail?: string | null;
 }
 
 export default function HybridFundingRequestForm({
   organizationId,
   teamId,
+  userEmail,
 }: HybridFundingRequestFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { data: session } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -201,7 +201,7 @@ export default function HybridFundingRequestForm({
     resolver: zodResolver(combinedSchema),
     defaultValues: {
       organizationId,
-      submittedBy: session?.user?.email || "",
+      submittedBy: userEmail || "",
       files: [],
     },
   });
