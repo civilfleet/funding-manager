@@ -63,7 +63,7 @@ export function AppSidebar({
       initialTeams.map((team) => ({
         ...team,
         modules:
-          team.modules?.length ? team.modules : [...DEFAULT_TEAM_MODULES],
+          team.modules ?? [...DEFAULT_TEAM_MODULES],
       })),
     [initialTeams],
   );
@@ -74,7 +74,7 @@ export function AppSidebar({
     activeType === "team" ? teams.find((item) => item.id === activeId) : null;
 
   const allowedModules = React.useMemo(() => {
-    if (activeTeam?.modules && activeTeam.modules.length > 0) {
+    if (activeTeam?.modules) {
       return activeTeam.modules;
     }
 
@@ -89,8 +89,12 @@ export function AppSidebar({
 
       const modules = allowedModules;
 
-      if (!modules || modules.length === 0) {
+      if (!modules) {
         return items;
+      }
+
+      if (modules.length === 0) {
+        return [];
       }
 
       const filtered = items.filter((item) => {

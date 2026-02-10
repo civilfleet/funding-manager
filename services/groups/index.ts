@@ -51,10 +51,26 @@ type GroupWithDefaults = Prisma.GroupGetPayload<{
 
 const DEFAULT_GROUP_NAME = "Default Access";
 
+const resolveTeamModules = (modules?: AppModule[] | null) =>
+  modules && modules.length > 0 ? modules : [...DEFAULT_TEAM_MODULES];
+
+const getTeamModules = async (
+  teamId: string,
+  client: typeof prisma = prisma,
+) => {
+  const team = await client.teams.findUnique({
+    where: { id: teamId },
+    select: { modules: true },
+  });
+
+  return resolveTeamModules(team?.modules ?? null);
+};
+
 const ensureDefaultGroup = async (
   teamId: string,
   client: Prisma.TransactionClient | typeof prisma = prisma,
 ) => {
+  const teamModules = await getTeamModules(teamId, client);
   let defaultGroup = await client.group.findFirst({
     where: {
       teamId,
@@ -93,7 +109,7 @@ const ensureDefaultGroup = async (
           isDefaultGroup: true,
           canAccessAllContacts: true,
           modulePermissions: {
-            create: DEFAULT_TEAM_MODULES.map((module) => ({ module })),
+            create: teamModules.map((module) => ({ module })),
           },
         },
         include: {
@@ -125,7 +141,7 @@ const ensureDefaultGroup = async (
 
   if (!ensuredDefaultGroup.modulePermissions.length) {
     await client.groupModulePermission.createMany({
-      data: DEFAULT_TEAM_MODULES.map((module) => ({
+      data: teamModules.map((module) => ({
         groupId: ensuredDefaultGroup.id,
         module,
       })),
@@ -423,11 +439,14 @@ const createGroup = async (input: CreateGroupInput) => {
     contactSubmodules,
   } = input;
 
-  const baseModules = modules?.length ? modules : [...DEFAULT_TEAM_MODULES];
+  const teamModules = await getTeamModules(teamId);
+  const allowedModules = new Set<AppModule>([...teamModules, "ADMIN"]);
+  const baseModules = modules?.length ? modules : [...teamModules];
   const modulesToAssign: AppModule[] = Array.from(
     new Set(
-      baseModules.filter((module): module is AppModule =>
-        APP_MODULES.includes(module),
+      baseModules.filter(
+        (module): module is AppModule =>
+          APP_MODULES.includes(module) && allowedModules.has(module),
       ),
     ),
   );
@@ -496,11 +515,14 @@ const updateGroup = async (input: UpdateGroupInput) => {
     });
 
     if (modules !== undefined) {
-      const baseModules = modules.length ? modules : [...APP_MODULES];
+      const teamModules = await getTeamModules(teamId, tx);
+      const allowedModules = new Set<AppModule>([...teamModules, "ADMIN"]);
+      const baseModules = modules.length ? modules : [...teamModules];
       const modulesToAssign: AppModule[] = Array.from(
         new Set(
-          baseModules.filter((module): module is AppModule =>
-            APP_MODULES.includes(module),
+          baseModules.filter(
+            (module): module is AppModule =>
+              APP_MODULES.includes(module) && allowedModules.has(module),
           ),
         ),
       );
@@ -657,8 +679,10 @@ const getUserModuleAccess = async (
 ): Promise<AppModule[]> => {
   const team = await prisma.teams.findUnique({
     where: { id: teamId },
-    select: { ownerId: true },
+    select: { ownerId: true, modules: true },
   });
+  const teamModules = resolveTeamModules(team?.modules ?? null);
+  const allowedModules = new Set<AppModule>([...teamModules, "ADMIN"]);
 
   const groups = await getUserGroups(userId, teamId);
 
@@ -669,20 +693,27 @@ const getUserModuleAccess = async (
         ? defaultGroup.modulePermissions.map(
             (permission) => permission.module as AppModule,
           )
-        : [...DEFAULT_TEAM_MODULES];
+        : [...teamModules];
+    const cappedBaseModules = baseModules.filter((module) =>
+      teamModules.includes(module),
+    );
 
     if (team?.ownerId === userId) {
-      return Array.from(new Set<AppModule>([...baseModules, "ADMIN"]));
+      return Array.from(
+        new Set<AppModule>([...cappedBaseModules, "ADMIN"]),
+      );
     }
 
-    return baseModules;
+    return cappedBaseModules;
   }
 
   const modules = new Set<AppModule>();
 
   for (const group of groups) {
     for (const moduleName of group.modules) {
-      modules.add(moduleName);
+      if (allowedModules.has(moduleName)) {
+        modules.add(moduleName);
+      }
     }
   }
 
@@ -690,7 +721,7 @@ const getUserModuleAccess = async (
     modules.add("ADMIN");
   }
 
-  return modules.size ? Array.from(modules) : [...DEFAULT_TEAM_MODULES];
+  return modules.size ? Array.from(modules) : [...teamModules];
 };
 
 export {

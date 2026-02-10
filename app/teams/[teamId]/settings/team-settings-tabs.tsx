@@ -10,6 +10,7 @@ import OrganizationTypesManager from "@/components/forms/organization-types-mana
 import FormConfigurationManager from "@/components/forms/form-configuration-manager";
 import KlaviyoIntegration from "@/components/forms/klaviyo-integration";
 import StrategicPrioritiesForm from "@/components/forms/strategic-priorities";
+import TeamModulesForm from "@/components/forms/team-modules";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -114,6 +115,7 @@ export default function TeamSettingsTabs({
           }}
         />
         <StrategicPrioritiesForm teamId={teamId} />
+        <TeamModulesForm teamId={teamId} />
       </TabsContent>
 
       <TabsContent value="email-templates" className="space-y-8">

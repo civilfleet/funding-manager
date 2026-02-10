@@ -140,6 +140,7 @@ model Teams {
   country     String?          @db.VarChar(255)
   website     String?          @db.VarChar(255)
   strategicPriorities String?  @db.Text
+  modules     AppModule[]      @default([CRM, FUNDING])
 
   bankDetailsId String?        @unique
   bankDetails   BankDetails?   @relation(fields: [bankDetailsId], references: [id])

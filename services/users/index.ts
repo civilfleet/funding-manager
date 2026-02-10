@@ -1,11 +1,6 @@
 import prisma from "@/lib/prisma";
 import { ensureDefaultGroup } from "@/services/groups";
-import {
-  APP_MODULES,
-  DEFAULT_TEAM_MODULES,
-  type AppModule,
-  type Roles,
-} from "@/types";
+import { DEFAULT_TEAM_MODULES, type AppModule, type Roles } from "@/types";
 
 export interface User {
   name?: string;
@@ -20,6 +15,9 @@ export interface User {
   teamId?: string;
   roles: Roles[];
 }
+
+const resolveTeamModules = (modules?: AppModule[] | null) =>
+  modules && modules.length > 0 ? modules : [...DEFAULT_TEAM_MODULES];
 
 const getAdminUser = async (userId: string) => {
   const userPromise = prisma.user.findUnique({
@@ -43,6 +41,7 @@ const getAdminUser = async (userId: string) => {
       id: true,
       name: true,
       email: true,
+      modules: true,
     },
   });
   const organizationsPromise = prisma.organization.findMany({
@@ -63,7 +62,9 @@ const getAdminUser = async (userId: string) => {
     ...user,
     teams: teams.map((team) => ({
       ...team,
-      modules: [...APP_MODULES],
+      modules: Array.from(
+        new Set<AppModule>([...resolveTeamModules(team.modules), "ADMIN"]),
+      ),
     })),
     organizations,
   };
@@ -98,6 +99,7 @@ const getUserCurrent = async (userId: string) => {
 
           email: true,
           ownerId: true,
+          modules: true,
         },
       },
     },
@@ -108,6 +110,12 @@ const getUserCurrent = async (userId: string) => {
   }
 
   const teamIds = user.teams.map((team) => team.id);
+  const teamModulesByTeam = new Map(
+    user.teams.map((team) => [
+      team.id,
+      resolveTeamModules(team.modules ?? null),
+    ]),
+  );
   const modulesByTeam = new Map<string, Set<AppModule>>();
   let defaultGroups: Array<{
     teamId: string;
@@ -152,15 +160,20 @@ const getUserCurrent = async (userId: string) => {
 
     for (const membership of memberships) {
       const teamId = membership.group.teamId;
+      const teamModules = teamModulesByTeam.get(teamId) ?? DEFAULT_TEAM_MODULES;
+      const allowedModules = new Set<AppModule>([...teamModules, "ADMIN"]);
       const set = modulesByTeam.get(teamId) ?? new Set<AppModule>();
 
       if (!membership.group.modulePermissions.length) {
-        for (const module of DEFAULT_TEAM_MODULES) {
+        for (const module of teamModules) {
           set.add(module);
         }
       } else {
         for (const permission of membership.group.modulePermissions) {
-          set.add(permission.module as AppModule);
+          const moduleName = permission.module as AppModule;
+          if (allowedModules.has(moduleName)) {
+            set.add(moduleName);
+          }
         }
       }
 
@@ -172,18 +185,26 @@ const getUserCurrent = async (userId: string) => {
 
   if (teamIds.length > 0) {
     defaultGroupsByTeam = new Map(
-      defaultGroups.map((group) => [
-        group.teamId,
-        group.modulePermissions.length
+      defaultGroups.map((group) => {
+        const teamModules =
+          teamModulesByTeam.get(group.teamId) ?? DEFAULT_TEAM_MODULES;
+        const baseModules = group.modulePermissions.length
           ? group.modulePermissions.map(
               (permission) => permission.module as AppModule,
             )
-          : [...DEFAULT_TEAM_MODULES],
-      ]),
+          : [...teamModules];
+        const cappedModules = baseModules.filter((module) =>
+          teamModules.includes(module),
+        );
+        return [group.teamId, cappedModules];
+      }),
     );
   }
 
   const teamsWithModules = user.teams.map((team) => {
+    const teamModules =
+      teamModulesByTeam.get(team.id) ?? DEFAULT_TEAM_MODULES;
+    const allowedModules = new Set<AppModule>([...teamModules, "ADMIN"]);
     const set = modulesByTeam.get(team.id);
 
     const modules = new Set<AppModule>(set ?? []);
@@ -196,7 +217,7 @@ const getUserCurrent = async (userId: string) => {
     }
 
     if (!modules.size) {
-      for (const module of DEFAULT_TEAM_MODULES) {
+      for (const module of teamModules) {
         modules.add(module);
       }
     }
@@ -205,9 +226,13 @@ const getUserCurrent = async (userId: string) => {
       modules.add("ADMIN");
     }
 
+    const cappedModules = Array.from(modules).filter((module) =>
+      allowedModules.has(module),
+    );
+
     return {
       ...team,
-      modules: Array.from(modules),
+      modules: cappedModules,
     };
   });
 

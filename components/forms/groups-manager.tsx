@@ -79,6 +79,7 @@ type FormValues = z.infer<typeof createGroupSchema>;
 
 interface GroupsManagerProps {
   teamId: string;
+  teamModules?: AppModule[];
 }
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -95,12 +96,28 @@ const MODULE_DESCRIPTIONS: Record<AppModule, string> = {
   ADMIN: "Manage settings, users, groups, and integrations.",
 };
 
-export default function GroupsManager({ teamId }: GroupsManagerProps) {
+export default function GroupsManager({ teamId, teamModules }: GroupsManagerProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+
+  const resolvedTeamModules = useMemo(
+    () =>
+      teamModules && teamModules.length > 0
+        ? teamModules
+        : [...DEFAULT_TEAM_MODULES],
+    [teamModules],
+  );
+
+  const availableModules = useMemo(
+    () =>
+      APP_MODULES.filter(
+        (module) => module === "ADMIN" || resolvedTeamModules.includes(module),
+      ),
+    [resolvedTeamModules],
+  );
 
   const { data: groupsData, mutate } = useSWR(
     `/api/groups?teamId=${teamId}`,
@@ -114,8 +131,8 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
       ...group,
       modules:
         group.modules?.length && group.modules.length > 0
-          ? [...group.modules]
-          : [...DEFAULT_TEAM_MODULES],
+          ? group.modules.filter((module) => availableModules.includes(module))
+          : [...resolvedTeamModules],
     }));
 
     return rawGroups.sort((a, b) => {
@@ -124,7 +141,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
       }
       return a.isDefaultGroup ? -1 : 1;
     });
-  }, [groupsData]);
+  }, [groupsData, availableModules, resolvedTeamModules]);
   const users: User[] = usersData?.data || [];
 
   const form = useForm({
@@ -135,7 +152,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
       description: "",
       canAccessAllContacts: false,
       userIds: [] as string[],
-      modules: [...DEFAULT_TEAM_MODULES],
+      modules: [...resolvedTeamModules],
       contactSubmodules: [] as ContactSubmodule[],
     },
   });
@@ -155,8 +172,10 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
         userIds: group.users?.map((u) => u.userId) || [],
         modules:
           group.modules && group.modules.length > 0
-            ? group.modules
-            : [...DEFAULT_TEAM_MODULES],
+            ? group.modules.filter((module) =>
+                availableModules.includes(module),
+              )
+            : [...resolvedTeamModules],
         contactSubmodules: group.contactSubmodules ?? [],
       });
     } else {
@@ -167,7 +186,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
         description: "",
         canAccessAllContacts: false,
         userIds: [],
-        modules: [...DEFAULT_TEAM_MODULES],
+        modules: [...resolvedTeamModules],
         contactSubmodules: [],
       });
     }
@@ -524,7 +543,7 @@ export default function GroupsManager({ teamId }: GroupsManagerProps) {
                           can access.
                         </FormDescription>
                         <div className="grid gap-3 sm:grid-cols-2">
-                          {APP_MODULES.map((module) => (
+                          {availableModules.map((module) => (
                             <div
                               key={module}
                               className="flex items-start space-x-3 rounded-md border p-3"
