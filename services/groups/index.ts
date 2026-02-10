@@ -56,7 +56,7 @@ const resolveTeamModules = (modules?: AppModule[] | null) =>
 
 const getTeamModules = async (
   teamId: string,
-  client: typeof prisma = prisma,
+  client: Prisma.TransactionClient | typeof prisma = prisma,
 ) => {
   const team = await client.teams.findUnique({
     where: { id: teamId },

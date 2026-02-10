@@ -16,7 +16,9 @@ export interface User {
   roles: Roles[];
 }
 
-const resolveTeamModules = (modules?: AppModule[] | null) =>
+const resolveTeamModules = (
+  modules?: AppModule[] | null,
+): AppModule[] =>
   modules && modules.length > 0 ? modules : [...DEFAULT_TEAM_MODULES];
 
 const getAdminUser = async (userId: string) => {
@@ -160,7 +162,8 @@ const getUserCurrent = async (userId: string) => {
 
     for (const membership of memberships) {
       const teamId = membership.group.teamId;
-      const teamModules = teamModulesByTeam.get(teamId) ?? DEFAULT_TEAM_MODULES;
+      const teamModules: AppModule[] =
+        teamModulesByTeam.get(teamId) ?? [...DEFAULT_TEAM_MODULES];
       const allowedModules = new Set<AppModule>([...teamModules, "ADMIN"]);
       const set = modulesByTeam.get(teamId) ?? new Set<AppModule>();
 
@@ -186,8 +189,8 @@ const getUserCurrent = async (userId: string) => {
   if (teamIds.length > 0) {
     defaultGroupsByTeam = new Map(
       defaultGroups.map((group) => {
-        const teamModules =
-          teamModulesByTeam.get(group.teamId) ?? DEFAULT_TEAM_MODULES;
+        const teamModules: AppModule[] =
+          teamModulesByTeam.get(group.teamId) ?? [...DEFAULT_TEAM_MODULES];
         const baseModules = group.modulePermissions.length
           ? group.modulePermissions.map(
               (permission) => permission.module as AppModule,
@@ -202,8 +205,8 @@ const getUserCurrent = async (userId: string) => {
   }
 
   const teamsWithModules = user.teams.map((team) => {
-    const teamModules =
-      teamModulesByTeam.get(team.id) ?? DEFAULT_TEAM_MODULES;
+    const teamModules: AppModule[] =
+      teamModulesByTeam.get(team.id) ?? [...DEFAULT_TEAM_MODULES];
     const allowedModules = new Set<AppModule>([...teamModules, "ADMIN"]);
     const set = modulesByTeam.get(team.id);
 
