@@ -777,6 +777,19 @@ export const replyToZammadTicket = async ({
     throw new Error("Zammad integration is currently disabled.");
   }
 
+  if (!contactId) {
+    throw new Error("Contact email is required to send a reply.");
+  }
+
+  const contact = await prisma.contact.findFirst({
+    where: { id: contactId, teamId },
+    select: { email: true, name: true },
+  });
+
+  if (!contact?.email) {
+    throw new Error("Contact email is required to send a reply.");
+  }
+
   const response = await fetch(
     `${normalizeBaseUrl(integration.baseUrl)}/api/v1/ticket_articles`,
     {
@@ -788,6 +801,7 @@ export const replyToZammadTicket = async ({
         subject,
         type: "email",
         sender: "Agent",
+        to: contact.email,
         content_type: "text/plain",
       }),
     },
