@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Circle,
   Clock,
+  Loader2,
   MessageSquare,
   Plus,
   StickyNote,
@@ -16,6 +17,7 @@ import useSWR from "swr";
 import ContactEngagementForm from "@/components/forms/contact-engagement";
 import { Loader } from "@/components/helper/loader";
 import { CONTACT_SUBMODULE_LABELS } from "@/constants/contact-submodules";
+import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +42,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   type ContactEngagement,
   EngagementDirection,
@@ -84,8 +89,12 @@ const getSourceLabel = (
   source: EngagementSource,
   externalSource?: string,
 ) => {
+  const normalizedExternal = externalSource?.toUpperCase() ?? "";
   switch (source) {
     case EngagementSource.EMAIL:
+      if (normalizedExternal.startsWith("ZAMMAD:")) {
+        return "Email - Zammad";
+      }
       return externalSource ? `Email - ${externalSource}` : "Email";
     case EngagementSource.PHONE:
       return "Phone";
@@ -147,6 +156,15 @@ const getTodoStatusIcon = (status?: TodoStatus) => {
   }
 };
 
+const getZammadTicketId = (externalSource?: string) => {
+  if (!externalSource) return null;
+  if (!externalSource.toUpperCase().startsWith("ZAMMAD:")) {
+    return null;
+  }
+  const ticketId = externalSource.split(":")[1];
+  return ticketId || null;
+};
+
 type ParsedEngagementContent = {
   body: string;
   details: Array<{ label: string; value: string }>;
@@ -192,7 +210,15 @@ export default function ContactEngagementHistory({
   teamId,
   currentUser,
 }: ContactEngagementHistoryProps) {
+  const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [replyTarget, setReplyTarget] = useState<{
+    ticketId: string;
+    subject: string;
+  } | null>(null);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [replySubject, setReplySubject] = useState("");
+  const [isReplying, setIsReplying] = useState(false);
 
   const { data, error, isLoading, mutate } = useSWR(
     `/api/contact-engagements?contactId=${contactId}&teamId=${teamId}`,
@@ -204,6 +230,79 @@ export default function ContactEngagementHistory({
   const handleSuccess = () => {
     mutate();
     setIsDialogOpen(false);
+  };
+
+  const handleReplyOpen = (engagement: ContactEngagement) => {
+    const ticketId = getZammadTicketId(engagement.externalSource);
+    if (!ticketId) {
+      toast({
+        title: "Unable to reply",
+        description: "This engagement is missing a Zammad ticket reference.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setReplyTarget({
+      ticketId,
+      subject: engagement.subject || "Zammad ticket update",
+    });
+    setReplySubject(engagement.subject || "Zammad ticket update");
+    setReplyMessage("");
+  };
+
+  const handleReplyClose = () => {
+    setReplyTarget(null);
+    setReplyMessage("");
+    setReplySubject("");
+  };
+
+  const handleReplySubmit = async () => {
+    if (!replyTarget) return;
+    if (!replyMessage.trim()) {
+      toast({
+        title: "Message required",
+        description: "Add a reply before sending.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsReplying(true);
+    try {
+      const response = await fetch(
+        `/api/teams/${teamId}/integrations/zammad/reply`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ticketId: replyTarget.ticketId,
+            message: replyMessage,
+            subject: replySubject || undefined,
+            contactId,
+          }),
+        },
+      );
+
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json?.error || response.statusText);
+      }
+
+      toast({
+        title: "Reply sent",
+        description: "Your response was sent to Zammad and logged here.",
+      });
+      handleReplyClose();
+      mutate();
+    } catch (error) {
+      toast({
+        title: "Failed to send reply",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsReplying(false);
+    }
   };
 
   return (
@@ -368,16 +467,29 @@ export default function ContactEngagementHistory({
                           </Badge>
                         )}
                       </div>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {format(
-                          new Date(
-                            engagement.source === EngagementSource.NOTE
-                              ? engagement.createdAt
-                              : engagement.engagedAt,
-                          ),
-                          "PPp",
-                        )}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        {engagement.source === EngagementSource.EMAIL &&
+                          getZammadTicketId(engagement.externalSource) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={() => handleReplyOpen(engagement)}
+                            >
+                              Reply
+                            </Button>
+                          )}
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {format(
+                            new Date(
+                              engagement.source === EngagementSource.NOTE
+                                ? engagement.createdAt
+                                : engagement.engagedAt,
+                            ),
+                            "PPp",
+                          )}
+                        </span>
+                      </div>
                     </div>
 
                     {engagement.source === EngagementSource.NOTE ? (
@@ -524,6 +636,61 @@ export default function ContactEngagementHistory({
           </div>
         )}
       </CardContent>
+
+      <Dialog
+        open={Boolean(replyTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleReplyClose();
+          }
+        }}
+      >
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Reply to Zammad ticket</DialogTitle>
+            <DialogDescription>
+              Send a response that will also be logged in engagement history.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="zammad-reply-subject">Subject</Label>
+              <Input
+                id="zammad-reply-subject"
+                value={replySubject}
+                onChange={(event) => setReplySubject(event.target.value)}
+                placeholder="Subject"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="zammad-reply-message">Message</Label>
+              <Textarea
+                id="zammad-reply-message"
+                value={replyMessage}
+                onChange={(event) => setReplyMessage(event.target.value)}
+                placeholder="Write your reply..."
+                rows={6}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={handleReplyClose}
+                disabled={isReplying}
+              >
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleReplySubmit} disabled={isReplying}>
+                {isReplying && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Send reply
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

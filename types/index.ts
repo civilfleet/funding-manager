@@ -24,6 +24,7 @@ export type AppModule = (typeof APP_MODULES)[number];
 
 export enum IntegrationProvider {
   KLAVIYO = "KLAVIYO",
+  ZAMMAD = "ZAMMAD",
 }
 
 export enum ContactGender {
@@ -44,6 +45,8 @@ export interface IntegrationConnection {
   id: string;
   teamId: string;
   provider: IntegrationProvider;
+  baseUrl?: string;
+  webhookSecret?: string;
   defaultListId?: string;
   isEnabled: boolean;
   lastSyncedAt?: Date;

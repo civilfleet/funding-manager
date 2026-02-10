@@ -1,0 +1,396 @@
+"use client";
+
+import { AlertTriangle, CheckCircle2, Loader2, PlugZap } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+
+type ZammadIntegrationResponse = {
+  id?: string;
+  teamId?: string;
+  isEnabled?: boolean;
+  hasApiKey?: boolean;
+  apiKeyPreview?: string;
+  baseUrl?: string;
+  webhookSecretSet?: boolean;
+  connectionVerified?: boolean;
+  connectionMessage?: string;
+  lastSyncedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+interface ZammadIntegrationProps {
+  teamId: string;
+}
+
+const formatDate = (value?: string) => {
+  if (!value) {
+    return null;
+  }
+  try {
+    return new Intl.DateTimeFormat("default", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+};
+
+export default function ZammadIntegration({ teamId }: ZammadIntegrationProps) {
+  const { toast } = useToast();
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const [apiKey, setApiKey] = useState("");
+  const [baseUrl, setBaseUrl] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const [isEnabled, setIsEnabled] = useState(true);
+  const [hasApiKey, setHasApiKey] = useState(false);
+  const [apiKeyPreview, setApiKeyPreview] = useState("");
+  const [webhookSecretSet, setWebhookSecretSet] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | undefined>();
+  const [connectionVerified, setConnectionVerified] = useState(false);
+  const [connectionMessage, setConnectionMessage] = useState<
+    string | undefined
+  >();
+
+  const fetcher = async (url: string) => {
+    const response = await fetch(url);
+    const json = await response.json();
+    if (!response.ok) {
+      throw new Error(json?.error || response.statusText);
+    }
+    return (json?.data || null) as ZammadIntegrationResponse | null;
+  };
+
+  const {
+    data: integrationData,
+    error: integrationError,
+    isLoading,
+    mutate,
+  } = useSWR(`/api/teams/${teamId}/integrations/zammad`, fetcher);
+
+  useEffect(() => {
+    if (!integrationData) {
+      return;
+    }
+    setIsEnabled(integrationData.isEnabled ?? true);
+    setHasApiKey(Boolean(integrationData.hasApiKey));
+    setApiKeyPreview(integrationData.apiKeyPreview ?? "");
+    setLastSyncedAt(integrationData.lastSyncedAt);
+    setConnectionMessage(integrationData.connectionMessage);
+    setConnectionVerified(Boolean(integrationData.connectionVerified));
+    setBaseUrl(integrationData.baseUrl ?? "");
+    setWebhookSecretSet(Boolean(integrationData.webhookSecretSet));
+  }, [integrationData]);
+
+  useEffect(() => {
+    if (!integrationError) {
+      return;
+    }
+    toast({
+      title: "Unable to load Zammad integration",
+      description: integrationError.message,
+      variant: "destructive",
+    });
+  }, [integrationError, toast]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    setWebhookUrl(`${window.location.origin}/api/teams/${teamId}/integrations/zammad/webhook`);
+  }, [teamId]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const response = await fetch(
+        `/api/teams/${teamId}/integrations/zammad`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            apiKey: apiKey || undefined,
+            baseUrl: baseUrl || undefined,
+            webhookSecret: webhookSecret || undefined,
+            isEnabled,
+            testConnection: true,
+          }),
+        },
+      );
+
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json?.error || response.statusText);
+      }
+
+      const data = json.data as ZammadIntegrationResponse;
+      mutate(data, { revalidate: false });
+      setHasApiKey(Boolean(data.hasApiKey));
+      setApiKeyPreview(data.apiKeyPreview ?? "");
+      setLastSyncedAt(data.lastSyncedAt);
+      setConnectionMessage(data.connectionMessage);
+      setConnectionVerified(Boolean(data.connectionVerified));
+      setWebhookSecretSet(Boolean(data.webhookSecretSet));
+      setApiKey("");
+      setWebhookSecret("");
+
+      toast({
+        title: "Zammad connected",
+        description: data.connectionMessage || "Integration settings saved",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to save integration",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const response = await fetch(
+        `/api/teams/${teamId}/integrations/zammad/sync`,
+        {
+          method: "POST",
+        },
+      );
+
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json?.error || response.statusText);
+      }
+
+      const result = json.data as {
+        engagementsUpserted?: number;
+        lastSyncedAt?: string;
+      };
+
+      const syncedAt = result?.lastSyncedAt;
+      setLastSyncedAt(syncedAt);
+      setConnectionVerified(true);
+
+      toast({
+        title: "Zammad sync finished",
+        description: `Synced ${result?.engagementsUpserted ?? 0} ticket messages into engagement history.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Sync failed",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const canSync = useMemo(
+    () =>
+      isEnabled &&
+      (hasApiKey || apiKey.trim().length > 0) &&
+      baseUrl.trim().length > 0,
+    [apiKey, baseUrl, hasApiKey, isEnabled],
+  );
+
+  const status = useMemo(() => {
+    if (!hasApiKey || !baseUrl) {
+      return {
+        label: "Not configured",
+        dotClass: "bg-amber-500",
+        panelClass: "border-amber-200 bg-amber-50",
+        badgeClass: "bg-amber-100 text-amber-900 border-amber-200",
+        description: "Add your Zammad base URL and API token to enable syncing.",
+        icon: AlertTriangle,
+      };
+    }
+    if (!isEnabled) {
+      return {
+        label: "Disabled",
+        dotClass: "bg-muted-foreground",
+        panelClass: "border-border bg-muted/30",
+        badgeClass: "bg-muted text-foreground border-border",
+        description: "Zammad is configured but currently switched off.",
+        icon: PlugZap,
+      };
+    }
+    if (connectionVerified) {
+      return {
+        label: "Connected",
+        dotClass: "bg-emerald-500",
+        panelClass: "border-emerald-200 bg-emerald-50",
+        badgeClass: "bg-emerald-100 text-emerald-900 border-emerald-200",
+        description: "Ready to sync ticket activity into engagement history.",
+        icon: CheckCircle2,
+      };
+    }
+    return {
+      label: "Configured",
+      dotClass: "bg-blue-500",
+      panelClass: "border-blue-200 bg-blue-50",
+      badgeClass: "bg-blue-100 text-blue-900 border-blue-200",
+      description: "Saved settings, but connection not verified yet.",
+      icon: PlugZap,
+    };
+  }, [connectionVerified, hasApiKey, isEnabled, baseUrl]);
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle>Zammad</CardTitle>
+            <CardDescription>
+              Connect Zammad to sync ticket conversations into contact
+              engagement history.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className={`h-2.5 w-2.5 rounded-full ${status.dotClass}`}
+              aria-hidden
+            />
+            <Badge
+              variant={hasApiKey ? "default" : "secondary"}
+              className={status.badgeClass}
+            >
+              {status.label}
+            </Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {connectionMessage && (
+          <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
+            {connectionMessage}
+          </div>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="zammad-base-url">Zammad base URL</Label>
+            <Input
+              id="zammad-base-url"
+              type="url"
+              placeholder="https://support.example.org"
+              value={baseUrl}
+              onChange={(event) => setBaseUrl(event.target.value)}
+              disabled={isLoading || isSaving}
+            />
+            <p className="text-xs text-muted-foreground">
+              Example: https://support.example.org
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="zammad-api-key">API token</Label>
+            <Input
+              id="zammad-api-key"
+              type="password"
+              placeholder={
+                hasApiKey && apiKeyPreview
+                  ? `Current token: ${apiKeyPreview}`
+                  : "Token from Zammad"}
+              value={apiKey}
+              onChange={(event) => setApiKey(event.target.value)}
+              disabled={isLoading || isSaving}
+            />
+            <p className="text-xs text-muted-foreground">
+              Generated from a Zammad service user profile.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="zammad-webhook-url">Webhook endpoint</Label>
+            <Input
+              id="zammad-webhook-url"
+              value={webhookUrl}
+              readOnly
+            />
+            <p className="text-xs text-muted-foreground">
+              Use this URL when configuring the Zammad webhook.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="zammad-webhook-secret">Webhook secret</Label>
+            <Input
+              id="zammad-webhook-secret"
+              type="password"
+              placeholder={
+                webhookSecretSet
+                  ? "Secret is already set"
+                  : "Optional shared secret"
+              }
+              value={webhookSecret}
+              onChange={(event) => setWebhookSecret(event.target.value)}
+              disabled={isLoading || isSaving}
+            />
+            <p className="text-xs text-muted-foreground">
+              Provide the same secret in Zammad to sign webhook payloads.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div>
+            <p className="font-medium">Enable Zammad sync</p>
+            <p className="text-sm text-muted-foreground">
+              When enabled, webhook updates are captured in engagement history.
+            </p>
+          </div>
+          <Switch
+            checked={isEnabled}
+            onCheckedChange={(checked) => setIsEnabled(checked)}
+            disabled={isLoading || isSaving}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button onClick={handleSave} disabled={isLoading || isSaving}>
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save connection
+          </Button>
+          <Button
+            onClick={handleSync}
+            variant="secondary"
+            disabled={isLoading || isSyncing || !canSync}
+          >
+            {isSyncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Sync now
+          </Button>
+          {lastSyncedAt && (
+            <p className="text-sm text-muted-foreground">
+              Last synced {formatDate(lastSyncedAt)}
+            </p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

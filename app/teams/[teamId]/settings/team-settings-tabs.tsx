@@ -11,6 +11,7 @@ import FormConfigurationManager from "@/components/forms/form-configuration-mana
 import KlaviyoIntegration from "@/components/forms/klaviyo-integration";
 import StrategicPrioritiesForm from "@/components/forms/strategic-priorities";
 import TeamModulesForm from "@/components/forms/team-modules";
+import ZammadIntegration from "@/components/forms/zammad-integration";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -144,6 +145,7 @@ export default function TeamSettingsTabs({
 
       <TabsContent value="integrations" className="space-y-8">
         <KlaviyoIntegration teamId={teamId} />
+        <ZammadIntegration teamId={teamId} />
       </TabsContent>
     </Tabs>
   );
