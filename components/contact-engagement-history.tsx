@@ -12,7 +12,7 @@ import {
   Plus,
   StickyNote,
 } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import useSWR from "swr";
 import ContactEngagementForm from "@/components/forms/contact-engagement";
 import { Loader } from "@/components/helper/loader";
@@ -205,6 +205,182 @@ const parseEngagementContent = (message?: string): ParsedEngagementContent => {
   return { body, details, additional };
 };
 
+const ZammadTicketDialog = React.memo(function ZammadTicketDialog({
+  teamId,
+  contactId,
+  onCreated,
+}: {
+  teamId: string;
+  contactId: string;
+  onCreated: () => void;
+}) {
+  const { toast } = useToast();
+  const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
+  const [ticketSubject, setTicketSubject] = useState("");
+  const [ticketMessage, setTicketMessage] = useState("");
+  const [ticketGroupId, setTicketGroupId] = useState<number | null>(null);
+  const [isCreatingTicket, setIsCreatingTicket] = useState(false);
+
+  const { data: zammadGroupsData } = useSWR(
+    `/api/teams/${teamId}/integrations/zammad/groups`,
+    fetcher,
+  );
+  const zammadGroups =
+    (zammadGroupsData?.data || zammadGroupsData || []) as Array<{
+      groupId: number;
+      groupName: string;
+      importEnabled: boolean;
+    }>;
+  const zammadGroupOptions = zammadGroups.filter(
+    (group) => group.importEnabled,
+  );
+
+  const handleCreateTicket = async () => {
+    if (!ticketGroupId) {
+      toast({
+        title: "Select a Zammad group",
+        description: "Choose the Zammad group for this ticket.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!ticketSubject.trim() || !ticketMessage.trim()) {
+      toast({
+        title: "Subject and message required",
+        description: "Add both a subject and message to create the ticket.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreatingTicket(true);
+    try {
+      const response = await fetch(
+        `/api/teams/${teamId}/integrations/zammad/tickets`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contactId,
+            groupId: ticketGroupId,
+            subject: ticketSubject,
+            message: ticketMessage,
+          }),
+        },
+      );
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json?.error || response.statusText);
+      }
+
+      toast({
+        title: "Zammad ticket created",
+        description: "The ticket has been created and logged here.",
+      });
+      setIsCreateTicketOpen(false);
+      setTicketSubject("");
+      setTicketMessage("");
+      setTicketGroupId(null);
+      onCreated();
+    } catch (error) {
+      toast({
+        title: "Failed to create ticket",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingTicket(false);
+    }
+  };
+
+  return (
+    <Dialog open={isCreateTicketOpen} onOpenChange={setIsCreateTicketOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          New Zammad Ticket
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create Zammad Ticket</DialogTitle>
+          <DialogDescription>
+            Start a new conversation in Zammad for this contact.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="zammad-ticket-group">Zammad group</Label>
+            <select
+              id="zammad-ticket-group"
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              value={ticketGroupId ?? ""}
+              onChange={(event) =>
+                setTicketGroupId(Number(event.target.value))
+              }
+            >
+              <option value="" disabled>
+                Select a group
+              </option>
+              {zammadGroupOptions.length === 0 && (
+                <option value="" disabled>
+                  No import-enabled groups configured
+                </option>
+              )}
+              {zammadGroupOptions.map((group) => (
+                <option key={group.groupId} value={group.groupId}>
+                  {group.groupName}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Choose a group with import enabled.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="zammad-ticket-subject">Subject</Label>
+            <Input
+              id="zammad-ticket-subject"
+              value={ticketSubject}
+              onChange={(event) => setTicketSubject(event.target.value)}
+              placeholder="Subject"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="zammad-ticket-message">Message</Label>
+            <Textarea
+              id="zammad-ticket-message"
+              value={ticketMessage}
+              onChange={(event) => setTicketMessage(event.target.value)}
+              placeholder="Write the opening message..."
+              rows={6}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setIsCreateTicketOpen(false)}
+              disabled={isCreatingTicket}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleCreateTicket}
+              disabled={isCreatingTicket}
+            >
+              {isCreatingTicket && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Create ticket
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+});
+
 export default function ContactEngagementHistory({
   contactId,
   teamId,
@@ -226,6 +402,7 @@ export default function ContactEngagementHistory({
   );
 
   const engagements = (data?.data || []) as ContactEngagement[];
+
 
   const handleSuccess = () => {
     mutate();
@@ -305,6 +482,10 @@ export default function ContactEngagementHistory({
     }
   };
 
+  const handleTicketCreated = () => {
+    mutate();
+  };
+
   return (
     <Card className="w-full shadow-sm">
       <CardHeader className="border-b pb-3">
@@ -317,28 +498,35 @@ export default function ContactEngagementHistory({
               Track all interactions with this contact
             </CardDescription>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Record Engagement
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Record New Engagement</DialogTitle>
-                <DialogDescription>
-                  Log a new interaction or communication with this contact
-                </DialogDescription>
-              </DialogHeader>
-              <ContactEngagementForm
-                contactId={contactId}
-                teamId={teamId}
-                onSuccess={handleSuccess}
-                currentUser={currentUser}
-              />
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-2">
+            <ZammadTicketDialog
+              teamId={teamId}
+              contactId={contactId}
+              onCreated={handleTicketCreated}
+            />
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Record Engagement
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Record New Engagement</DialogTitle>
+                  <DialogDescription>
+                    Log a new interaction or communication with this contact
+                  </DialogDescription>
+                </DialogHeader>
+                <ContactEngagementForm
+                  contactId={contactId}
+                  teamId={teamId}
+                  onSuccess={handleSuccess}
+                  currentUser={currentUser}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </CardHeader>
 

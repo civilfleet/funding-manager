@@ -116,6 +116,11 @@ type ZammadGroup = {
   name: string;
 };
 
+type ZammadTicketCreateResponse = {
+  id: number;
+  article_ids?: number[];
+};
+
 export type ZammadIntegrationSettings = {
   id?: string;
   teamId?: string;
@@ -828,6 +833,99 @@ export const replyToZammadTicket = async ({
   );
 
   return { articleId: article.id };
+};
+
+export const createZammadTicket = async ({
+  teamId,
+  contactId,
+  groupId,
+  subject,
+  message,
+}: {
+  teamId: string;
+  contactId: string;
+  groupId: number;
+  subject: string;
+  message: string;
+}) => {
+  const integration = await prisma.integrationConnection.findUnique({
+    where: {
+      teamId_provider: {
+        teamId,
+        provider: PrismaIntegrationProvider.ZAMMAD,
+      },
+    },
+  });
+
+  if (!integration || !integration.apiKey || !integration.baseUrl) {
+    throw new Error("Zammad integration is not configured for this team.");
+  }
+
+  if (!integration.isEnabled) {
+    throw new Error("Zammad integration is currently disabled.");
+  }
+
+  const contact = await prisma.contact.findFirst({
+    where: { id: contactId, teamId },
+    select: { email: true, name: true },
+  });
+
+  if (!contact?.email) {
+    throw new Error("Contact email is required to create a Zammad ticket.");
+  }
+
+  const response = await fetch(
+    `${normalizeBaseUrl(integration.baseUrl)}/api/v1/tickets`,
+    {
+      method: "POST",
+      headers: buildZammadHeaders(integration.apiKey),
+      body: JSON.stringify({
+        title: subject,
+        group_id: groupId,
+        customer_id: `guess:${contact.email}`,
+        article: {
+          subject,
+          body: message,
+          type: "email",
+          sender: "Agent",
+          to: contact.email,
+          content_type: "text/plain",
+        },
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(text || response.statusText);
+  }
+
+  const created = (await response.json()) as ZammadTicketCreateResponse;
+  const { ticket, articles } = await getTicketArticles(
+    integration.baseUrl,
+    integration.apiKey,
+    created.id,
+  );
+
+  let engagementsUpserted = 0;
+  for (const article of articles) {
+    const contactMatch = await upsertArticleEngagement(
+      teamId,
+      ticket,
+      article,
+      integration.baseUrl,
+      contactId,
+      false,
+    );
+    if (contactMatch) {
+      engagementsUpserted += 1;
+    }
+  }
+
+  return {
+    ticketId: created.id,
+    engagementsUpserted,
+  };
 };
 
 export const getZammadGroups = async (teamId: string) => {
