@@ -54,6 +54,17 @@ export interface IntegrationConnection {
   updatedAt: Date;
 }
 
+export interface ZammadGroupSetting {
+  id: string;
+  teamId: string;
+  groupId: number;
+  groupName: string;
+  importEnabled: boolean;
+  autoCreateContacts: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export enum ContactAttributeType {
   STRING = "STRING",
   NUMBER = "NUMBER",

@@ -82,6 +82,8 @@ type ZammadUser = {
   firstname?: string;
   lastname?: string;
   email?: string;
+  login?: string;
+  roles?: Array<{ id: number; name: string }>;
 };
 
 type ZammadTicket = {
@@ -90,6 +92,7 @@ type ZammadTicket = {
   title?: string;
   updated_at?: string;
   article_ids?: number[];
+  group_id?: number;
 };
 
 type ZammadTicketArticle = {
@@ -106,6 +109,11 @@ type ZammadTicketArticle = {
   type?: string;
   created_at?: string;
   created_by?: ZammadUser;
+};
+
+type ZammadGroup = {
+  id: number;
+  name: string;
 };
 
 export type ZammadIntegrationSettings = {
@@ -183,12 +191,58 @@ const findContactIdForEmails = async (teamId: string, emails: string[]) => {
   return contact?.id ?? null;
 };
 
+const ensureContactForEmail = async (
+  teamId: string,
+  email?: string | null,
+  name?: string | null,
+) => {
+  if (!email) return null;
+  const normalizedEmail = email.toLowerCase();
+  const contactName =
+    name?.trim() || normalizedEmail.split("@")[0] || "Unknown Contact";
+
+  const contact = await prisma.contact.upsert({
+    where: {
+      teamId_email: {
+        teamId,
+        email: normalizedEmail,
+      },
+    },
+    create: {
+      teamId,
+      name: contactName,
+      email: normalizedEmail,
+    },
+    update: {},
+    select: { id: true },
+  });
+
+  return contact.id;
+};
+
+const getZammadGroupSettingsMap = async (teamId: string) => {
+  const settings = await prisma.zammadGroupSetting.findMany({
+    where: { teamId },
+  });
+
+  return new Map(
+    settings.map((setting) => [
+      setting.groupId,
+      {
+        importEnabled: setting.importEnabled,
+        autoCreateContacts: setting.autoCreateContacts,
+      },
+    ]),
+  );
+};
+
 const upsertArticleEngagement = async (
   teamId: string,
   ticket: ZammadTicket,
   article: ZammadTicketArticle,
   baseUrl: string,
   contactIdOverride?: string,
+  autoCreateContacts?: boolean,
 ) => {
   const body = article.body_plain || stripHtml(article.body);
   const details = buildDetails([
@@ -215,6 +269,28 @@ const upsertArticleEngagement = async (
 
   const contactId =
     contactIdOverride || (await findContactIdForEmails(teamId, emails));
+  if (!contactId && autoCreateContacts) {
+    const primaryEmail =
+      extractEmails(article.from)[0] ||
+      extractEmails(article.to)[0] ||
+      emails[0];
+    const contactName = resolveUserName(article) || primaryEmail;
+    const createdId = await ensureContactForEmail(
+      teamId,
+      primaryEmail,
+      contactName,
+    );
+    if (createdId) {
+      return await upsertArticleEngagement(
+        teamId,
+        ticket,
+        article,
+        baseUrl,
+        createdId,
+        false,
+      );
+    }
+  }
   if (!contactId) {
     warn("[Zammad] No matching contact", {
       teamId,
@@ -456,6 +532,7 @@ export const syncZammadIntegration = async (
     fullSync,
   });
 
+  const groupSettings = await getZammadGroupSettingsMap(teamId);
   const perPage = 50;
   const tickets: ZammadTicket[] = [];
   let page = 1;
@@ -508,18 +585,26 @@ export const syncZammadIntegration = async (
   let engagementsUpserted = 0;
 
   for (const ticket of filtered) {
-    const { articles } = await getTicketArticles(
+    const { ticket: fullTicket, articles } = await getTicketArticles(
       integration.baseUrl,
       integration.apiKey,
       ticket.id,
     );
 
+    const groupId = fullTicket.group_id ?? ticket.group_id;
+    const groupSetting = groupId ? groupSettings.get(groupId) : undefined;
+    if (!groupSetting?.importEnabled) {
+      continue;
+    }
+
     for (const article of articles) {
       const contactId = await upsertArticleEngagement(
         teamId,
-        ticket,
+        fullTicket,
         article,
         integration.baseUrl,
+        undefined,
+        groupSetting?.autoCreateContacts ?? false,
       );
       if (contactId) {
         engagementsUpserted += 1;
@@ -614,16 +699,28 @@ export const handleZammadWebhook = async ({
   const hasPayloadArticles =
     (payload.articles && payload.articles.length > 0) || payload.article;
 
-  const { ticket, articles } = payload.ticket && hasPayloadArticles
-    ? {
-        ticket: payload.ticket,
-        articles: payload.articles ?? (payload.article ? [payload.article] : []),
-      }
-    : await getTicketArticles(
+  const shouldFetchTicket =
+    !payload.ticket ||
+    !hasPayloadArticles ||
+    payload.ticket.group_id === undefined;
+
+  const { ticket, articles } = shouldFetchTicket
+    ? await getTicketArticles(
         integration.baseUrl,
         integration.apiKey,
         ticketId,
-      );
+      )
+    : {
+        ticket: payload.ticket as ZammadTicket,
+        articles: payload.articles ?? (payload.article ? [payload.article] : []),
+      };
+
+  const groupSettings = await getZammadGroupSettingsMap(teamId);
+  const groupId = ticket.group_id;
+  const groupSetting = groupId ? groupSettings.get(groupId) : undefined;
+  if (!groupSetting?.importEnabled) {
+    return { engagementsUpserted: 0 };
+  }
 
   let engagementsUpserted = 0;
 
@@ -633,6 +730,8 @@ export const handleZammadWebhook = async ({
       ticket,
       article,
       integration.baseUrl,
+      undefined,
+      groupSetting?.autoCreateContacts ?? false,
     );
     if (contactId) {
       engagementsUpserted += 1;
@@ -711,9 +810,99 @@ export const replyToZammadTicket = async ({
     article,
     integration.baseUrl,
     contactId,
+    false,
   );
 
   return { articleId: article.id };
+};
+
+export const getZammadGroups = async (teamId: string) => {
+  const integration = await prisma.integrationConnection.findUnique({
+    where: {
+      teamId_provider: {
+        teamId,
+        provider: PrismaIntegrationProvider.ZAMMAD,
+      },
+    },
+  });
+
+  if (!integration || !integration.apiKey || !integration.baseUrl) {
+    throw new Error("Zammad integration is not configured for this team.");
+  }
+
+  const tokenUser = await fetchZammad<ZammadUser>(
+    integration.baseUrl,
+    "/api/v1/users/me",
+    integration.apiKey,
+  );
+  const groups = await fetchZammad<ZammadGroup[]>(
+    integration.baseUrl,
+    "/api/v1/groups",
+    integration.apiKey,
+  );
+
+  const settings = await prisma.zammadGroupSetting.findMany({
+    where: { teamId },
+  });
+  const settingsById = new Map(
+    settings.map((setting) => [setting.groupId, setting]),
+  );
+
+  const userGroupIds = tokenUser && (tokenUser as { group_ids?: Record<string, unknown> }).group_ids
+    ? Object.keys((tokenUser as { group_ids?: Record<string, unknown> }).group_ids || {}).map((id) => Number(id))
+    : [];
+  const filteredGroups =
+    userGroupIds.length > 0
+      ? groups.filter((group) => userGroupIds.includes(group.id))
+      : groups;
+
+  return filteredGroups.map((group) => {
+    const existing = settingsById.get(group.id);
+    return {
+      groupId: group.id,
+      groupName: group.name,
+      importEnabled: existing?.importEnabled ?? false,
+      autoCreateContacts: existing?.autoCreateContacts ?? false,
+    };
+  });
+};
+
+
+export const saveZammadGroups = async (
+  teamId: string,
+  groups: Array<{
+    groupId: number;
+    groupName: string;
+    importEnabled: boolean;
+    autoCreateContacts: boolean;
+  }>,
+) => {
+  const operations = groups.map((group) =>
+    prisma.zammadGroupSetting.upsert({
+      where: {
+        teamId_groupId: {
+          teamId,
+          groupId: group.groupId,
+        },
+      },
+      create: {
+        teamId,
+        groupId: group.groupId,
+        groupName: group.groupName,
+        importEnabled: group.importEnabled,
+        autoCreateContacts: group.autoCreateContacts,
+      },
+      update: {
+        groupName: group.groupName,
+        importEnabled: group.importEnabled,
+        autoCreateContacts: group.autoCreateContacts,
+      },
+    }),
+  );
+
+  await prisma.$transaction(operations);
+
+  return { saved: groups.length };
 };
 
 export const getZammadWebhookUrl = (baseUrl: string, teamId: string) =>

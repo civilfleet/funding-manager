@@ -275,6 +275,21 @@ export default function KlaviyoIntegration({
           </div>
         )}
 
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div>
+            <p className="font-medium">Enable Klaviyo sync</p>
+            <p className="text-sm text-muted-foreground">
+              When enabled, you can pull contacts and email engagement from
+              Klaviyo.
+            </p>
+          </div>
+          <Switch
+            checked={isEnabled}
+            onCheckedChange={(checked) => setIsEnabled(checked)}
+            disabled={isLoading || isSaving}
+          />
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="klaviyo-api-key">Private API key</Label>
@@ -310,21 +325,6 @@ export default function KlaviyoIntegration({
               list.
             </p>
           </div>
-        </div>
-
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div>
-            <p className="font-medium">Enable Klaviyo sync</p>
-            <p className="text-sm text-muted-foreground">
-              When enabled, you can pull contacts and email engagement from
-              Klaviyo.
-            </p>
-          </div>
-          <Switch
-            checked={isEnabled}
-            onCheckedChange={(checked) => setIsEnabled(checked)}
-            disabled={isLoading || isSaving}
-          />
         </div>
 
         <div className="flex flex-wrap items-center gap-3">

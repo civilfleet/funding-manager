@@ -32,6 +32,13 @@ type ZammadIntegrationResponse = {
   updatedAt?: string;
 };
 
+type ZammadGroupSetting = {
+  groupId: number;
+  groupName: string;
+  importEnabled: boolean;
+  autoCreateContacts: boolean;
+};
+
 interface ZammadIntegrationProps {
   teamId: string;
 }
@@ -69,6 +76,8 @@ export default function ZammadIntegration({ teamId }: ZammadIntegrationProps) {
   const [connectionMessage, setConnectionMessage] = useState<
     string | undefined
   >();
+  const [groupSettings, setGroupSettings] = useState<ZammadGroupSetting[]>([]);
+  const [isSavingGroups, setIsSavingGroups] = useState(false);
 
   const fetcher = async (url: string) => {
     const response = await fetch(url);
@@ -86,6 +95,20 @@ export default function ZammadIntegration({ teamId }: ZammadIntegrationProps) {
     mutate,
   } = useSWR(`/api/teams/${teamId}/integrations/zammad`, fetcher);
 
+  const groupsKey =
+    integrationData?.hasApiKey && integrationData?.baseUrl
+      ? `/api/teams/${teamId}/integrations/zammad/groups`
+      : null;
+
+
+  const {
+    data: groupsData,
+    error: groupsError,
+    isLoading: isGroupsLoading,
+    mutate: mutateGroups,
+  } = useSWR(groupsKey, fetcher);
+
+
   useEffect(() => {
     if (!integrationData) {
       return;
@@ -101,6 +124,13 @@ export default function ZammadIntegration({ teamId }: ZammadIntegrationProps) {
   }, [integrationData]);
 
   useEffect(() => {
+    if (!groupsData) {
+      return;
+    }
+    setGroupSettings((groupsData as ZammadGroupSetting[]) || []);
+  }, [groupsData]);
+
+  useEffect(() => {
     if (!integrationError) {
       return;
     }
@@ -110,6 +140,18 @@ export default function ZammadIntegration({ teamId }: ZammadIntegrationProps) {
       variant: "destructive",
     });
   }, [integrationError, toast]);
+
+  useEffect(() => {
+    if (!groupsError) {
+      return;
+    }
+    toast({
+      title: "Unable to load Zammad groups",
+      description: groupsError.message,
+      variant: "destructive",
+    });
+  }, [groupsError, toast]);
+
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -208,6 +250,48 @@ export default function ZammadIntegration({ teamId }: ZammadIntegrationProps) {
     }
   };
 
+  const handleGroupSettingChange = (
+    groupId: number,
+    updates: Partial<ZammadGroupSetting>,
+  ) => {
+    setGroupSettings((prev) =>
+      prev.map((group) =>
+        group.groupId === groupId ? { ...group, ...updates } : group,
+      ),
+    );
+  };
+
+  const handleSaveGroups = async () => {
+    if (!groupsKey) {
+      return;
+    }
+    setIsSavingGroups(true);
+    try {
+      const response = await fetch(groupsKey, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(groupSettings),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json?.error || response.statusText);
+      }
+      await mutateGroups();
+      toast({
+        title: "Group settings saved",
+        description: "Zammad group import settings were updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to save group settings",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingGroups(false);
+    }
+  };
+
   const canSync = useMemo(
     () =>
       isEnabled &&
@@ -283,6 +367,20 @@ export default function ZammadIntegration({ teamId }: ZammadIntegrationProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div>
+            <p className="font-medium">Enable Zammad sync</p>
+            <p className="text-sm text-muted-foreground">
+              When enabled, webhook updates are captured in engagement history.
+            </p>
+          </div>
+          <Switch
+            checked={isEnabled}
+            onCheckedChange={(checked) => setIsEnabled(checked)}
+            disabled={isLoading || isSaving}
+          />
+        </div>
+
         {connectionMessage && (
           <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
             {connectionMessage}
@@ -357,18 +455,82 @@ export default function ZammadIntegration({ teamId }: ZammadIntegrationProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-lg border p-4">
+        <div className="rounded-lg border p-4 space-y-4">
           <div>
-            <p className="font-medium">Enable Zammad sync</p>
+            <p className="font-medium">Group import settings</p>
             <p className="text-sm text-muted-foreground">
-              When enabled, webhook updates are captured in engagement history.
+              Choose which Zammad groups should sync into engagement history and
+              whether contacts should be created automatically.
             </p>
           </div>
-          <Switch
-            checked={isEnabled}
-            onCheckedChange={(checked) => setIsEnabled(checked)}
-            disabled={isLoading || isSaving}
-          />
+          {isGroupsLoading ? (
+            <p className="text-sm text-muted-foreground">Loading groups...</p>
+          ) : groupSettings.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No groups found yet. Configure Zammad and try again.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {groupSettings.map((group) => (
+                <div
+                  key={group.groupId}
+                  className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{group.groupName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Group ID {group.groupId}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={group.importEnabled}
+                        onCheckedChange={(checked) =>
+                          handleGroupSettingChange(group.groupId, {
+                            importEnabled: checked,
+                            autoCreateContacts: checked
+                              ? group.autoCreateContacts
+                              : false,
+                          })
+                        }
+                        disabled={isSavingGroups}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        Import
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={group.autoCreateContacts}
+                        onCheckedChange={(checked) =>
+                          handleGroupSettingChange(group.groupId, {
+                            autoCreateContacts: checked,
+                          })
+                        }
+                        disabled={isSavingGroups || !group.importEnabled}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        Auto-create contacts
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={handleSaveGroups}
+              disabled={isSavingGroups || isGroupsLoading || !groupSettings.length}
+            >
+              {isSavingGroups && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Save group settings
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">

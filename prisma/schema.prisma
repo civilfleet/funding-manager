@@ -167,6 +167,7 @@ model Teams {
   eventTypes   EventType[]
   groups       Group[]
   integrationConnections IntegrationConnection[]
+  zammadGroupSettings ZammadGroupSetting[]
   contactFieldAccesses ContactFieldAccess[]
   organizationEngagements OrganizationEngagement[]
 }
@@ -236,6 +237,21 @@ model IntegrationConnection {
   updatedAt     DateTime             @updatedAt @db.Timestamptz(6)
 
   @@unique([teamId, provider])
+}
+
+model ZammadGroupSetting {
+  id                 String   @id @default(uuid()) @unique
+  teamId             String
+  team               Teams    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  groupId            Int
+  groupName          String   @db.VarChar(255)
+  importEnabled      Boolean  @default(false)
+  autoCreateContacts Boolean  @default(false)
+  createdAt          DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @db.Timestamptz(6)
+
+  @@unique([teamId, groupId])
+  @@index([teamId])
 }
 
 model User {
