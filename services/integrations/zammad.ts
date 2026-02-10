@@ -46,7 +46,19 @@ const buildZammadHeaders = (apiKey: string) => ({
   "Content-Type": "application/json",
 });
 
+const isDev = process.env.NODE_ENV !== "production";
+const log = (...args: unknown[]) => {
+  if (isDev) console.log(...args);
+};
+const warn = (...args: unknown[]) => {
+  if (isDev) console.warn(...args);
+};
+const errorLog = (...args: unknown[]) => {
+  if (isDev) console.error(...args);
+};
+
 const fetchZammad = async <T>(baseUrl: string, path: string, apiKey: string) => {
+  log("[Zammad] Fetch", { baseUrl, path });
   const response = await fetch(`${normalizeBaseUrl(baseUrl)}${path}`, {
     headers: buildZammadHeaders(apiKey),
     cache: "no-store",
@@ -54,6 +66,11 @@ const fetchZammad = async <T>(baseUrl: string, path: string, apiKey: string) => 
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
+    errorLog("[Zammad] Fetch failed", {
+      path,
+      status: response.status,
+      body: text,
+    });
     throw new Error(text || response.statusText);
   }
 
@@ -199,6 +216,12 @@ const upsertArticleEngagement = async (
   const contactId =
     contactIdOverride || (await findContactIdForEmails(teamId, emails));
   if (!contactId) {
+    warn("[Zammad] No matching contact", {
+      teamId,
+      ticketId: ticket.id,
+      articleId: article.id,
+      emails,
+    });
     return null;
   }
 
@@ -235,6 +258,13 @@ const upsertArticleEngagement = async (
       userName: resolveUserName(article),
       engagedAt,
     },
+  });
+
+  log("[Zammad] Engagement upserted", {
+    teamId,
+    contactId,
+    ticketId: ticket.id,
+    articleId: article.id,
   });
 
   return contactId;
@@ -394,7 +424,10 @@ export const saveZammadIntegration = async ({
   };
 };
 
-export const syncZammadIntegration = async (teamId: string) => {
+export const syncZammadIntegration = async (
+  teamId: string,
+  { fullSync = false }: { fullSync?: boolean } = {},
+) => {
   const integration = await prisma.integrationConnection.findUnique({
     where: {
       teamId_provider: {
@@ -405,26 +438,72 @@ export const syncZammadIntegration = async (teamId: string) => {
   });
 
   if (!integration || !integration.apiKey || !integration.baseUrl) {
+    errorLog("[Zammad] Sync missing integration settings", { teamId });
     throw new Error("Zammad integration is not configured for this team.");
   }
 
   if (!integration.isEnabled) {
+    warn("[Zammad] Sync skipped because integration is disabled", {
+      teamId,
+    });
     throw new Error("Zammad integration is currently disabled.");
   }
 
-  const tickets = await fetchZammad<ZammadTicket[]>(
-    integration.baseUrl,
-    "/api/v1/tickets?per_page=50&page=1",
-    integration.apiKey,
-  );
+  log("[Zammad] Sync start", {
+    teamId,
+    baseUrl: integration.baseUrl,
+    lastSyncedAt: integration.lastSyncedAt?.toISOString(),
+    fullSync,
+  });
+
+  const perPage = 50;
+  const tickets: ZammadTicket[] = [];
+  let page = 1;
+  const maxPages = 200;
+
+  while (page <= maxPages) {
+    const pageTickets = await fetchZammad<ZammadTicket[]>(
+      integration.baseUrl,
+      `/api/v1/tickets?per_page=${perPage}&page=${page}`,
+      integration.apiKey,
+    );
+
+    log("[Zammad] Tickets page fetched", {
+      page,
+      count: pageTickets.length,
+    });
+
+    if (!pageTickets.length) {
+      break;
+    }
+
+    tickets.push(...pageTickets);
+
+    if (pageTickets.length < perPage) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  if (page > maxPages) {
+    warn("[Zammad] Pagination stopped at max pages", { maxPages });
+  }
 
   const lastSyncedAt = integration.lastSyncedAt ?? null;
-  const filtered = lastSyncedAt
-    ? tickets.filter((ticket) => {
-        if (!ticket.updated_at) return true;
-        return new Date(ticket.updated_at) > lastSyncedAt;
-      })
-    : tickets;
+  const filtered = fullSync
+    ? tickets
+    : lastSyncedAt
+      ? tickets.filter((ticket) => {
+          if (!ticket.updated_at) return true;
+          return new Date(ticket.updated_at) > lastSyncedAt;
+        })
+      : tickets;
+
+  log("[Zammad] Tickets fetched", {
+    total: tickets.length,
+    filtered: filtered.length,
+  });
 
   let engagementsUpserted = 0;
 
@@ -454,6 +533,12 @@ export const syncZammadIntegration = async (teamId: string) => {
     select: { lastSyncedAt: true },
   });
 
+  log("[Zammad] Sync finished", {
+    teamId,
+    engagementsUpserted,
+    lastSyncedAt: updated.lastSyncedAt?.toISOString(),
+  });
+
   return {
     engagementsUpserted,
     lastSyncedAt: updated.lastSyncedAt?.toISOString(),
@@ -479,10 +564,14 @@ export const handleZammadWebhook = async ({
   });
 
   if (!integration || !integration.apiKey || !integration.baseUrl) {
+    errorLog("[Zammad] Webhook missing integration settings", { teamId });
     throw new Error("Zammad integration is not configured for this team.");
   }
 
   if (!integration.isEnabled) {
+    warn("[Zammad] Webhook received but integration disabled", {
+      teamId,
+    });
     throw new Error("Zammad integration is currently disabled.");
   }
 
@@ -493,9 +582,12 @@ export const handleZammadWebhook = async ({
       signature,
     );
     if (!isValid) {
+      errorLog("[Zammad] Webhook signature invalid", { teamId });
       throw new Error("Invalid webhook signature.");
     }
   }
+
+  log("[Zammad] Webhook received", { teamId });
 
   const payload = JSON.parse(rawBody) as {
     ticket?: ZammadTicket;
@@ -512,6 +604,10 @@ export const handleZammadWebhook = async ({
     null;
 
   if (!ticketId) {
+    errorLog("[Zammad] Webhook missing ticket id", {
+      teamId,
+      payloadKeys: Object.keys(payload || {}),
+    });
     throw new Error("Webhook payload missing ticket id.");
   }
 
@@ -542,6 +638,12 @@ export const handleZammadWebhook = async ({
       engagementsUpserted += 1;
     }
   }
+
+  log("[Zammad] Webhook processed", {
+    teamId,
+    ticketId,
+    engagementsUpserted,
+  });
 
   return { engagementsUpserted };
 };

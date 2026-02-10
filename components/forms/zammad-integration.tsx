@@ -169,11 +169,11 @@ export default function ZammadIntegration({ teamId }: ZammadIntegrationProps) {
     }
   };
 
-  const handleSync = async () => {
+  const handleSync = async (fullSync = false) => {
     setIsSyncing(true);
     try {
       const response = await fetch(
-        `/api/teams/${teamId}/integrations/zammad/sync`,
+        `/api/teams/${teamId}/integrations/zammad/sync${fullSync ? "?fullSync=1" : ""}`,
         {
           method: "POST",
         },
@@ -194,12 +194,12 @@ export default function ZammadIntegration({ teamId }: ZammadIntegrationProps) {
       setConnectionVerified(true);
 
       toast({
-        title: "Zammad sync finished",
+        title: fullSync ? "Full sync finished" : "Zammad sync finished",
         description: `Synced ${result?.engagementsUpserted ?? 0} ticket messages into engagement history.`,
       });
     } catch (error) {
       toast({
-        title: "Sync failed",
+        title: fullSync ? "Full sync failed" : "Sync failed",
         description: (error as Error).message,
         variant: "destructive",
       });
@@ -377,12 +377,20 @@ export default function ZammadIntegration({ teamId }: ZammadIntegrationProps) {
             Save connection
           </Button>
           <Button
-            onClick={handleSync}
+            onClick={() => handleSync(false)}
             variant="secondary"
             disabled={isLoading || isSyncing || !canSync}
           >
             {isSyncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Sync now
+          </Button>
+          <Button
+            onClick={() => handleSync(true)}
+            variant="outline"
+            disabled={isLoading || isSyncing || !canSync}
+          >
+            {isSyncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Full sync
           </Button>
           {lastSyncedAt && (
             <p className="text-sm text-muted-foreground">

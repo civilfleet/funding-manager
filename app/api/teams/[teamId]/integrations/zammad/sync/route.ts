@@ -3,12 +3,18 @@ import { handlePrismaError } from "@/lib/utils";
 import { syncZammadIntegration } from "@/services/integrations/zammad";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ teamId: string }> },
 ) {
   try {
     const { teamId } = await params;
-    const result = await syncZammadIntegration(teamId);
+    const { searchParams } = new URL(request.url);
+    const fullSyncParam = searchParams.get("fullSync");
+    const fullSync =
+      fullSyncParam === "1" ||
+      fullSyncParam === "true" ||
+      fullSyncParam === "yes";
+    const result = await syncZammadIntegration(teamId, { fullSync });
 
     return NextResponse.json({ data: result }, { status: 200 });
   } catch (error) {
