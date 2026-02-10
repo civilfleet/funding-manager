@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
+import { DEFAULT_TEAM_MODULES } from "@/types";
 
 export async function GET(
   _request: Request,
@@ -16,6 +17,7 @@ export async function GET(
       select: {
         name: true,
         strategicPriorities: true,
+        modules: true,
       },
     });
 
@@ -23,7 +25,19 @@ export async function GET(
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
     }
 
-    return NextResponse.json(team);
+    const teamModules =
+      team.modules && team.modules.length > 0
+        ? team.modules
+        : [...DEFAULT_TEAM_MODULES];
+
+    if (!teamModules.includes("FUNDING")) {
+      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      name: team.name,
+      strategicPriorities: team.strategicPriorities,
+    });
   } catch (e) {
     const { message } = handlePrismaError(e);
     return NextResponse.json(

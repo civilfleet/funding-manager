@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 type TeamOrganizationsPageProps = {
   teamId: string;
   scope: "crm" | "funding";
+  showRegistrationLink?: boolean;
 };
 
 export default function TeamOrganizationsPage({
   teamId,
   scope,
+  showRegistrationLink = true,
 }: TeamOrganizationsPageProps) {
   const basePath = `/teams/${teamId}/${scope}/organizations`;
 
@@ -19,7 +21,9 @@ export default function TeamOrganizationsPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold">Organizations</h1>
         <div className="flex flex-wrap gap-2">
-          <CopyRegistrationLinkButton teamId={teamId} />
+          {showRegistrationLink ? (
+            <CopyRegistrationLinkButton teamId={teamId} />
+          ) : null}
           <Link href={`${basePath}/create`}>
             <Button type="button">Create New</Button>
           </Link>

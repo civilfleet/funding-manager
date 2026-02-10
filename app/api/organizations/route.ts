@@ -4,6 +4,7 @@ import { z } from "zod";
 import { sendEmail } from "@/lib/nodemailer";
 import { APP_NAME } from "@/constants/app";
 import { getAppUrl, getLoginUrl, handlePrismaError } from "@/lib/utils";
+import prisma from "@/lib/prisma";
 import {
   createOrUpdateOrganization,
   getOrganizations,
@@ -13,6 +14,7 @@ import {
   updateOrganizationSchema,
 } from "@/validations/organizations";
 import { organizationFiltersSchema } from "@/validations/organization-filters";
+import { DEFAULT_TEAM_MODULES } from "@/types";
 
 export async function GET(req: Request) {
   try {
@@ -49,6 +51,24 @@ export async function POST(req: Request) {
       .and(z.object({ teamId: z.string().uuid() }))
       .and(z.object({ isFilledByOrg: z.boolean() }))
       .parse({ ...organizationData });
+
+    if (validatedData.isFilledByOrg) {
+      const team = await prisma.teams.findUnique({
+        where: { id: validatedData.teamId },
+        select: { modules: true },
+      });
+      const teamModules =
+        team?.modules && team.modules.length > 0
+          ? team.modules
+          : [...DEFAULT_TEAM_MODULES];
+
+      if (!team || !teamModules.includes("FUNDING")) {
+        return NextResponse.json(
+          { error: "Organization self-registration is disabled" },
+          { status: 403, statusText: "Organization self-registration is disabled" },
+        );
+      }
+    }
     const normalizedData = {
       ...validatedData,
       profileData: validatedData.profileData as Prisma.InputJsonValue | undefined,
