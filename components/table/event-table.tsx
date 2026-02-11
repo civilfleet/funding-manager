@@ -179,7 +179,7 @@ export default function EventTable({ teamId }: EventTableProps) {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="flex flex-wrap items-end gap-3"
+          className="flex flex-wrap items-end gap-3 [&>*]:w-full sm:[&>*]:w-auto"
         >
           <FormInputControl
             form={form}
@@ -193,7 +193,7 @@ export default function EventTable({ teamId }: EventTableProps) {
           />
           <FormInputControl form={form} name="from" placeholder="From" type="date" />
           <FormInputControl form={form} name="to" placeholder="To" type="date" />
-          <div className="min-w-[200px]">
+          <div className="w-full sm:min-w-[200px] sm:w-auto">
             <Select
               onValueChange={(value) => form.setValue("eventTypeId", value)}
               value={form.getValues("eventTypeId") || "all"}

@@ -68,7 +68,7 @@ export function DataSelectBox({
   }
   return (
     <Select onValueChange={onChange} value={value ?? ""} disabled={disabled}>
-      <SelectTrigger className="w-[250px]">
+      <SelectTrigger className="w-full sm:w-[250px]">
         <SelectValue placeholder={isLoading ? "Loading..." : label} />
       </SelectTrigger>
       <SelectContent>

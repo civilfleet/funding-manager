@@ -237,7 +237,7 @@ export default function OrganizationTable({
                       }
                       value={filter.key}
                     >
-                      <SelectTrigger className="min-w-[200px]">
+                      <SelectTrigger className="w-full sm:min-w-[200px] sm:w-auto">
                         <SelectValue placeholder="Field" />
                       </SelectTrigger>
                       <SelectContent>
@@ -260,7 +260,7 @@ export default function OrganizationTable({
                       }
                       value={filter.operator}
                     >
-                      <SelectTrigger className="min-w-[160px]">
+                      <SelectTrigger className="w-full sm:min-w-[160px] sm:w-auto">
                         <SelectValue placeholder="Operator" />
                       </SelectTrigger>
                       <SelectContent>
@@ -274,7 +274,7 @@ export default function OrganizationTable({
                     {filter.operator !== "isTrue" &&
                       filter.operator !== "isFalse" && (
                         <Input
-                          className="min-w-[200px]"
+                          className="w-full sm:min-w-[200px] sm:w-auto"
                           placeholder="Value"
                           type={fieldType === "NUMBER" ? "number" : fieldType === "DATE" ? "date" : "text"}
                           value={filter.value ?? ""}

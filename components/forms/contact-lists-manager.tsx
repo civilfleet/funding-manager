@@ -245,7 +245,7 @@ export default function ContactListsManager({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={sortKey} onValueChange={setSortKey}>
-            <SelectTrigger className="w-[190px]">
+            <SelectTrigger className="w-full sm:w-[190px]">
               <SelectValue placeholder="Sort lists" />
             </SelectTrigger>
             <SelectContent>

@@ -169,7 +169,7 @@ export default function EventCalendar({ teamId }: EventCalendarProps) {
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
-        <div className="min-w-[200px]">
+        <div className="w-full sm:min-w-[200px] sm:w-auto">
           <Select value={eventTypeId} onValueChange={setEventTypeId}>
             <SelectTrigger>
               <SelectValue placeholder="Event type" />
@@ -184,14 +184,14 @@ export default function EventCalendar({ teamId }: EventCalendarProps) {
             </SelectContent>
           </Select>
         </div>
-        <div className="min-w-[200px]">
+        <div className="w-full sm:min-w-[200px] sm:w-auto">
           <Input
             placeholder="Filter by state"
             value={stateFilter}
             onChange={(event) => setStateFilter(event.target.value)}
           />
         </div>
-        <div className="min-w-[180px]">
+        <div className="w-full sm:min-w-[180px] sm:w-auto">
           <Input
             type="date"
             placeholder="From"
@@ -199,7 +199,7 @@ export default function EventCalendar({ teamId }: EventCalendarProps) {
             onChange={(event) => setRangeFrom(event.target.value)}
           />
         </div>
-        <div className="min-w-[180px]">
+        <div className="w-full sm:min-w-[180px] sm:w-auto">
           <Input
             type="date"
             placeholder="To"
@@ -231,7 +231,7 @@ export default function EventCalendar({ teamId }: EventCalendarProps) {
             Reset filters
           </Button>
         )}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
           <Button
             variant={viewMode === "month" ? "default" : "outline"}
             size="sm"
@@ -253,7 +253,8 @@ export default function EventCalendar({ teamId }: EventCalendarProps) {
       {isLoading ? (
         <div className="text-sm text-muted-foreground">Loading events…</div>
       ) : viewMode === "month" ? (
-        <div className="grid grid-cols-7 gap-px overflow-hidden rounded-md border bg-muted">
+        <div className="overflow-x-auto">
+          <div className="grid min-w-[700px] grid-cols-7 gap-px rounded-md border bg-muted">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
             <div
               key={day}
@@ -318,6 +319,7 @@ export default function EventCalendar({ teamId }: EventCalendarProps) {
               </div>
             );
           })}
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
