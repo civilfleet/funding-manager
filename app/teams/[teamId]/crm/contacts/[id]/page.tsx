@@ -17,6 +17,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import ContactChangeHistory from "@/components/contact-change-history";
 import ContactEngagementHistory from "@/components/contact-engagement-history";
+import ContactResponsiveTabs from "@/components/contact-responsive-tabs";
 import DeleteContactButton from "@/components/forms/delete-contact-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getAllowedContactSubmodules,
   getContactById,
@@ -325,6 +325,342 @@ export default async function ContactDetailPage({
     value: string;
   }>;
 
+  const generalTabContent = (
+    <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+      <section className="space-y-4">
+        <div>
+          <h3 className="text-base font-semibold">Basic Information</h3>
+          <p className="text-sm text-muted-foreground">Core contact details</p>
+        </div>
+
+        {generalInfoItems.length === 0 ? (
+          <p className="rounded-md border border-dashed p-3 text-center text-sm text-muted-foreground">
+            No contact information available
+          </p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {generalInfoItems.map(
+              ({ icon: Icon, label, value, href, newTab }) => (
+                <div
+                  key={label}
+                  className="flex items-center gap-3 rounded-md border bg-muted/30 p-3"
+                >
+                  <Icon className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {label}
+                    </p>
+                    {href ? (
+                      <a
+                        href={href}
+                        className="text-base hover:underline"
+                        target={newTab ? "_blank" : undefined}
+                        rel={newTab ? "noreferrer" : undefined}
+                      >
+                        {value}
+                      </a>
+                    ) : (
+                      <p className="text-base">{value}</p>
+                    )}
+                  </div>
+                </div>
+              ),
+            )}
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-4">
+        <div>
+          <h3 className="text-base font-semibold">Metadata</h3>
+          <p className="text-sm text-muted-foreground">
+            Contact lifecycle details
+          </p>
+        </div>
+
+        <div className="grid gap-3">
+          {contact.group && (
+            <div className="rounded-md border bg-muted/30 p-3">
+              <div className="mb-1 flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium text-muted-foreground">
+                  Group
+                </p>
+              </div>
+              <p className="text-base">{contact.group.name}</p>
+              {contact.group.description && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {contact.group.description}
+                </p>
+              )}
+            </div>
+          )}
+          <div className="rounded-md border bg-muted/30 p-3">
+            <p className="text-sm font-medium text-muted-foreground">
+              Created At
+            </p>
+            <p className="text-base">
+              {format(new Date(contact.createdAt), "PPpp")}
+            </p>
+          </div>
+          <div className="rounded-md border bg-muted/30 p-3">
+            <p className="text-sm font-medium text-muted-foreground">
+              Last Updated
+            </p>
+            <p className="text-base">
+              {format(new Date(contact.updatedAt), "PPpp")}
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+
+  const supervisionTabContent = (
+    <>
+      <div>
+        <h3 className="text-base font-semibold">Supervision</h3>
+        <p className="text-sm text-muted-foreground">
+          Sensitive supervision details
+        </p>
+      </div>
+
+      {supervisionInfoItems.length === 0 ? (
+        <p className="rounded-md border border-dashed p-3 text-center text-sm text-muted-foreground">
+          No supervision details available
+        </p>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {supervisionInfoItems.map(({ icon: Icon, label, value }) => (
+            <div
+              key={label}
+              className="flex items-center gap-3 rounded-md border bg-muted/30 p-3"
+            >
+              <Icon className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {label}
+                </p>
+                <p className="text-base">{value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+
+  const engagementsTabContent = (
+    <ContactEngagementHistory
+      contactId={id}
+      teamId={teamId}
+      currentUser={{
+        id: session?.user?.userId ?? null,
+        name: session?.user?.name ?? null,
+        email: session?.user?.email ?? null,
+      }}
+    />
+  );
+
+  const eventsTabContent = (
+    <Card className="w-full shadow-sm">
+      <CardHeader className="border-b pb-3">
+        <div className="flex items-center gap-2">
+          <CalendarDays className="h-5 w-5" />
+          <CardTitle className="text-xl font-semibold">
+            Associated Events
+          </CardTitle>
+        </div>
+        <CardDescription>
+          Events this contact is participating in
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="pt-6">
+        {contact.events && contact.events.length > 0 ? (
+          <div className="grid gap-4">
+            {contact.events.map((contactEvent) => (
+              <Link
+                key={contactEvent.event.id}
+                href={`/teams/${teamId}/crm/events/${contactEvent.event.id}`}
+                className="block h-full rounded-md border bg-muted/30 p-4 transition-colors hover:bg-muted/50"
+              >
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <h4 className="text-base font-semibold">
+                      {contactEvent.event.title}
+                    </h4>
+                    {contactEvent.event.description && (
+                      <p className="text-sm text-muted-foreground">
+                        {contactEvent.event.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {contactEvent.participationTypes?.length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {contactEvent.participationTypes.includes("linked") && (
+                        <Badge variant="outline">Linked contact</Badge>
+                      )}
+                      {contactEvent.participationTypes.includes("registered") && (
+                        <Badge variant="outline">Registered attendee</Badge>
+                      )}
+                    </div>
+                  ) : null}
+
+                  <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        {format(new Date(contactEvent.event.startDate), "PPP")}
+                      </span>
+                    </div>
+                    {contactEvent.event.location && (
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="h-4 w-4" />
+                        <span>{contactEvent.event.location}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {contactEvent.roles && contactEvent.roles.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {contactEvent.roles.map((role) => (
+                        <Badge
+                          key={`${contactEvent.event.id}-${role.eventRole.id}`}
+                          variant="secondary"
+                          style={
+                            role.eventRole.color
+                              ? {
+                                  backgroundColor: `${role.eventRole.color}20`,
+                                  color: role.eventRole.color,
+                                  borderColor: role.eventRole.color,
+                                }
+                              : undefined
+                          }
+                        >
+                          {role.eventRole.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {contactEvent.registration && (
+                    <p className="text-xs text-muted-foreground">
+                      Registered on{" "}
+                      {format(new Date(contactEvent.registration.createdAt), "PPpp")}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No associated events yet.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  const shopTabContent = (
+    <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+      No shop data configured yet.
+    </div>
+  );
+
+  const attributesTabContent = (
+    <>
+      <div>
+        <h3 className="text-base font-semibold">Profile Attributes</h3>
+        <p className="text-sm text-muted-foreground">
+          Additional information about this contact
+        </p>
+      </div>
+
+      {contact.profileAttributes.length === 0 ? (
+        <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+          No attributes yet.
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {contact.profileAttributes.map((attribute) => {
+            const Icon = getAttributeIcon(attribute.type);
+            return (
+              <div
+                key={`${attribute.key}-${attribute.type}`}
+                className="flex items-start gap-3 rounded-md border bg-muted/30 p-3"
+              >
+                <Icon className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                <div className="flex-1">
+                  <div className="mb-1 flex items-center gap-2">
+                    <p className="text-sm font-medium">{attribute.key}</p>
+                    <Badge variant="outline" className="text-xs">
+                      {attribute.type}
+                    </Badge>
+                  </div>
+                  <p className="text-base">
+                    {formatAttributeValue(attribute.type, attribute.value)}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+
+  const tabItems = [
+    {
+      value: "general",
+      label: "General",
+      content: generalTabContent,
+      contentClassName: "space-y-6",
+    },
+    {
+      value: "engagements",
+      label: "Engagements",
+      content: engagementsTabContent,
+      contentClassName: "space-y-6",
+    },
+    ...(showSupervisionTab
+      ? [
+          {
+            value: "supervision",
+            label: "Supervision",
+            content: supervisionTabContent,
+            contentClassName: "space-y-4",
+          },
+        ]
+      : []),
+    ...(showEventsTab
+      ? [
+          {
+            value: "events",
+            label: "Events",
+            content: eventsTabContent,
+            contentClassName: "space-y-6",
+          },
+        ]
+      : []),
+    ...(showShopTab
+      ? [
+          {
+            value: "shop",
+            label: "Shop",
+            content: shopTabContent,
+            contentClassName: "space-y-4",
+          },
+        ]
+      : []),
+    {
+      value: "attributes",
+      label: "Attributes",
+      content: attributesTabContent,
+      contentClassName: "space-y-4",
+    },
+  ];
+
   return (
     <div className="overflow-x-hidden p-4">
       <div className="mx-auto w-full">
@@ -355,361 +691,7 @@ export default async function ContactDetailPage({
               </CardHeader>
 
               <CardContent className="pt-6">
-                <Tabs defaultValue="general" className="w-full">
-                  <TabsList className="mb-6 mt-4 grid h-auto w-full grid-cols-2 gap-1 sm:flex sm:h-9 sm:flex-wrap">
-                    <TabsTrigger className="w-full sm:w-auto" value="general">
-                      General
-                    </TabsTrigger>
-                    <TabsTrigger className="w-full sm:w-auto" value="engagements">
-                      Engagements
-                    </TabsTrigger>
-                    {showSupervisionTab && (
-                      <TabsTrigger className="w-full sm:w-auto" value="supervision">
-                        Supervision
-                      </TabsTrigger>
-                    )}
-                    {showEventsTab && (
-                      <TabsTrigger className="w-full sm:w-auto" value="events">
-                        Events
-                      </TabsTrigger>
-                    )}
-                    {showShopTab && (
-                      <TabsTrigger className="w-full sm:w-auto" value="shop">
-                        Shop
-                      </TabsTrigger>
-                    )}
-                    <TabsTrigger className="w-full sm:w-auto" value="attributes">
-                      Attributes
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="general" className="space-y-6">
-                    <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-                      <section className="space-y-4">
-                        <div>
-                          <h3 className="text-base font-semibold">
-                            Basic Information
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Core contact details
-                          </p>
-                        </div>
-
-                        {generalInfoItems.length === 0 ? (
-                          <p className="rounded-md border border-dashed p-3 text-center text-sm text-muted-foreground">
-                            No contact information available
-                          </p>
-                        ) : (
-                          <div className="grid gap-3 sm:grid-cols-2">
-                            {generalInfoItems.map(
-                              ({ icon: Icon, label, value, href, newTab }) => (
-                                <div
-                                  key={label}
-                                  className="flex items-center gap-3 rounded-md border bg-muted/30 p-3"
-                                >
-                                  <Icon className="h-5 w-5 text-muted-foreground" />
-                                  <div>
-                                    <p className="text-sm font-medium text-muted-foreground">
-                                      {label}
-                                    </p>
-                                    {href ? (
-                                      <a
-                                        href={href}
-                                        className="text-base hover:underline"
-                                        target={newTab ? "_blank" : undefined}
-                                        rel={newTab ? "noreferrer" : undefined}
-                                      >
-                                        {value}
-                                      </a>
-                                    ) : (
-                                      <p className="text-base">{value}</p>
-                                    )}
-                                  </div>
-                                </div>
-                              ),
-                            )}
-                          </div>
-                        )}
-                      </section>
-
-                      <section className="space-y-4">
-                        <div>
-                          <h3 className="text-base font-semibold">Metadata</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Contact lifecycle details
-                          </p>
-                        </div>
-
-                        <div className="grid gap-3">
-                          {contact.group && (
-                            <div className="rounded-md border bg-muted/30 p-3">
-                              <div className="mb-1 flex items-center gap-2">
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                                <p className="text-sm font-medium text-muted-foreground">
-                                  Group
-                                </p>
-                              </div>
-                              <p className="text-base">
-                                {contact.group.name}
-                              </p>
-                              {contact.group.description && (
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                  {contact.group.description}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                          <div className="rounded-md border bg-muted/30 p-3">
-                            <p className="text-sm font-medium text-muted-foreground">
-                              Created At
-                            </p>
-                            <p className="text-base">
-                              {format(new Date(contact.createdAt), "PPpp")}
-                            </p>
-                          </div>
-                          <div className="rounded-md border bg-muted/30 p-3">
-                            <p className="text-sm font-medium text-muted-foreground">
-                              Last Updated
-                            </p>
-                            <p className="text-base">
-                              {format(new Date(contact.updatedAt), "PPpp")}
-                            </p>
-                          </div>
-                        </div>
-                      </section>
-                    </div>
-                  </TabsContent>
-
-                  {showSupervisionTab && (
-                    <TabsContent value="supervision" className="space-y-4">
-                      <div>
-                        <h3 className="text-base font-semibold">Supervision</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Sensitive supervision details
-                        </p>
-                      </div>
-
-                      {supervisionInfoItems.length === 0 ? (
-                        <p className="rounded-md border border-dashed p-3 text-center text-sm text-muted-foreground">
-                          No supervision details available
-                        </p>
-                      ) : (
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          {supervisionInfoItems.map(
-                            ({ icon: Icon, label, value }) => (
-                              <div
-                                key={label}
-                                className="flex items-center gap-3 rounded-md border bg-muted/30 p-3"
-                              >
-                                <Icon className="h-5 w-5 text-muted-foreground" />
-                                <div>
-                                  <p className="text-sm font-medium text-muted-foreground">
-                                    {label}
-                                  </p>
-                                  <p className="text-base">{value}</p>
-                                </div>
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      )}
-                    </TabsContent>
-                  )}
-
-                  <TabsContent value="engagements" className="space-y-6">
-                    <ContactEngagementHistory
-                      contactId={id}
-                      teamId={teamId}
-                      currentUser={{
-                        id: session?.user?.userId ?? null,
-                        name: session?.user?.name ?? null,
-                        email: session?.user?.email ?? null,
-                      }}
-                    />
-                  </TabsContent>
-
-                  {showEventsTab && (
-                    <TabsContent value="events" className="space-y-6">
-                      <Card className="w-full shadow-sm">
-                        <CardHeader className="border-b pb-3">
-                          <div className="flex items-center gap-2">
-                            <CalendarDays className="h-5 w-5" />
-                            <CardTitle className="text-xl font-semibold">
-                              Associated Events
-                            </CardTitle>
-                          </div>
-                          <CardDescription>
-                            Events this contact is participating in
-                          </CardDescription>
-                        </CardHeader>
-
-                        <CardContent className="pt-6">
-                          {contact.events && contact.events.length > 0 ? (
-                            <div className="grid gap-4">
-                              {contact.events.map((contactEvent) => (
-                                <Link
-                                  key={contactEvent.event.id}
-                                  href={`/teams/${teamId}/crm/events/${contactEvent.event.id}`}
-                                  className="block h-full rounded-md border bg-muted/30 p-4 transition-colors hover:bg-muted/50"
-                                >
-                                  <div className="space-y-3">
-                                    <div className="space-y-1">
-                                      <h4 className="text-base font-semibold">
-                                        {contactEvent.event.title}
-                                      </h4>
-                                      {contactEvent.event.description && (
-                                        <p className="text-sm text-muted-foreground">
-                                          {contactEvent.event.description}
-                                        </p>
-                                      )}
-                                    </div>
-
-                                    {contactEvent.participationTypes?.length ? (
-                                      <div className="flex flex-wrap gap-2">
-                                        {contactEvent.participationTypes.includes(
-                                          "linked",
-                                        ) && (
-                                          <Badge variant="outline">
-                                            Linked contact
-                                          </Badge>
-                                        )}
-                                        {contactEvent.participationTypes.includes(
-                                          "registered",
-                                        ) && (
-                                          <Badge variant="outline">
-                                            Registered attendee
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    ) : null}
-
-                                    <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                                      <div className="flex items-center gap-1.5">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>
-                                          {format(
-                                            new Date(
-                                              contactEvent.event.startDate,
-                                            ),
-                                            "PPP",
-                                          )}
-                                        </span>
-                                      </div>
-                                      {contactEvent.event.location && (
-                                        <div className="flex items-center gap-1.5">
-                                          <MapPin className="h-4 w-4" />
-                                          <span>
-                                            {contactEvent.event.location}
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {contactEvent.roles &&
-                                      contactEvent.roles.length > 0 && (
-                                        <div className="flex flex-wrap gap-2">
-                                          {contactEvent.roles.map((role) => (
-                                            <Badge
-                                              key={`${contactEvent.event.id}-${role.eventRole.id}`}
-                                              variant="secondary"
-                                              style={
-                                                role.eventRole.color
-                                                  ? {
-                                                      backgroundColor: `${role.eventRole.color}20`,
-                                                      color:
-                                                        role.eventRole.color,
-                                                      borderColor:
-                                                        role.eventRole.color,
-                                                    }
-                                                  : undefined
-                                              }
-                                            >
-                                              {role.eventRole.name}
-                                            </Badge>
-                                          ))}
-                                        </div>
-                                      )}
-
-                                    {contactEvent.registration && (
-                                      <p className="text-xs text-muted-foreground">
-                                        Registered on{" "}
-                                        {format(
-                                          new Date(
-                                            contactEvent.registration.createdAt,
-                                          ),
-                                          "PPpp",
-                                        )}
-                                      </p>
-                                    )}
-                                  </div>
-                                </Link>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">
-                              No associated events yet.
-                            </p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
-                  )}
-
-                  {showShopTab && (
-                    <TabsContent value="shop" className="space-y-4">
-                      <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                        No shop data configured yet.
-                      </div>
-                    </TabsContent>
-                  )}
-
-                  <TabsContent value="attributes" className="space-y-4">
-                    <div>
-                      <h3 className="text-base font-semibold">
-                        Profile Attributes
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Additional information about this contact
-                      </p>
-                    </div>
-
-                    {contact.profileAttributes.length === 0 ? (
-                      <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                        No attributes yet.
-                      </div>
-                    ) : (
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        {contact.profileAttributes.map((attribute) => {
-                          const Icon = getAttributeIcon(attribute.type);
-                          return (
-                            <div
-                              key={`${attribute.key}-${attribute.type}`}
-                              className="flex items-start gap-3 rounded-md border bg-muted/30 p-3"
-                            >
-                              <Icon className="mt-0.5 h-5 w-5 text-muted-foreground" />
-                              <div className="flex-1">
-                                <div className="mb-1 flex items-center gap-2">
-                                  <p className="text-sm font-medium">
-                                    {attribute.key}
-                                  </p>
-                                  <Badge variant="outline" className="text-xs">
-                                    {attribute.type}
-                                  </Badge>
-                                </div>
-                                <p className="text-base">
-                                  {formatAttributeValue(
-                                    attribute.type,
-                                    attribute.value,
-                                  )}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </TabsContent>
-                </Tabs>
+                <ContactResponsiveTabs defaultValue="general" items={tabItems} />
               </CardContent>
             </Card>
           </div>
