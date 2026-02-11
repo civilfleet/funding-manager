@@ -17,6 +17,7 @@ export async function GET(
       select: {
         name: true,
         strategicPriorities: true,
+        registrationPageLogoKey: true,
         modules: true,
       },
     });
@@ -37,6 +38,7 @@ export async function GET(
     return NextResponse.json({
       name: team.name,
       strategicPriorities: team.strategicPriorities,
+      registrationPageLogoKey: team.registrationPageLogoKey,
     });
   } catch (e) {
     const { message } = handlePrismaError(e);

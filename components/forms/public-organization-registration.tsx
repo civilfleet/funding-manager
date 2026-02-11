@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -31,6 +32,7 @@ export default function PublicOrganizationRegistration({
   const { toast } = useToast();
   const [teamName, setTeamName] = useState<string>("");
   const [strategicPriorities, setStrategicPriorities] = useState<string>("");
+  const [registrationPageLogoKey, setRegistrationPageLogoKey] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -44,6 +46,7 @@ export default function PublicOrganizationRegistration({
         const data = await response.json();
         setTeamName(data.name);
         setStrategicPriorities(data.strategicPriorities || "");
+        setRegistrationPageLogoKey(data.registrationPageLogoKey || "");
       } catch (_error) {
         toast({
           title: "Error",
@@ -142,6 +145,18 @@ export default function PublicOrganizationRegistration({
     <div className="container mx-auto py-10">
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
+          {registrationPageLogoKey ? (
+            <div className="mb-2">
+              <Image
+                src={`/api/public/teams/${teamId}/logo`}
+                alt={`${teamName} logo`}
+                width={160}
+                height={160}
+                className="h-16 w-auto max-w-40 object-contain"
+                unoptimized
+              />
+            </div>
+          ) : null}
           <CardTitle>Register Your Organization with {teamName}</CardTitle>
           <CardDescription>
             Please fill out the form below to request an organization account

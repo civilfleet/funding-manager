@@ -37,6 +37,7 @@ export async function PATCH(
     const {
       name,
       email,
+      registrationPageLogoKey,
       phone,
       address,
       postalCode,
@@ -98,6 +99,7 @@ export async function PATCH(
           city,
           country,
           website,
+          registrationPageLogoKey,
           strategicPriorities,
           bankDetailsId,
         },

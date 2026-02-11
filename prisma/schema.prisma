@@ -133,6 +133,7 @@ model Teams {
   id          String           @id @default(uuid()) @unique
   name        String           @unique
   email       String           @db.VarChar(255) @unique
+  registrationPageLogoKey String? @db.VarChar(255)
   phone       String?          @db.VarChar(255)
   address     String?          @db.VarChar(255)
   postalCode  String?          @db.VarChar(255)

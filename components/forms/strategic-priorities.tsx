@@ -1,10 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import FileUpload from "@/components/file-uploader";
 import {
   Form,
   FormControl,
@@ -16,6 +18,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import ButtonControl from "../helper/button-control";
+import { Button } from "../ui/button";
 import {
   Card,
   CardContent,
@@ -26,6 +29,7 @@ import {
 
 const strategicPrioritiesSchema = z.object({
   strategicPriorities: z.string().optional(),
+  registrationPageLogoKey: z.string().optional(),
 });
 
 interface StrategicPrioritiesFormProps {
@@ -43,6 +47,7 @@ export default function StrategicPrioritiesForm({
     resolver: zodResolver(strategicPrioritiesSchema),
     defaultValues: {
       strategicPriorities: "",
+      registrationPageLogoKey: "",
     },
   });
 
@@ -54,6 +59,7 @@ export default function StrategicPrioritiesForm({
           const data = await response.json();
           form.reset({
             strategicPriorities: data.strategicPriorities || "",
+            registrationPageLogoKey: data.registrationPageLogoKey || "",
           });
         }
       } catch (error) {
@@ -113,6 +119,8 @@ export default function StrategicPrioritiesForm({
     );
   }
 
+  const registrationPageLogoKey = form.watch("registrationPageLogoKey");
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -149,6 +157,49 @@ export default function StrategicPrioritiesForm({
                 </FormItem>
               )}
             />
+
+            <FormItem>
+              <FormLabel>Registration Page Logo</FormLabel>
+              <div className="space-y-3">
+                <FileUpload
+                  label="Upload organization logo"
+                  onFileUpload={(fileUrl) => {
+                    form.setValue("registrationPageLogoKey", fileUrl, {
+                      shouldDirty: true,
+                    });
+                  }}
+                />
+                {registrationPageLogoKey ? (
+                  <div className="flex items-center gap-3 rounded-md border p-3">
+                    <Image
+                      src={`/api/public/teams/${teamId}/logo`}
+                      alt="Registration page logo preview"
+                      width={56}
+                      height={56}
+                      className="h-14 w-14 rounded-md object-contain bg-background"
+                      unoptimized
+                    />
+                    <div className="flex-1 text-sm text-muted-foreground break-all">
+                      Current logo: {registrationPageLogoKey}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        form.setValue("registrationPageLogoKey", "", {
+                          shouldDirty: true,
+                        })
+                      }
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                This logo is shown at the top of your public registration page.
+              </p>
+            </FormItem>
 
             <ButtonControl
               className="w-32"
