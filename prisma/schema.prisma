@@ -128,11 +128,21 @@ enum Roles {
   Admin
 }
 
+enum LoginMethod {
+  EMAIL_MAGIC_LINK
+  OIDC
+}
+
 
 model Teams {
   id          String           @id @default(uuid()) @unique
   name        String           @unique
   email       String           @db.VarChar(255) @unique
+  loginDomain String?          @db.VarChar(255) @unique
+  loginMethod LoginMethod      @default(EMAIL_MAGIC_LINK)
+  oidcIssuer  String?          @db.VarChar(500)
+  oidcClientId String?         @db.VarChar(255)
+  oidcClientSecret String?     @db.Text
   registrationPageLogoKey String? @db.VarChar(255)
   phone       String?          @db.VarChar(255)
   address     String?          @db.VarChar(255)

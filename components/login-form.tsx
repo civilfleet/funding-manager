@@ -38,7 +38,7 @@ export function LoginForm({
             setIsLinkSent(true);
           } catch (error) {
             console.log("Login error:", error);
-            setError("Account not found.");
+            setError((error as Error).message || "Account not found.");
           } finally {
             setIsLoading(false);
           }

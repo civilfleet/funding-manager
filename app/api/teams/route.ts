@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { normalizeLoginDomain } from "@/lib/auth-routing";
 import { Roles } from "@/types";
+import { createTeamSchema } from "@/validations/team";
 import logger from "@/lib/logger";
+import { ZodError } from "zod";
 
 export async function GET() {
   try {
@@ -23,17 +26,23 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const validatedData = createTeamSchema.parse(body);
     const {
       name,
       email,
+      loginMethod,
+      oidcIssuer,
+      oidcClientId,
+      oidcClientSecret,
+      user,
       phone,
       address,
       postalCode,
       city,
       country,
       website,
-      user,
-    } = body;
+    } = validatedData;
+    const loginDomain = normalizeLoginDomain(validatedData.loginDomain);
 
     // Use transaction to handle team creation with user
     const team = await prisma.$transaction(async (tx) => {
@@ -42,13 +51,18 @@ export async function POST(request: Request) {
         data: {
           name,
           email,
+          loginMethod,
+          loginDomain,
+          oidcIssuer,
+          oidcClientId,
+          oidcClientSecret,
           phone,
           address,
           postalCode,
           city,
           country,
           website,
-        },
+        } as any,
         include: {
           users: true,
         },
@@ -97,6 +111,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json(team);
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: error.issues[0]?.message ?? "Invalid request payload" },
+        { status: 400 },
+      );
+    }
     logger.error({ error }, "Error creating team");
     return NextResponse.json(
       { error: "Failed to create team" },

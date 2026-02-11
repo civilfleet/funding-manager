@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { normalizeLoginDomain } from "@/lib/auth-routing";
 import logger from "@/lib/logger";
+import { updateTeamSchema } from "@/validations/team";
+import { ZodError } from "zod";
 
 export async function GET(
   _request: Request,
@@ -34,9 +37,14 @@ export async function PATCH(
   try {
     const { teamId } = await params;
     const body = await request.json();
+    const validatedData = updateTeamSchema.parse(body);
     const {
       name,
       email,
+      loginMethod,
+      oidcIssuer,
+      oidcClientId,
+      oidcClientSecret,
       registrationPageLogoKey,
       phone,
       address,
@@ -47,7 +55,11 @@ export async function PATCH(
       strategicPriorities,
       bankDetails,
       user,
-    } = body;
+    } = validatedData;
+    const hasLoginDomain = Object.hasOwn(validatedData, "loginDomain");
+    const loginDomain = hasLoginDomain
+      ? normalizeLoginDomain(validatedData.loginDomain)
+      : undefined;
 
     // Start a transaction to handle all updates
     const team = await prisma.$transaction(async (tx) => {
@@ -93,6 +105,10 @@ export async function PATCH(
         data: {
           name,
           email,
+          loginMethod,
+          oidcIssuer,
+          oidcClientId,
+          oidcClientSecret,
           phone,
           address,
           postalCode,
@@ -102,7 +118,8 @@ export async function PATCH(
           registrationPageLogoKey,
           strategicPriorities,
           bankDetailsId,
-        },
+          ...(hasLoginDomain ? { loginDomain } : {}),
+        } as any,
         include: {
           bankDetails: true,
           users: true,
@@ -154,6 +171,12 @@ export async function PATCH(
 
     return NextResponse.json(team);
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: error.issues[0]?.message ?? "Invalid request payload" },
+        { status: 400 },
+      );
+    }
     logger.error({ error }, "Error updating team");
     return NextResponse.json(
       { error: "Failed to update team" },

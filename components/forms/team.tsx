@@ -5,7 +5,21 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import { Form } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { createTeamSchema } from "@/validations/team";
 import ButtonControl from "../helper/button-control";
@@ -23,6 +37,11 @@ interface TeamFormProps {
     id: string;
     name: string;
     email: string;
+    loginDomain?: string | null;
+    loginMethod?: "EMAIL_MAGIC_LINK" | "OIDC" | null;
+    oidcIssuer?: string | null;
+    oidcClientId?: string | null;
+    oidcClientSecret?: string | null;
     phone: string | null;
     address: string | null;
     postalCode: string | null;
@@ -53,6 +72,11 @@ export default function TeamForm({ team }: TeamFormProps) {
     defaultValues: {
       name: "",
       email: "",
+      loginDomain: "",
+      loginMethod: "EMAIL_MAGIC_LINK",
+      oidcIssuer: "",
+      oidcClientId: "",
+      oidcClientSecret: "",
       phone: "",
       address: "",
       city: "",
@@ -73,6 +97,11 @@ export default function TeamForm({ team }: TeamFormProps) {
       form.reset({
         name: team.name || "",
         email: team.email || "",
+        loginDomain: team.loginDomain || "",
+        loginMethod: team.loginMethod || "EMAIL_MAGIC_LINK",
+        oidcIssuer: team.oidcIssuer || "",
+        oidcClientId: team.oidcClientId || "",
+        oidcClientSecret: team.oidcClientSecret || "",
         phone: team.phone || "",
         address: team.address || "",
         city: team.city || "",
@@ -163,6 +192,50 @@ export default function TeamForm({ team }: TeamFormProps) {
                 form={form}
                 name="email"
                 placeholder="Email address"
+              />
+              <FormInputControl
+                form={form}
+                name="loginDomain"
+                placeholder="Login domain (e.g. @example.org)"
+              />
+              <FormField
+                control={form.control}
+                name="loginMethod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Login method</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select login method" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="EMAIL_MAGIC_LINK">
+                          Email magic link
+                        </SelectItem>
+                        <SelectItem value="OIDC">OIDC</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormInputControl
+                form={form}
+                name="oidcIssuer"
+                placeholder="OIDC issuer (https://idp.example.com)"
+              />
+              <FormInputControl
+                form={form}
+                name="oidcClientId"
+                placeholder="OIDC client ID"
+              />
+              <FormInputControl
+                form={form}
+                name="oidcClientSecret"
+                placeholder="OIDC client secret"
+                type="password"
               />
               <FormInputControl
                 form={form}

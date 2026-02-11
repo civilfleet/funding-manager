@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { normalizeLoginDomain } from "@/lib/auth-routing";
 import { ensureDefaultGroup } from "@/services/groups";
 import { Roles } from "@/types";
 import type { CreateTeamInput } from "@/validations/team";
@@ -16,12 +17,19 @@ const getTeamsByRoles = async (_roles: string[] | null) => {
 const createTeam = async (teamData: CreateTeamInput) => {
   const TeamUser = teamData.user;
 
-  const { user: _user, ...sanitizedTeamData } = teamData;
+  const {
+    user: _user,
+    loginDomain,
+    bankDetails: _bankDetails,
+    ...sanitizedTeamData
+  } = teamData;
   void _user;
+  void _bankDetails;
 
-  const query = {
+  const query: any = {
     data: {
       ...sanitizedTeamData,
+      loginDomain: normalizeLoginDomain(loginDomain),
       users: {},
     },
     select: {
@@ -73,7 +81,7 @@ const createTeam = async (teamData: CreateTeamInput) => {
     };
   }
 
-  const team = await prisma.teams.create(query);
+  const team = (await prisma.teams.create(query)) as any;
   const ownerId = user?.id ?? team.users?.[0]?.id;
   if (ownerId) {
     await prisma.teams.update({
