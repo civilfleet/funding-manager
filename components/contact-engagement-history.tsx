@@ -339,7 +339,7 @@ const ZammadTicketDialog = React.memo(function ZammadTicketDialog({
   return (
     <Dialog open={isCreateTicketOpen} onOpenChange={setIsCreateTicketOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
+        <Button size="sm" variant="outline" className="w-full sm:w-auto">
           New Zammad Ticket
         </Button>
       </DialogTrigger>
@@ -593,7 +593,7 @@ function EngagementRow({
               {engagement.subject || "Internal note"}
             </h4>
             <div className="rounded-md border bg-background px-3 py-3">
-              <p className="text-sm whitespace-pre-wrap leading-relaxed">
+              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
                 {engagement.message}
               </p>
             </div>
@@ -640,7 +640,7 @@ function EngagementRow({
                         Message
                       </p>
                       <div className="rounded-md border bg-background px-3 py-3">
-                        <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                        <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
                           {parsed.body}
                         </p>
                       </div>
@@ -850,7 +850,7 @@ export default function ContactEngagementHistory({
   return (
     <Card className="w-full shadow-sm">
       <CardHeader className="border-b pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-xl font-semibold">
               Engagement History
@@ -859,7 +859,7 @@ export default function ContactEngagementHistory({
               Track all interactions with this contact
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
             <ZammadTicketDialog
               teamId={teamId}
               contactId={contactId}
@@ -867,7 +867,7 @@ export default function ContactEngagementHistory({
             />
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm">
+                <Button size="sm" className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   Record Engagement
                 </Button>
@@ -964,7 +964,7 @@ export default function ContactEngagementHistory({
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 uppercase tracking-wide">
                           Thread ({item.engagements.length} messages)
                         </span>
@@ -975,7 +975,7 @@ export default function ContactEngagementHistory({
                         <p className="text-base font-semibold">
                           {latest?.subject || "Zammad ticket update"}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                           {latestTimestamp && <span>{latestTimestamp}</span>}
                           <span>• Last by {latestBy}</span>
                         </div>

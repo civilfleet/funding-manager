@@ -326,7 +326,7 @@ export default async function ContactDetailPage({
   }>;
 
   return (
-    <div className="p-4">
+    <div className="overflow-x-hidden p-4">
       <div className="mx-auto w-full">
         <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
           <div className="space-y-6 lg:col-span-8">
@@ -356,19 +356,31 @@ export default async function ContactDetailPage({
 
               <CardContent className="pt-6">
                 <Tabs defaultValue="general" className="w-full">
-                  <TabsList className="mb-6 mt-4 flex flex-wrap">
-                    <TabsTrigger value="general">General</TabsTrigger>
-                    <TabsTrigger value="engagements">Engagements</TabsTrigger>
+                  <TabsList className="mb-6 mt-4 grid h-auto w-full grid-cols-2 gap-1 sm:flex sm:h-9 sm:flex-wrap">
+                    <TabsTrigger className="w-full sm:w-auto" value="general">
+                      General
+                    </TabsTrigger>
+                    <TabsTrigger className="w-full sm:w-auto" value="engagements">
+                      Engagements
+                    </TabsTrigger>
                     {showSupervisionTab && (
-                      <TabsTrigger value="supervision">Supervision</TabsTrigger>
+                      <TabsTrigger className="w-full sm:w-auto" value="supervision">
+                        Supervision
+                      </TabsTrigger>
                     )}
                     {showEventsTab && (
-                      <TabsTrigger value="events">Events</TabsTrigger>
+                      <TabsTrigger className="w-full sm:w-auto" value="events">
+                        Events
+                      </TabsTrigger>
                     )}
                     {showShopTab && (
-                      <TabsTrigger value="shop">Shop</TabsTrigger>
+                      <TabsTrigger className="w-full sm:w-auto" value="shop">
+                        Shop
+                      </TabsTrigger>
                     )}
-                    <TabsTrigger value="attributes">Attributes</TabsTrigger>
+                    <TabsTrigger className="w-full sm:w-auto" value="attributes">
+                      Attributes
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="general" className="space-y-6">

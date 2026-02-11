@@ -44,7 +44,7 @@ export default async function RootLayout({
           user={session.user}
         />
         <SidebarInset>
-          <div className="flex min-h-svh flex-1 flex-col">
+          <div className="flex min-h-svh min-w-0 flex-1 flex-col">
             <header className="flex items-center gap-2 border-b bg-background px-4 py-3 md:hidden">
               <SidebarTrigger className="-ml-1" />
               <span className="text-sm font-semibold">Team Navigation</span>
