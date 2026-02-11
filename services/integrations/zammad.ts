@@ -238,6 +238,8 @@ const upsertArticleEngagement = async (
   baseUrl: string,
   contactIdOverride?: string,
   autoCreateContacts?: boolean,
+  userIdOverride?: string,
+  userNameOverride?: string,
 ) => {
   const body = article.body_plain || stripHtml(article.body);
   const details = buildDetails([
@@ -302,6 +304,16 @@ const upsertArticleEngagement = async (
     ? new Date(article.created_at)
     : new Date();
 
+  const resolvedUserName = userNameOverride ?? resolveUserName(article);
+  const resolvedUserId = userIdOverride ?? undefined;
+  const updateUserFields: Record<string, unknown> = {};
+  if (userNameOverride) {
+    updateUserFields.userName = userNameOverride;
+  }
+  if (userIdOverride) {
+    updateUserFields.userId = userIdOverride;
+  }
+
   await prisma.contactEngagement.upsert({
     where: {
       teamId_externalId_externalSource: {
@@ -317,7 +329,8 @@ const upsertArticleEngagement = async (
       source: EngagementSource.EMAIL,
       subject: article.subject || ticket.title || "Zammad ticket update",
       message,
-      userName: resolveUserName(article),
+      userName: resolvedUserName,
+      userId: resolvedUserId,
       engagedAt,
       externalId,
       externalSource,
@@ -326,7 +339,8 @@ const upsertArticleEngagement = async (
       direction: resolveEngagementDirection(article),
       subject: article.subject || ticket.title || "Zammad ticket update",
       message,
-      userName: resolveUserName(article),
+      userName: resolvedUserName,
+      ...updateUserFields,
       engagedAt,
     },
   });
@@ -748,12 +762,16 @@ export const replyToZammadTicket = async ({
   message,
   subject,
   contactId,
+  userId,
+  userName,
 }: {
   teamId: string;
   ticketId: number;
   message: string;
   subject?: string;
   contactId?: string;
+  userId?: string;
+  userName?: string;
 }) => {
   const integration = await prisma.integrationConnection.findUnique({
     where: {
@@ -820,6 +838,8 @@ export const replyToZammadTicket = async ({
     integration.baseUrl,
     contactId,
     false,
+    userId,
+    userName,
   );
 
   return { articleId: article.id };
@@ -831,12 +851,16 @@ export const createZammadTicket = async ({
   groupId,
   subject,
   message,
+  userId,
+  userName,
 }: {
   teamId: string;
   contactId: string;
   groupId: number;
   subject: string;
   message: string;
+  userId?: string;
+  userName?: string;
 }) => {
   const integration = await prisma.integrationConnection.findUnique({
     where: {
@@ -906,6 +930,8 @@ export const createZammadTicket = async ({
       integration.baseUrl,
       contactId,
       false,
+      userId,
+      userName,
     );
     if (contactMatch) {
       engagementsUpserted += 1;

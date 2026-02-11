@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { handlePrismaError } from "@/lib/utils";
 import { createZammadTicket } from "@/services/integrations/zammad";
+import { auth } from "@/auth";
 
 const createTicketSchema = z.object({
   contactId: z.string().uuid(),
@@ -15,6 +16,10 @@ export async function POST(
   { params }: { params: Promise<{ teamId: string }> },
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const { teamId } = await params;
     const payload = await request.json();
     const validated = createTicketSchema.parse(payload);
@@ -25,6 +30,8 @@ export async function POST(
       groupId: validated.groupId,
       subject: validated.subject,
       message: validated.message,
+      userId: session.user.userId,
+      userName: session.user.name ?? session.user.email ?? undefined,
     });
 
     return NextResponse.json({ data: result }, { status: 200 });

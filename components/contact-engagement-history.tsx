@@ -205,6 +205,41 @@ const parseEngagementContent = (message?: string): ParsedEngagementContent => {
   return { body, details, additional };
 };
 
+type EngagementListItem =
+  | { type: "single"; engagement: ContactEngagement }
+  | { type: "thread"; ticketId: string; engagements: ContactEngagement[] };
+
+const buildEngagementList = (
+  engagements: ContactEngagement[],
+): EngagementListItem[] => {
+  const items: EngagementListItem[] = [];
+  const threads = new Map<string, ContactEngagement[]>();
+
+  for (const engagement of engagements) {
+    const ticketId = getZammadTicketId(engagement.externalSource);
+    if (!ticketId) {
+      items.push({ type: "single", engagement });
+      continue;
+    }
+
+    const existing = threads.get(ticketId);
+    if (existing) {
+      existing.push(engagement);
+      continue;
+    }
+
+    const threadEngagements: ContactEngagement[] = [engagement];
+    threads.set(ticketId, threadEngagements);
+    items.push({
+      type: "thread",
+      ticketId,
+      engagements: threadEngagements,
+    });
+  }
+
+  return items;
+};
+
 const ZammadTicketDialog = React.memo(function ZammadTicketDialog({
   teamId,
   contactId,
@@ -381,6 +416,269 @@ const ZammadTicketDialog = React.memo(function ZammadTicketDialog({
   );
 });
 
+function EngagementRow({
+  engagement,
+  showConnector,
+  onReply,
+}: {
+  engagement: ContactEngagement;
+  showConnector: boolean;
+  onReply: (engagement: ContactEngagement) => void;
+}) {
+  return (
+    <div className="flex gap-4">
+      <div className="flex flex-col items-center">
+        {engagement.source === EngagementSource.TODO ? (
+          <div
+            className={`rounded-full p-2 ${
+              engagement.todoStatus === TodoStatus.COMPLETED
+                ? "bg-green-100"
+                : engagement.todoStatus === TodoStatus.IN_PROGRESS
+                  ? "bg-blue-100"
+                  : "bg-amber-100"
+            }`}
+          >
+            {(() => {
+              const Icon = getTodoStatusIcon(engagement.todoStatus);
+              return (
+                <Icon
+                  className={`h-4 w-4 ${
+                    engagement.todoStatus === TodoStatus.COMPLETED
+                      ? "text-green-600"
+                      : engagement.todoStatus === TodoStatus.IN_PROGRESS
+                        ? "text-blue-600"
+                        : "text-amber-600"
+                  }`}
+                />
+              );
+            })()}
+          </div>
+        ) : engagement.source === EngagementSource.NOTE ? (
+          <div className="rounded-full p-2 bg-emerald-100">
+            <StickyNote className="h-4 w-4 text-emerald-600" />
+          </div>
+        ) : (
+          <div
+            className={`rounded-full p-2 ${
+              engagement.direction === EngagementDirection.OUTBOUND
+                ? "bg-blue-100"
+                : "bg-green-100"
+            }`}
+          >
+            {engagement.direction === EngagementDirection.OUTBOUND ? (
+              <ArrowUpRight className="h-4 w-4 text-blue-600" />
+            ) : (
+              <ArrowDownLeft className="h-4 w-4 text-green-600" />
+            )}
+          </div>
+        )}
+        {showConnector && <div className="w-px h-full bg-border mt-2" />}
+      </div>
+
+      <div className="flex-1 pb-4">
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge
+              variant="outline"
+              className={`text-xs ${getSourceColor(engagement.source)}`}
+            >
+              {getSourceLabel(engagement.source, engagement.externalSource)}
+            </Badge>
+            {engagement.source === EngagementSource.TODO &&
+              engagement.todoStatus && (
+                <Badge
+                  variant="outline"
+                  className={`text-xs ${getTodoStatusColor(engagement.todoStatus)}`}
+                >
+                  {getTodoStatusLabel(engagement.todoStatus)}
+                </Badge>
+              )}
+            {engagement.source === EngagementSource.NOTE &&
+              engagement.restrictedToSubmodule && (
+                <Badge variant="outline" className="text-xs">
+                  Restricted:{" "}
+                  {
+                    CONTACT_SUBMODULE_LABELS[
+                      engagement.restrictedToSubmodule
+                    ]
+                  }
+                </Badge>
+              )}
+            {engagement.source !== EngagementSource.TODO &&
+              engagement.source !== EngagementSource.NOTE && (
+                <Badge
+                  variant={
+                    engagement.direction === EngagementDirection.OUTBOUND
+                      ? "default"
+                      : "secondary"
+                  }
+                  className="text-xs"
+                >
+                  {engagement.direction === EngagementDirection.OUTBOUND
+                    ? "Outbound"
+                    : "Inbound"}
+                </Badge>
+              )}
+          </div>
+          <div className="flex items-center gap-3">
+            {engagement.source === EngagementSource.EMAIL &&
+              getZammadTicketId(engagement.externalSource) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => onReply(engagement)}
+                >
+                  Reply
+                </Button>
+              )}
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {format(
+                new Date(
+                  engagement.source === EngagementSource.NOTE
+                    ? engagement.createdAt
+                    : engagement.engagedAt,
+                ),
+                "PPp",
+              )}
+            </span>
+          </div>
+        </div>
+
+        {engagement.source === EngagementSource.NOTE ? (
+          <div className="rounded-lg border bg-emerald-50/40 px-4 py-4 space-y-2">
+            <h4 className="text-sm font-semibold">
+              {engagement.subject || "Internal note"}
+            </h4>
+            <div className="rounded-md border bg-background px-3 py-3">
+              <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                {engagement.message}
+              </p>
+            </div>
+          </div>
+        ) : (
+          (() => {
+            const parsed = parseEngagementContent(engagement.message);
+            const metric =
+              parsed.details.find(
+                (d) => d.label.toLowerCase() === "metric",
+              )?.value ?? undefined;
+            return (
+              <div className="space-y-3">
+                <div className="rounded-lg border shadow-sm bg-white">
+                  <div className="px-4 py-3 space-y-1">
+                    <h4 className="text-sm font-semibold">
+                      Subject: {engagement.subject || "Email"}
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      To:{" "}
+                      {parsed.details.find((d) =>
+                        d.label.toLowerCase().includes("recipient"),
+                      )?.value || "Unknown"}
+                    </p>
+                    {metric && (
+                      <div className="flex items-center gap-2 pt-1">
+                        <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                          Event
+                        </span>
+                        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 border border-blue-100">
+                          {metric}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <UiSeparator />
+
+                  {parsed.body && (
+                    <div className="bg-muted/40 px-4 py-4">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                        Message
+                      </p>
+                      <div className="rounded-md border bg-background px-3 py-3">
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                          {parsed.body}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {(() => {
+                    const combinedAdditional = [
+                      ...parsed.details.filter(
+                        (d) =>
+                          !d.label.toLowerCase().includes("recipient") &&
+                          d.label.toLowerCase() !== "subject",
+                      ),
+                      ...parsed.additional,
+                    ];
+                    if (combinedAdditional.length === 0) return null;
+                    return (
+                      <>
+                        <UiSeparator />
+                        <div className="px-4 py-3 space-y-3">
+                          <Collapsible>
+                            <CollapsibleTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-3"
+                              >
+                                Show details
+                              </Button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="mt-2 rounded-md border bg-muted/20 px-3 py-2 space-y-2">
+                              {combinedAdditional.map((item) => (
+                                <div key={`${engagement.id}-add-${item.label}`}>
+                                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                    {item.label}
+                                  </p>
+                                  <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                                    {item.value}
+                                  </p>
+                                </div>
+                              ))}
+                            </CollapsibleContent>
+                          </Collapsible>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            );
+          })()
+        )}
+
+        {engagement.source === EngagementSource.TODO && (
+          <div className="mt-2 flex flex-col gap-1">
+            {engagement.assignedToUserName && (
+              <p className="text-xs text-muted-foreground">
+                Assigned to: {engagement.assignedToUserName}
+              </p>
+            )}
+            {engagement.dueDate && (
+              <p className="text-xs text-muted-foreground">
+                Due: {format(new Date(engagement.dueDate), "PPp")}
+              </p>
+            )}
+          </div>
+        )}
+
+        {engagement.userName && (
+          <p className="text-xs text-muted-foreground mt-2">
+            {engagement.source === EngagementSource.TODO ||
+            engagement.source === EngagementSource.NOTE
+              ? "Created by"
+              : "By"}
+            : {engagement.userName}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ContactEngagementHistory({
   contactId,
   teamId,
@@ -402,6 +700,10 @@ export default function ContactEngagementHistory({
   );
 
   const engagements = (data?.data || []) as ContactEngagement[];
+  const engagementItems = React.useMemo(
+    () => buildEngagementList(engagements),
+    [engagements],
+  );
 
 
   const handleSuccess = () => {
@@ -551,276 +853,61 @@ export default function ContactEngagementHistory({
           </div>
         ) : (
           <div className="space-y-4">
-            {engagements.map((engagement, index) => (
-              <div key={engagement.id}>
-                <div className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    {engagement.source === EngagementSource.TODO ? (
-                      <div
-                          className={`rounded-full p-2 ${
-                            engagement.todoStatus === TodoStatus.COMPLETED
-                              ? "bg-green-100"
-                              : engagement.todoStatus === TodoStatus.IN_PROGRESS
-                                ? "bg-blue-100"
-                                : "bg-amber-100"
-                          }`}
-                        >
-                          {(() => {
-                            const Icon = getTodoStatusIcon(
-                              engagement.todoStatus,
-                            );
-                            return (
-                              <Icon
-                                className={`h-4 w-4 ${
-                                  engagement.todoStatus === TodoStatus.COMPLETED
-                                    ? "text-green-600"
-                                    : engagement.todoStatus ===
-                                        TodoStatus.IN_PROGRESS
-                                      ? "text-blue-600"
-                                      : "text-amber-600"
-                                }`}
-                              />
-                            );
-                          })()}
-                        </div>
-                    ) : engagement.source === EngagementSource.NOTE ? (
-                      <div className="rounded-full p-2 bg-emerald-100">
-                        <StickyNote className="h-4 w-4 text-emerald-600" />
-                      </div>
-                    ) : (
-                      <div
-                        className={`rounded-full p-2 ${
-                          engagement.direction === EngagementDirection.OUTBOUND
-                            ? "bg-blue-100"
-                            : "bg-green-100"
-                        }`}
-                      >
-                        {engagement.direction ===
-                        EngagementDirection.OUTBOUND ? (
-                          <ArrowUpRight className="h-4 w-4 text-blue-600" />
-                        ) : (
-                          <ArrowDownLeft className="h-4 w-4 text-green-600" />
-                        )}
-                      </div>
-                    )}
-                    {index < engagements.length - 1 && (
-                      <div className="w-px h-full bg-border mt-2" />
-                    )}
+            {engagementItems.map((item, index) => {
+              if (item.type === "single") {
+                return (
+                  <div key={item.engagement.id}>
+                    <EngagementRow
+                      engagement={item.engagement}
+                      showConnector={false}
+                      onReply={handleReplyOpen}
+                    />
+                    {index < engagementItems.length - 1 && <Separator />}
                   </div>
+                );
+              }
 
-                  <div className="flex-1 pb-4">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge
+              const latest = item.engagements[0];
+              return (
+                <div key={`thread-${item.ticketId}`} className="space-y-3">
+                  <div className="rounded-md border bg-muted/30 px-4 py-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold">
+                          Zammad Ticket #{item.ticketId}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.engagements.length} messages
+                        </p>
+                      </div>
+                      {latest ? (
+                        <Button
                           variant="outline"
-                          className={`text-xs ${getSourceColor(engagement.source)}`}
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => handleReplyOpen(latest)}
                         >
-                          {getSourceLabel(engagement.source, engagement.externalSource)}
-                        </Badge>
-                        {engagement.source === EngagementSource.TODO &&
-                          engagement.todoStatus && (
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${getTodoStatusColor(engagement.todoStatus)}`}
-                            >
-                              {getTodoStatusLabel(engagement.todoStatus)}
-                            </Badge>
-                          )}
-                        {engagement.source === EngagementSource.NOTE &&
-                          engagement.restrictedToSubmodule && (
-                            <Badge variant="outline" className="text-xs">
-                              Restricted:{" "}
-                              {
-                                CONTACT_SUBMODULE_LABELS[
-                                  engagement.restrictedToSubmodule
-                                ]
-                              }
-                            </Badge>
-                          )}
-                        {engagement.source !== EngagementSource.TODO &&
-                          engagement.source !== EngagementSource.NOTE && (
-                          <Badge
-                            variant={
-                              engagement.direction ===
-                              EngagementDirection.OUTBOUND
-                                ? "default"
-                                : "secondary"
-                            }
-                            className="text-xs"
-                          >
-                            {engagement.direction ===
-                            EngagementDirection.OUTBOUND
-                              ? "Outbound"
-                              : "Inbound"}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {engagement.source === EngagementSource.EMAIL &&
-                          getZammadTicketId(engagement.externalSource) && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 px-2 text-xs"
-                              onClick={() => handleReplyOpen(engagement)}
-                            >
-                              Reply
-                            </Button>
-                          )}
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {format(
-                            new Date(
-                              engagement.source === EngagementSource.NOTE
-                                ? engagement.createdAt
-                                : engagement.engagedAt,
-                            ),
-                            "PPp",
-                          )}
-                        </span>
-                      </div>
+                          Reply
+                        </Button>
+                      ) : null}
                     </div>
-
-                    {engagement.source === EngagementSource.NOTE ? (
-                      <div className="rounded-lg border bg-emerald-50/40 px-4 py-4 space-y-2">
-                        <h4 className="text-sm font-semibold">
-                          {engagement.subject || "Internal note"}
-                        </h4>
-                        <div className="rounded-md border bg-background px-3 py-3">
-                          <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                            {engagement.message}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      (() => {
-                        const parsed = parseEngagementContent(
-                          engagement.message,
-                        );
-                        const metric =
-                          parsed.details.find(
-                            (d) => d.label.toLowerCase() === "metric",
-                          )?.value ?? undefined;
-                        return (
-                          <div className="space-y-3">
-                            <div className="rounded-lg border shadow-sm bg-white">
-                              <div className="px-4 py-3 space-y-1">
-                                <h4 className="text-sm font-semibold">
-                                  Subject: {engagement.subject || "Email"}
-                                </h4>
-                                <p className="text-xs text-muted-foreground">
-                                  To:{" "}
-                                  {parsed.details.find((d) =>
-                                    d.label.toLowerCase().includes("recipient"),
-                                  )?.value || "Unknown"}
-                                </p>
-                                {metric && (
-                                  <div className="flex items-center gap-2 pt-1">
-                                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                      Event
-                                    </span>
-                                    <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 border border-blue-100">
-                                      {metric}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-
-                              <UiSeparator />
-
-                              {parsed.body && (
-                                <div className="bg-muted/40 px-4 py-4">
-                                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                                    Message
-                                  </p>
-                                  <div className="rounded-md border bg-background px-3 py-3">
-                                    <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                                      {parsed.body}
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
-
-                              {(() => {
-                                const combinedAdditional = [
-                                  ...parsed.details.filter(
-                                    (d) =>
-                                      !d.label
-                                        .toLowerCase()
-                                        .includes("recipient") &&
-                                      d.label.toLowerCase() !== "subject",
-                                  ),
-                                  ...parsed.additional,
-                                ];
-                                if (combinedAdditional.length === 0)
-                                  return null;
-                                return (
-                                  <>
-                                    <UiSeparator />
-                                    <div className="px-4 py-3 space-y-3">
-                                      <Collapsible>
-                                        <CollapsibleTrigger asChild>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-8 px-3"
-                                          >
-                                            Show details
-                                          </Button>
-                                        </CollapsibleTrigger>
-                                        <CollapsibleContent className="mt-2 rounded-md border bg-muted/20 px-3 py-2 space-y-2">
-                                          {combinedAdditional.map((item) => (
-                                            <div
-                                              key={`${engagement.id}-add-${item.label}`}
-                                            >
-                                              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                                {item.label}
-                                              </p>
-                                              <p className="text-sm text-foreground whitespace-pre-wrap break-words">
-                                                {item.value}
-                                              </p>
-                                            </div>
-                                          ))}
-                                        </CollapsibleContent>
-                                      </Collapsible>
-                                    </div>
-                                  </>
-                                );
-                              })()}
-                            </div>
-                          </div>
-                        );
-                      })()
-                    )}
-
-                    {engagement.source === EngagementSource.TODO && (
-                      <div className="mt-2 flex flex-col gap-1">
-                        {engagement.assignedToUserName && (
-                          <p className="text-xs text-muted-foreground">
-                            Assigned to: {engagement.assignedToUserName}
-                          </p>
-                        )}
-                        {engagement.dueDate && (
-                          <p className="text-xs text-muted-foreground">
-                            Due: {format(new Date(engagement.dueDate), "PPp")}
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {engagement.userName && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {engagement.source === EngagementSource.TODO ||
-                        engagement.source === EngagementSource.NOTE
-                          ? "Created by"
-                          : "By"}
-                        : {engagement.userName}
-                      </p>
-                    )}
                   </div>
+                  <div className="space-y-4">
+                    {item.engagements.map((engagement, idx) => (
+                      <div key={engagement.id}>
+                        <EngagementRow
+                          engagement={engagement}
+                          showConnector={idx < item.engagements.length - 1}
+                          onReply={handleReplyOpen}
+                        />
+                        {idx < item.engagements.length - 1 && <Separator />}
+                      </div>
+                    ))}
+                  </div>
+                  {index < engagementItems.length - 1 && <Separator />}
                 </div>
-                {index < engagements.length - 1 && <Separator />}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardContent>
