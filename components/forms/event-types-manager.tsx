@@ -271,8 +271,8 @@ export default function EventTypesManager({ teamId }: EventTypesManagerProps) {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="sm:max-w-md sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:grid-rows-[auto,auto] p-0 gap-0 overflow-hidden">
+          <DialogHeader className="border-b px-6 py-4">
             <DialogTitle>
               {editingType ? "Edit event type" : "Add event type"}
             </DialogTitle>
