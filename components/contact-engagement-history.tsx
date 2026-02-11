@@ -205,6 +205,14 @@ const parseEngagementContent = (message?: string): ParsedEngagementContent => {
   return { body, details, additional };
 };
 
+const getPreviewText = (message?: string, maxLength = 140) => {
+  if (!message) return "";
+  const { body } = parseEngagementContent(message);
+  const cleaned = body.replace(/\s+/g, " ").trim();
+  if (cleaned.length <= maxLength) return cleaned;
+  return `${cleaned.slice(0, maxLength).trim()}…`;
+};
+
 type EngagementListItem =
   | { type: "single"; engagement: ContactEngagement }
   | { type: "thread"; ticketId: string; engagements: ContactEngagement[] };
@@ -420,132 +428,166 @@ function EngagementRow({
   engagement,
   showConnector,
   onReply,
+  useHeader = false,
 }: {
   engagement: ContactEngagement;
   showConnector: boolean;
   onReply: (engagement: ContactEngagement) => void;
+  useHeader?: boolean;
 }) {
+  const parsed = engagement.source === EngagementSource.NOTE
+    ? null
+    : parseEngagementContent(engagement.message);
+  const previewText =
+    engagement.source === EngagementSource.NOTE
+      ? engagement.message
+      : getPreviewText(engagement.message, 180);
+
+  const showIconColumn = !useHeader;
+
   return (
-    <div className="flex gap-4">
-      <div className="flex flex-col items-center">
-        {engagement.source === EngagementSource.TODO ? (
-          <div
-            className={`rounded-full p-2 ${
-              engagement.todoStatus === TodoStatus.COMPLETED
-                ? "bg-green-100"
-                : engagement.todoStatus === TodoStatus.IN_PROGRESS
+    <div className={showIconColumn ? "flex gap-4" : ""}>
+      {showIconColumn && (
+        <div className="flex flex-col items-center">
+          {engagement.source === EngagementSource.TODO ? (
+            <div
+              className={`rounded-full p-2 ${
+                engagement.todoStatus === TodoStatus.COMPLETED
+                  ? "bg-green-100"
+                  : engagement.todoStatus === TodoStatus.IN_PROGRESS
+                    ? "bg-blue-100"
+                    : "bg-amber-100"
+              }`}
+            >
+              {(() => {
+                const Icon = getTodoStatusIcon(engagement.todoStatus);
+                return (
+                  <Icon
+                    className={`h-4 w-4 ${
+                      engagement.todoStatus === TodoStatus.COMPLETED
+                        ? "text-green-600"
+                        : engagement.todoStatus === TodoStatus.IN_PROGRESS
+                          ? "text-blue-600"
+                          : "text-amber-600"
+                    }`}
+                  />
+                );
+              })()}
+            </div>
+          ) : engagement.source === EngagementSource.NOTE ? (
+            <div className="rounded-full p-2 bg-emerald-100">
+              <StickyNote className="h-4 w-4 text-emerald-600" />
+            </div>
+          ) : (
+            <div
+              className={`rounded-full p-2 ${
+                engagement.direction === EngagementDirection.OUTBOUND
                   ? "bg-blue-100"
-                  : "bg-amber-100"
-            }`}
-          >
-            {(() => {
-              const Icon = getTodoStatusIcon(engagement.todoStatus);
-              return (
-                <Icon
-                  className={`h-4 w-4 ${
-                    engagement.todoStatus === TodoStatus.COMPLETED
-                      ? "text-green-600"
-                      : engagement.todoStatus === TodoStatus.IN_PROGRESS
-                        ? "text-blue-600"
-                        : "text-amber-600"
-                  }`}
-                />
-              );
-            })()}
-          </div>
-        ) : engagement.source === EngagementSource.NOTE ? (
-          <div className="rounded-full p-2 bg-emerald-100">
-            <StickyNote className="h-4 w-4 text-emerald-600" />
-          </div>
-        ) : (
-          <div
-            className={`rounded-full p-2 ${
-              engagement.direction === EngagementDirection.OUTBOUND
-                ? "bg-blue-100"
-                : "bg-green-100"
-            }`}
-          >
-            {engagement.direction === EngagementDirection.OUTBOUND ? (
-              <ArrowUpRight className="h-4 w-4 text-blue-600" />
-            ) : (
-              <ArrowDownLeft className="h-4 w-4 text-green-600" />
-            )}
+                  : "bg-green-100"
+              }`}
+            >
+              {engagement.direction === EngagementDirection.OUTBOUND ? (
+                <ArrowUpRight className="h-4 w-4 text-blue-600" />
+              ) : (
+                <ArrowDownLeft className="h-4 w-4 text-green-600" />
+              )}
+            </div>
+          )}
+          {showConnector && <div className="w-px h-full bg-border mt-2" />}
+        </div>
+      )}
+
+      <div className={showIconColumn ? "flex-1 pb-4" : "pb-4"}>
+        {useHeader && (
+          <div className="mb-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 uppercase tracking-wide">
+                    {getSourceLabel(engagement.source, engagement.externalSource)}
+                  </span>
+                  {engagement.source === EngagementSource.TODO &&
+                    engagement.todoStatus && (
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${getTodoStatusColor(engagement.todoStatus)}`}
+                      >
+                        {getTodoStatusLabel(engagement.todoStatus)}
+                      </Badge>
+                    )}
+                  {engagement.source === EngagementSource.NOTE &&
+                    engagement.restrictedToSubmodule && (
+                      <Badge variant="outline" className="text-xs">
+                        Restricted:{" "}
+                        {
+                          CONTACT_SUBMODULE_LABELS[
+                            engagement.restrictedToSubmodule
+                          ]
+                        }
+                      </Badge>
+                    )}
+                  {engagement.source !== EngagementSource.TODO &&
+                    engagement.source !== EngagementSource.NOTE && (
+                      <Badge
+                        variant={
+                          engagement.direction === EngagementDirection.OUTBOUND
+                            ? "default"
+                            : "secondary"
+                        }
+                        className="text-xs inline-flex items-center gap-1"
+                      >
+                        {engagement.direction === EngagementDirection.OUTBOUND ? (
+                          <ArrowUpRight className="h-3 w-3" />
+                        ) : (
+                          <ArrowDownLeft className="h-3 w-3" />
+                        )}
+                        {engagement.direction === EngagementDirection.OUTBOUND
+                          ? "Outbound"
+                          : "Inbound"}
+                      </Badge>
+                    )}
+                </div>
+                <p className="text-base font-semibold">
+                  {engagement.subject || "Engagement"}
+                </p>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span>
+                    {format(
+                      new Date(
+                        engagement.source === EngagementSource.NOTE
+                          ? engagement.createdAt
+                          : engagement.engagedAt,
+                      ),
+                      "PPp",
+                    )}
+                  </span>
+                  {engagement.userName && <span>• {engagement.userName}</span>}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {engagement.source === EngagementSource.EMAIL &&
+                  getZammadTicketId(engagement.externalSource) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => onReply(engagement)}
+                    >
+                      Reply
+                    </Button>
+                  )}
+              </div>
+            </div>
           </div>
         )}
-        {showConnector && <div className="w-px h-full bg-border mt-2" />}
-      </div>
 
-      <div className="flex-1 pb-4">
-        <div className="flex items-start justify-between gap-4 mb-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge
-              variant="outline"
-              className={`text-xs ${getSourceColor(engagement.source)}`}
-            >
-              {getSourceLabel(engagement.source, engagement.externalSource)}
-            </Badge>
-            {engagement.source === EngagementSource.TODO &&
-              engagement.todoStatus && (
-                <Badge
-                  variant="outline"
-                  className={`text-xs ${getTodoStatusColor(engagement.todoStatus)}`}
-                >
-                  {getTodoStatusLabel(engagement.todoStatus)}
-                </Badge>
-              )}
-            {engagement.source === EngagementSource.NOTE &&
-              engagement.restrictedToSubmodule && (
-                <Badge variant="outline" className="text-xs">
-                  Restricted:{" "}
-                  {
-                    CONTACT_SUBMODULE_LABELS[
-                      engagement.restrictedToSubmodule
-                    ]
-                  }
-                </Badge>
-              )}
-            {engagement.source !== EngagementSource.TODO &&
-              engagement.source !== EngagementSource.NOTE && (
-                <Badge
-                  variant={
-                    engagement.direction === EngagementDirection.OUTBOUND
-                      ? "default"
-                      : "secondary"
-                  }
-                  className="text-xs"
-                >
-                  {engagement.direction === EngagementDirection.OUTBOUND
-                    ? "Outbound"
-                    : "Inbound"}
-                </Badge>
-              )}
+        {useHeader ? (
+          <div className="space-y-2">
+            {previewText && (
+              <p className="text-sm text-muted-foreground">{previewText}</p>
+            )}
           </div>
-          <div className="flex items-center gap-3">
-            {engagement.source === EngagementSource.EMAIL &&
-              getZammadTicketId(engagement.externalSource) && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2 text-xs"
-                  onClick={() => onReply(engagement)}
-                >
-                  Reply
-                </Button>
-              )}
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {format(
-                new Date(
-                  engagement.source === EngagementSource.NOTE
-                    ? engagement.createdAt
-                    : engagement.engagedAt,
-                ),
-                "PPp",
-              )}
-            </span>
-          </div>
-        </div>
-
-        {engagement.source === EngagementSource.NOTE ? (
+        ) : engagement.source === EngagementSource.NOTE ? (
           <div className="rounded-lg border bg-emerald-50/40 px-4 py-4 space-y-2">
             <h4 className="text-sm font-semibold">
               {engagement.subject || "Internal note"}
@@ -558,7 +600,9 @@ function EngagementRow({
           </div>
         ) : (
           (() => {
-            const parsed = parseEngagementContent(engagement.message);
+            if (!parsed) {
+              return null;
+            }
             const metric =
               parsed.details.find(
                 (d) => d.label.toLowerCase() === "metric",
@@ -665,7 +709,7 @@ function EngagementRow({
           </div>
         )}
 
-        {engagement.userName && (
+        {!useHeader && engagement.userName && (
           <p className="text-xs text-muted-foreground mt-2">
             {engagement.source === EngagementSource.TODO ||
             engagement.source === EngagementSource.NOTE
@@ -693,6 +737,9 @@ export default function ContactEngagementHistory({
   const [replyMessage, setReplyMessage] = useState("");
   const [replySubject, setReplySubject] = useState("");
   const [isReplying, setIsReplying] = useState(false);
+  const [expandedThreads, setExpandedThreads] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   const { data, error, isLoading, mutate } = useSWR(
     `/api/contact-engagements?contactId=${contactId}&teamId=${teamId}`,
@@ -788,6 +835,18 @@ export default function ContactEngagementHistory({
     mutate();
   };
 
+  const toggleThread = (ticketId: string) => {
+    setExpandedThreads((prev) => {
+      const next = new Set(prev);
+      if (next.has(ticketId)) {
+        next.delete(ticketId);
+      } else {
+        next.add(ticketId);
+      }
+      return next;
+    });
+  };
+
   return (
     <Card className="w-full shadow-sm">
       <CardHeader className="border-b pb-3">
@@ -857,53 +916,120 @@ export default function ContactEngagementHistory({
               if (item.type === "single") {
                 return (
                   <div key={item.engagement.id}>
+                    <div className="rounded-xl border bg-white shadow-sm p-4">
                     <EngagementRow
                       engagement={item.engagement}
                       showConnector={false}
                       onReply={handleReplyOpen}
+                      useHeader
                     />
+                    </div>
                     {index < engagementItems.length - 1 && <Separator />}
                   </div>
                 );
               }
 
               const latest = item.engagements[0];
+              const isExpanded = expandedThreads.has(item.ticketId);
+              const latestTimestamp = latest
+                ? format(
+                    new Date(
+                      latest.source === EngagementSource.NOTE
+                        ? latest.createdAt
+                        : latest.engagedAt,
+                    ),
+                    "PPp",
+                  )
+                : null;
+              const latestPreview = latest
+                ? getPreviewText(latest.message)
+                : "";
+              const latestBy = latest?.userName || "Unknown sender";
               return (
-                <div key={`thread-${item.ticketId}`} className="space-y-3">
-                  <div className="rounded-md border bg-muted/30 px-4 py-3">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-semibold">
-                          Zammad Ticket #{item.ticketId}
+                <div
+                  key={`thread-${item.ticketId}`}
+                  className="rounded-xl border bg-white shadow-sm"
+                >
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className="w-full text-left px-4 py-3 border-b bg-muted/10 hover:bg-muted/20 transition-colors cursor-pointer"
+                    onClick={() => toggleThread(item.ticketId)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        toggleThread(item.ticketId);
+                      }
+                    }}
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                        <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 uppercase tracking-wide">
+                          Thread ({item.engagements.length} messages)
+                        </span>
+                          <span className="text-xs text-muted-foreground">
+                            Ticket #{item.ticketId}
+                          </span>
+                        </div>
+                        <p className="text-base font-semibold">
+                          {latest?.subject || "Zammad ticket update"}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.engagements.length} messages
-                        </p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {latestTimestamp && <span>{latestTimestamp}</span>}
+                          <span>• Last by {latestBy}</span>
+                        </div>
+                        {latestPreview && (
+                          <p className="text-sm text-muted-foreground">
+                            {latestPreview}
+                          </p>
+                        )}
                       </div>
-                      {latest ? (
+                      <div
+                        className="flex items-center gap-2"
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         <Button
                           variant="outline"
                           size="sm"
                           className="h-7 px-2 text-xs"
-                          onClick={() => handleReplyOpen(latest)}
+                          onClick={() => toggleThread(item.ticketId)}
                         >
-                          Reply
+                          {isExpanded ? "Collapse" : "Open thread"}
                         </Button>
-                      ) : null}
+                        {latest ? (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => handleReplyOpen(latest)}
+                          >
+                            Reply
+                          </Button>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    {item.engagements.map((engagement, idx) => (
-                      <div key={engagement.id}>
-                        <EngagementRow
-                          engagement={engagement}
-                          showConnector={idx < item.engagements.length - 1}
-                          onReply={handleReplyOpen}
-                        />
-                        {idx < item.engagements.length - 1 && <Separator />}
-                      </div>
-                    ))}
-                  </div>
+                  {isExpanded && (
+                    <div className="space-y-4 p-4">
+                      {item.engagements.map((engagement, idx) => (
+                        <div
+                          key={engagement.id}
+                          className="rounded-lg border bg-white shadow-sm px-4 py-3"
+                        >
+                          <EngagementRow
+                            engagement={engagement}
+                            showConnector={idx < item.engagements.length - 1}
+                            onReply={handleReplyOpen}
+                            useHeader
+                          />
+                          {idx < item.engagements.length - 1 && (
+                            <Separator className="mt-4" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {index < engagementItems.length - 1 && <Separator />}
                 </div>
               );
