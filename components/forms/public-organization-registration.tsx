@@ -267,7 +267,7 @@ export default function PublicOrganizationRegistration({
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-4">
                     <FileUpload
                       label="Organization logo"
                       onFileUpload={(fileUrl) =>
