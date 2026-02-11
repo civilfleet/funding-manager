@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -145,6 +146,8 @@ export function DataTable<TData, TValue>({
 
   const effectiveView = isMobile ? "card" : view;
   const showMapToggle = Boolean(renderMap);
+  const hasBatchActions = selectable && Boolean(renderBatchActions);
+  const showBatchActions = hasBatchActions && selectedRows.length > 0;
 
   return (
     <div className="w-full">
@@ -190,9 +193,19 @@ export function DataTable<TData, TValue>({
           </div>
         )}
       </div>
-      {selectable && selectedRows.length > 0 && renderBatchActions && (
-        <div className="flex items-center justify-between gap-3 px-3 pb-2">
-          {renderBatchActions({ selectedRows, clearSelection })}
+      {hasBatchActions && (
+        <div
+          className={cn(
+            "min-h-11 px-3 pb-2 transition-opacity",
+            showBatchActions ? "opacity-100" : "opacity-0",
+          )}
+          aria-hidden={!showBatchActions}
+        >
+          {showBatchActions ? (
+            <div className="flex items-center justify-between gap-3">
+              {renderBatchActions?.({ selectedRows, clearSelection })}
+            </div>
+          ) : null}
         </div>
       )}
 
