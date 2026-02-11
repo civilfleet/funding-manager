@@ -13,6 +13,13 @@ import StrategicPrioritiesForm from "@/components/forms/strategic-priorities";
 import TeamModulesForm from "@/components/forms/team-modules";
 import ZammadIntegration from "@/components/forms/zammad-integration";
 import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +42,16 @@ const VALID_TABS = [
   "integrations",
 ] as const;
 type TabValue = (typeof VALID_TABS)[number];
+
+const TAB_OPTIONS: Array<{ value: TabValue; label: string }> = [
+  { value: "general", label: "General Settings" },
+  { value: "email-templates", label: "Email Templates" },
+  { value: "form-configuration", label: "Funding Request Form" },
+  { value: "event-types", label: "Event Types" },
+  { value: "event-roles", label: "Event Roles" },
+  { value: "organization-types", label: "Organization Types" },
+  { value: "integrations", label: "Integrations" },
+];
 
 export default function TeamSettingsTabs({
   teamId,
@@ -90,16 +107,27 @@ export default function TeamSettingsTabs({
       onValueChange={handleTabChange}
       className="space-y-8"
     >
-      <TabsList className="grid w-full grid-cols-7">
-        <TabsTrigger value="general">General Settings</TabsTrigger>
-        <TabsTrigger value="email-templates">Email Templates</TabsTrigger>
-        <TabsTrigger value="form-configuration">
-          Funding Request Form
-        </TabsTrigger>
-        <TabsTrigger value="event-types">Event Types</TabsTrigger>
-        <TabsTrigger value="event-roles">Event Roles</TabsTrigger>
-        <TabsTrigger value="organization-types">Organization Types</TabsTrigger>
-        <TabsTrigger value="integrations">Integrations</TabsTrigger>
+      <div className="sm:hidden">
+        <Select value={activeTab} onValueChange={handleTabChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select section" />
+          </SelectTrigger>
+          <SelectContent>
+            {TAB_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <TabsList className="hidden w-full grid-cols-7 sm:grid">
+        {TAB_OPTIONS.map((option) => (
+          <TabsTrigger key={option.value} value={option.value}>
+            {option.label}
+          </TabsTrigger>
+        ))}
       </TabsList>
 
       <TabsContent value="general" className="space-y-8">
