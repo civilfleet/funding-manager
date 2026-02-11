@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import logger from "@/lib/logger";
 
 export async function GET(
   _request: Request,
@@ -151,7 +152,7 @@ export async function PATCH(
 
     return NextResponse.json(team);
   } catch (error) {
-    console.error("Error updating team:", error);
+    logger.error({ error }, "Error updating team");
     return NextResponse.json(
       { error: "Failed to update team" },
       { status: 500 },

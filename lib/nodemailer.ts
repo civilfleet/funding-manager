@@ -4,13 +4,14 @@ import nodemailer from "nodemailer";
 import path from "node:path";
 import type { EMAIL_CONTENT } from "@/types";
 import config, { mailProvider } from "../config/mail";
+import logger from "@/lib/logger";
 
 const transporter = nodemailer.createTransport({
   ...config,
 });
 
 // Log the email provider being used
-console.info(`[mail] Email provider configured: ${mailProvider}`);
+logger.info({ provider: mailProvider }, "Email provider configured");
 
 const templateCache = new Map<string, handlebars.TemplateDelegate>();
 
@@ -51,12 +52,12 @@ async function sendEmail(
       template: emailContent.template ?? "inline-content",
     };
 
-    console.info("[mail] Dispatching email", {
+    logger.info({
       to,
       subject,
       template,
       hasContent: Boolean(emailContent.content),
-    });
+    }, "Dispatching email");
 
     // Determine sender email
     const senderEmail =
@@ -69,21 +70,21 @@ async function sendEmail(
       html,
     });
 
-    console.info("[mail] Email dispatched", {
+    logger.info({
       to,
       subject,
       messageId: info.messageId,
       response: info.response,
-    });
+    }, "Email dispatched");
 
     return info;
   } catch (error) {
-    console.error("[mail] Error sending email", {
+    logger.error({
       to: emailContent.to,
       subject: emailContent.subject,
       template: emailContent.template ?? "inline-content",
       error,
-    });
+    }, "Error sending email");
     throw error;
   }
 }

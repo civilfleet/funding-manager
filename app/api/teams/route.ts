@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { Roles } from "@/types";
+import logger from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(team);
   } catch (error) {
-    console.error("Error creating team:", error);
+    logger.error({ error }, "Error creating team");
     return NextResponse.json(
       { error: "Failed to create team" },
       { status: 500 },

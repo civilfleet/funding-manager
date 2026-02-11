@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { ensureTeamOwner } from "@/services/teams";
+import logger from "@/lib/logger";
 
 export async function GET(
   _request: Request,
@@ -37,7 +38,7 @@ export async function GET(
       { status: 200 },
     );
   } catch (error) {
-    console.error("Error fetching team users:", error);
+    logger.error({ error }, "Error fetching team users");
     return NextResponse.json(
       { error: "Failed to fetch team users" },
       { status: 500 },

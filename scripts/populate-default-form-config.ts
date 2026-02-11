@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import logger from "../lib/logger";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -10,7 +11,7 @@ const prisma = new PrismaClient({ adapter });
 
 async function populateDefaultFormConfiguration() {
   try {
-    console.log("Starting form configuration population...");
+    logger.info("Starting form configuration population...");
 
     // Get all teams that don't have form configuration yet
     const teams = await prisma.teams.findMany({
@@ -25,10 +26,16 @@ async function populateDefaultFormConfiguration() {
       },
     });
 
-    console.log(`Found ${teams.length} teams without form configuration`);
+    logger.info(
+      { count: teams.length },
+      "Found teams without form configuration",
+    );
 
     for (const team of teams) {
-      console.log(`Creating default configuration for team: ${team.name}`);
+      logger.info(
+        { teamId: team.id, teamName: team.name },
+        "Creating default configuration for team",
+      );
 
       await prisma.$transaction(async (tx) => {
         // Create Basic Information section
@@ -155,12 +162,15 @@ async function populateDefaultFormConfiguration() {
         });
       });
 
-      console.log(`✓ Created default configuration for team: ${team.name}`);
+      logger.info(
+        { teamId: team.id, teamName: team.name },
+        "Created default configuration for team",
+      );
     }
 
-    console.log("Form configuration population completed successfully!");
+    logger.info("Form configuration population completed successfully");
   } catch (error) {
-    console.error("Error populating form configurations:", error);
+    logger.error({ error }, "Error populating form configurations");
     throw error;
   } finally {
     await prisma.$disconnect();
@@ -172,11 +182,11 @@ async function populateDefaultFormConfiguration() {
 if (require.main === module) {
   populateDefaultFormConfiguration()
     .then(() => {
-      console.log("Script completed successfully");
+      logger.info("Script completed successfully");
       process.exit(0);
     })
     .catch((error) => {
-      console.error("Script failed:", error);
+      logger.error({ error }, "Script failed");
       process.exit(1);
     });
 }

@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import logger from "@/lib/logger";
 import { FundingStatus } from "@/types";
 
 type CreateTransaction = {
@@ -82,7 +83,7 @@ const getTransactions = async ({
     };
   }
 
-  console.log("where", where);
+  logger.debug({ where }, "Transactions query filters");
   const response = await prisma.transaction.findMany({
     where,
     include: {

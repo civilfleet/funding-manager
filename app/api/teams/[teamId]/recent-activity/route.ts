@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import logger from "@/lib/logger";
 
 export async function GET(
   _request: NextRequest,
@@ -176,7 +177,7 @@ export async function GET(
       activities: sortedActivities,
     });
   } catch (error) {
-    console.error("Error fetching team recent activity:", error);
+    logger.error({ error }, "Error fetching team recent activity");
     return NextResponse.json(
       { error: "Failed to fetch recent activity" },
       { status: 500 },

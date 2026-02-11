@@ -3,6 +3,7 @@
 import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import s3Client from "@/lib/s3-client";
+import logger from "@/lib/logger";
 
 import { cleanFileName } from "@/lib/utils";
 
@@ -28,7 +29,7 @@ export const uploadFile = async ({
 
     return putUrl;
   } catch (error) {
-    console.error("Error uploading file to S3:", error);
+    logger.error({ error, fileName, fileType }, "Error uploading file to S3");
     throw error;
   }
 };
@@ -45,7 +46,7 @@ export const deleteFile = async (fileKey: string) => {
     await s3Client.send(command);
     return { success: true, message: "File deleted successfully" };
   } catch (error) {
-    console.error("Error deleting file from S3:", error);
+    logger.error({ error, fileKey }, "Error deleting file from S3");
     throw new Error("Error deleting file");
   }
 };

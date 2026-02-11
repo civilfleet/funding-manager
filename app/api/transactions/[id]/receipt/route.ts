@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { handlePrismaError } from "@/lib/utils";
 import { updateTransactionReceipt } from "@/services/transactions";
+import logger from "@/lib/logger";
 
 export async function PATCH(
   request: Request,
@@ -23,7 +24,7 @@ export async function PATCH(
 
     return NextResponse.json(transaction);
   } catch (error) {
-    console.error("[TRANSACTION_RECEIPT_PATCH]", error);
+    logger.error({ error }, "[TRANSACTION_RECEIPT_PATCH]");
     const errorMessage = handlePrismaError(error);
     return new NextResponse(JSON.stringify({ error: errorMessage }), {
       status: 500,

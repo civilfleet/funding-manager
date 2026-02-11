@@ -5,6 +5,7 @@ import { sendEmail } from "@/lib/nodemailer";
 import { APP_NAME } from "@/constants/app";
 import { getAppUrl, getLoginUrl, handlePrismaError } from "@/lib/utils";
 import prisma from "@/lib/prisma";
+import logger from "@/lib/logger";
 import {
   createOrUpdateOrganization,
   getOrganizations,
@@ -46,7 +47,13 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const organizationData = await req.json();
-    console.log(organizationData, "organizationData");
+    logger.debug(
+      {
+        teamId: organizationData?.teamId,
+        isFilledByOrg: organizationData?.isFilledByOrg,
+      },
+      "Organization create request received",
+    );
     const validatedData = createOrganizationSchema
       .and(z.object({ teamId: z.string().uuid() }))
       .and(z.object({ isFilledByOrg: z.boolean() }))
@@ -125,7 +132,7 @@ export async function POST(req: Request) {
     );
   } catch (e) {
     const { message } = handlePrismaError(e);
-    console.log(message, "message");
+    logger.error({ message }, "Organization create failed");
     return NextResponse.json(
       { error: message },
       { status: 400, statusText: message },

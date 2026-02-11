@@ -8,6 +8,7 @@ import https from "node:https";
 import { Client } from "pg";
 import { from as copyFrom } from "pg-copy-streams";
 import yauzl from "yauzl";
+import logger from "../lib/logger";
 
 const DEFAULT_URL = "https://download.geonames.org/export/zip/allCountries.zip";
 const ZIP_NAME = "allCountries.zip";
@@ -183,13 +184,13 @@ const run = async () => {
   if (!providedPostalFile) {
     const url = process.env.POSTAL_URL ?? DEFAULT_URL;
 
-    console.log(`Downloading ${url}...`);
+    logger.info({ url }, "Downloading postal centroid data");
     await downloadFile(url, zipPath);
 
-    console.log("Extracting allCountries.txt...");
+    logger.info("Extracting allCountries.txt...");
     await extractPostalFile(zipPath, extractedPath);
   } else if (isProvidedZip) {
-    console.log("Extracting allCountries.txt from provided zip...");
+    logger.info("Extracting allCountries.txt from provided zip...");
     await extractPostalFile(resolvedPostalFile, extractedPath);
   }
 
@@ -197,17 +198,17 @@ const run = async () => {
     throw new Error(`Postal file not found at ${postalFilePath}`);
   }
 
-  console.log("Importing into database...");
+  logger.info("Importing into database...");
   await importPostalData(databaseUrl, postalFilePath);
 
   if (shouldCleanup) {
     await rm(tempRoot, { recursive: true, force: true });
   }
 
-  console.log("Postal code centroid import complete.");
+  logger.info("Postal code centroid import complete.");
 };
 
 run().catch((error) => {
-  console.error(error);
+  logger.error({ error }, "Postal centroid import failed");
   process.exitCode = 1;
 });

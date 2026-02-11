@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { handlePrismaError } from "@/lib/utils";
 import { deleteUser, getUserById } from "@/services/users";
+import logger from "@/lib/logger";
 
 export async function GET(
   _req: Request,
@@ -26,7 +27,8 @@ export async function DELETE(
     await deleteUser(userId, organizationId, teamId);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting user:", error);
+    const { userId } = await params;
+    logger.error({ error, userId }, "Error deleting user");
     return NextResponse.json(
       { error: "Failed to delete user" },
       { status: 500 },

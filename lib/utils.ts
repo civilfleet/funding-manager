@@ -2,6 +2,7 @@
 import { Prisma } from "@prisma/client";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import logger from "@/lib/logger";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -9,7 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function handlePrismaError(error: unknown): Error {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    console.error(`Prisma Error (${error.code}):`, error.message);
+    logger.error({ code: error.code, message: error.message }, "Prisma error");
 
     switch (error.code) {
       case "P2002":
@@ -21,19 +22,19 @@ export function handlePrismaError(error: unknown): Error {
         return new Error(`Database error: ${error.code}`);
     }
   } else if (error instanceof Prisma.PrismaClientValidationError) {
-    console.error("Validation Error:", error.message);
+    logger.error({ message: error.message }, "Prisma validation error");
     return new Error("Invalid input data format.");
   } else if (error instanceof Error) {
     // Handle regular Error objects
-    console.error("Error:", error.message);
+    logger.error({ message: error.message }, "Error");
     return error;
   } else if (typeof error === "string") {
     // Handle string errors
-    console.error("Error:", error);
+    logger.error({ message: error }, "Error");
     return new Error(error);
   }
 
-  console.error("Unexpected Error:", error);
+  logger.error({ error }, "Unexpected error");
   return new Error("Operation failed! Please try again later.");
 }
 

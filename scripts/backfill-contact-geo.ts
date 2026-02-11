@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { normalizeCountryCode } from "@/lib/countries";
 import { normalizePostalCode } from "@/lib/geo";
+import logger from "../lib/logger";
 
 const BATCH_SIZE = Number(process.env.BATCH_SIZE ?? 200);
 const DRY_RUN = process.env.DRY_RUN === "1";
@@ -77,7 +78,7 @@ const run = async () => {
     lastId = contacts[contacts.length - 1]?.id;
   }
 
-  console.log(
+  logger.info(
     DRY_RUN
       ? `Dry run complete. ${updatedCount} contacts would be updated.`
       : `Backfill complete. Updated ${updatedCount} contacts.`,
@@ -86,7 +87,7 @@ const run = async () => {
 
 run()
   .catch((error) => {
-    console.error(error);
+    logger.error({ error }, "Backfill contact geo failed");
     process.exitCode = 1;
   })
   .finally(async () => {

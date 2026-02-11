@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import logger from "@/lib/logger";
 
 const fieldOptionSchema = z.object({
   label: z.string(),
@@ -99,7 +100,7 @@ export async function GET(
 
     return NextResponse.json({ sections: sectionsWithParsedOptions });
   } catch (error) {
-    console.error("Error fetching form configuration:", error);
+    logger.error({ error }, "Error fetching form configuration");
     return NextResponse.json(
       { error: "Failed to fetch form configuration" },
       { status: 500 },
@@ -181,7 +182,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error updating form configuration:", error);
+    logger.error({ error }, "Error updating form configuration");
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

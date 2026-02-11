@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import logger from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -166,7 +167,7 @@ export async function GET() {
       activities: sortedActivities,
     });
   } catch (error) {
-    console.error("Error fetching recent activity:", error);
+    logger.error({ error }, "Error fetching recent activity");
     return NextResponse.json(
       { error: "Failed to fetch recent activity" },
       { status: 500 },

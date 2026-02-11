@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/nodemailer";
+import logger from "@/lib/logger";
 import {
   getDonationAgreementPastEightWeeks,
   getDonationAgreementPastSevenDays,
@@ -60,7 +61,7 @@ export async function GET() {
       message: "Reminders sent successfully",
     });
   } catch (error) {
-    console.error("Error in cron job:", error);
+    logger.error({ error }, "Error in cron job");
     return NextResponse.json(
       { success: false, message: "Failed to send reminders" },
       { status: 500 },

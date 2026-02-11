@@ -1,6 +1,7 @@
 import { Prisma, Roles } from "@prisma/client";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import logger from "@/lib/logger";
 import type { OrganizationFieldFilter } from "@/validations/organization-filters";
 
 type Organization = {
@@ -611,7 +612,7 @@ const deleteOrganization = async (id: string) => {
 
     return true;
   } catch (error) {
-    console.error("Error deleting organization:", error);
+    logger.error({ error, organizationId: id }, "Error deleting organization");
     throw error;
   }
 };
