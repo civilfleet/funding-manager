@@ -15,7 +15,7 @@ export default async function FundingRequest({
 
   return (
     <div>
-      <div className="container p-8">
+      <div className="container px-4 py-6 sm:p-8">
         <FundingRequestData fundingRequestId={id} isTeam={isTeam} />
       </div>
     </div>

@@ -103,13 +103,13 @@ export default function FundingRequestHeader({
 
   return (
     <div
-      className={`shadow-lg ${getStatusColor()} rounded-xl p-8 mb-8 dark:bg-gray-900`}
+      className={`shadow-lg ${getStatusColor()} rounded-xl p-4 sm:p-6 lg:p-8 mb-8 dark:bg-gray-900`}
     >
       <div className="space-y-8">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                 Funding Request
               </h1>
               <StatusBadge status={currentStatus} />

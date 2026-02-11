@@ -339,37 +339,53 @@ export default async function ContactDetailPage({
                     </CardTitle>
                     <CardDescription>Contact Details</CardDescription>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button asChild variant="outline">
+                  <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                    <Button asChild variant="outline" className="w-full sm:w-auto">
                       <Link href={`/teams/${teamId}/crm/contacts/${id}/edit`}>
                         Edit Contact
                       </Link>
                     </Button>
-                    <DeleteContactButton
-                      teamId={teamId}
-                      contactId={id}
-                      contactName={contact.name}
-                    />
+                    <div className="w-full sm:w-auto [&>*]:w-full sm:[&>*]:w-auto">
+                      <DeleteContactButton
+                        teamId={teamId}
+                        contactId={id}
+                        contactName={contact.name}
+                      />
+                    </div>
                   </div>
                 </div>
               </CardHeader>
 
               <CardContent className="pt-6">
                 <Tabs defaultValue="general" className="w-full">
-                  <TabsList className="mb-6 mt-4 flex flex-wrap">
-                    <TabsTrigger value="general">General</TabsTrigger>
-                    <TabsTrigger value="engagements">Engagements</TabsTrigger>
+                  <div className="-mx-2 mb-4 mt-4 overflow-x-auto px-2">
+                    <TabsList className="inline-flex h-auto w-max min-w-full items-center justify-start gap-1 whitespace-nowrap">
+                    <TabsTrigger value="general" className="px-2.5 text-xs sm:px-3 sm:text-sm">
+                      General
+                    </TabsTrigger>
+                    <TabsTrigger value="engagements" className="px-2.5 text-xs sm:px-3 sm:text-sm">
+                      Engagements
+                    </TabsTrigger>
                     {showSupervisionTab && (
-                      <TabsTrigger value="supervision">Supervision</TabsTrigger>
+                      <TabsTrigger value="supervision" className="px-2.5 text-xs sm:px-3 sm:text-sm">
+                        Supervision
+                      </TabsTrigger>
                     )}
                     {showEventsTab && (
-                      <TabsTrigger value="events">Events</TabsTrigger>
+                      <TabsTrigger value="events" className="px-2.5 text-xs sm:px-3 sm:text-sm">
+                        Events
+                      </TabsTrigger>
                     )}
                     {showShopTab && (
-                      <TabsTrigger value="shop">Shop</TabsTrigger>
+                      <TabsTrigger value="shop" className="px-2.5 text-xs sm:px-3 sm:text-sm">
+                        Shop
+                      </TabsTrigger>
                     )}
-                    <TabsTrigger value="attributes">Attributes</TabsTrigger>
-                  </TabsList>
+                    <TabsTrigger value="attributes" className="px-2.5 text-xs sm:px-3 sm:text-sm">
+                      Attributes
+                    </TabsTrigger>
+                    </TabsList>
+                  </div>
 
                   <TabsContent value="general" className="space-y-6">
                     <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
@@ -403,14 +419,14 @@ export default async function ContactDetailPage({
                                     {href ? (
                                       <a
                                         href={href}
-                                        className="text-base hover:underline"
+                                        className="text-base break-words hover:underline"
                                         target={newTab ? "_blank" : undefined}
                                         rel={newTab ? "noreferrer" : undefined}
                                       >
                                         {value}
                                       </a>
                                     ) : (
-                                      <p className="text-base">{value}</p>
+                                      <p className="text-base break-words">{value}</p>
                                     )}
                                   </div>
                                 </div>
