@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
@@ -234,6 +235,18 @@ export default function EventTable({ teamId }: EventTableProps) {
             data={events}
             renderCard={renderEventCard}
             initialView="table"
+            toolbar={
+              <Link href={`/teams/${teamId}/crm/events/create`} aria-label="Add event">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="hidden gap-2 px-3 sm:inline-flex"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add event</span>
+                </Button>
+              </Link>
+            }
             selectable
             renderBatchActions={({ selectedRows, clearSelection }) => (
               <div className="flex flex-wrap items-center gap-3">
@@ -274,6 +287,21 @@ export default function EventTable({ teamId }: EventTableProps) {
           />
         )}
       </div>
+
+      <Link
+        href={`/teams/${teamId}/crm/events/create`}
+        aria-label="Add event"
+        className="fixed bottom-5 right-5 z-40 sm:hidden"
+      >
+        <Button
+          type="button"
+          size="icon"
+          className="h-12 w-12 rounded-full shadow-lg"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="sr-only">Add event</span>
+        </Button>
+      </Link>
     </div>
   );
 }
