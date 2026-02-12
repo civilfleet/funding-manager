@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Filter, Loader2, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
@@ -951,6 +952,21 @@ export default function ContactTable({ teamId }: ContactTableProps) {
             renderCard={renderCard}
             renderMap={() => <ContactMap contacts={contacts} />}
             initialView="table"
+            toolbar={
+              <Link
+                href={`/teams/${teamId}/crm/contacts/create`}
+                aria-label="Add contact"
+              >
+                <Button
+                  type="button"
+                  size="sm"
+                  className="hidden gap-2 px-3 sm:inline-flex"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add contact</span>
+                </Button>
+              </Link>
+            }
             selectable
             renderBatchActions={({ selectedRows, clearSelection }) => (
               <div className="flex flex-wrap items-center gap-3">
@@ -991,6 +1007,21 @@ export default function ContactTable({ teamId }: ContactTableProps) {
           />
         )}
       </div>
+
+      <Link
+        href={`/teams/${teamId}/crm/contacts/create`}
+        aria-label="Add contact"
+        className="fixed bottom-5 right-5 z-40 sm:hidden"
+      >
+        <Button
+          type="button"
+          size="icon"
+          className="h-12 w-12 rounded-full shadow-lg"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="sr-only">Add contact</span>
+        </Button>
+      </Link>
     </div>
   );
 }
