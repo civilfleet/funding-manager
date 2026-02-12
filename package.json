@@ -98,8 +98,6 @@
   },
   "resolutions": {
     "@auth/core": "0.41.1",
-    "@types/react": "19.2.8",
-    "@types/react-dom": "19.2.3",
     "glob": ">=10.5.0",
     "js-yaml": ">=4.1.1"
   }
