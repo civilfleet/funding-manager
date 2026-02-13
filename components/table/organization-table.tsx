@@ -33,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Loader2 } from "lucide-react";
 
 const querySchema = z.object({
   query: z.string(),
@@ -67,6 +67,7 @@ export default function OrganizationTable({
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
   const [fieldFilters, setFieldFilters] = useState<FieldFilter[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
   const resolvedBasePath = (basePath ?? pathname).replace(/\/$/, "");
 
   const form = useForm<z.infer<typeof querySchema>>({
@@ -152,6 +153,58 @@ export default function OrganizationTable({
   async function onSubmit(values: z.infer<typeof querySchema>) {
     form.setValue("query", values.query); // Triggers SWR to re-fetch
   }
+
+  const handleDeleteSelected = async (
+    selectedRows: OrganizationColumns[],
+    clearSelection: () => void,
+  ) => {
+    if (!selectedRows.length) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const results = await Promise.allSettled(
+        selectedRows.map((organization) =>
+          fetch(`/api/organizations/${organization.id}`, {
+            method: "DELETE",
+          }),
+        ),
+      );
+
+      const failed = results.filter((result) => {
+        if (result.status !== "fulfilled") {
+          return true;
+        }
+        return !result.value.ok;
+      }).length;
+
+      await mutate();
+      clearSelection();
+
+      if (failed > 0) {
+        toast({
+          title: "Organizations partially deleted",
+          description: `${selectedRows.length - failed} deleted, ${failed} failed.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Organizations deleted",
+        description: `${selectedRows.length} organization${selectedRows.length === 1 ? "" : "s"} deleted.`,
+      });
+    } catch (_deleteError) {
+      toast({
+        title: "Unable to delete organizations",
+        description: "An unexpected error occurred while deleting organizations.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="my-2 flex flex-col gap-4">
@@ -327,6 +380,46 @@ export default function OrganizationTable({
               columns={columns(mutate, resolvedBasePath)}
               data={data?.data}
               initialView="table"
+              selectable
+              renderBatchActions={({ selectedRows, clearSelection }) => (
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-sm text-muted-foreground">
+                    {selectedRows.length} selected
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      disabled={isDeleting}
+                      onClick={() =>
+                        handleDeleteSelected(
+                          selectedRows as OrganizationColumns[],
+                          clearSelection,
+                        )
+                      }
+                    >
+                      {isDeleting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        "Delete selected"
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={isDeleting || selectedRows.length === 0}
+                      onClick={clearSelection}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+              )}
               renderCard={(org: OrganizationColumns) => (
                 <Card className="h-full">
                   <CardHeader>

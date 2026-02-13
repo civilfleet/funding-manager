@@ -1,9 +1,10 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 
@@ -54,7 +55,6 @@ function OrganizationActions({
   basePath: string;
 }) {
   const { toast } = useToast();
-  const _router = useRouter();
 
   const handleDelete = async () => {
     try {
@@ -107,7 +107,9 @@ export const columns = (
 ): ColumnDef<OrganizationColumns>[] => [
   {
     accessorKey: "name",
-    header: () => <div className="text-left w-24">Name</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
     cell: ({ row }) => {
       return (
         <div className="text-left font-medium">
@@ -118,7 +120,9 @@ export const columns = (
   },
   {
     accessorKey: "email",
-    header: () => <div className="text-left w-24">Email</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Email" />
+    ),
     cell: ({ row }) => {
       return (
         <div className="text-left font-medium">
@@ -129,7 +133,9 @@ export const columns = (
   },
   {
     accessorKey: "team.name",
-    header: () => <div className="text-left w-24">Team</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Team" />
+    ),
     cell: ({ row }) => {
       return (
         <div className="text-left font-medium">
@@ -140,7 +146,9 @@ export const columns = (
   },
   {
     accessorKey: "orgType.name",
-    header: () => <div className="text-left w-24">Type</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Type" />
+    ),
     cell: ({ row }) => {
       const type = row.original.orgType;
       if (!type) {
@@ -167,7 +175,9 @@ export const columns = (
   },
   {
     accessorKey: "contactPerson",
-    header: () => <div className="text-left w-24">Contact person</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Contact person" />
+    ),
     cell: ({ row }) => {
       const contact = row.original.contactPerson;
       if (!contact) {
@@ -182,7 +192,9 @@ export const columns = (
   },
   {
     accessorKey: "phone",
-    header: () => <div className="text-left max-w-24">Phone</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Phone" />
+    ),
     cell: ({ row }) => {
       return (
         <div className="text-left font-medium">
@@ -193,7 +205,9 @@ export const columns = (
   },
   {
     accessorKey: "isFilledByOrg",
-    header: () => <div className="text-left w-24">Registration Type</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Registration Type" />
+    ),
     cell: ({ row }) => {
       const isFilledByOrg = row.getValue("isFilledByOrg");
       return (
@@ -207,7 +221,9 @@ export const columns = (
   },
   {
     accessorKey: "country",
-    header: () => <div className="text-left w-24">Country</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Country" />
+    ),
     cell: ({ row }) => {
       return (
         <div className="text-left font-medium">
@@ -218,7 +234,9 @@ export const columns = (
   },
   {
     accessorKey: "website",
-    header: () => <div className="text-left w-24">Website</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Website" />
+    ),
     cell: ({ row }) => {
       const website = row.getValue("website") as string;
       const websiteUrl =
@@ -244,7 +262,9 @@ export const columns = (
   },
   {
     accessorKey: "taxID",
-    header: () => <div className="text-left w-24">Tax ID</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Tax ID" />
+    ),
     cell: ({ row }) => {
       return (
         <div className="text-left font-medium">
@@ -255,7 +275,9 @@ export const columns = (
   },
   {
     accessorKey: "bankDetails.bankName",
-    header: () => <div className="text-left w-24">Bank Name</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Bank Name" />
+    ),
     cell: ({ row }) => {
       return (
         <div className="text-left font-medium">
@@ -266,11 +288,13 @@ export const columns = (
   },
   {
     accessorKey: "createdAt",
-    header: () => <div className="text-left w-24">Created At</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Created At" />
+    ),
     cell: ({ row }) => {
       return (
         <div className="text-left font-medium">
-          {new Date(row.getValue("createdAt")).toLocaleDateString() || "N/A"}
+          {format(new Date(row.getValue("createdAt")), "PP")}
         </div>
       );
     },
