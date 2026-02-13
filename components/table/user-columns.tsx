@@ -1,8 +1,10 @@
 import type { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
 import { Crown, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
+import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -35,7 +37,9 @@ const NavigableCell = ({
 export const columns: ColumnDef<User & { isOwner?: boolean }>[] = [
   {
     accessorKey: "name",
-    header: () => <div className="text-left w-36">Name</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
     cell: ({ row }) => (
       <NavigableCell
         id={row.original.id}
@@ -53,7 +57,9 @@ export const columns: ColumnDef<User & { isOwner?: boolean }>[] = [
   },
   {
     accessorKey: "email",
-    header: () => <div className="text-left w-36">Email</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Email" />
+    ),
     cell: ({ row }) => (
       <NavigableCell id={row.original.id}>
         {row.original?.email || "N/A"}
@@ -62,7 +68,9 @@ export const columns: ColumnDef<User & { isOwner?: boolean }>[] = [
   },
   {
     accessorKey: "phone",
-    header: () => <div className="text-left w-36">Phone</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Phone" />
+    ),
     cell: ({ row }) => (
       <NavigableCell id={row.original.id}>
         {row.original?.phone || "N/A"}
@@ -71,7 +79,9 @@ export const columns: ColumnDef<User & { isOwner?: boolean }>[] = [
   },
   {
     accessorKey: "city",
-    header: () => <div className="text-left w-36">City</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="City" />
+    ),
     cell: ({ row }) => (
       <NavigableCell id={row.original.id}>
         {row.original?.city || "N/A"}
@@ -80,7 +90,9 @@ export const columns: ColumnDef<User & { isOwner?: boolean }>[] = [
   },
   {
     accessorKey: "country",
-    header: () => <div className="text-left w-36">Country</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Country" />
+    ),
     cell: ({ row }) => (
       <NavigableCell id={row.original.id}>
         {row.original?.country || "N/A"}
@@ -89,7 +101,9 @@ export const columns: ColumnDef<User & { isOwner?: boolean }>[] = [
   },
   {
     accessorKey: "roles",
-    header: () => <div className="text-left w-36">Roles</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Roles" />
+    ),
     cell: ({ row }) => (
       <NavigableCell id={row.original.id}>
         {Array.isArray(row.original?.roles)
@@ -100,7 +114,9 @@ export const columns: ColumnDef<User & { isOwner?: boolean }>[] = [
   },
   {
     accessorKey: "groups",
-    header: () => <div className="text-left w-48">Groups</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Groups" />
+    ),
     cell: ({ row }) => {
       const groups = row.original?.groups;
       if (!groups || groups.length === 0) {
@@ -130,22 +146,26 @@ export const columns: ColumnDef<User & { isOwner?: boolean }>[] = [
   },
   {
     accessorKey: "createdAt",
-    header: () => <div className="text-left w-36">Created At</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Created At" />
+    ),
     cell: ({ row }) => (
       <NavigableCell id={row.original.id}>
         {row.original?.createdAt
-          ? new Date(row.original.createdAt).toLocaleDateString()
+          ? format(new Date(row.original.createdAt), "PP")
           : "N/A"}
       </NavigableCell>
     ),
   },
   {
     accessorKey: "updatedAt",
-    header: () => <div className="text-left w-36">Updated At</div>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Updated At" />
+    ),
     cell: ({ row }) => (
       <NavigableCell id={row.original.id}>
         {row.original?.updatedAt
-          ? new Date(row.original.updatedAt).toLocaleDateString()
+          ? format(new Date(row.original.updatedAt), "PP")
           : "N/A"}
       </NavigableCell>
     ),
