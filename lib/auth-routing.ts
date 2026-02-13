@@ -154,6 +154,7 @@ export const loadTeamOidcProviders = async (): Promise<
     id: buildOidcProviderId(team.id),
     name: `OIDC (${team.id})`,
     type: "oidc",
+    allowDangerousEmailAccountLinking: true,
     issuer: team.oidcIssuer,
     clientId: team.oidcClientId,
     clientSecret: team.oidcClientSecret,
