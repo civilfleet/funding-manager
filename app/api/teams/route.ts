@@ -72,6 +72,7 @@ export async function POST(request: Request) {
       oidcIssuer: normalizeOptionalString(body?.oidcIssuer),
       oidcClientId: normalizeOptionalString(body?.oidcClientId),
       oidcClientSecret: normalizeOptionalString(body?.oidcClientSecret),
+      defaultOidcGroupId: normalizeOptionalString(body?.defaultOidcGroupId),
     };
     const validatedData = createTeamSchema.parse(normalizedBody);
     const {
@@ -81,6 +82,7 @@ export async function POST(request: Request) {
       oidcIssuer,
       oidcClientId,
       oidcClientSecret,
+      autoProvisionUsersFromOidc,
       user,
       phone,
       address,
@@ -103,6 +105,7 @@ export async function POST(request: Request) {
           oidcIssuer,
           oidcClientId,
           oidcClientSecret,
+          autoProvisionUsersFromOidc: Boolean(autoProvisionUsersFromOidc),
           phone,
           address,
           postalCode,

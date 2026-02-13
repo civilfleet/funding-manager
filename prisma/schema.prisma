@@ -143,6 +143,9 @@ model Teams {
   oidcIssuer  String?          @db.VarChar(500)
   oidcClientId String?         @db.VarChar(255)
   oidcClientSecret String?     @db.Text
+  autoProvisionUsersFromOidc Boolean @default(false)
+  defaultOidcGroupId String?
+  defaultOidcGroup Group? @relation("DefaultOidcGroup", fields: [defaultOidcGroupId], references: [id], onDelete: SetNull)
   domainVerificationToken String? @db.VarChar(255)
   domainVerifiedAt DateTime?   @db.Timestamptz(6)
   domainLastCheckedAt DateTime? @db.Timestamptz(6)
@@ -852,6 +855,7 @@ model Group {
   users       UserGroup[]
   contacts    Contact[]
   contactFieldAccesses ContactFieldAccess[]
+  teamsDefaultOidcFor Teams[] @relation("DefaultOidcGroup")
 
   @@unique([teamId, name])
   @@index([teamId])

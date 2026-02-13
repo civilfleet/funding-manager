@@ -3,12 +3,15 @@ import NextAuth, { type DefaultSession } from "next-auth";
 import Nodemailer from "next-auth/providers/nodemailer";
 import authConfig from "./config/auth";
 import {
+  extractEmailDomain,
   loadTeamOidcProviders,
+  normalizeLoginDomain,
   resolveExpectedProviderByEmail,
 } from "./lib/auth-routing";
 import mailConfig from "./config/mail";
 import logger from "./lib/logger";
 import prisma from "./lib/prisma";
+import { ensureDefaultGroup } from "./services/groups";
 import type { Roles } from "./types";
 
 declare module "next-auth" {
@@ -50,10 +53,146 @@ const buildAuth = async () => {
       async signIn({ user, account }) {
         if (!account || !user.email) return false;
 
-        const userExist = await prisma.user.findFirst({
+        let userExist = await prisma.user.findFirst({
           where: { email: user.email as string },
         });
-        if (!userExist) return false;
+        if (!userExist) {
+          const providerId = account.provider;
+          if (!providerId.startsWith("oidc-")) {
+            logger.warn(
+              { email: user.email, provider: providerId },
+              "Sign-in denied: user does not exist and provider is not OIDC",
+            );
+            return false;
+          }
+
+          const teamId = providerId.replace("oidc-", "");
+          const team = (await prisma.teams.findUnique({
+            where: { id: teamId },
+            select: {
+              id: true,
+              loginMethod: true,
+              loginDomain: true,
+              domainVerifiedAt: true,
+              autoProvisionUsersFromOidc: true,
+              defaultOidcGroupId: true,
+            },
+          } as any)) as
+            | {
+                id: string;
+                loginMethod?: string | null;
+                loginDomain?: string | null;
+                domainVerifiedAt?: Date | null;
+                autoProvisionUsersFromOidc?: boolean | null;
+                defaultOidcGroupId?: string | null;
+              }
+            | null;
+
+          const userEmailDomain = extractEmailDomain(user.email);
+          const teamLoginDomain = normalizeLoginDomain(team?.loginDomain);
+          const canAutoProvision = Boolean(
+            team &&
+              team.loginMethod === "OIDC" &&
+              team.domainVerifiedAt &&
+              team.autoProvisionUsersFromOidc &&
+              userEmailDomain &&
+              teamLoginDomain &&
+              userEmailDomain === teamLoginDomain,
+          );
+
+          if (!canAutoProvision) {
+            logger.warn(
+              {
+                email: user.email,
+                provider: providerId,
+                teamId,
+                hasTeam: Boolean(team),
+                loginMethod: team?.loginMethod,
+                domainVerified: Boolean(team?.domainVerifiedAt),
+                autoProvisionUsersFromOidc: Boolean(
+                  team?.autoProvisionUsersFromOidc,
+                ),
+                userEmailDomain,
+                teamLoginDomain,
+              },
+              "Sign-in denied: OIDC auto-provisioning not allowed for user",
+            );
+            return false;
+          }
+
+          try {
+            await prisma.$transaction(async (tx) => {
+              const createdUser = await tx.user.create({
+                data: {
+                  email: user.email as string,
+                  name: user.name,
+                  roles: ["Team"],
+                  teams: {
+                    connect: {
+                      id: teamId,
+                    },
+                  },
+                },
+              });
+
+              if (team?.defaultOidcGroupId) {
+                const selectedGroup = await tx.group.findFirst({
+                  where: {
+                    id: team.defaultOidcGroupId,
+                    teamId,
+                  },
+                  select: {
+                    id: true,
+                  },
+                });
+
+                if (selectedGroup) {
+                  await tx.userGroup.create({
+                    data: {
+                      userId: createdUser.id,
+                      groupId: selectedGroup.id,
+                    },
+                  });
+                  return;
+                }
+
+                logger.warn(
+                  { teamId, defaultOidcGroupId: team.defaultOidcGroupId },
+                  "Configured default OIDC group not found in team; using team default group",
+                );
+              }
+
+              const defaultGroup = await ensureDefaultGroup(teamId, tx);
+              await tx.userGroup.createMany({
+                data: [
+                  {
+                    userId: createdUser.id,
+                    groupId: defaultGroup.id,
+                  },
+                ],
+                skipDuplicates: true,
+              });
+            });
+
+            logger.info(
+              { email: user.email, teamId },
+              "Auto-provisioned user from OIDC sign-in",
+            );
+          } catch (error) {
+            logger.error(
+              { error, email: user.email, teamId },
+              "Failed to auto-provision OIDC user",
+            );
+            return false;
+          }
+
+          userExist = await prisma.user.findFirst({
+            where: { email: user.email as string },
+          });
+          if (!userExist) {
+            return false;
+          }
+        }
         try {
           const expectedProvider = await resolveExpectedProviderByEmail(user.email);
           if (expectedProvider !== account.provider) {

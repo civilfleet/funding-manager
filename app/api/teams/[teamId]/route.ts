@@ -91,6 +91,7 @@ export async function PATCH(
       oidcIssuer: normalizeOptionalString(body?.oidcIssuer),
       oidcClientId: normalizeOptionalString(body?.oidcClientId),
       oidcClientSecret: normalizeOptionalString(body?.oidcClientSecret),
+      defaultOidcGroupId: normalizeOptionalString(body?.defaultOidcGroupId),
     };
     const validatedData = updateTeamSchema.parse(normalizedBody);
     const {
@@ -100,6 +101,8 @@ export async function PATCH(
       oidcIssuer,
       oidcClientId,
       oidcClientSecret,
+      autoProvisionUsersFromOidc,
+      defaultOidcGroupId,
       registrationPageLogoKey,
       phone,
       address,
@@ -112,6 +115,14 @@ export async function PATCH(
       user,
     } = validatedData;
     const hasLoginDomain = Object.hasOwn(normalizedBody, "loginDomain");
+    const hasAutoProvisionUsersFromOidc = Object.hasOwn(
+      normalizedBody,
+      "autoProvisionUsersFromOidc",
+    );
+    const hasDefaultOidcGroupId = Object.hasOwn(
+      normalizedBody,
+      "defaultOidcGroupId",
+    );
     const loginDomain = hasLoginDomain
       ? normalizeLoginDomain(validatedData.loginDomain)
       : undefined;
@@ -120,6 +131,21 @@ export async function PATCH(
     const team = await prisma.$transaction(async (tx) => {
       // Update bank details if provided
       let bankDetailsId: string | undefined;
+      if (hasDefaultOidcGroupId && defaultOidcGroupId) {
+        const defaultGroup = await tx.group.findFirst({
+          where: {
+            id: defaultOidcGroupId,
+            teamId,
+          },
+          select: {
+            id: true,
+          },
+        });
+        if (!defaultGroup) {
+          throw new Error("Selected default OIDC group does not belong to this team");
+        }
+      }
+
       const existingTeamAuth = (await tx.teams.findUnique({
         where: { id: teamId },
         select: {
@@ -196,6 +222,12 @@ export async function PATCH(
           oidcIssuer,
           oidcClientId,
           oidcClientSecret: resolvedOidcClientSecret,
+          ...(hasAutoProvisionUsersFromOidc
+            ? { autoProvisionUsersFromOidc: Boolean(autoProvisionUsersFromOidc) }
+            : {}),
+          ...(hasDefaultOidcGroupId
+            ? { defaultOidcGroupId: defaultOidcGroupId ?? null }
+            : {}),
           phone,
           address,
           postalCode,
@@ -274,6 +306,14 @@ export async function PATCH(
         { error: error.issues[0]?.message ?? "Invalid request payload" },
         { status: 400 },
       );
+    }
+    if (error instanceof Error) {
+      if (error.message.includes("default OIDC group")) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 400 },
+        );
+      }
     }
     logger.error({ error }, "Error updating team");
     return NextResponse.json(

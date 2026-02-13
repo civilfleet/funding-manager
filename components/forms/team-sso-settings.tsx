@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 type LoginMethod = "EMAIL_MAGIC_LINK" | "OIDC";
 
@@ -32,6 +33,8 @@ type TeamAuthSettings = {
   domainVerificationToken?: string | null;
   domainVerifiedAt?: string | null;
   domainLastCheckedAt?: string | null;
+  autoProvisionUsersFromOidc?: boolean | null;
+  defaultOidcGroupId?: string | null;
 };
 
 type DomainVerificationResponse = {
@@ -45,6 +48,15 @@ type DomainVerificationResponse = {
     recordValue?: string;
     observedValues?: string[];
   };
+  error?: string;
+};
+
+type TeamGroupResponse = {
+  data?: Array<{
+    id: string;
+    name: string;
+    isDefaultGroup?: boolean;
+  }>;
   error?: string;
 };
 
@@ -66,6 +78,10 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
     `/api/teams/${teamId}`,
     fetcher,
   );
+  const { data: groupsResponse } = useSWR<TeamGroupResponse>(
+    `/api/groups?teamId=${teamId}`,
+    (url: string) => fetch(url).then((response) => response.json()),
+  );
 
   const [isSaving, setIsSaving] = useState(false);
   const [isStartingVerification, setIsStartingVerification] = useState(false);
@@ -79,6 +95,9 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
   const [domainVerificationToken, setDomainVerificationToken] = useState("");
   const [domainVerifiedAt, setDomainVerifiedAt] = useState<string | null>(null);
   const [domainLastCheckedAt, setDomainLastCheckedAt] = useState<string | null>(null);
+  const [autoProvisionUsersFromOidc, setAutoProvisionUsersFromOidc] =
+    useState(false);
+  const [defaultOidcGroupId, setDefaultOidcGroupId] = useState("");
   const [observedTxtValues, setObservedTxtValues] = useState<string[]>([]);
   const [initialSnapshot, setInitialSnapshot] = useState("");
   const [origin, setOrigin] = useState("");
@@ -110,6 +129,8 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
     setDomainVerificationToken(data.domainVerificationToken || "");
     setDomainVerifiedAt(data.domainVerifiedAt || null);
     setDomainLastCheckedAt(data.domainLastCheckedAt || null);
+    setAutoProvisionUsersFromOidc(Boolean(data.autoProvisionUsersFromOidc));
+    setDefaultOidcGroupId(data.defaultOidcGroupId || "");
 
     setInitialSnapshot(
       JSON.stringify({
@@ -117,6 +138,8 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
         loginDomain: nextLoginDomain,
         oidcIssuer: nextOidcIssuer,
         oidcClientId: nextOidcClientId,
+        autoProvisionUsersFromOidc: Boolean(data.autoProvisionUsersFromOidc),
+        defaultOidcGroupId: data.defaultOidcGroupId || "",
       }),
     );
   }, [data]);
@@ -134,6 +157,7 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
   }, [error, toast]);
 
   const isOidc = loginMethod === "OIDC";
+  const groups = groupsResponse?.data || [];
 
   const normalizedLoginDomain = normalizeDomain(loginDomain);
   const hasDomain = normalizedLoginDomain.length > 0;
@@ -171,9 +195,20 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
       loginDomain: loginDomain.trim(),
       oidcIssuer: oidcIssuer.trim(),
       oidcClientId: oidcClientId.trim(),
+      autoProvisionUsersFromOidc,
+      defaultOidcGroupId,
     });
     return currentSnapshot !== initialSnapshot || oidcClientSecret.trim().length > 0;
-  }, [initialSnapshot, loginMethod, loginDomain, oidcIssuer, oidcClientId, oidcClientSecret]);
+  }, [
+    initialSnapshot,
+    loginMethod,
+    loginDomain,
+    oidcIssuer,
+    oidcClientId,
+    oidcClientSecret,
+    autoProvisionUsersFromOidc,
+    defaultOidcGroupId,
+  ]);
 
   const copyValue = async (label: string, value: string) => {
     if (!value) {
@@ -209,6 +244,8 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
           oidcIssuer: isOidc ? oidcIssuer.trim() : "",
           oidcClientId: isOidc ? oidcClientId.trim() : "",
           oidcClientSecret: isOidc ? oidcClientSecret.trim() : "",
+          autoProvisionUsersFromOidc,
+          defaultOidcGroupId: defaultOidcGroupId || "",
         }),
       });
 
@@ -519,6 +556,59 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
                   Leave client secret empty to keep the existing secret.
                 </p>
               )}
+            </div>
+
+            <div className="space-y-3 rounded-md border p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="team-auto-provision-oidc">
+                    Auto-provision users from OIDC
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Create team user accounts automatically on first successful
+                    OIDC login for this verified domain.
+                  </p>
+                </div>
+                <Switch
+                  id="team-auto-provision-oidc"
+                  checked={autoProvisionUsersFromOidc}
+                  onCheckedChange={setAutoProvisionUsersFromOidc}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="team-default-oidc-group">
+                  Default group for auto-provisioned users
+                </Label>
+                <Select
+                  value={defaultOidcGroupId || "__none__"}
+                  onValueChange={(value) =>
+                    setDefaultOidcGroupId(value === "__none__" ? "" : value)
+                  }
+                >
+                  <SelectTrigger
+                    id="team-default-oidc-group"
+                    disabled={!autoProvisionUsersFromOidc}
+                  >
+                    <SelectValue placeholder="Select a default group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">
+                      Team default access group
+                    </SelectItem>
+                    {groups.map((group) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name}
+                        {group.isDefaultGroup ? " (Default Access)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  If no group is selected, users are added to the team default
+                  access group.
+                </p>
+              </div>
             </div>
           </>
         )}

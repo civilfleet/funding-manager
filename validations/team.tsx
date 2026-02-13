@@ -19,6 +19,8 @@ const teamSchemaBase = z.object({
     .string()
     .min(1, "OIDC client secret is required")
     .optional(),
+  autoProvisionUsersFromOidc: z.boolean().optional(),
+  defaultOidcGroupId: z.string().uuid("Invalid default OIDC group").optional().nullable(),
   registrationPageLogoKey: z.string().optional(),
   bankDetails: z
     .object({
