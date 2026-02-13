@@ -43,7 +43,7 @@ const teamSchemaBase = z.object({
   }),
 });
 
-const requireDomainForOidc = (
+const requireOidcFields = (
   value: {
     loginMethod?: (typeof teamLoginMethods)[number];
     loginDomain?: string;
@@ -52,6 +52,7 @@ const requireDomainForOidc = (
     oidcClientSecret?: string;
   },
   ctx: z.RefinementCtx,
+  options?: { requireClientSecret?: boolean },
 ) => {
   const hasDomain = Boolean(value.loginDomain?.trim());
 
@@ -79,7 +80,11 @@ const requireDomainForOidc = (
     });
   }
 
-  if (value.loginMethod === "OIDC" && !value.oidcClientSecret?.trim()) {
+  if (
+    options?.requireClientSecret &&
+    value.loginMethod === "OIDC" &&
+    !value.oidcClientSecret?.trim()
+  ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["oidcClientSecret"],
@@ -88,8 +93,12 @@ const requireDomainForOidc = (
   }
 };
 
-const createTeamSchema = teamSchemaBase.superRefine(requireDomainForOidc);
-const updateTeamSchema = teamSchemaBase.partial().superRefine(requireDomainForOidc);
+const createTeamSchema = teamSchemaBase.superRefine((value, ctx) =>
+  requireOidcFields(value, ctx, { requireClientSecret: true }),
+);
+const updateTeamSchema = teamSchemaBase.partial().superRefine((value, ctx) =>
+  requireOidcFields(value, ctx),
+);
 // Generate TypeScript type
 export type CreateTeamInput = z.infer<typeof createTeamSchema>;
 export { createTeamSchema, updateTeamSchema };

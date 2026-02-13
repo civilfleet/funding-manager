@@ -11,6 +11,7 @@ import FormConfigurationManager from "@/components/forms/form-configuration-mana
 import KlaviyoIntegration from "@/components/forms/klaviyo-integration";
 import StrategicPrioritiesForm from "@/components/forms/strategic-priorities";
 import TeamModulesForm from "@/components/forms/team-modules";
+import TeamSsoSettings from "@/components/forms/team-sso-settings";
 import ZammadIntegration from "@/components/forms/zammad-integration";
 import { Card } from "@/components/ui/card";
 import {
@@ -143,6 +144,7 @@ export default function TeamSettingsTabs({
             router.refresh();
           }}
         />
+        <TeamSsoSettings teamId={teamId} />
         <StrategicPrioritiesForm teamId={teamId} />
         <TeamModulesForm teamId={teamId} />
       </TabsContent>
