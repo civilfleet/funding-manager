@@ -57,6 +57,7 @@ export function DataTable<TData, TValue>({
   const [view, setView] = React.useState<"table" | "card" | "map">(
     isMobile ? "card" : resolvedInitialView,
   );
+  const [mobileView, setMobileView] = React.useState<"card" | "map">("card");
   const [desktopView, setDesktopView] = React.useState<"table" | "card" | "map">(
     resolvedInitialView,
   );
@@ -137,14 +138,15 @@ export function DataTable<TData, TValue>({
   }, [selectable, selectedRows, onSelectionChange]);
 
   React.useEffect(() => {
-    if (isMobile) {
-      setView("card");
-      return;
+    if (!renderMap && mobileView === "map") {
+      setMobileView("card");
     }
-    setView(desktopView);
-  }, [isMobile, desktopView]);
+    if (!isMobile) {
+      setView(desktopView);
+    }
+  }, [isMobile, desktopView, mobileView, renderMap]);
 
-  const effectiveView = isMobile ? "card" : view;
+  const effectiveView = isMobile ? mobileView : view;
   const showMapToggle = Boolean(renderMap);
   const hasBatchActions = selectable && Boolean(renderBatchActions);
   const showBatchActions = hasBatchActions && selectedRows.length > 0;
@@ -153,6 +155,26 @@ export function DataTable<TData, TValue>({
     <div className="w-full">
       <div className="flex items-center justify-between gap-2 p-3">
         <div className="flex-1 min-w-0">{toolbar}</div>
+        {isMobile && showMapToggle && (
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              size="sm"
+              variant={effectiveView === "card" ? "default" : "outline"}
+              onClick={() => setMobileView("card")}
+            >
+              <LayoutGrid className="mr-2" /> Cards
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={effectiveView === "map" ? "default" : "outline"}
+              onClick={() => setMobileView("map")}
+            >
+              <Map className="mr-2" /> Map
+            </Button>
+          </div>
+        )}
         {!isMobile && (
           <div className="flex items-center gap-1">
             <Button

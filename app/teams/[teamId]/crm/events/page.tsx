@@ -1,7 +1,5 @@
-import Link from "next/link";
 import EventsView from "@/components/events/events-view";
 import PublicEventsLinkButton from "@/components/events/public-events-link-button";
-import { Button } from "@/components/ui/button";
 
 interface EventsPageProps {
   params: Promise<{ teamId: string }>;
@@ -21,9 +19,6 @@ export default async function EventsPage({ params }: EventsPageProps) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <PublicEventsLinkButton teamId={teamId} />
-          <Link href={`/teams/${teamId}/crm/events/create`}>
-            <Button type="button">Add event</Button>
-          </Link>
         </div>
       </div>
 
