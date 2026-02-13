@@ -3,20 +3,42 @@
 import { signIn } from "@/auth";
 import { resolveExpectedProviderByEmail } from "@/lib/auth-routing";
 
-export async function sendLoginLink(formData: FormData) {
-  const email = formData.get("email")?.toString() ?? "";
+export type LoginStrategyResult =
+  | {
+      strategy: "OIDC";
+      provider: `oidc-${string}`;
+    }
+  | {
+      strategy: "EMAIL_MAGIC_LINK";
+    };
+
+export async function resolveLoginStrategy(
+  formData: FormData,
+): Promise<LoginStrategyResult> {
+  const email = formData.get("email")?.toString().trim() ?? "";
 
   try {
     const provider = await resolveExpectedProviderByEmail(email);
 
     if (provider !== "nodemailer") {
-      await signIn(provider, {
-        redirectTo: "/organizations",
-        login_hint: email,
-      });
-      return;
+      return {
+        strategy: "OIDC",
+        provider,
+      };
     }
 
+    return {
+      strategy: "EMAIL_MAGIC_LINK",
+    };
+  } catch {
+    throw new Error("Unable to sign in with this email.");
+  }
+}
+
+export async function sendMagicLoginLink(formData: FormData) {
+  const email = formData.get("email")?.toString().trim() ?? "";
+
+  try {
     await signIn("nodemailer", {
       redirect: false,
       redirectTo: "/organizations",

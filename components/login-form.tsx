@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { sendLoginLink } from "@/app/actions/auth";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import {
+  resolveLoginStrategy,
+  sendMagicLoginLink,
+} from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -9,9 +13,45 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"form">) {
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isLinkSent, setIsLinkSent] = useState(false);
   const [error, setError] = useState("");
+
+  const authError = searchParams.get("error");
+  const authErrorMessage = useMemo(() => {
+    if (!authError) {
+      return "";
+    }
+
+    const messages: Record<string, string> = {
+      OAuthSignin: "Could not start OIDC sign-in. Please try again.",
+      OAuthCallback:
+        "OIDC login failed during callback. Please check your OIDC settings.",
+      OAuthCreateAccount: "Unable to create a user from OIDC profile.",
+      EmailCreateAccount: "Unable to create your user account.",
+      Callback: "Sign-in callback failed. Please contact support.",
+      OAuthAccountNotLinked:
+        "This email is already linked to a different sign-in method.",
+      EmailSignin: "Failed to send email sign-in link.",
+      SessionRequired: "Please sign in to continue.",
+      AccessDenied:
+        "Access denied. Your account may not be allowed for this team.",
+      Verification: "The sign-in link is invalid or has expired.",
+      Default: "Login failed. Please try again.",
+      Configuration:
+        "OIDC is not configured correctly for this domain. Contact your team admin.",
+    };
+
+    return messages[authError] || messages.Default;
+  }, [authError]);
+
+  useEffect(() => {
+    if (!authErrorMessage) {
+      return;
+    }
+    setError(authErrorMessage);
+  }, [authErrorMessage]);
 
   const validateEmail = (email: string) => {
     // Simple email regex
@@ -34,10 +74,27 @@ export function LoginForm({
           }
           setError("");
           try {
-            await sendLoginLink(formData);
+            const strategy = await resolveLoginStrategy(formData);
+
+            if (strategy.strategy === "OIDC") {
+              const params = new URLSearchParams({
+                callbackUrl: "/organizations",
+                login_hint: email,
+              });
+              window.location.assign(
+                `/api/auth/signin/${strategy.provider}?${params.toString()}`,
+              );
+              return;
+            }
+
+            await sendMagicLoginLink(formData);
             setIsLinkSent(true);
-          } catch {
-            setError("Unable to sign in with this email.");
+          } catch (loginError) {
+            setError(
+              loginError instanceof Error
+                ? loginError.message
+                : "Unable to sign in with this email.",
+            );
           } finally {
             setIsLoading(false);
           }
