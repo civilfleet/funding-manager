@@ -463,14 +463,16 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold">{headerTitle}</h1>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="break-words text-3xl font-semibold">{headerTitle}</h1>
           {headerDescription && (
-            <p className="mt-1 text-muted-foreground">{headerDescription}</p>
+            <p className="mt-1 break-words text-muted-foreground">
+              {headerDescription}
+            </p>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
           {!isNewList && (
             <>
               <Badge variant="secondary">
@@ -642,7 +644,7 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
                               control={typedControl}
                               name="contactIds"
                               render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                <FormItem className="flex min-w-0 flex-row items-start space-x-3 space-y-0">
                                   <FormControl>
                                     <Checkbox
                                       checked={field.value?.includes(contact.id)}
@@ -663,9 +665,9 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
                                       }}
                                     />
                                   </FormControl>
-                                  <FormLabel className="flex flex-col gap-0.5 font-normal">
-                                    <span>{contact.name}</span>
-                                    <span className="text-xs text-muted-foreground">
+                                  <FormLabel className="flex min-w-0 flex-col gap-0.5 font-normal">
+                                    <span className="break-words">{contact.name}</span>
+                                    <span className="break-all text-xs text-muted-foreground">
                                       {[contact.email, contact.phone]
                                         .filter(Boolean)
                                         .join(" • ")}
@@ -736,7 +738,7 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
                 </div>
               )}
 
-              <div className="flex justify-end gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -804,22 +806,22 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
                 {list?.contacts.map((contact) => (
                   <div
                     key={contact.id}
-                    className="flex items-center justify-between rounded-md border p-3"
+                    className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div>
+                    <div className="min-w-0">
                       <Link
                         href={`/teams/${teamId}/crm/contacts/${contact.id}`}
-                        className="font-medium hover:underline"
+                        className="block truncate font-medium hover:underline"
                       >
                         {contact.name}
                       </Link>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="truncate text-sm text-muted-foreground">
                         {[contact.email, contact.phone]
                           .filter(Boolean)
                           .join(" • ")}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/teams/${teamId}/crm/contacts/${contact.id}/edit`}>
                           Edit

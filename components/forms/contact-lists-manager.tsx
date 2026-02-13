@@ -393,31 +393,33 @@ export default function ContactListsManager({
 
   const renderListCard = (list: ContactList) => (
     <div className="rounded-lg border bg-card p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div>
+      <div className="space-y-2">
+        <div className="min-w-0">
           <Link
             href={`/teams/${teamId}/crm/lists/${list.id}`}
-            className="text-base font-semibold hover:underline"
+            className="block break-words text-base font-semibold leading-tight hover:underline"
           >
             {list.name}
           </Link>
-          <Badge variant="outline" className="mt-1 text-xs uppercase">
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="text-xs uppercase">
             {list.type === ContactListType.SMART ? "Smart" : "Manual"}
           </Badge>
+          <Badge className="flex w-fit items-center gap-1" variant="secondary">
+            <Users className="h-3 w-3" />
+            {list.contactCount}
+          </Badge>
         </div>
-        <Badge className="flex w-fit items-center gap-1" variant="secondary">
-          <Users className="h-3 w-3" />
-          {list.contactCount}
-        </Badge>
       </div>
-      <div className="mt-3 text-sm text-muted-foreground">
+      <div className="mt-3 break-words text-sm text-muted-foreground">
         {list.description || "No description"}
       </div>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-3 grid grid-cols-2 gap-2">
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="gap-1"
+          className="justify-start gap-1"
           onClick={() => handleCopyContacts(list)}
           aria-label="Copy contacts"
         >
@@ -429,25 +431,25 @@ export default function ContactListsManager({
           Copy
         </Button>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="gap-1"
+          className="justify-start gap-1"
           onClick={() => handleExportEmails(list)}
           aria-label="Export emails"
         >
           <Download className="h-4 w-4" />
           Export
         </Button>
-        <Button asChild variant="ghost" size="sm" className="gap-1">
+        <Button asChild variant="outline" size="sm" className="justify-start gap-1">
           <Link href={`/teams/${teamId}/crm/lists/${list.id}`}>
             <Pencil className="h-4 w-4" />
             Edit
           </Link>
         </Button>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="gap-1 text-destructive hover:text-destructive"
+          className="justify-start gap-1 border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive"
           onClick={() => handleDelete(list.id, list.name)}
           aria-label="Delete list"
           disabled={deletingId === list.id || isBulkDeleting}
@@ -520,7 +522,7 @@ export default function ContactListsManager({
             toolbar={
               <div className="flex flex-wrap items-center gap-2">
                 <Select value={sortKey} onValueChange={setSortKey}>
-                  <SelectTrigger className="w-[190px]">
+                  <SelectTrigger className="w-full sm:w-[190px]">
                     <SelectValue placeholder="Sort lists" />
                   </SelectTrigger>
                   <SelectContent>
