@@ -29,6 +29,23 @@ type TeamAuthSettings = {
   oidcIssuer?: string | null;
   oidcClientId?: string | null;
   hasOidcClientSecret?: boolean;
+  domainVerificationToken?: string | null;
+  domainVerifiedAt?: string | null;
+  domainLastCheckedAt?: string | null;
+};
+
+type DomainVerificationResponse = {
+  data?: {
+    loginDomain?: string | null;
+    domainVerificationToken?: string | null;
+    domainVerifiedAt?: string | null;
+    domainLastCheckedAt?: string | null;
+    verified?: boolean;
+    recordName?: string;
+    recordValue?: string;
+    observedValues?: string[];
+  };
+  error?: string;
 };
 
 const fetcher = async (url: string) => {
@@ -40,6 +57,9 @@ const fetcher = async (url: string) => {
   return json;
 };
 
+const normalizeDomain = (domain: string) =>
+  domain.trim().toLowerCase().replace(/^@+/, "");
+
 export default function TeamSsoSettings({ teamId }: { teamId: string }) {
   const { toast } = useToast();
   const { data, error, isLoading, mutate } = useSWR<TeamAuthSettings>(
@@ -48,12 +68,18 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
   );
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isStartingVerification, setIsStartingVerification] = useState(false);
+  const [isCheckingVerification, setIsCheckingVerification] = useState(false);
   const [loginMethod, setLoginMethod] = useState<LoginMethod>("EMAIL_MAGIC_LINK");
   const [loginDomain, setLoginDomain] = useState("");
   const [oidcIssuer, setOidcIssuer] = useState("");
   const [oidcClientId, setOidcClientId] = useState("");
   const [oidcClientSecret, setOidcClientSecret] = useState("");
   const [hasOidcClientSecret, setHasOidcClientSecret] = useState(false);
+  const [domainVerificationToken, setDomainVerificationToken] = useState("");
+  const [domainVerifiedAt, setDomainVerifiedAt] = useState<string | null>(null);
+  const [domainLastCheckedAt, setDomainLastCheckedAt] = useState<string | null>(null);
+  const [observedTxtValues, setObservedTxtValues] = useState<string[]>([]);
   const [initialSnapshot, setInitialSnapshot] = useState("");
   const [origin, setOrigin] = useState("");
 
@@ -81,6 +107,9 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
     setOidcClientId(nextOidcClientId);
     setOidcClientSecret("");
     setHasOidcClientSecret(nextHasOidcClientSecret);
+    setDomainVerificationToken(data.domainVerificationToken || "");
+    setDomainVerifiedAt(data.domainVerifiedAt || null);
+    setDomainLastCheckedAt(data.domainLastCheckedAt || null);
 
     setInitialSnapshot(
       JSON.stringify({
@@ -106,6 +135,34 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
 
   const isOidc = loginMethod === "OIDC";
 
+  const normalizedLoginDomain = normalizeDomain(loginDomain);
+  const hasDomain = normalizedLoginDomain.length > 0;
+
+  const providerId = `oidc-${teamId}`;
+  const redirectUri = origin
+    ? `${origin}/api/auth/callback/${providerId}`
+    : "";
+  const signInUri = origin ? `${origin}/api/auth/signin/${providerId}` : "";
+  const txtRecordName = hasDomain ? `_fm-sso.${normalizedLoginDomain}` : "";
+  const txtRecordValue = domainVerificationToken
+    ? `fm-verify-${domainVerificationToken}`
+    : "";
+
+  const isDomainVerified = Boolean(domainVerifiedAt);
+
+  const verificationStatusText = useMemo(() => {
+    if (!hasDomain) {
+      return "No domain configured";
+    }
+    if (isDomainVerified) {
+      return "Verified";
+    }
+    if (domainVerificationToken) {
+      return "Pending verification";
+    }
+    return "Not started";
+  }, [domainVerificationToken, hasDomain, isDomainVerified]);
+
   const isDirty = useMemo(() => {
     const currentSnapshot = JSON.stringify({
       loginMethod,
@@ -115,12 +172,6 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
     });
     return currentSnapshot !== initialSnapshot || oidcClientSecret.trim().length > 0;
   }, [initialSnapshot, loginMethod, loginDomain, oidcIssuer, oidcClientId, oidcClientSecret]);
-
-  const providerId = `oidc-${teamId}`;
-  const redirectUri = origin
-    ? `${origin}/api/auth/callback/${providerId}`
-    : "";
-  const signInUri = origin ? `${origin}/api/auth/signin/${providerId}` : "";
 
   const copyValue = async (label: string, value: string) => {
     if (!value) {
@@ -165,6 +216,7 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
       }
 
       await mutate(json, { revalidate: false });
+      setObservedTxtValues([]);
       toast({
         title: "SSO settings saved",
         description: "Team authentication settings were updated.",
@@ -181,6 +233,85 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
     }
   };
 
+  const handleStartVerification = async () => {
+    setIsStartingVerification(true);
+    try {
+      const response = await fetch(
+        `/api/teams/${teamId}/domain-verification/start`,
+        {
+          method: "POST",
+        },
+      );
+
+      const json = (await response.json()) as DomainVerificationResponse;
+      if (!response.ok) {
+        throw new Error(json.error || response.statusText);
+      }
+
+      setObservedTxtValues([]);
+      await mutate();
+      toast({
+        title: "Verification token generated",
+        description: "Add the TXT record, then click Check verification.",
+      });
+    } catch (verificationError) {
+      toast({
+        title: "Unable to start verification",
+        description:
+          verificationError instanceof Error
+            ? verificationError.message
+            : "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsStartingVerification(false);
+    }
+  };
+
+  const handleCheckVerification = async () => {
+    setIsCheckingVerification(true);
+    try {
+      const response = await fetch(
+        `/api/teams/${teamId}/domain-verification/check`,
+        {
+          method: "POST",
+        },
+      );
+
+      const json = (await response.json()) as DomainVerificationResponse;
+      if (!response.ok) {
+        throw new Error(json.error || response.statusText);
+      }
+
+      setObservedTxtValues(json.data?.observedValues || []);
+      await mutate();
+
+      if (json.data?.verified) {
+        toast({
+          title: "Domain verified",
+          description: "DNS TXT record verified successfully.",
+        });
+      } else {
+        toast({
+          title: "Verification not found",
+          description: "TXT record does not match yet. Check DNS and retry.",
+          variant: "destructive",
+        });
+      }
+    } catch (verificationError) {
+      toast({
+        title: "Unable to check verification",
+        description:
+          verificationError instanceof Error
+            ? verificationError.message
+            : "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingVerification(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -192,7 +323,10 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="team-login-method">Login method</Label>
-          <Select value={loginMethod} onValueChange={(value) => setLoginMethod(value as LoginMethod)}>
+          <Select
+            value={loginMethod}
+            onValueChange={(value) => setLoginMethod(value as LoginMethod)}
+          >
             <SelectTrigger id="team-login-method">
               <SelectValue placeholder="Select login method" />
             </SelectTrigger>
@@ -214,6 +348,87 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
           <p className="text-xs text-muted-foreground">
             Users with this email domain will use the selected login method.
           </p>
+        </div>
+
+        <div className="space-y-3 rounded-md border p-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium">Domain verification (DNS TXT)</p>
+            <p className="text-xs text-muted-foreground">{verificationStatusText}</p>
+          </div>
+          {!isDomainVerified && isOidc && (
+            <p className="text-xs text-amber-600">
+              OIDC sign-in remains inactive until the login domain is verified.
+            </p>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="team-domain-txt-name">TXT record name</Label>
+            <div className="flex gap-2">
+              <Input id="team-domain-txt-name" value={txtRecordName} readOnly />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => copyValue("TXT name", txtRecordName)}
+                disabled={!txtRecordName}
+              >
+                Copy
+              </Button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="team-domain-txt-value">TXT record value</Label>
+            <div className="flex gap-2">
+              <Input id="team-domain-txt-value" value={txtRecordValue} readOnly />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => copyValue("TXT value", txtRecordValue)}
+                disabled={!txtRecordValue}
+              >
+                Copy
+              </Button>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleStartVerification}
+              disabled={!hasDomain || isSaving || isStartingVerification}
+            >
+              {isStartingVerification
+                ? "Generating..."
+                : domainVerificationToken
+                  ? "Regenerate Token"
+                  : "Generate Token"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCheckVerification}
+              disabled={!hasDomain || !domainVerificationToken || isCheckingVerification}
+            >
+              {isCheckingVerification ? "Checking..." : "Check Verification"}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Add this TXT record in your DNS provider, wait for propagation, then
+            check verification.
+          </p>
+          {domainVerifiedAt && (
+            <p className="text-xs text-emerald-700">
+              Verified at {new Date(domainVerifiedAt).toLocaleString()}
+            </p>
+          )}
+          {!domainVerifiedAt && domainLastCheckedAt && (
+            <p className="text-xs text-muted-foreground">
+              Last checked at {new Date(domainLastCheckedAt).toLocaleString()}
+            </p>
+          )}
+          {observedTxtValues.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              DNS currently returns: {observedTxtValues.join(", ")}
+            </p>
+          )}
         </div>
 
         {isOidc && (
@@ -306,7 +521,11 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
         )}
 
         <div className="flex justify-end">
-          <Button type="button" onClick={handleSave} disabled={isLoading || isSaving || !isDirty}>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={isLoading || isSaving || !isDirty}
+          >
             {isSaving ? "Saving..." : "Save Authentication Settings"}
           </Button>
         </div>

@@ -30,6 +30,7 @@ type TeamAuthConfig = {
   id: string;
   loginMethod?: string;
   loginDomain?: string | null;
+  domainVerifiedAt?: Date | null;
   oidcIssuer?: string | null;
   oidcClientId?: string | null;
   oidcClientSecret?: string | null;
@@ -41,11 +42,15 @@ const getTeamByEmailDomain = async (
   const team = (await prisma.teams.findFirst({
     where: {
       loginDomain: domain,
+      domainVerifiedAt: {
+        not: null,
+      },
     } as any,
     select: {
       id: true,
       loginMethod: true,
       loginDomain: true,
+      domainVerifiedAt: true,
       oidcIssuer: true,
       oidcClientId: true,
       oidcClientSecret: true,
@@ -94,6 +99,9 @@ export const loadTeamOidcProviders = async (): Promise<
   const teams = (await prisma.teams.findMany({
     where: {
       loginMethod: OIDC_LOGIN_METHOD,
+      domainVerifiedAt: {
+        not: null,
+      },
       oidcIssuer: {
         not: null,
       },
@@ -106,6 +114,7 @@ export const loadTeamOidcProviders = async (): Promise<
     } as any,
     select: {
       id: true,
+      domainVerifiedAt: true,
       oidcIssuer: true,
       oidcClientId: true,
       oidcClientSecret: true,

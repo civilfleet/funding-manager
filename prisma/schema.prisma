@@ -138,11 +138,14 @@ model Teams {
   id          String           @id @default(uuid()) @unique
   name        String           @unique
   email       String           @db.VarChar(255) @unique
-  loginDomain String?          @db.VarChar(255) @unique
+  loginDomain String?          @db.VarChar(255)
   loginMethod LoginMethod      @default(EMAIL_MAGIC_LINK)
   oidcIssuer  String?          @db.VarChar(500)
   oidcClientId String?         @db.VarChar(255)
   oidcClientSecret String?     @db.Text
+  domainVerificationToken String? @db.VarChar(255)
+  domainVerifiedAt DateTime?   @db.Timestamptz(6)
+  domainLastCheckedAt DateTime? @db.Timestamptz(6)
   registrationPageLogoKey String? @db.VarChar(255)
   phone       String?          @db.VarChar(255)
   address     String?          @db.VarChar(255)
