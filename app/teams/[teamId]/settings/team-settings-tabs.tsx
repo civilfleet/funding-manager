@@ -63,6 +63,13 @@ export default function TeamSettingsTabs({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { data: modulesResponse } = useSWR(
+    `/api/teams/${teamId}/modules`,
+    (url: string) => fetch(url).then((res) => res.json()),
+  );
+  const hasFundingModule = Array.isArray(modulesResponse?.data)
+    ? modulesResponse.data.includes("FUNDING")
+    : true;
 
   // Get tab from URL or default to "general"
   const tabFromUrl = searchParams.get("tab");
@@ -145,7 +152,7 @@ export default function TeamSettingsTabs({
           }}
         />
         <TeamSsoSettings teamId={teamId} />
-        <StrategicPrioritiesForm teamId={teamId} />
+        {hasFundingModule ? <StrategicPrioritiesForm teamId={teamId} /> : null}
         <TeamModulesForm teamId={teamId} />
       </TabsContent>
 
