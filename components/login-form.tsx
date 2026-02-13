@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { signIn as authSignIn } from "next-auth/react";
 import {
   resolveLoginStrategy,
   sendMagicLoginLink,
@@ -77,13 +78,10 @@ export function LoginForm({
             const strategy = await resolveLoginStrategy(formData);
 
             if (strategy.strategy === "OIDC") {
-              const params = new URLSearchParams({
+              await authSignIn(strategy.provider, {
                 callbackUrl: "/organizations",
                 login_hint: email,
               });
-              window.location.assign(
-                `/api/auth/signin/${strategy.provider}?${params.toString()}`,
-              );
               return;
             }
 

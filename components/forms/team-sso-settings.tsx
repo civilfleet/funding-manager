@@ -142,7 +142,9 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
   const redirectUri = origin
     ? `${origin}/api/auth/callback/${providerId}`
     : "";
-  const signInUri = origin ? `${origin}/api/auth/signin/${providerId}` : "";
+  const signInUri = origin
+    ? `${origin}/api/auth/signin?provider=${providerId}`
+    : "";
   const txtRecordName = hasDomain ? `_fm-sso.${normalizedLoginDomain}` : "";
   const txtRecordValue = domainVerificationToken
     ? `fm-verify-${domainVerificationToken}`
@@ -482,6 +484,7 @@ export default function TeamSsoSettings({ teamId }: { teamId: string }) {
               </div>
               <p className="text-xs text-muted-foreground">
                 Use the redirect URI in your identity provider app settings.
+                Start login via the app UI or with the sign-in endpoint query.
               </p>
             </div>
             <div className="space-y-2">
