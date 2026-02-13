@@ -1,9 +1,10 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +35,6 @@ export type Team = {
 
 const ActionsCell = ({ team, mutate }: { team: Team; mutate: () => void }) => {
   const { toast } = useToast();
-  const _router = useRouter();
   const [open, setOpen] = useState(false);
 
   const handleDelete = async () => {
@@ -103,29 +103,44 @@ const ActionsCell = ({ team, mutate }: { team: Team; mutate: () => void }) => {
 export const columns = (mutate: () => void): ColumnDef<Team>[] => [
   {
     accessorKey: "name",
-    header: "Name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
   },
   {
     accessorKey: "email",
-    header: "Email",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Email" />
+    ),
   },
   {
     accessorKey: "phone",
-    header: "Phone",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Phone" />
+    ),
+    cell: ({ row }) => row.original.phone || "-",
   },
   {
     accessorKey: "city",
-    header: "City",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="City" />
+    ),
+    cell: ({ row }) => row.original.city || "-",
   },
   {
     accessorKey: "country",
-    header: "Country",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Country" />
+    ),
+    cell: ({ row }) => row.original.country || "-",
   },
   {
     accessorKey: "createdAt",
-    header: "Created At",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Created At" />
+    ),
     cell: ({ row }) => {
-      return new Date(row.getValue("createdAt")).toLocaleDateString();
+      return format(new Date(row.getValue("createdAt")), "PP");
     },
   },
   {
