@@ -308,25 +308,32 @@ const getUsers = async (
         ...whereConditions,
       ],
     },
-    include: teamId
-      ? {
-          groups: {
-            where: {
-              group: {
-                teamId,
+    include: {
+      accounts: {
+        select: {
+          provider: true,
+        },
+      },
+      ...(teamId
+        ? {
+            groups: {
+              where: {
+                group: {
+                  teamId,
+                },
               },
-            },
-            include: {
-              group: {
-                select: {
-                  id: true,
-                  name: true,
+              include: {
+                group: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
                 },
               },
             },
-          },
-        }
-      : undefined,
+          }
+        : {}),
+    },
     orderBy: { createdAt: "desc" },
   });
 };
@@ -349,6 +356,13 @@ const getUsersForDonation = async ({
         { organizations: { some: { id: fundingRequest?.organizationId } } },
         { teams: { some: { id: teamId } } },
       ],
+    },
+    include: {
+      accounts: {
+        select: {
+          provider: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   });

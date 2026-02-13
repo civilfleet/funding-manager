@@ -14,6 +14,15 @@ import type { User } from "@/types";
 
 const userDetailPath = (id: string) => `users/${id}`;
 
+type UserLoginAccount = {
+  provider: string;
+};
+
+type UserRow = User & {
+  isOwner?: boolean;
+  accounts?: UserLoginAccount[];
+};
+
 const NavigableCell = ({
   id,
   children,
@@ -34,7 +43,44 @@ const NavigableCell = ({
   </Link>
 );
 
-export const columns: ColumnDef<User & { isOwner?: boolean }>[] = [
+const toLoginMethodLabel = (accounts?: UserLoginAccount[]) => {
+  if (!accounts?.length) {
+    return "Unknown";
+  }
+
+  const methods = new Set<string>();
+
+  for (const account of accounts) {
+    const provider = account.provider?.trim();
+    if (!provider) {
+      continue;
+    }
+
+    if (provider === "nodemailer") {
+      methods.add("Email");
+      continue;
+    }
+
+    if (provider.startsWith("oidc-")) {
+      methods.add("SSO");
+      continue;
+    }
+
+    methods.add(`Other (${provider})`);
+  }
+
+  if (!methods.size) {
+    return "Unknown";
+  }
+
+  if (methods.size === 1) {
+    return Array.from(methods)[0];
+  }
+
+  return "Mixed";
+};
+
+export const columns: ColumnDef<UserRow>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -63,6 +109,18 @@ export const columns: ColumnDef<User & { isOwner?: boolean }>[] = [
     cell: ({ row }) => (
       <NavigableCell id={row.original.id}>
         {row.original?.email || "N/A"}
+      </NavigableCell>
+    ),
+  },
+  {
+    id: "loginMethod",
+    accessorFn: (row) => toLoginMethodLabel(row.accounts),
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Login method" />
+    ),
+    cell: ({ row }) => (
+      <NavigableCell id={row.original.id}>
+        {toLoginMethodLabel(row.original.accounts)}
       </NavigableCell>
     ),
   },
@@ -179,7 +237,7 @@ export const columns: ColumnDef<User & { isOwner?: boolean }>[] = [
   },
 ];
 
-const UserActions = ({ user }: { user: User }) => {
+const UserActions = ({ user }: { user: UserRow }) => {
   const { toast } = useToast();
   const router = useRouter();
   const params = useParams();
