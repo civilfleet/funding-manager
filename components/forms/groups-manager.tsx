@@ -102,6 +102,7 @@ export default function GroupsManager({ teamId, teamModules }: GroupsManagerProp
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+  const [memberSearch, setMemberSearch] = useState("");
 
   const resolvedTeamModules = useMemo(
     () =>
@@ -143,6 +144,16 @@ export default function GroupsManager({ teamId, teamModules }: GroupsManagerProp
     });
   }, [groupsData, availableModules, resolvedTeamModules]);
   const users: User[] = usersData?.data || [];
+  const filteredUsers = useMemo(() => {
+    const query = memberSearch.trim().toLowerCase();
+    if (!query) {
+      return users;
+    }
+
+    return users.filter((user) =>
+      `${user.name || ""} ${user.email}`.toLowerCase().includes(query),
+    );
+  }, [memberSearch, users]);
 
   const form = useForm({
     resolver: zodResolver(createGroupSchema),
@@ -162,6 +173,7 @@ export default function GroupsManager({ teamId, teamModules }: GroupsManagerProp
   const isEditingDefaultGroup = editingGroup?.isDefaultGroup ?? false;
 
   const handleOpenDialog = (group?: Group) => {
+    setMemberSearch("");
     if (group) {
       setEditingGroup(group);
       form.reset({
@@ -195,6 +207,7 @@ export default function GroupsManager({ teamId, teamModules }: GroupsManagerProp
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setMemberSearch("");
     setEditingGroup(null);
     form.reset();
   };
@@ -686,6 +699,13 @@ export default function GroupsManager({ teamId, teamModules }: GroupsManagerProp
                       );
                     }
 
+                    const selectedUserIds = form.watch("userIds") || [];
+                    const allVisibleSelected =
+                      filteredUsers.length > 0 &&
+                      filteredUsers.every((user) =>
+                        selectedUserIds.includes(user.id),
+                      );
+
                     return (
                       <FormItem>
                         <FormLabel>Group Members</FormLabel>
@@ -706,35 +726,61 @@ export default function GroupsManager({ teamId, teamModules }: GroupsManagerProp
                           </Alert>
                         )}
                         <div className="border rounded-md">
+                          <div className="px-3 py-2 border-b">
+                            <Input
+                              value={memberSearch}
+                              onChange={(event) =>
+                                setMemberSearch(event.target.value)
+                              }
+                              placeholder="Search users by name or email"
+                              aria-label="Search group members"
+                            />
+                          </div>
                           <div className="flex items-center gap-3 px-3 py-2 border-b">
                             <Checkbox
-                              checked={
-                                users.length > 0 &&
-                                (form.watch("userIds") || []).length ===
-                                  users.length
-                              }
+                              checked={allVisibleSelected}
                               onCheckedChange={(checked) => {
                                 if (checked) {
+                                  const mergedUserIds = Array.from(
+                                    new Set([
+                                      ...selectedUserIds,
+                                      ...filteredUsers.map((u) => u.id),
+                                    ]),
+                                  );
                                   form.setValue(
                                     "userIds",
-                                    users.map((u) => u.id),
+                                    mergedUserIds,
                                   );
                                 } else {
-                                  form.setValue("userIds", []);
+                                  form.setValue(
+                                    "userIds",
+                                    selectedUserIds.filter(
+                                      (id) =>
+                                        !filteredUsers.some((u) => u.id === id),
+                                    ),
+                                  );
                                 }
                               }}
                             />
                             <FormLabel className="text-sm font-medium">
-                              Select all users
+                              Select all visible users
                             </FormLabel>
+                            {memberSearch.trim() ? (
+                              <span className="text-muted-foreground text-sm ml-2">
+                                {filteredUsers.length} match
+                                {filteredUsers.length === 1 ? "" : "es"}
+                              </span>
+                            ) : null}
                           </div>
                           <div className="divide-y max-h-64 overflow-y-auto">
-                            {users.length === 0 ? (
+                            {filteredUsers.length === 0 ? (
                               <p className="text-sm text-muted-foreground px-3 py-2">
-                                No users available
+                                {users.length === 0
+                                  ? "No users available"
+                                  : "No users match your search"}
                               </p>
                             ) : (
-                              users.map((user) => (
+                              filteredUsers.map((user) => (
                                 <FormField
                                   key={user.id}
                                   control={typedControl}
