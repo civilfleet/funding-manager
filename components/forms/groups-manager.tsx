@@ -466,7 +466,7 @@ export default function GroupsManager({ teamId, teamModules }: GroupsManagerProp
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>
               {editingGroup ? "Edit Group" : "Create Group"}
@@ -481,9 +481,9 @@ export default function GroupsManager({ teamId, teamModules }: GroupsManagerProp
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="flex h-full min-h-0 flex-col gap-4 sm:h-full sm:min-h-0"
+              className="flex h-full min-h-0 flex-col gap-4"
             >
-              <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:flex-1 sm:overflow-y-auto">
+              <div className="flex-1 space-y-4 overflow-y-auto pr-1">
                 <FormField
                   control={typedControl}
                   name="name"
@@ -835,7 +835,7 @@ export default function GroupsManager({ teamId, teamModules }: GroupsManagerProp
 
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="sticky bottom-0 border-t border-border bg-background pt-4">
                 <Button
                   type="button"
                   variant="outline"
