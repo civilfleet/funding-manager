@@ -70,6 +70,9 @@ export default function TeamSettingsTabs({
   const hasFundingModule = Array.isArray(modulesResponse?.data)
     ? modulesResponse.data.includes("FUNDING")
     : true;
+  const tabOptions = hasFundingModule
+    ? TAB_OPTIONS
+    : TAB_OPTIONS.filter((option) => option.value !== "form-configuration");
 
   // Get tab from URL or default to "general"
   const tabFromUrl = searchParams.get("tab");
@@ -109,6 +112,15 @@ export default function TeamSettingsTabs({
     return () => window.removeEventListener("popstate", handlePopState);
   }, [isValidTab]);
 
+  useEffect(() => {
+    if (!hasFundingModule && activeTab === "form-configuration") {
+      setActiveTab("general");
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", "general");
+      router.replace(url.pathname + url.search, { scroll: false });
+    }
+  }, [activeTab, hasFundingModule, router]);
+
   return (
     <Tabs
       value={activeTab}
@@ -121,7 +133,7 @@ export default function TeamSettingsTabs({
             <SelectValue placeholder="Select section" />
           </SelectTrigger>
           <SelectContent>
-            {TAB_OPTIONS.map((option) => (
+            {tabOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>
@@ -130,8 +142,12 @@ export default function TeamSettingsTabs({
         </Select>
       </div>
 
-      <TabsList className="hidden w-full grid-cols-7 sm:grid">
-        {TAB_OPTIONS.map((option) => (
+      <TabsList
+        className={`hidden w-full sm:grid ${
+          hasFundingModule ? "grid-cols-7" : "grid-cols-6"
+        }`}
+      >
+        {tabOptions.map((option) => (
           <TabsTrigger key={option.value} value={option.value}>
             {option.label}
           </TabsTrigger>
@@ -164,9 +180,11 @@ export default function TeamSettingsTabs({
         </Card>
       </TabsContent>
 
-      <TabsContent value="form-configuration" className="space-y-8">
-        <FormConfigurationManager teamId={teamId} />
-      </TabsContent>
+      {hasFundingModule ? (
+        <TabsContent value="form-configuration" className="space-y-8">
+          <FormConfigurationManager teamId={teamId} />
+        </TabsContent>
+      ) : null}
 
       <TabsContent value="event-types" className="space-y-8">
         <EventTypesManager teamId={teamId} />
