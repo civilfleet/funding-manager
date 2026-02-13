@@ -2,6 +2,7 @@
 
 import { signIn } from "@/auth";
 import { resolveExpectedProviderByEmail } from "@/lib/auth-routing";
+import logger from "@/lib/logger";
 
 export type LoginStrategyResult =
   | {
@@ -16,21 +17,31 @@ export async function resolveLoginStrategy(
   formData: FormData,
 ): Promise<LoginStrategyResult> {
   const email = formData.get("email")?.toString().trim() ?? "";
+  const emailDomain = email.split("@")[1]?.toLowerCase() ?? "";
 
   try {
     const provider = await resolveExpectedProviderByEmail(email);
 
     if (provider !== "nodemailer") {
+      logger.info(
+        { emailDomain, provider },
+        "Resolved OIDC login strategy for email domain",
+      );
       return {
         strategy: "OIDC",
         provider,
       };
     }
 
+    logger.debug({ emailDomain }, "Resolved magic-link login strategy for email domain");
     return {
       strategy: "EMAIL_MAGIC_LINK",
     };
-  } catch {
+  } catch (error) {
+    logger.error(
+      { error, emailDomain },
+      "Failed to resolve login strategy for email domain",
+    );
     throw new Error("Unable to sign in with this email.");
   }
 }

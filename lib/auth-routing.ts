@@ -1,4 +1,5 @@
 import type { OAuthConfig } from "next-auth/providers";
+import logger from "@/lib/logger";
 import prisma from "@/lib/prisma";
 
 export type SignInProviderId = "nodemailer" | `oidc-${string}`;
@@ -77,14 +78,29 @@ export const resolveExpectedProviderByEmail = async (
   const team = await getTeamByEmailDomain(domain);
 
   if (!team) {
+    logger.debug({ domain }, "No verified team OIDC config found for domain");
     return MAGIC_LINK_PROVIDER_ID;
   }
 
   if (team.loginMethod !== OIDC_LOGIN_METHOD) {
+    logger.debug(
+      { domain, teamId: team.id, loginMethod: team.loginMethod },
+      "Team login method is not OIDC for domain",
+    );
     return MAGIC_LINK_PROVIDER_ID;
   }
 
   if (!hasOidcCredentials(team)) {
+    logger.warn(
+      {
+        domain,
+        teamId: team.id,
+        hasIssuer: Boolean(team.oidcIssuer),
+        hasClientId: Boolean(team.oidcClientId),
+        hasClientSecret: Boolean(team.oidcClientSecret),
+      },
+      "Team OIDC settings are incomplete for domain",
+    );
     throw new Error(
       "OIDC login is configured for this domain but team OIDC settings are incomplete.",
     );
@@ -125,6 +141,14 @@ export const loadTeamOidcProviders = async (): Promise<
     oidcClientId: string;
     oidcClientSecret: string;
   }>;
+
+  logger.info(
+    {
+      count: teams.length,
+      teamIds: teams.map((team) => team.id),
+    },
+    "Loaded team OIDC providers",
+  );
 
   return teams.map((team) => ({
     id: buildOidcProviderId(team.id),

@@ -7,6 +7,7 @@ import {
   resolveExpectedProviderByEmail,
 } from "./lib/auth-routing";
 import mailConfig from "./config/mail";
+import logger from "./lib/logger";
 import prisma from "./lib/prisma";
 import type { Roles } from "./types";
 
@@ -25,7 +26,13 @@ declare module "next-auth" {
 }
 
 const buildAuth = async () => {
-  const teamOidcProviders = await loadTeamOidcProviders();
+  let teamOidcProviders = [] as Awaited<ReturnType<typeof loadTeamOidcProviders>>;
+  try {
+    teamOidcProviders = await loadTeamOidcProviders();
+  } catch (error) {
+    logger.error({ error }, "Failed to load team OIDC providers");
+    throw error;
+  }
 
   return NextAuth({
     ...authConfig,
@@ -49,8 +56,22 @@ const buildAuth = async () => {
         if (!userExist) return false;
         try {
           const expectedProvider = await resolveExpectedProviderByEmail(user.email);
-          if (expectedProvider !== account.provider) return false;
-        } catch {
+          if (expectedProvider !== account.provider) {
+            logger.warn(
+              {
+                email: user.email,
+                expectedProvider,
+                actualProvider: account.provider,
+              },
+              "Sign-in denied due to provider mismatch",
+            );
+            return false;
+          }
+        } catch (error) {
+          logger.error(
+            { error, email: user.email, provider: account.provider },
+            "Error resolving expected provider during sign-in",
+          );
           return false;
         }
 
@@ -96,26 +117,51 @@ const buildAuth = async () => {
 
 export const handlers = {
   GET: async (...args: any[]) => {
-    const authInstance = await buildAuth();
-    return (authInstance.handlers.GET as any)(...args);
+    try {
+      const authInstance = await buildAuth();
+      return (authInstance.handlers.GET as any)(...args);
+    } catch (error) {
+      logger.error({ error }, "Auth GET handler failed");
+      throw error;
+    }
   },
   POST: async (...args: any[]) => {
-    const authInstance = await buildAuth();
-    return (authInstance.handlers.POST as any)(...args);
+    try {
+      const authInstance = await buildAuth();
+      return (authInstance.handlers.POST as any)(...args);
+    } catch (error) {
+      logger.error({ error }, "Auth POST handler failed");
+      throw error;
+    }
   },
 };
 
 export const auth = async (...args: any[]) => {
-  const authInstance = await buildAuth();
-  return (authInstance.auth as any)(...args);
+  try {
+    const authInstance = await buildAuth();
+    return (authInstance.auth as any)(...args);
+  } catch (error) {
+    logger.error({ error }, "Auth session resolver failed");
+    throw error;
+  }
 };
 
 export const signIn = async (...args: any[]) => {
-  const authInstance = await buildAuth();
-  return (authInstance.signIn as any)(...args);
+  try {
+    const authInstance = await buildAuth();
+    return (authInstance.signIn as any)(...args);
+  } catch (error) {
+    logger.error({ error }, "Auth signIn helper failed");
+    throw error;
+  }
 };
 
 export const signOut = async (...args: any[]) => {
-  const authInstance = await buildAuth();
-  return (authInstance.signOut as any)(...args);
+  try {
+    const authInstance = await buildAuth();
+    return (authInstance.signOut as any)(...args);
+  } catch (error) {
+    logger.error({ error }, "Auth signOut helper failed");
+    throw error;
+  }
 };
