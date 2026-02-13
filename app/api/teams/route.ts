@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { normalizeLoginDomain } from "@/lib/auth-routing";
 import { Roles } from "@/types";
@@ -6,15 +7,45 @@ import { createTeamSchema } from "@/validations/team";
 import logger from "@/lib/logger";
 import { ZodError } from "zod";
 
+const hasAdminRole = (roles?: Roles[] | string[]) =>
+  Boolean(roles?.includes(Roles.Admin));
+
+const normalizeOptionalString = (value: unknown) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const sanitizeTeamResponse = <T extends Record<string, unknown>>(
+  team: T & { oidcClientSecret?: string | null },
+) => {
+  const { oidcClientSecret, ...safeTeam } = team;
+  return {
+    ...safeTeam,
+    hasOidcClientSecret: Boolean(oidcClientSecret),
+  };
+};
+
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session?.user?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!hasAdminRole(session.user.roles)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const teams = await prisma.teams.findMany({
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    return NextResponse.json({ data: teams });
+    return NextResponse.json({ data: teams.map((team) => sanitizeTeamResponse(team)) });
   } catch (_error) {
     return NextResponse.json(
       { error: "Failed to fetch teams" },
@@ -25,8 +56,24 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const session = await auth();
+    if (!session?.user?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!hasAdminRole(session.user.roles)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const body = await request.json();
-    const validatedData = createTeamSchema.parse(body);
+    const normalizedBody = {
+      ...body,
+      loginDomain: normalizeOptionalString(body?.loginDomain),
+      oidcIssuer: normalizeOptionalString(body?.oidcIssuer),
+      oidcClientId: normalizeOptionalString(body?.oidcClientId),
+      oidcClientSecret: normalizeOptionalString(body?.oidcClientSecret),
+    };
+    const validatedData = createTeamSchema.parse(normalizedBody);
     const {
       name,
       email,
@@ -109,7 +156,9 @@ export async function POST(request: Request) {
       return newTeam;
     });
 
-    return NextResponse.json(team);
+    return NextResponse.json(sanitizeTeamResponse(team as Record<string, unknown> & {
+      oidcClientSecret?: string | null;
+    }));
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(

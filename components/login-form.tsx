@@ -36,9 +36,8 @@ export function LoginForm({
           try {
             await sendLoginLink(formData);
             setIsLinkSent(true);
-          } catch (error) {
-            console.log("Login error:", error);
-            setError((error as Error).message || "Account not found.");
+          } catch {
+            setError("Unable to sign in with this email.");
           } finally {
             setIsLoading(false);
           }

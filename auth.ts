@@ -47,8 +47,12 @@ const buildAuth = async () => {
           where: { email: user.email as string },
         });
         if (!userExist) return false;
-        const expectedProvider = await resolveExpectedProviderByEmail(user.email);
-        if (expectedProvider !== account.provider) return false;
+        try {
+          const expectedProvider = await resolveExpectedProviderByEmail(user.email);
+          if (expectedProvider !== account.provider) return false;
+        } catch {
+          return false;
+        }
 
         return true;
       },

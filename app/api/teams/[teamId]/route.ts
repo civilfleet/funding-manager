@@ -1,16 +1,50 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { normalizeLoginDomain } from "@/lib/auth-routing";
 import logger from "@/lib/logger";
+import { getTeamAdminAccess } from "@/services/teams/access";
 import { updateTeamSchema } from "@/validations/team";
 import { ZodError } from "zod";
+
+const normalizeOptionalString = (value: unknown) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const sanitizeTeamResponse = <T extends Record<string, unknown>>(
+  team: T & { oidcClientSecret?: string | null },
+) => {
+  const { oidcClientSecret, ...safeTeam } = team;
+  return {
+    ...safeTeam,
+    hasOidcClientSecret: Boolean(oidcClientSecret),
+  };
+};
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ teamId: string }> },
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { teamId } = await params;
+    const access = await getTeamAdminAccess(
+      session.user.userId,
+      teamId,
+      session.user.roles,
+    );
+    if (!access.allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const team = await prisma.teams.findUnique({
       where: {
         id: teamId,
@@ -21,7 +55,7 @@ export async function GET(
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
     }
 
-    return NextResponse.json(team);
+    return NextResponse.json(sanitizeTeamResponse(team));
   } catch (_error) {
     return NextResponse.json(
       { error: "Failed to fetch team" },
@@ -35,9 +69,30 @@ export async function PATCH(
   { params }: { params: Promise<{ teamId: string }> },
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { teamId } = await params;
     const body = await request.json();
-    const validatedData = updateTeamSchema.parse(body);
+    const access = await getTeamAdminAccess(
+      session.user.userId,
+      teamId,
+      session.user.roles,
+    );
+    if (!access.allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const normalizedBody = {
+      ...body,
+      loginDomain: normalizeOptionalString(body?.loginDomain),
+      oidcIssuer: normalizeOptionalString(body?.oidcIssuer),
+      oidcClientId: normalizeOptionalString(body?.oidcClientId),
+      oidcClientSecret: normalizeOptionalString(body?.oidcClientSecret),
+    };
+    const validatedData = updateTeamSchema.parse(normalizedBody);
     const {
       name,
       email,
@@ -56,7 +111,7 @@ export async function PATCH(
       bankDetails,
       user,
     } = validatedData;
-    const hasLoginDomain = Object.hasOwn(validatedData, "loginDomain");
+    const hasLoginDomain = Object.hasOwn(normalizedBody, "loginDomain");
     const loginDomain = hasLoginDomain
       ? normalizeLoginDomain(validatedData.loginDomain)
       : undefined;
@@ -65,6 +120,12 @@ export async function PATCH(
     const team = await prisma.$transaction(async (tx) => {
       // Update bank details if provided
       let bankDetailsId: string | undefined;
+      const existingTeamAuth = (await tx.teams.findUnique({
+        where: { id: teamId },
+        select: {
+          oidcClientSecret: true,
+        },
+      } as any)) as { oidcClientSecret?: string | null } | null;
       if (bankDetails) {
         const existingTeam = await tx.teams.findUnique({
           where: { id: teamId },
@@ -97,6 +158,15 @@ export async function PATCH(
         }
       }
 
+      const resolvedOidcClientSecret =
+        oidcClientSecret ?? existingTeamAuth?.oidcClientSecret ?? undefined;
+
+      if (loginMethod === "OIDC" && !resolvedOidcClientSecret) {
+        throw new Error(
+          "OIDC client secret is required when login method is OIDC",
+        );
+      }
+
       // Update team information
       const updatedTeam = await tx.teams.update({
         where: {
@@ -108,7 +178,7 @@ export async function PATCH(
           loginMethod,
           oidcIssuer,
           oidcClientId,
-          oidcClientSecret,
+          oidcClientSecret: resolvedOidcClientSecret,
           phone,
           address,
           postalCode,
@@ -169,7 +239,11 @@ export async function PATCH(
       return updatedTeam;
     });
 
-    return NextResponse.json(team);
+    return NextResponse.json(
+      sanitizeTeamResponse(
+        team as Record<string, unknown> & { oidcClientSecret?: string | null },
+      ),
+    );
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
@@ -190,7 +264,21 @@ export async function DELETE(
   { params }: { params: Promise<{ teamId: string }> },
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { teamId } = await params;
+    const access = await getTeamAdminAccess(
+      session.user.userId,
+      teamId,
+      session.user.roles,
+    );
+    if (!access.allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     await prisma.teams.delete({
       where: {
         id: teamId,

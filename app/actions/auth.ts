@@ -5,19 +5,24 @@ import { resolveExpectedProviderByEmail } from "@/lib/auth-routing";
 
 export async function sendLoginLink(formData: FormData) {
   const email = formData.get("email")?.toString() ?? "";
-  const provider = await resolveExpectedProviderByEmail(email);
 
-  if (provider !== "nodemailer") {
-    await signIn(provider, {
+  try {
+    const provider = await resolveExpectedProviderByEmail(email);
+
+    if (provider !== "nodemailer") {
+      await signIn(provider, {
+        redirectTo: "/organizations",
+        login_hint: email,
+      });
+      return;
+    }
+
+    await signIn("nodemailer", {
+      redirect: false,
       redirectTo: "/organizations",
-      login_hint: email,
+      email,
     });
-    return;
+  } catch {
+    throw new Error("Unable to sign in with this email.");
   }
-
-  await signIn("nodemailer", {
-    redirect: false,
-    redirectTo: "/organizations",
-    email,
-  });
 }

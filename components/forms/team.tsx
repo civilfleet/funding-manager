@@ -41,7 +41,7 @@ interface TeamFormProps {
     loginMethod?: "EMAIL_MAGIC_LINK" | "OIDC" | null;
     oidcIssuer?: string | null;
     oidcClientId?: string | null;
-    oidcClientSecret?: string | null;
+    hasOidcClientSecret?: boolean;
     phone: string | null;
     address: string | null;
     postalCode: string | null;
@@ -101,7 +101,7 @@ export default function TeamForm({ team }: TeamFormProps) {
         loginMethod: team.loginMethod || "EMAIL_MAGIC_LINK",
         oidcIssuer: team.oidcIssuer || "",
         oidcClientId: team.oidcClientId || "",
-        oidcClientSecret: team.oidcClientSecret || "",
+        oidcClientSecret: "",
         phone: team.phone || "",
         address: team.address || "",
         city: team.city || "",
@@ -122,13 +122,20 @@ export default function TeamForm({ team }: TeamFormProps) {
     try {
       const url = team ? `/api/teams/${team.id}` : "/api/teams";
       const method = team ? "PATCH" : "POST";
+      const payload = {
+        ...values,
+        loginDomain: values.loginDomain?.trim() || undefined,
+        oidcIssuer: values.oidcIssuer?.trim() || undefined,
+        oidcClientId: values.oidcClientId?.trim() || undefined,
+        oidcClientSecret: values.oidcClientSecret?.trim() || undefined,
+      };
 
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -237,6 +244,11 @@ export default function TeamForm({ team }: TeamFormProps) {
                 placeholder="OIDC client secret"
                 type="password"
               />
+              {team?.hasOidcClientSecret && (
+                <p className="col-span-2 -mt-2 text-xs text-muted-foreground">
+                  Leave OIDC client secret empty to keep the existing secret.
+                </p>
+              )}
               <FormInputControl
                 form={form}
                 name="phone"
