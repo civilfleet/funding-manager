@@ -126,6 +126,27 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
   const allowedSubmodules: ContactSubmodule[] = submodulesData?.data || [];
   const canAccessSubmodule = (submodule: ContactSubmodule) =>
     allowedSubmodules.includes(submodule);
+  const tabOptions = useMemo(
+    () => [
+      { value: "general", label: "General" },
+      ...(canAccessSubmodule("SUPERVISION")
+        ? [{ value: "supervision", label: "Supervision" }]
+        : []),
+      ...(canAccessSubmodule("EVENTS")
+        ? [{ value: "events", label: "Events" }]
+        : []),
+      ...(canAccessSubmodule("SHOP") ? [{ value: "shop", label: "Shop" }] : []),
+      { value: "attributes", label: "Attributes" },
+    ],
+    [allowedSubmodules],
+  );
+  const [activeTab, setActiveTab] = useState("general");
+
+  useEffect(() => {
+    if (!tabOptions.some((option) => option.value === activeTab)) {
+      setActiveTab(tabOptions[0]?.value ?? "general");
+    }
+  }, [activeTab, tabOptions]);
 
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(
@@ -518,20 +539,28 @@ export default function ContactForm({ teamId, contact }: ContactFormProps) {
               value={contact?.id}
             />
           )}
-          <CardContent className="space-y-6">
-            <Tabs defaultValue="general" className="w-full">
-              <TabsList className="mb-6 mt-4 flex flex-wrap">
-                <TabsTrigger value="general">General</TabsTrigger>
-                {canAccessSubmodule("SUPERVISION") && (
-                  <TabsTrigger value="supervision">Supervision</TabsTrigger>
-                )}
-                {canAccessSubmodule("EVENTS") && (
-                  <TabsTrigger value="events">Events</TabsTrigger>
-                )}
-                {canAccessSubmodule("SHOP") && (
-                  <TabsTrigger value="shop">Shop</TabsTrigger>
-                )}
-                <TabsTrigger value="attributes">Attributes</TabsTrigger>
+          <CardContent className="space-y-6 pt-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <div className="mb-4 mt-2 sm:hidden">
+                <Select value={activeTab} onValueChange={setActiveTab}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select section" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tabOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <TabsList className="mb-6 mt-4 hidden h-9 w-full flex-wrap sm:flex">
+                {tabOptions.map((option) => (
+                  <TabsTrigger key={option.value} value={option.value}>
+                    {option.label}
+                  </TabsTrigger>
+                ))}
               </TabsList>
 
               <TabsContent value="general" className="space-y-6">
