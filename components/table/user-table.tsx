@@ -125,8 +125,11 @@ export default function UserTable({ teamId, organizationId }: UserTableProps) {
   return (
     <div className="flex flex-col my-2">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-1/2">
-          <div className="flex-1">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex w-full items-start gap-2 sm:w-1/2 sm:gap-0"
+        >
+          <div className="min-w-0 flex-1">
             <FormInputControl
               form={form}
               name="query"
@@ -134,7 +137,11 @@ export default function UserTable({ teamId, organizationId }: UserTableProps) {
             />
           </div>
 
-          <ButtonControl type="submit" label="Submit" className="mx-2" />
+          <ButtonControl
+            type="submit"
+            label="Submit"
+            className="shrink-0 sm:mx-2"
+          />
         </form>
       </Form>
       <div

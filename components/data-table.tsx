@@ -12,7 +12,7 @@ import {
 import { LayoutGrid, List, Map } from "lucide-react";
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
@@ -150,6 +150,8 @@ export function DataTable<TData, TValue>({
   const showMapToggle = Boolean(renderMap);
   const hasBatchActions = selectable && Boolean(renderBatchActions);
   const showBatchActions = hasBatchActions && selectedRows.length > 0;
+  const showDesktopBatchActions = showBatchActions && !isMobile;
+  const showMobileBatchActions = showBatchActions && isMobile;
 
   return (
     <div className="w-full">
@@ -218,12 +220,13 @@ export function DataTable<TData, TValue>({
       {hasBatchActions && (
         <div
           className={cn(
-            "min-h-11 px-3 pb-2 transition-opacity",
-            showBatchActions ? "opacity-100" : "opacity-0",
+            "px-3 transition-opacity",
+            isMobile ? "min-h-0 pb-0" : "min-h-11 pb-2",
+            showDesktopBatchActions ? "opacity-100" : "opacity-0",
           )}
-          aria-hidden={!showBatchActions}
+          aria-hidden={!showDesktopBatchActions}
         >
-          {showBatchActions ? (
+          {showDesktopBatchActions ? (
             <div className="flex items-center justify-between gap-3">
               {renderBatchActions?.({ selectedRows, clearSelection })}
             </div>
@@ -291,41 +294,71 @@ export function DataTable<TData, TValue>({
           )}
         </div>
       ) : hasRows ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-3">
-          {table.getRowModel().rows.map((row) => (
-            <div key={row.id}>
-              {renderCard ? (
-                renderCard(row.original as TData)
-              ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Item</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {row.getVisibleCells().map((cell) => (
-                      <div key={cell.id} className="text-sm">
-                        <div className="text-xs text-muted-foreground">
-                          {cell.column.id}
-                        </div>
-                        <div className="font-medium">
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-4 px-3 pb-3 pt-0 sm:grid-cols-2 sm:pt-3 lg:grid-cols-3",
+            showMobileBatchActions ? "pb-24" : "",
+          )}
+        >
+          {table.getRowModel().rows.map((row) => {
+            const selectionCell = row
+              .getVisibleCells()
+              .find((cell) => cell.column.id === "__select");
+            const contentCells = row
+              .getVisibleCells()
+              .filter((cell) => cell.column.id !== "__select");
+
+            return (
+              <div key={row.id}>
+                {renderCard ? (
+                  renderCard(row.original as TData)
+                ) : (
+                  <Card>
+                    {selectable && selectionCell ? (
+                      <CardHeader className="flex flex-row items-center justify-end space-y-0 pb-3">
+                        <div>
                           {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
+                            selectionCell.column.columnDef.cell,
+                            selectionCell.getContext(),
                           )}
                         </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          ))}
+                      </CardHeader>
+                    ) : null}
+                    <CardContent className="space-y-2">
+                      {contentCells.map((cell) => (
+                        <div key={cell.id} className="text-sm">
+                          <div className="text-xs text-muted-foreground">
+                            {cell.column.id}
+                          </div>
+                          <div className="font-medium">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="p-6 text-center text-sm text-muted-foreground">
           No results.
         </div>
       )}
+      {showMobileBatchActions ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <div className="mx-auto w-full max-w-screen-sm">
+            <div className="flex items-center justify-between gap-3">
+              {renderBatchActions?.({ selectedRows, clearSelection })}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
