@@ -40,6 +40,31 @@ interface DataTableProps<TData, TValue> {
   }) => React.ReactNode;
 }
 
+const CARD_FIELD_LABELS: Record<string, string> = {
+  loginMethod: "Login method",
+  createdAt: "Created",
+  updatedAt: "Updated",
+};
+
+function formatCardFieldLabel(columnId: string) {
+  const known = CARD_FIELD_LABELS[columnId];
+  if (known) {
+    return known;
+  }
+
+  const normalized = columnId
+    .replace(/^_+/, "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[-_]+/g, " ")
+    .trim();
+
+  if (!normalized) {
+    return columnId;
+  }
+
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -328,7 +353,7 @@ export function DataTable<TData, TValue>({
                       {contentCells.map((cell) => (
                         <div key={cell.id} className="text-sm">
                           <div className="text-xs text-muted-foreground">
-                            {cell.column.id}
+                            {formatCardFieldLabel(cell.column.id)}
                           </div>
                           <div className="font-medium">
                             {flexRender(

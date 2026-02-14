@@ -253,6 +253,8 @@ export default function EventRolesManager({ teamId }: EventRolesManagerProps) {
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Edit role ${role.name}`}
+                      title={`Edit role ${role.name}`}
                       onClick={() => handleOpenDialog(role)}
                     >
                       <Pencil className="h-4 w-4" />
@@ -260,6 +262,8 @@ export default function EventRolesManager({ teamId }: EventRolesManagerProps) {
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Delete role ${role.name}`}
+                      title={`Delete role ${role.name}`}
                       onClick={() => handleDelete(role.id, role.name)}
                     >
                       <Trash2 className="h-4 w-4" />

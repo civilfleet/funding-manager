@@ -445,6 +445,8 @@ export default function GroupsManager({ teamId, teamModules }: GroupsManagerProp
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Edit group ${group.name}`}
+                      title={`Edit group ${group.name}`}
                       onClick={() => handleOpenDialog(group)}
                     >
                       <Pencil className="h-4 w-4" />
@@ -452,6 +454,8 @@ export default function GroupsManager({ teamId, teamModules }: GroupsManagerProp
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Delete group ${group.name}`}
+                      title={`Delete group ${group.name}`}
                       disabled={group.isDefaultGroup}
                       onClick={() => handleDelete(group.id, group.name)}
                     >
