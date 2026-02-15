@@ -440,6 +440,10 @@ const getOrganizations = async (
   searchQuery: string,
   teamId: string,
   filters: OrganizationFieldFilter[] = [],
+  pagination?: {
+    page: number;
+    pageSize: number;
+  },
 ) => {
   const fieldFilters = filters.filter((filter) => filter.type === "field");
   const andClauses: Prisma.OrganizationWhereInput[] = [];
@@ -528,40 +532,74 @@ const getOrganizations = async (
     }
   });
 
-  const organization = await prisma.organization.findMany({
-    where: {
-      ...(teamId ? { teamId } : {}),
-      ...(andClauses.length ? { AND: andClauses } : {}),
-      OR: [
-        { name: { contains: searchQuery, mode: "insensitive" } },
-        { email: { contains: searchQuery, mode: "insensitive" } },
-        { address: { contains: searchQuery, mode: "insensitive" } },
-        { city: { contains: searchQuery, mode: "insensitive" } },
-        { country: { contains: searchQuery, mode: "insensitive" } },
-        { phone: { contains: searchQuery, mode: "insensitive" } },
-        { website: { contains: searchQuery, mode: "insensitive" } },
-        { taxID: { contains: searchQuery, mode: "insensitive" } },
-      ],
-    },
-    include: {
-      bankDetails: true,
-      orgType: true,
-      contactPerson: true,
-      users: true,
-      team: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
+  const where = {
+    ...(teamId ? { teamId } : {}),
+    ...(andClauses.length ? { AND: andClauses } : {}),
+    OR: [
+      { name: { contains: searchQuery, mode: "insensitive" } },
+      { email: { contains: searchQuery, mode: "insensitive" } },
+      { address: { contains: searchQuery, mode: "insensitive" } },
+      { city: { contains: searchQuery, mode: "insensitive" } },
+      { country: { contains: searchQuery, mode: "insensitive" } },
+      { phone: { contains: searchQuery, mode: "insensitive" } },
+      { website: { contains: searchQuery, mode: "insensitive" } },
+      { taxID: { contains: searchQuery, mode: "insensitive" } },
+    ],
+  } as Prisma.OrganizationWhereInput;
+
+  const page = Math.max(pagination?.page ?? 1, 1);
+  const pageSize = Math.max(pagination?.pageSize ?? 10, 1);
+  const skip = (page - 1) * pageSize;
+
+  if (!pagination) {
+    const data = await prisma.organization.findMany({
+      where,
+      include: {
+        bankDetails: true,
+        orgType: true,
+        contactPerson: true,
+        users: true,
+        team: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
         },
       },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    return { data, total: data.length };
+  }
 
-  return organization;
+  const [data, total] = await Promise.all([
+    prisma.organization.findMany({
+      where,
+      include: {
+        bankDetails: true,
+        orgType: true,
+        contactPerson: true,
+        users: true,
+        team: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      skip,
+      take: pageSize,
+    }),
+    prisma.organization.count({ where }),
+  ]);
+
+  return { data, total };
 };
 
 const deleteOrganization = async (id: string) => {

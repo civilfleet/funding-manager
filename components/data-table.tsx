@@ -4,6 +4,8 @@ import {
   type ColumnDef,
   flexRender,
   getCoreRowModel,
+  getPaginationRowModel,
+  type PaginationState,
   getSortedRowModel,
   type RowSelectionState,
   type SortingState,
@@ -14,6 +16,13 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -38,6 +47,13 @@ interface DataTableProps<TData, TValue> {
     selectedRows: TData[];
     clearSelection: () => void;
   }) => React.ReactNode;
+  serverPagination?: {
+    page: number;
+    pageSize: number;
+    total: number;
+    onPageChange: (page: number) => void;
+    onPageSizeChange: (pageSize: number) => void;
+  };
 }
 
 const CARD_FIELD_LABELS: Record<string, string> = {
@@ -75,6 +91,7 @@ export function DataTable<TData, TValue>({
   selectable = false,
   onSelectionChange,
   renderBatchActions,
+  serverPagination,
 }: DataTableProps<TData, TValue>) {
   const isMobile = useIsMobile();
   const resolvedInitialView =
@@ -88,6 +105,26 @@ export function DataTable<TData, TValue>({
   );
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  const isServerPagination = Boolean(serverPagination);
+  const paginationState = isServerPagination
+    ? {
+        pageIndex: Math.max((serverPagination?.page ?? 1) - 1, 0),
+        pageSize: serverPagination?.pageSize ?? 10,
+      }
+    : pagination;
+  const controlledPageCount = isServerPagination
+    ? Math.max(
+        1,
+        Math.ceil(
+          (serverPagination?.total ?? 0) /
+            Math.max(serverPagination?.pageSize ?? 1, 1),
+        ),
+      )
+    : undefined;
 
   const selectionColumn = React.useMemo<ColumnDef<TData, TValue>[]>(
     () =>
@@ -138,12 +175,17 @@ export function DataTable<TData, TValue>({
     columns: enhancedColumns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: isServerPagination,
+    pageCount: controlledPageCount,
     enableRowSelection: selectable,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
+    onPaginationChange: isServerPagination ? undefined : setPagination,
     state: {
       rowSelection,
       sorting,
+      pagination: paginationState,
     },
   });
 
@@ -171,12 +213,47 @@ export function DataTable<TData, TValue>({
     }
   }, [isMobile, desktopView, mobileView, renderMap]);
 
+  React.useEffect(() => {
+    if (isServerPagination) {
+      return;
+    }
+    setPagination((previous) => {
+      if (previous.pageIndex === 0) {
+        return previous;
+      }
+      return { ...previous, pageIndex: 0 };
+    });
+  }, [data, isServerPagination]);
+
+  React.useEffect(() => {
+    if (isServerPagination) {
+      return;
+    }
+    setPagination((previous) => {
+      const pageCount = table.getPageCount();
+      if (pageCount === 0 || previous.pageIndex < pageCount) {
+        return previous;
+      }
+      return { ...previous, pageIndex: pageCount - 1 };
+    });
+  }, [table, data, pagination.pageSize, isServerPagination]);
+
   const effectiveView = isMobile ? mobileView : view;
   const showMapToggle = Boolean(renderMap);
   const hasBatchActions = selectable && Boolean(renderBatchActions);
   const showBatchActions = hasBatchActions && selectedRows.length > 0;
   const showDesktopBatchActions = showBatchActions && !isMobile;
   const showMobileBatchActions = showBatchActions && isMobile;
+  const pageCount = isServerPagination
+    ? controlledPageCount ?? 1
+    : table.getPageCount();
+  const canPaginate = pageCount > 1;
+  const currentPageRows = isServerPagination
+    ? data.length
+    : table.getRowModel().rows.length;
+  const currentFrom = paginationState.pageIndex * paginationState.pageSize + 1;
+  const currentTo = currentFrom + currentPageRows - 1;
+  const totalItems = isServerPagination ? serverPagination?.total ?? 0 : data.length;
 
   return (
     <div className="w-full">
@@ -375,6 +452,85 @@ export function DataTable<TData, TValue>({
           No results.
         </div>
       )}
+      {effectiveView !== "map" && totalItems > 0 ? (
+        <div className="flex flex-col gap-2 border-t px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {currentPageRows === 0 ? 0 : currentFrom}-{currentTo} of {totalItems}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Rows</span>
+              <Select
+                value={String(paginationState.pageSize)}
+                onValueChange={(value) => {
+                  const nextSize = Number(value);
+                  if (isServerPagination && serverPagination) {
+                    serverPagination.onPageSizeChange(nextSize);
+                    return;
+                  }
+                  table.setPageSize(nextSize);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[84px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[10, 20, 50, 100].map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Page {paginationState.pageIndex + 1} of {Math.max(pageCount, 1)}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (isServerPagination && serverPagination) {
+                  if (serverPagination.page > 1) {
+                    serverPagination.onPageChange(serverPagination.page - 1);
+                  }
+                  return;
+                }
+                table.previousPage();
+              }}
+              disabled={
+                isServerPagination
+                  ? (serverPagination?.page ?? 1) <= 1 || !canPaginate
+                  : !table.getCanPreviousPage() || !canPaginate
+              }
+            >
+              Previous
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (isServerPagination && serverPagination) {
+                  if ((serverPagination.page ?? 1) < pageCount) {
+                    serverPagination.onPageChange(serverPagination.page + 1);
+                  }
+                  return;
+                }
+                table.nextPage();
+              }}
+              disabled={
+                isServerPagination
+                  ? (serverPagination?.page ?? 1) >= pageCount || !canPaginate
+                  : !table.getCanNextPage() || !canPaginate
+              }
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      ) : null}
       {showMobileBatchActions ? (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <div className="mx-auto w-full max-w-screen-sm">

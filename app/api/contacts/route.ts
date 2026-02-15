@@ -23,6 +23,17 @@ export async function GET(req: Request) {
     const teamId = searchParams.get("teamId");
     const query = searchParams.get("query") || "";
     const filtersParam = searchParams.get("filters");
+    const hasPageParam = searchParams.has("page");
+    const hasPageSizeParam = searchParams.has("pageSize");
+    const hasPagination = hasPageParam || hasPageSizeParam;
+    const pageParam = Number(searchParams.get("page") || "1");
+    const pageSizeParam = Number(searchParams.get("pageSize") || "10");
+    const page = Number.isFinite(pageParam) && pageParam > 0
+      ? Math.floor(pageParam)
+      : 1;
+    const pageSize = Number.isFinite(pageSizeParam) && pageSizeParam > 0
+      ? Math.min(Math.floor(pageSizeParam), 100)
+      : 10;
 
     if (!teamId) {
       return NextResponse.json(
@@ -57,14 +68,33 @@ export async function GET(req: Request) {
 
     const roles = (session?.user?.roles ?? []) as Roles[];
 
-    const contacts = await getTeamContacts(
-      teamId,
-      query || undefined,
-      userId,
-      filters,
-      roles,
+    const contactsResult = hasPagination
+      ? await getTeamContacts(
+          teamId,
+          query || undefined,
+          userId,
+          filters,
+          roles,
+          { page, pageSize },
+        )
+      : await getTeamContacts(
+          teamId,
+          query || undefined,
+          userId,
+          filters,
+          roles,
+        );
+    const contacts = Array.isArray(contactsResult)
+      ? contactsResult
+      : contactsResult.data;
+    const total = Array.isArray(contactsResult)
+      ? contactsResult.length
+      : contactsResult.total;
+    const totalPages = pageSize > 0 ? Math.ceil(total / pageSize) : 1;
+    return NextResponse.json(
+      { data: contacts, total, page, pageSize, totalPages },
+      { status: 200 },
     );
-    return NextResponse.json({ data: contacts }, { status: 200 });
   } catch (e) {
     const { message } = handlePrismaError(e);
     return NextResponse.json(

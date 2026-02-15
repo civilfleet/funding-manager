@@ -208,6 +208,8 @@ export default function ContactTable({ teamId }: ContactTableProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [filters, setFilters] = useState<ContactFilter[]>([]);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
@@ -230,9 +232,10 @@ export default function ContactTable({ teamId }: ContactTableProps) {
   }, [activeFilters]);
 
   const contactsKey = `/api/contacts?teamId=${teamId}&query=${encodeURIComponent(query)}${filtersQuery}`;
+  const paginatedContactsKey = `${contactsKey}&page=${page}&pageSize=${pageSize}`;
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
-    contactsKey,
+    paginatedContactsKey,
     fetcher,
   );
 
@@ -280,6 +283,11 @@ export default function ContactTable({ teamId }: ContactTableProps) {
 
     return data.data as ContactRow[];
   }, [data]);
+  const totalContacts = Number(data?.total ?? contacts.length);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, filtersQuery]);
 
   const [attributeKeyOptions, setAttributeKeyOptions] = useState<string[]>([]);
 
@@ -958,6 +966,16 @@ export default function ContactTable({ teamId }: ContactTableProps) {
             renderCard={renderCard}
             renderMap={() => <ContactMap contacts={contacts} />}
             initialView="table"
+            serverPagination={{
+              page,
+              pageSize,
+              total: totalContacts,
+              onPageChange: setPage,
+              onPageSizeChange: (nextPageSize) => {
+                setPageSize(nextPageSize);
+                setPage(1);
+              },
+            }}
             toolbar={
               <Link
                 href={`/teams/${teamId}/crm/contacts/create`}

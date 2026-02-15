@@ -661,13 +661,29 @@ const mapContact = (contact: ContactWithAttributes): ContactType => ({
   updatedAt: contact.updatedAt,
 });
 
-const getTeamContacts = async (
+async function getTeamContacts(
+  teamId: string,
+  query?: string,
+  userId?: string,
+  filters?: ContactFilter[],
+  roles?: Roles[],
+): Promise<ContactType[]>;
+async function getTeamContacts(
+  teamId: string,
+  query: string | undefined,
+  userId: string | undefined,
+  filters: ContactFilter[] | undefined,
+  roles: Roles[] | undefined,
+  pagination: { page: number; pageSize: number },
+): Promise<{ data: ContactType[]; total: number }>;
+async function getTeamContacts(
   teamId: string,
   query?: string,
   userId?: string,
   filters?: ContactFilter[],
   roles: Roles[] = [],
-) => {
+  pagination?: { page: number; pageSize: number },
+) {
   await ensureDefaultGroup(teamId);
 
   const andConditions: Prisma.ContactWhereInput[] = [
@@ -1204,43 +1220,57 @@ const getTeamContacts = async (
   const where: Prisma.ContactWhereInput =
     andConditions.length === 1 ? andConditions[0] : { AND: andConditions };
 
-  const contacts = await prisma.contact.findMany({
-    where,
-    include: {
-      attributes: true,
-      socialLinks: true,
-      group: {
-        include: {
-          modulePermissions: true,
+  const page = Math.max(pagination?.page ?? 1, 1);
+  const pageSize = Math.max(pagination?.pageSize ?? 10, 1);
+  const skip = (page - 1) * pageSize;
+
+  const [contacts, total] = await Promise.all([
+    prisma.contact.findMany({
+      where,
+      include: {
+        attributes: true,
+        socialLinks: true,
+        group: {
+          include: {
+            modulePermissions: true,
+          },
         },
-      },
-      events: {
-        include: {
-          event: true,
-          roles: {
-            include: {
-              eventRole: true,
+        events: {
+          include: {
+            event: true,
+            roles: {
+              include: {
+                eventRole: true,
+              },
             },
           },
         },
-      },
-      registrations: {
-        include: {
-          event: true,
+        registrations: {
+          include: {
+            event: true,
+          },
         },
       },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+      orderBy: {
+        createdAt: "desc",
+      },
+      ...(pagination ? { skip, take: pageSize } : {}),
+    }),
+    pagination ? prisma.contact.count({ where }) : Promise.resolve(0),
+  ]);
 
   const accessMap = await getContactFieldAccessMap(teamId);
 
-  return contacts
+  const mapped = contacts
     .map(mapContact)
     .map((contact) => filterContactByAccess(contact, accessMap, userGroupIds));
-};
+
+  if (pagination) {
+    return { data: mapped, total };
+  }
+
+  return mapped;
+}
 
 const getContactById = async (
   contactId: string,

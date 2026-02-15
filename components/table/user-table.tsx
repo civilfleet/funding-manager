@@ -1,7 +1,7 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
@@ -28,6 +28,8 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 export default function UserTable({ teamId, organizationId }: UserTableProps) {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const form = useForm<z.infer<typeof querySchema>>({
     resolver: zodResolver(querySchema),
@@ -37,11 +39,20 @@ export default function UserTable({ teamId, organizationId }: UserTableProps) {
   const query = form.watch("query");
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
-    `/api/users?teamId=${teamId}&query=${query}&organizationId=${organizationId}`,
+    `/api/users?teamId=${teamId}&query=${query}&organizationId=${organizationId}&page=${page}&pageSize=${pageSize}`,
     fetcher,
   );
   const loading = isLoading || !data;
   const ownerId = data?.ownerId as string | undefined;
+  const totalUsers = Number(data?.total ?? (data?.data?.length ?? 0));
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
+
+  const onSubmit = (values: z.infer<typeof querySchema>) => {
+    form.setValue("query", values.query);
+  };
 
   if (error) {
     toast({
@@ -49,10 +60,6 @@ export default function UserTable({ teamId, organizationId }: UserTableProps) {
       description: "Error fetching funding requests",
       variant: "destructive",
     });
-  }
-
-  async function onSubmit(values: z.infer<typeof querySchema>) {
-    form.setValue("query", values.query);
   }
 
   const handleDeleteSelected = async (
@@ -164,6 +171,16 @@ export default function UserTable({ teamId, organizationId }: UserTableProps) {
               }))
             }
             initialView="table"
+            serverPagination={{
+              page,
+              pageSize,
+              total: totalUsers,
+              onPageChange: setPage,
+              onPageSizeChange: (nextPageSize) => {
+                setPageSize(nextPageSize);
+                setPage(1);
+              },
+            }}
             selectable
             renderBatchActions={({ selectedRows, clearSelection }) => (
               <div className="flex flex-wrap items-center gap-3">

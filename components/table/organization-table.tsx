@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { z } from "zod";
 import { DataTable } from "@/components/data-table";
@@ -68,6 +68,8 @@ export default function OrganizationTable({
   const isAdmin = pathname.startsWith("/admin");
   const [fieldFilters, setFieldFilters] = useState<FieldFilter[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const resolvedBasePath = (basePath ?? pathname).replace(/\/$/, "");
 
   const form = useForm<z.infer<typeof querySchema>>({
@@ -136,11 +138,16 @@ export default function OrganizationTable({
     return `&filters=${encodeURIComponent(JSON.stringify(fieldFilters.map((filter) => ({ type: "field", ...filter }))))}`;
   }, [fieldFilters]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [query, filtersQuery]);
+
   const { data, error, isLoading, isValidating, mutate } = useSWR(
-    `/api/organizations?${isAdmin ? "" : `teamId=${teamId}&`}query=${query}${filtersQuery}`,
+    `/api/organizations?${isAdmin ? "" : `teamId=${teamId}&`}query=${query}${filtersQuery}&page=${page}&pageSize=${pageSize}`,
     fetcher,
   );
   const loading = isLoading || !data;
+  const totalOrganizations = Number(data?.total ?? (data?.data?.length ?? 0));
 
   if (error) {
     toast({
@@ -152,7 +159,20 @@ export default function OrganizationTable({
 
   async function onSubmit(values: z.infer<typeof querySchema>) {
     form.setValue("query", values.query); // Triggers SWR to re-fetch
+    setPage(1);
   }
+
+  const handleAddFilter = () => {
+    setFieldFilters((prev) => [
+      ...prev,
+      {
+        key: fieldOptions[0].key,
+        operator: "contains",
+        value: "",
+      },
+    ]);
+    setPage(1);
+  };
 
   const handleDeleteSelected = async (
     selectedRows: OrganizationColumns[],
@@ -237,16 +257,7 @@ export default function OrganizationTable({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() =>
-                setFieldFilters((prev) => [
-                  ...prev,
-                  {
-                    key: fieldOptions[0].key,
-                    operator: "contains",
-                    value: "",
-                  },
-                ])
-              }
+              onClick={handleAddFilter}
             >
               <Plus className="mr-2 h-4 w-4" />
               Add filter
@@ -381,6 +392,16 @@ export default function OrganizationTable({
               columns={columns(mutate, resolvedBasePath)}
               data={data?.data}
               initialView="table"
+              serverPagination={{
+                page,
+                pageSize,
+                total: totalOrganizations,
+                onPageChange: setPage,
+                onPageSizeChange: (nextPageSize) => {
+                  setPageSize(nextPageSize);
+                  setPage(1);
+                },
+              }}
               selectable
               renderBatchActions={({ selectedRows, clearSelection }) => (
                 <div className="flex flex-wrap items-center gap-3">

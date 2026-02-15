@@ -23,17 +23,38 @@ export async function GET(req: Request) {
     const searchQuery = searchParams.get("query") || "";
     const teamId = searchParams.get("teamId") || "";
     const filtersParam = searchParams.get("filters");
+    const hasPageParam = searchParams.has("page");
+    const hasPageSizeParam = searchParams.has("pageSize");
+    const hasPagination = hasPageParam || hasPageSizeParam;
+    const pageParam = Number(searchParams.get("page") || "1");
+    const pageSizeParam = Number(searchParams.get("pageSize") || "10");
+    const page = Number.isFinite(pageParam) && pageParam > 0
+      ? Math.floor(pageParam)
+      : 1;
+    const pageSize = Number.isFinite(pageSizeParam) && pageSizeParam > 0
+      ? Math.min(Math.floor(pageSizeParam), 100)
+      : 10;
     const parsedFilters = filtersParam
       ? organizationFiltersSchema.parse(JSON.parse(filtersParam))
       : [];
 
-    const data = await getOrganizations(searchQuery, teamId, parsedFilters);
+    const { data, total } = await getOrganizations(
+      searchQuery,
+      teamId,
+      parsedFilters,
+      hasPagination ? { page, pageSize } : undefined,
+    );
+    const totalPages = pageSize > 0 ? Math.ceil(total / pageSize) : 1;
 
     return NextResponse.json(
       {
         data,
+        total,
+        page,
+        pageSize,
+        totalPages,
       },
-      { status: 201 },
+      { status: 200 },
     );
   } catch (e) {
     const { message } = handlePrismaError(e);

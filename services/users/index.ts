@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { ensureDefaultGroup } from "@/services/groups";
 import { DEFAULT_TEAM_MODULES, type AppModule, type Roles } from "@/types";
@@ -256,6 +257,10 @@ const getUsers = async (
     fundingRequestId?: string;
   },
   searchQuery: string,
+  pagination?: {
+    page: number;
+    pageSize: number;
+  },
 ) => {
   const whereConditions = [];
 
@@ -296,46 +301,69 @@ const getUsers = async (
     whereConditions.push({ organizations: { some: { id: organizationId } } });
   }
 
-  // Fetch users based on conditions
-  return await prisma.user.findMany({
-    where: {
-      AND: [
-        {
-          OR: ["name", "email", "address", "city", "country"].map((field) => ({
-            [field]: { contains: searchQuery, mode: "insensitive" },
-          })),
-        },
-        ...whereConditions,
-      ],
-    },
-    include: {
-      accounts: {
-        select: {
-          provider: true,
-        },
+  const where = {
+    AND: [
+      {
+        OR: ["name", "email", "address", "city", "country"].map((field) => ({
+          [field]: { contains: searchQuery, mode: "insensitive" },
+        })),
       },
-      ...(teamId
-        ? {
-            groups: {
-              where: {
-                group: {
-                  teamId,
-                },
+      ...whereConditions,
+    ],
+  } as Prisma.UserWhereInput;
+
+  const include = {
+    accounts: {
+      select: {
+        provider: true,
+      },
+    },
+    ...(teamId
+      ? {
+          groups: {
+            where: {
+              group: {
+                teamId,
               },
-              include: {
-                group: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
+            },
+            include: {
+              group: {
+                select: {
+                  id: true,
+                  name: true,
                 },
               },
             },
-          }
-        : {}),
-    },
-    orderBy: { createdAt: "desc" },
-  });
+          },
+        }
+      : {}),
+  };
+
+  const page = Math.max(pagination?.page ?? 1, 1);
+  const pageSize = Math.max(pagination?.pageSize ?? 10, 1);
+  const skip = (page - 1) * pageSize;
+
+  if (!pagination) {
+    const data = await prisma.user.findMany({
+      where,
+      include,
+      orderBy: { createdAt: "desc" },
+    });
+    return { data, total: data.length };
+  }
+
+  const [data, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      include,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  return { data, total };
 };
 
 const getUsersForDonation = async ({
