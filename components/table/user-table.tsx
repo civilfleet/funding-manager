@@ -7,13 +7,13 @@ import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
 import { DataTable } from "@/components/data-table";
+import TableLoadingState from "@/components/loading/table-loading-state";
 import { columns } from "@/components/table/user-columns";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/types";
 import ButtonControl from "../helper/button-control";
 import FormInputControl from "../helper/form-input-control";
-import { Loader } from "../helper/loader";
 import { Form } from "../ui/form";
 
 interface UserTableProps {
@@ -36,7 +36,7 @@ export default function UserTable({ teamId, organizationId }: UserTableProps) {
 
   const query = form.watch("query");
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
     `/api/users?teamId=${teamId}&query=${query}&organizationId=${organizationId}`,
     fetcher,
   );
@@ -145,13 +145,15 @@ export default function UserTable({ teamId, organizationId }: UserTableProps) {
         </form>
       </Form>
       <div
-        className="rounded-md border my-2 flex  justify-center items-center
-      grow h-full"
+        className="relative rounded-md border my-2 flex justify-center items-center grow h-full"
       >
+        {isValidating && !loading ? (
+          <p className="absolute right-4 top-4 text-xs text-muted-foreground">
+            Refreshing...
+          </p>
+        ) : null}
         {loading ? (
-          <div className="flex justify-center items-center h-32">
-            <Loader className="" />
-          </div>
+          <TableLoadingState />
         ) : (
           <DataTable
             columns={columns}

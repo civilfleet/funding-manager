@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 import { z } from "zod";
 import { DataTable } from "@/components/data-table";
+import TableLoadingState from "@/components/loading/table-loading-state";
 import {
   columns,
   type OrganizationColumns,
@@ -25,7 +26,6 @@ import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import ButtonControl from "../helper/button-control";
 import FormInputControl from "../helper/form-input-control";
-import { Loader } from "../helper/loader";
 import {
   Select,
   SelectContent,
@@ -136,7 +136,7 @@ export default function OrganizationTable({
     return `&filters=${encodeURIComponent(JSON.stringify(fieldFilters.map((filter) => ({ type: "field", ...filter }))))}`;
   }, [fieldFilters]);
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
     `/api/organizations?${isAdmin ? "" : `teamId=${teamId}&`}query=${query}${filtersQuery}`,
     fetcher,
   );
@@ -367,13 +367,14 @@ export default function OrganizationTable({
         </div>
       )}
 
-      <div
-        className="my-2 flex h-full grow items-center justify-center rounded-md border p-2 sm:p-4"
-      >
+      <div className="relative my-2 flex h-full grow items-center justify-center rounded-md border p-2 sm:p-4">
+        {isValidating && !loading ? (
+          <p className="absolute right-4 top-4 text-xs text-muted-foreground">
+            Refreshing...
+          </p>
+        ) : null}
         {loading ? (
-          <div className="flex justify-center items-center h-32">
-            <Loader className="" />
-          </div>
+          <TableLoadingState />
         ) : (
           <div className="w-full overflow-x-auto">
             <DataTable

@@ -10,7 +10,7 @@ import { z } from "zod";
 import { DataTable } from "@/components/data-table";
 import ButtonControl from "@/components/helper/button-control";
 import FormInputControl from "@/components/helper/form-input-control";
-import { Loader } from "@/components/helper/loader";
+import TableLoadingState from "@/components/loading/table-loading-state";
 import {
   type EventRow,
   eventColumns,
@@ -90,7 +90,7 @@ export default function EventTable({ teamId }: EventTableProps) {
     return stringified ? `&${stringified}` : "";
   }, [eventTypeId, stateFilter, fromDate, toDate]);
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
     `/api/events?teamId=${teamId}&query=${encodeURIComponent(query)}${filtersQuery}`,
     fetcher,
   );
@@ -224,11 +224,14 @@ export default function EventTable({ teamId }: EventTableProps) {
         </form>
       </Form>
 
-      <div className="rounded-md border p-2">
+      <div className="relative rounded-md border p-2">
+        {isValidating && !isLoading ? (
+          <p className="absolute right-4 top-4 text-xs text-muted-foreground">
+            Refreshing...
+          </p>
+        ) : null}
         {isLoading ? (
-          <div className="flex justify-center items-center h-32">
-            <Loader className="h-6 w-6 text-muted-foreground" />
-          </div>
+          <TableLoadingState />
         ) : (
           <DataTable
             columns={eventColumns}
@@ -266,7 +269,7 @@ export default function EventTable({ teamId }: EventTableProps) {
                     {isDeleting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Deleting…
+                        Deleting...
                       </>
                     ) : (
                       "Delete selected"

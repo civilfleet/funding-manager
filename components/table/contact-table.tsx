@@ -11,7 +11,7 @@ import { z } from "zod";
 import { DataTable } from "@/components/data-table";
 import ButtonControl from "@/components/helper/button-control";
 import FormInputControl from "@/components/helper/form-input-control";
-import { Loader } from "@/components/helper/loader";
+import TableLoadingState from "@/components/loading/table-loading-state";
 import {
   type ContactRow,
   contactColumns,
@@ -231,7 +231,10 @@ export default function ContactTable({ teamId }: ContactTableProps) {
 
   const contactsKey = `/api/contacts?teamId=${teamId}&query=${encodeURIComponent(query)}${filtersQuery}`;
 
-  const { data, error, isLoading, mutate } = useSWR(contactsKey, fetcher);
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
+    contactsKey,
+    fetcher,
+  );
 
   const { data: rolesData } = useSWR(
     `/api/event-roles?teamId=${teamId}`,
@@ -940,11 +943,14 @@ export default function ContactTable({ teamId }: ContactTableProps) {
         </div>
       )}
 
-      <div className="rounded-md border p-2">
+      <div className="relative rounded-md border p-2">
+        {isValidating && !isLoading ? (
+          <p className="absolute right-4 top-4 text-xs text-muted-foreground">
+            Refreshing...
+          </p>
+        ) : null}
         {isLoading ? (
-          <div className="flex h-32 items-center justify-center">
-            <Loader className="h-6 w-6 text-muted-foreground" />
-          </div>
+          <TableLoadingState />
         ) : (
           <DataTable
             columns={contactColumns}
@@ -986,7 +992,7 @@ export default function ContactTable({ teamId }: ContactTableProps) {
                     {isDeleting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Deleting…
+                        Deleting...
                       </>
                     ) : (
                       "Delete selected"
