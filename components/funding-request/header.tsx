@@ -5,7 +5,6 @@ import { AlertTriangle, CheckCircle2, Clock, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import FundingRequestDetailsForm from "@/components/forms/funding-request-detail-form";
-import CreateTransaction from "@/components/forms/modal/create-transaction";
 import formatCurrency from "@/components/helper/format-currency";
 import { StatusBadge } from "@/components/helper/status-badge";
 import { Button } from "@/components/ui/button";
@@ -228,10 +227,17 @@ export default function FundingRequestHeader({
               </Button>
             )}
             {currentStatus === FundingStatus.FundsDisbursing && isTeam && (
-              <CreateTransaction
-                fundingRequest={data}
-                refreshData={refreshData}
-              />
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() =>
+                  router.push(
+                    `/teams/${teamId}/funding/transactions/create?fundingRequestId=${data.id}`,
+                  )
+                }
+              >
+                Create Transaction
+              </Button>
             )}
           </div>
         </div>

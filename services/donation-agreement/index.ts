@@ -169,6 +169,7 @@ const getDonationAgreements = async (
           description: true,
           purpose: true,
           name: true,
+          status: true,
         },
       },
     },
@@ -233,6 +234,12 @@ const updateDonationAgreement = async (
       id,
     },
     include: {
+      fundingRequest: {
+        select: {
+          id: true,
+          status: true,
+        },
+      },
       file: {
         select: {
           id: true,
@@ -275,6 +282,27 @@ const updateDonationAgreement = async (
         signedAt: new Date(),
       },
     });
+
+    const remainingSignatures = await prisma.donationAgreementSignature.count({
+      where: {
+        donationAgreementId: id,
+        signedAt: null,
+      },
+    });
+
+    if (
+      remainingSignatures === 0 &&
+      donation?.fundingRequest?.status === FundingStatus.WaitingForSignature
+    ) {
+      await prisma.fundingRequest.update({
+        where: {
+          id: donation.fundingRequest.id,
+        },
+        data: {
+          status: FundingStatus.FundsDisbursing,
+        },
+      });
+    }
 
     return {
       data: donation,

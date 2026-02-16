@@ -1,14 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 import { DonationAgreementStatusBadge } from "@/components/helper/status-badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { DonationAgreement } from "@/types";
 
 const truncateText = (value?: string, maxLength = 20) => {
@@ -20,24 +13,16 @@ const truncateText = (value?: string, maxLength = 20) => {
 export const columns: ColumnDef<DonationAgreement>[] = [
   {
     id: "actions",
+    header: () => <div className="text-left">Actions</div>,
     cell: ({ row }) => {
       const request = row.original;
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <a href={`donation-agreements/${request.id}`}>
-              <DropdownMenuItem>View</DropdownMenuItem>
-            </a>
-            <DropdownMenuSeparator />
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="text-left">
+          <Button asChild variant="outline" size="sm">
+            <Link href={`donation-agreements/${request.id}`}>View</Link>
+          </Button>
+        </div>
       );
     },
   },

@@ -55,8 +55,7 @@ export default function SignDonationAgreement({
     currentUserSignature && !currentUserSignature.signedAt,
   );
 
-  const approved =
-    data.fundingRequest?.status === FundingStatus.FundsDisbursing ||
+  const isFundsCompleted =
     data.fundingRequest?.status === FundingStatus.Completed;
   const signaturesCompleted = data.userSignatures.every(
     (signature) => signature?.signedAt,
@@ -129,45 +128,6 @@ export default function SignDonationAgreement({
       toast({
         title: "Success",
         description: "Donation Agreement information updated",
-        variant: "default",
-      });
-    } catch (e) {
-      toast({
-        title: "Error",
-        description: (e as Error).message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function changeFundingRequestStatus() {
-    setIsSubmitting(true);
-    try {
-      const response = await fetch(
-        `/api/funding-requests/${data.fundingRequestId}/status`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status: FundingStatus.FundsDisbursing,
-            donationId: data.id,
-            teamId,
-          }),
-        },
-      );
-      if (!response.ok) {
-        throw new Error("Failed to update funding request status");
-      }
-
-      await refreshData();
-
-      toast({
-        title: "Success",
-        description: "Funding Request status updated",
         variant: "default",
       });
     } catch (e) {
@@ -275,13 +235,13 @@ export default function SignDonationAgreement({
                 <h2 className="text-lg font-semibold mb-2">User Signatures</h2>
                 {data.userSignatures.length > 0 ? (
                   <div className="space-y-2">
-                    {data.userSignatures.map((signature) => (
+                    {data.userSignatures.map((signature, index) => (
                       // Some signature rows can arrive without a stable id in dev snapshots.
-                      // Fall back to donationAgreementId+userId to keep React keys unique.
+                      // Fall back to user identity + index to keep React keys unique.
                       <div
                         key={
                           signature.id ||
-                          `${signature.donationAgreementId}-${signature.user?.id || signature.user?.email}`
+                          `${signature.user?.id || signature.user?.email || "signature"}-${index}`
                         }
                         className="flex items-center justify-between bg-muted p-2 rounded-md"
                       >
@@ -330,11 +290,11 @@ export default function SignDonationAgreement({
                           <SelectValue placeholder="Select user to sign for" />
                         </SelectTrigger>
                         <SelectContent>
-                          {data.userSignatures.map((signature) => (
+                          {data.userSignatures.map((signature, index) => (
                             <SelectItem
                               key={
                                 signature.id ||
-                                `${signature.donationAgreementId}-${signature.user?.id || signature.user?.email}`
+                                `${signature.user?.id || signature.user?.email || "signature"}-${index}`
                               }
                               value={signature.user?.id || ""}
                               disabled={signature.signedAt !== null}
@@ -375,15 +335,21 @@ export default function SignDonationAgreement({
           </Button>
         )}
 
-        {signaturesCompleted && teamId && (
-          <Button
-            type="button"
-            className="m-2"
-            disabled={approved}
-            onClick={changeFundingRequestStatus}
-          >
+        {signaturesCompleted && teamId && !isFundsCompleted && (
+          <Button asChild type="button" className="m-2">
+            <Link
+              href={`/teams/${teamId}/funding/transactions/create?fundingRequestId=${data.fundingRequestId}`}
+            >
+              <CreditCard className="mr-2 h-5 w-5" />
+              Disburse Funds
+            </Link>
+          </Button>
+        )}
+
+        {signaturesCompleted && isFundsCompleted && (
+          <Button type="button" className="m-2" disabled>
             <CreditCard className="mr-2 h-5 w-5" />
-            {!approved ? "Disburse Funds" : "Funds Disbursed"}
+            Funds Disbursed
           </Button>
         )}
       </CardFooter>
