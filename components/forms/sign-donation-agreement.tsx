@@ -48,6 +48,13 @@ export default function SignDonationAgreement({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
 
+  const currentUserSignature = data.userSignatures.find(
+    (signature) => signature.user?.id === userId,
+  );
+  const canCurrentUserSign = Boolean(
+    currentUserSignature && !currentUserSignature.signedAt,
+  );
+
   const approved =
     data.fundingRequest?.status === FundingStatus.FundsDisbursing ||
     data.fundingRequest?.status === FundingStatus.Completed;
@@ -85,6 +92,16 @@ export default function SignDonationAgreement({
       return;
     }
 
+    if (!isAdmin && !canCurrentUserSign) {
+      toast({
+        title: "Not Authorized",
+        description:
+          "You are not assigned to sign this agreement. Please ask a team admin to sign on behalf of an assigned user.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const response = await fetch(`/api/donation-agreements/${data.id}`, {
@@ -99,7 +116,12 @@ export default function SignDonationAgreement({
         }),
       });
       if (!response.ok) {
-        throw new Error("Failed to update donation agreement");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.error ||
+            errorData?.message ||
+            "Failed to update donation agreement",
+        );
       }
 
       await refreshData();
@@ -285,6 +307,11 @@ export default function SignDonationAgreement({
                   <h2 className="text-lg font-semibold mb-2">
                     Upload Signed Agreement
                   </h2>
+                  {!isAdmin && !canCurrentUserSign && (
+                    <p className="text-sm text-destructive mb-4">
+                      You are not assigned as a signer for this agreement.
+                    </p>
+                  )}
                   {isAdmin && (
                     <div className="mb-4">
                       <label className="text-sm font-medium mb-2 block" htmlFor="sign-on-behalf">
@@ -329,7 +356,9 @@ export default function SignDonationAgreement({
           <Button
             type="submit"
             form="organization-form"
-            disabled={isSubmitting || (isAdmin && !selectedUserId)}
+            disabled={
+              isSubmitting || (isAdmin ? !selectedUserId : !canCurrentUserSign)
+            }
           >
             <Upload className="mr-2 h-4 w-4" />
             {isAdmin

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { DataSelectBox } from "@/components/helper/data-select-box";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,15 +58,17 @@ const createUploadedFile = (fileUrl: string): UploadedFile => ({
 });
 
 interface HybridFundingRequestFormProps {
-  organizationId: string;
+  organizationId?: string;
   teamId?: string;
   userEmail?: string | null;
+  returnToTeamView?: boolean;
 }
 
 export default function HybridFundingRequestForm({
   organizationId,
   teamId,
   userEmail,
+  returnToTeamView = false,
 }: HybridFundingRequestFormProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -200,7 +203,7 @@ export default function HybridFundingRequestForm({
   const form = useForm<z.infer<typeof combinedSchema>>({
     resolver: zodResolver(combinedSchema),
     defaultValues: {
-      organizationId,
+      organizationId: organizationId || "",
       submittedBy: userEmail || "",
       files: [],
     },
@@ -455,7 +458,9 @@ export default function HybridFundingRequestForm({
 
       // Redirect to the funding request detail page
       router.push(
-        `/organizations/${organizationId}/funding-requests/${data.data.id}`,
+        returnToTeamView && teamId
+          ? `/teams/${teamId}/funding/funding-requests/${data.data.id}`
+          : `/organizations/${values.organizationId}/funding-requests/${data.data.id}`,
       );
     } catch (error) {
       console.error("Submission error:", error);
@@ -484,6 +489,42 @@ export default function HybridFundingRequestForm({
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
+        )}
+
+        {!organizationId && teamId && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Target Organization</CardTitle>
+              <CardDescription>
+                Select the organization this funding request belongs to.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FormField
+                control={form.control}
+                name="organizationId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Organization</FormLabel>
+                    <FormControl>
+                      <DataSelectBox
+                        targetKey="id"
+                        url={`/api/organizations?teamId=${teamId}`}
+                        attribute="name"
+                        label="Select Organization"
+                        value={
+                          typeof field.value === "string" ? field.value : null
+                        }
+                        onChange={field.onChange}
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
         )}
 
         {/* Static Fields Section */}
@@ -570,16 +611,23 @@ export default function HybridFundingRequestForm({
 
         {/* Submit Button */}
         <Card>
-          <CardFooter className="flex justify-end gap-4">
+          <CardFooter className="mt-2 flex flex-col-reverse gap-3 pt-6 sm:flex-row sm:justify-end sm:gap-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => router.back()}
               disabled={isSubmitting}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              className="w-full sm:w-auto"
+              type="submit"
+              disabled={
+                isSubmitting || (!organizationId && !form.watch("organizationId"))
+              }
+            >
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
