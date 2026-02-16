@@ -276,8 +276,13 @@ export default function SignDonationAgreement({
                 {data.userSignatures.length > 0 ? (
                   <div className="space-y-2">
                     {data.userSignatures.map((signature) => (
+                      // Some signature rows can arrive without a stable id in dev snapshots.
+                      // Fall back to donationAgreementId+userId to keep React keys unique.
                       <div
-                        key={signature.id}
+                        key={
+                          signature.id ||
+                          `${signature.donationAgreementId}-${signature.user?.id || signature.user?.email}`
+                        }
                         className="flex items-center justify-between bg-muted p-2 rounded-md"
                       >
                         <span className="text-sm font-medium">
@@ -327,7 +332,10 @@ export default function SignDonationAgreement({
                         <SelectContent>
                           {data.userSignatures.map((signature) => (
                             <SelectItem
-                              key={signature.id}
+                              key={
+                                signature.id ||
+                                `${signature.donationAgreementId}-${signature.user?.id || signature.user?.email}`
+                              }
                               value={signature.user?.id || ""}
                               disabled={signature.signedAt !== null}
                             >
