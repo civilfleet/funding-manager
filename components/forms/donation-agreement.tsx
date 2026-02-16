@@ -47,6 +47,7 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<string[]>([]);
 
@@ -325,7 +326,23 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
                   placeholder="Drag and drop or click to upload"
                   name="file"
                   data={""}
-                  onFileUpload={(url) => form.setValue("file", url)}
+                  onFileUpload={(url) => {
+                    form.setValue("file", url, { shouldValidate: true });
+                    if (url) {
+                      form.clearErrors("file");
+                    }
+                  }}
+                  onUploadError={(message) => {
+                    if (!message) {
+                      form.clearErrors("file");
+                      return;
+                    }
+                    form.setError("file", {
+                      type: "manual",
+                      message,
+                    });
+                  }}
+                  onUploadingChange={setIsUploadingFile}
                 />
                 {form.formState.errors.file && (
                   <p className="text-sm text-destructive">
@@ -352,7 +369,7 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
 
             <Button
               type="submit"
-              disabled={isSubmitting || users.length === 0}
+              disabled={isSubmitting || isUploadingFile || users.length === 0}
               className="min-w-[120px]"
             >
               {isSubmitting ? (

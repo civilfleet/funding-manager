@@ -11,6 +11,8 @@ interface FileUploadProps {
   data?: string;
   disabled?: boolean;
   label?: string;
+  onUploadError?: (message: string) => void;
+  onUploadingChange?: (isUploading: boolean) => void;
 }
 
 const FileUpload = ({
@@ -21,17 +23,24 @@ const FileUpload = ({
   error,
   disabled = false,
   label,
+  onUploadError,
+  onUploadingChange,
 }: FileUploadProps) => {
   const [_fileUrl, setFileUrl] = useState<string | null>(data || null);
   const [loading, setLoading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const inputId = useId();
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    setLoading(true);
     const file = event.target.files?.[0];
     if (!file) return;
+
+    setUploadError(null);
+    onUploadError?.("");
+    setLoading(true);
+    onUploadingChange?.(true);
 
     try {
       const upload = await fetch("/api/upload", {
@@ -40,7 +49,14 @@ const FileUpload = ({
         body: JSON.stringify({ fileName: file.name, fileType: file.type }),
       });
 
+      if (!upload.ok) {
+        throw new Error("Failed to request upload URL");
+      }
+
       const { putUrl } = await upload.json();
+      if (!putUrl) {
+        throw new Error("Upload URL is missing");
+      }
 
       const uploadFile = await fetch(putUrl, {
         method: "PUT",
@@ -48,15 +64,26 @@ const FileUpload = ({
         body: file,
       });
 
-      if (uploadFile.ok) {
-        const fileUrl = putUrl.split("?")[0].split("/").pop(); // Remove query params
-        setFileUrl(fileUrl);
-        onFileUpload(fileUrl); // Send file URL to parent
-        setLoading(false);
+      if (!uploadFile.ok) {
+        throw new Error("File upload failed");
       }
+
+      const fileUrl = putUrl.split("?")[0].split("/").pop(); // Keep only object key
+      if (!fileUrl) {
+        throw new Error("Invalid uploaded file URL");
+      }
+
+      setFileUrl(fileUrl);
+      onFileUpload(fileUrl);
     } catch (error) {
       console.error("File upload failed:", error);
+      const message = "File upload failed. Please try again.";
+      setUploadError(message);
+      onUploadError?.(message);
+      onFileUpload("");
+    } finally {
       setLoading(false);
+      onUploadingChange?.(false);
     }
   };
 
@@ -79,6 +106,7 @@ const FileUpload = ({
       )}
 
       {error && <p className="text-red-500 text-xs ">{error}</p>}
+      {uploadError && <p className="text-red-500 text-xs ">{uploadError}</p>}
     </div>
   );
 };

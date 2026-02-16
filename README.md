@@ -137,12 +137,51 @@ yarn start
 # Run linting
 yarn lint
 
+# Print desired S3 CORS rules
+yarn s3:cors:print
+
+# Check bucket CORS against desired rules (exit code 2 on mismatch)
+yarn s3:cors:check
+
+# Apply desired CORS rules to the configured bucket
+yarn s3:cors:apply
+
 # Database operations
 npx prisma generate      # Generate Prisma client
 npx prisma migrate dev   # Run database migrations
 npx prisma db push       # Push schema changes to database
 npx prisma studio        # Open Prisma Studio
 ```
+
+### S3 CORS Bootstrap
+
+Direct browser uploads use pre-signed S3 URLs, so bucket CORS must allow preflight
+and `PUT`.
+
+Set these env vars before running the scripts:
+
+```env
+NEXT_AWS_S3_ENDPOINT="https://s3.fr-par.scw.cloud"
+NEXT_AWS_S3_BUCKET_REGION="fr-par"
+NEXT_AWS_S3_BUCKET_NAME="funding-manager-civilfleet"
+NEXT_AWS_S3_ACCESS_KEY="..."
+NEXT_AWS_S3_ACCESS_SECRET="..."
+
+# Optional overrides
+S3_CORS_ALLOWED_ORIGINS="http://localhost:3000,http://169.254.83.107:3000"
+S3_CORS_ALLOWED_METHODS="GET,HEAD,PUT"
+S3_CORS_ALLOWED_HEADERS="*"
+S3_CORS_EXPOSE_HEADERS="ETag"
+S3_CORS_MAX_AGE_SECONDS="3000"
+S3_FORCE_PATH_STYLE="true"
+```
+
+The script auto-loads environment files via `dotenv` in this order:
+`.env` -> `.env.local` -> `.env.{NODE_ENV}` -> `.env.{NODE_ENV}.local`.
+
+Use a base endpoint (for example `https://s3.fr-par.scw.cloud`) rather than a
+bucket-specific host/path. If unsure, keep `S3_FORCE_PATH_STYLE` unset and the
+script will auto-try both styles.
 
 ## 📁 Project Structure
 
