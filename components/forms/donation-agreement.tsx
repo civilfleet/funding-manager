@@ -357,12 +357,8 @@ export default function DonationAgreement({ teamId }: { teamId: string }) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                form.reset();
-                setUsers([]);
-                setError(null);
-              }}
-              disabled={isSubmitting}
+              onClick={() => router.push(`/teams/${teamId}/funding/donation-agreements`)}
+              disabled={isSubmitting || isUploadingFile}
             >
               Cancel
             </Button>
