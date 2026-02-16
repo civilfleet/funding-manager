@@ -76,3 +76,71 @@ export const DonationAgreementStatusBadge: React.FC<
 
   return <Badge className={`${colorClass} text-white`}>{status}</Badge>;
 };
+
+export type DonationPayoutStatus =
+  | "not_disbursed"
+  | "in_disbursement"
+  | "partially_disbursed"
+  | "disbursed";
+
+export const getDonationPayoutStatus = ({
+  fundingStatus,
+  amountAgreed,
+  remainingAmount,
+}: {
+  fundingStatus?: FundingStatus;
+  amountAgreed?: number | null;
+  remainingAmount?: number | null;
+}): DonationPayoutStatus => {
+  if (fundingStatus === FundingStatus.Completed) {
+    return "disbursed";
+  }
+
+  if (amountAgreed !== undefined && amountAgreed !== null) {
+    const agreed = Number(amountAgreed);
+    const remaining =
+      remainingAmount !== undefined && remainingAmount !== null
+        ? Number(remainingAmount)
+        : null;
+
+    if (agreed > 0 && remaining !== null) {
+      if (remaining <= 0) {
+        return "disbursed";
+      }
+      if (remaining < agreed) {
+        return "partially_disbursed";
+      }
+    }
+  }
+
+  if (fundingStatus === FundingStatus.FundsDisbursing) {
+    return "in_disbursement";
+  }
+
+  return "not_disbursed";
+};
+
+export const donationPayoutStatusLabelMap: Record<DonationPayoutStatus, string> =
+  {
+    not_disbursed: "Not Disbursed",
+    in_disbursement: "In Disbursement",
+    partially_disbursed: "Partially Disbursed",
+    disbursed: "Disbursed",
+  };
+
+export const DonationPayoutStatusBadge: React.FC<{
+  status: DonationPayoutStatus;
+}> = ({ status }) => {
+  const colorClassMap: Record<DonationPayoutStatus, string> = {
+    not_disbursed: "bg-slate-500",
+    in_disbursement: "bg-violet-500",
+    partially_disbursed: "bg-amber-500",
+    disbursed: "bg-green-600",
+  };
+
+  return (
+    <Badge className={`${colorClassMap[status]} text-white`}>
+      {donationPayoutStatusLabelMap[status]}
+    </Badge>
+  );
+};

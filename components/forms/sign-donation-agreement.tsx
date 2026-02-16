@@ -18,6 +18,10 @@ import {
 } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import {
+  donationPayoutStatusLabelMap,
+  getDonationPayoutStatus,
+} from "@/components/helper/status-badge";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -26,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import formatCurrency from "../helper/format-currency";
 import { type DonationAgreement, FundingStatus, Roles } from "@/types";
 import { updateDonationAgreementSchema as schema } from "@/validations/donation-agreement";
 import DetailItem from "../helper/detail-item";
@@ -60,6 +65,19 @@ export default function SignDonationAgreement({
   const signaturesCompleted = data.userSignatures.every(
     (signature) => signature?.signedAt,
   );
+  const payoutStatus = getDonationPayoutStatus({
+    fundingStatus: data.fundingRequest?.status,
+    amountAgreed:
+      data.fundingRequest?.amountAgreed !== undefined &&
+      data.fundingRequest?.amountAgreed !== null
+        ? Number(data.fundingRequest.amountAgreed)
+        : null,
+    remainingAmount:
+      data.fundingRequest?.remainingAmount !== undefined &&
+      data.fundingRequest?.remainingAmount !== null
+        ? Number(data.fundingRequest.remainingAmount)
+        : null,
+  });
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -169,6 +187,19 @@ export default function SignDonationAgreement({
                   <DetailItem
                     label="Purpose"
                     value={data.fundingRequest?.purpose}
+                  />
+                  <DetailItem
+                    label="Agreed Amount"
+                    value={
+                      data.fundingRequest?.amountAgreed !== undefined &&
+                      data.fundingRequest?.amountAgreed !== null
+                        ? formatCurrency(Number(data.fundingRequest.amountAgreed))
+                        : "Not set"
+                    }
+                  />
+                  <DetailItem
+                    label="Payout"
+                    value={donationPayoutStatusLabelMap[payoutStatus]}
                   />
                 </div>
               </div>

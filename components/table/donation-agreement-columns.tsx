@@ -1,6 +1,11 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { DonationAgreementStatusBadge } from "@/components/helper/status-badge";
+import formatCurrency from "@/components/helper/format-currency";
+import {
+  DonationAgreementStatusBadge,
+  DonationPayoutStatusBadge,
+  getDonationPayoutStatus,
+} from "@/components/helper/status-badge";
 import { Button } from "@/components/ui/button";
 import type { DonationAgreement } from "@/types";
 
@@ -47,6 +52,46 @@ export const columns: ColumnDef<DonationAgreement>[] = [
           <DonationAgreementStatusBadge
             status={signed ? "completed" : "pending"}
           />
+        </div>
+      );
+    },
+  },
+  {
+    id: "amountAgreed",
+    header: () => <div className="text-left w-36">Agreed Amount</div>,
+    cell: ({ row }) => {
+      const amountAgreed = row.original.fundingRequest?.amountAgreed;
+      return (
+        <div className="text-left w-36">
+          {amountAgreed !== undefined && amountAgreed !== null
+            ? formatCurrency(Number(amountAgreed))
+            : "Not set"}
+        </div>
+      );
+    },
+  },
+  {
+    id: "payoutStatus",
+    header: () => <div className="text-left w-44">Payout</div>,
+    cell: ({ row }) => {
+      const fundingRequest = row.original.fundingRequest;
+      const payoutStatus = getDonationPayoutStatus({
+        fundingStatus: fundingRequest?.status,
+        amountAgreed:
+          fundingRequest?.amountAgreed !== undefined &&
+          fundingRequest?.amountAgreed !== null
+            ? Number(fundingRequest.amountAgreed)
+            : null,
+        remainingAmount:
+          fundingRequest?.remainingAmount !== undefined &&
+          fundingRequest?.remainingAmount !== null
+            ? Number(fundingRequest.remainingAmount)
+            : null,
+      });
+
+      return (
+        <div className="text-left w-44">
+          <DonationPayoutStatusBadge status={payoutStatus} />
         </div>
       );
     },
