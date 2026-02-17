@@ -1,14 +1,94 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import type { File } from "@/types";
-export const columns: ColumnDef<File>[] = [
+
+const getBaseFundingPath = (teamId: string, organizationId: string) => {
+  if (teamId) {
+    return `/teams/${teamId}/funding`;
+  }
+  return `/organizations/${organizationId}`;
+};
+
+const getAssociatedResource = (
+  file: File,
+  teamId: string,
+  organizationId: string,
+) => {
+  const basePath = getBaseFundingPath(teamId, organizationId);
+
+  const donationAgreement = file.donationAgreement?.[0];
+  if (donationAgreement?.id) {
+    return {
+      label: donationAgreement.fundingRequest?.name
+        ? `Donation Agreement: ${donationAgreement.fundingRequest.name}`
+        : "Donation Agreement",
+      href: `${basePath}/donation-agreements/${donationAgreement.id}`,
+    };
+  }
+
+  if (file.FundingRequest?.id) {
+    return {
+      label: file.FundingRequest.name
+        ? `Funding Request: ${file.FundingRequest.name}`
+        : "Funding Request",
+      href: `${basePath}/funding-requests/${file.FundingRequest.id}`,
+    };
+  }
+
+  const transaction = file.Transaction?.[0];
+  if (transaction) {
+    return {
+      label: transaction.fundingRequest?.name
+        ? `Transaction: ${transaction.fundingRequest.name}`
+        : "Transaction",
+      href: `${basePath}/transactions`,
+    };
+  }
+
+  return null;
+};
+
+export const getFileColumns = (
+  teamId: string,
+  organizationId: string,
+): ColumnDef<File>[] => [
+  {
+    id: "actions",
+    header: () => <div className="text-left w-28">Actions</div>,
+    cell: ({ row }) => (
+      <div className="text-left">
+        <Button asChild size="sm" variant="outline">
+          <Link href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${row.original?.id}`}>
+            Download
+          </Link>
+        </Button>
+      </div>
+    ),
+  },
+  {
+    id: "associatedResource",
+    header: () => <div className="text-left w-64">Associated Resource</div>,
+    cell: ({ row }) => {
+      const resource = getAssociatedResource(row.original, teamId, organizationId);
+      if (!resource) {
+        return <div className="text-left w-64">N/A</div>;
+      }
+
+      return (
+        <div className="text-left w-64">
+          <Link className="text-blue-600 hover:underline" href={resource.href}>
+            {resource.label}
+          </Link>
+        </div>
+      );
+    },
+  },
   {
     accessorKey: "organization",
     header: () => <div className="text-left w-36">Organization</div>,
     cell: ({ row }) => (
-      <div className="text-left">
-        {row.original?.organization?.name || "N/A"}
-      </div>
+      <div className="text-left">{row.original?.organization?.name || "N/A"}</div>
     ),
   },
   {
@@ -42,13 +122,11 @@ export const columns: ColumnDef<File>[] = [
   },
   {
     accessorKey: "url",
-    header: () => <div className="text-left w-36">URL</div>,
+    header: () => <div className="text-left w-36">File</div>,
     cell: ({ row }) => (
-      <div className="text-left  text-blue-500">
-        <Link
-          href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${row.original?.id}`}
-        >
-          {row.original?.url || "N/A"}
+      <div className="text-left text-blue-500">
+        <Link href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${row.original?.id}`}>
+          {row.original?.name || row.original?.url || "N/A"}
         </Link>
       </div>
     ),
@@ -68,3 +146,4 @@ export const columns: ColumnDef<File>[] = [
     ),
   },
 ];
+

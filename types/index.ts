@@ -380,6 +380,8 @@ export interface File {
   OrganizationTaxExemptionCertificate?: Organization;
   OrganizationArticlesOfAssociation?: Organization;
   FundingRequest?: FundingRequest;
+  donationAgreement?: DonationAgreement[];
+  Transaction?: Transaction[];
 }
 
 export enum FundingStatus {
