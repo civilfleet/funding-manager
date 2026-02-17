@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
 
@@ -25,7 +26,7 @@ const getFiles = async (
   },
   _searchQuery: string,
 ) => {
-  const whereConditions = [];
+  let where: Prisma.FileWhereInput = {};
 
   if (teamId) {
     const organizationIds = await prisma.organization
@@ -35,21 +36,29 @@ const getFiles = async (
       })
       .then((orgs) => orgs.map((org) => org.id));
 
-    if (organizationIds.length > 0) {
-      whereConditions.push({
-        OR: [{ organizationId: { in: organizationIds } }],
-      });
-    }
+    where = {
+      OR: [
+        ...(organizationIds.length > 0
+          ? [{ organizationId: { in: organizationIds } }]
+          : []),
+        { FundingRequest: { teamId } },
+        { donationAgreement: { some: { teamId } } },
+        { Transaction: { some: { teamId } } },
+      ],
+    };
   } else if (organizationId) {
-    whereConditions.push({
-      organizationId,
-    });
+    where = {
+      OR: [
+        { organizationId },
+        { FundingRequest: { organizationId } },
+        { donationAgreement: { some: { organizationId } } },
+        { Transaction: { some: { organizationId } } },
+      ],
+    };
   }
 
   const users = await prisma.file.findMany({
-    where: {
-      ...whereConditions[0],
-    },
+    where,
     include: {
       organization: {
         select: {

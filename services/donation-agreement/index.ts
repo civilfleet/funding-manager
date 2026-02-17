@@ -27,23 +27,28 @@ const createDonationAgreement = async (
         name: true,
       },
     });
-    const file = await prisma.file.create({
-      data: {
-        url: donation.file as string,
-        type: "DONATION_AGREEMENT",
-        createdBy: {
-          connect: { id: createdByUserId as string },
-        },
-        updatedBy: { connect: { id: createdByUserId as string } },
-      },
-    });
-
     const organizationId = await prisma.fundingRequest.findUnique({
       where: {
         id: donation?.fundingRequestId,
       },
       select: {
         organizationId: true,
+      },
+    });
+    const file = await prisma.file.create({
+      data: {
+        url: donation.file as string,
+        type: "DONATION_AGREEMENT",
+        ...(organizationId?.organizationId
+          ? { organization: { connect: { id: organizationId.organizationId } } }
+          : {}),
+        ...(donation?.fundingRequestId
+          ? { FundingRequest: { connect: { id: donation.fundingRequestId } } }
+          : {}),
+        createdBy: {
+          connect: { id: createdByUserId as string },
+        },
+        updatedBy: { connect: { id: createdByUserId as string } },
       },
     });
     const agreement = await prisma.donationAgreement.create({
@@ -244,6 +249,11 @@ const updateDonationAgreement = async (
           status: true,
         },
       },
+      organization: {
+        select: {
+          id: true,
+        },
+      },
       file: {
         select: {
           id: true,
@@ -266,6 +276,12 @@ const updateDonationAgreement = async (
       },
       data: {
         url: updatedDonationAgreement.file as string,
+        ...(donation?.organization?.id
+          ? { organization: { connect: { id: donation.organization.id } } }
+          : {}),
+        ...(donation?.fundingRequest?.id
+          ? { FundingRequest: { connect: { id: donation.fundingRequest.id } } }
+          : {}),
         updatedBy: {
           connect: { id: updatedDonationAgreement.userId as string },
         },

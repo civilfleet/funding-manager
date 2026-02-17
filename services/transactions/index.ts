@@ -117,10 +117,27 @@ const updateTransactionReceipt = async (
   transactionReciept: string,
   userId: string,
 ) => {
+  const transaction = await prisma.transaction.findUnique({
+    where: { id },
+    select: {
+      organizationId: true,
+      fundingRequestId: true,
+    },
+  });
+  if (!transaction) {
+    throw new Error("Transaction not found");
+  }
+
   const file = await prisma.file.create({
     data: {
       url: transactionReciept,
       type: "TRANSACTION_RECEIPT",
+      organization: {
+        connect: { id: transaction.organizationId },
+      },
+      FundingRequest: {
+        connect: { id: transaction.fundingRequestId },
+      },
       createdBy: {
         connect: {
           id: userId,
