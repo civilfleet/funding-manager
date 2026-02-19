@@ -1434,13 +1434,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@getbrevo/brevo@npm:^3.0.1":
-  version: 3.0.2
-  resolution: "@getbrevo/brevo@npm:3.0.2"
-  checksum: 10c0/c78c948229cadab3d10fa5d79eb6ff77ee08335e631420e13c1978f9f660083b92c23aed5a0ec41fa9bed33654f714f6afac52194d049a000a151b8502b38f65
-  languageName: node
-  linkType: hard
-
 "@hono/node-server@npm:1.19.9":
   version: 1.19.9
   resolution: "@hono/node-server@npm:1.19.9"
@@ -8438,7 +8431,6 @@ __metadata:
     "@aws-sdk/s3-request-presigner": "npm:^3.993.0"
     "@biomejs/biome": "npm:2.4.2"
     "@eslint/eslintrc": "npm:3.3.3"
-    "@getbrevo/brevo": "npm:^3.0.1"
     "@hookform/resolvers": "npm:^5.2.2"
     "@prisma/adapter-pg": "npm:^7.4.0"
     "@prisma/client": "npm:^7.4.0"
