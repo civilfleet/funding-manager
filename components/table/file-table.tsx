@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import ButtonControl from "../helper/button-control";
 import FormInputControl from "../helper/form-input-control";
 import { Form } from "../ui/form";
+import type { FileDownloadAudit } from "@/types";
 
 const querySchema = z.object({
   query: z.string(),
@@ -34,6 +35,10 @@ export default function FileTable({ teamId, organizationId }: IFileTableProps) {
 
   const { data, error, isLoading, isValidating } = useSWR(
     `/api/files?teamId=${teamId}&query=${query}&organizationId=${organizationId}`,
+    fetcher,
+  );
+  const { data: auditData } = useSWR(
+    `/api/files/audit?teamId=${teamId}&organizationId=${organizationId}`,
     fetcher,
   );
   const loading = isLoading || !data;
@@ -127,6 +132,39 @@ export default function FileTable({ teamId, organizationId }: IFileTableProps) {
             data={data?.data}
           />
         )}
+      </div>
+      <div className="rounded-md border my-2 p-3">
+        <h3 className="text-sm font-semibold mb-2">Recent Downloads</h3>
+        <div className="space-y-2">
+          {((auditData?.data as FileDownloadAudit[] | undefined) ?? []).length ===
+          0 ? (
+            <p className="text-sm text-muted-foreground">No downloads yet.</p>
+          ) : (
+            ((auditData?.data as FileDownloadAudit[] | undefined) ?? []).map(
+              (item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between text-sm border-b pb-1"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {item.type === "BULK"
+                        ? `Bulk download (${item.fileCount} files)`
+                        : `File download: ${item.file?.name || item.file?.url || "Unknown file"}`}
+                    </p>
+                    <p className="text-muted-foreground">
+                      by {item.user.email}
+                      {item.query ? ` | query: "${item.query}"` : ""}
+                    </p>
+                  </div>
+                  <div className="text-muted-foreground">
+                    {new Date(item.createdAt).toLocaleString()}
+                  </div>
+                </div>
+              ),
+            )
+          )}
+        </div>
       </div>
     </div>
   );

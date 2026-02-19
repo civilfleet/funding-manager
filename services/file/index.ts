@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { handlePrismaError } from "@/lib/utils";
-import { Roles } from "@/types";
+import { FileDownloadType, Roles } from "@/types";
 
 const getFileById = async (id: string) => {
   try {
@@ -110,6 +110,20 @@ const getFiles = async (
           fundingRequest: {
             select: {
               name: true,
+            },
+          },
+        },
+      },
+      downloadAudits: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 1,
+        select: {
+          createdAt: true,
+          user: {
+            select: {
+              email: true,
             },
           },
         },
@@ -251,9 +265,102 @@ const canUserAccessFile = async ({
   return false;
 };
 
+const recordFileDownloadAudit = async ({
+  userId,
+  type,
+  fileId,
+  teamId,
+  organizationId,
+  query,
+  fileCount,
+}: {
+  userId: string;
+  type: FileDownloadType;
+  fileId?: string;
+  teamId?: string;
+  organizationId?: string;
+  query?: string;
+  fileCount?: number;
+}) => {
+  return prisma.fileDownloadAudit.create({
+    data: {
+      type,
+      fileCount: fileCount ?? 1,
+      ...(query ? { query } : {}),
+      user: {
+        connect: { id: userId },
+      },
+      ...(fileId
+        ? {
+            file: {
+              connect: { id: fileId },
+            },
+          }
+        : {}),
+      ...(teamId
+        ? {
+            team: {
+              connect: { id: teamId },
+            },
+          }
+        : {}),
+      ...(organizationId
+        ? {
+            organization: {
+              connect: { id: organizationId },
+            },
+          }
+        : {}),
+    },
+  });
+};
+
+const getFileDownloadAudits = async ({
+  teamId,
+  organizationId,
+  limit = 20,
+}: {
+  teamId?: string;
+  organizationId?: string;
+  limit?: number;
+}) => {
+  return prisma.fileDownloadAudit.findMany({
+    where: {
+      ...(teamId ? { teamId } : {}),
+      ...(organizationId ? { organizationId } : {}),
+    },
+    take: limit,
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      id: true,
+      type: true,
+      fileCount: true,
+      query: true,
+      createdAt: true,
+      user: {
+        select: {
+          email: true,
+        },
+      },
+      file: {
+        select: {
+          id: true,
+          name: true,
+          url: true,
+        },
+      },
+    },
+  });
+};
+
 export {
   canUserAccessFile,
   canUserAccessTeamOrOrgScope,
   getFileById,
+  getFileDownloadAudits,
   getFiles,
+  getFileByIdWithRelations,
+  recordFileDownloadAudit,
 };

@@ -382,6 +382,28 @@ export interface File {
   FundingRequest?: FundingRequest;
   donationAgreement?: DonationAgreement[];
   Transaction?: Transaction[];
+  downloadAudits?: FileDownloadAudit[];
+}
+
+export enum FileDownloadType {
+  SINGLE = "SINGLE",
+  BULK = "BULK",
+}
+
+export interface FileDownloadAudit {
+  id: string;
+  type: FileDownloadType;
+  fileCount: number;
+  query?: string;
+  createdAt: Date;
+  user: {
+    email: string;
+  };
+  file?: {
+    id: string;
+    name?: string;
+    url: string;
+  };
 }
 
 export enum FundingStatus {

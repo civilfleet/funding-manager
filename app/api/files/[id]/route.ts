@@ -3,7 +3,13 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import s3Client from "@/lib/s3-client";
 import { handlePrismaError } from "@/lib/utils";
-import { canUserAccessFile, getFileById } from "@/services/file";
+import {
+  canUserAccessFile,
+  getFileById,
+  getFileByIdWithRelations,
+  recordFileDownloadAudit,
+} from "@/services/file";
+import { FileDownloadType } from "@/types";
 
 export async function GET(
   _req: Request,
@@ -31,7 +37,10 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const data = await getFileById(fileId);
+    const [data, fileWithRelations] = await Promise.all([
+      getFileById(fileId),
+      getFileByIdWithRelations(fileId),
+    ]);
     const dataUrl = data?.url;
 
     const name = data?.name
@@ -46,6 +55,27 @@ export async function GET(
     const { Body } = await s3Client.send(command); // Get file stream
 
     if (!Body) throw new Error("File not found");
+
+    const relatedTeamId =
+      fileWithRelations?.FundingRequest?.teamId ||
+      fileWithRelations?.donationAgreement?.[0]?.teamId ||
+      fileWithRelations?.Transaction?.[0]?.teamId ||
+      undefined;
+    const relatedOrganizationId =
+      fileWithRelations?.organizationId ||
+      fileWithRelations?.FundingRequest?.organizationId ||
+      fileWithRelations?.donationAgreement?.[0]?.organizationId ||
+      fileWithRelations?.Transaction?.[0]?.organizationId ||
+      undefined;
+
+    await recordFileDownloadAudit({
+      userId: session.user.userId,
+      type: FileDownloadType.SINGLE,
+      fileId,
+      teamId: relatedTeamId,
+      organizationId: relatedOrganizationId,
+      fileCount: 1,
+    });
 
     return new NextResponse(Body as ReadableStream, {
       headers: {

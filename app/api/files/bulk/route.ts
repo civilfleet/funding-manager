@@ -4,7 +4,12 @@ import { auth } from "@/auth";
 import s3Client from "@/lib/s3-client";
 import { createZipBuffer } from "@/lib/zip";
 import { handlePrismaError } from "@/lib/utils";
-import { canUserAccessTeamOrOrgScope, getFiles } from "@/services/file";
+import {
+  canUserAccessTeamOrOrgScope,
+  getFiles,
+  recordFileDownloadAudit,
+} from "@/services/file";
+import { FileDownloadType } from "@/types";
 
 const normalizePathSegment = (value: string) =>
   value
@@ -97,6 +102,15 @@ export async function GET(req: Request) {
     const zip = createZipBuffer(entries);
     const archiveName = `funding-files-${new Date().toISOString().slice(0, 10)}.zip`;
 
+    await recordFileDownloadAudit({
+      userId: session.user.userId,
+      type: FileDownloadType.BULK,
+      teamId: teamId || undefined,
+      organizationId: organizationId || undefined,
+      query: searchQuery || undefined,
+      fileCount: entries.length,
+    });
+
     return new NextResponse(zip, {
       headers: {
         "Content-Type": "application/zip",
@@ -108,4 +122,3 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
-

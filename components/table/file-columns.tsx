@@ -145,5 +145,24 @@ export const getFileColumns = (
       <div className="text-left">{row.original?.updatedBy?.email || "N/A"}</div>
     ),
   },
+  {
+    id: "lastDownloadedBy",
+    header: () => <div className="text-left w-40">Last Downloaded By</div>,
+    cell: ({ row }) => (
+      <div className="text-left">
+        {row.original.downloadAudits?.[0]?.user?.email || "Never"}
+      </div>
+    ),
+  },
+  {
+    id: "lastDownloadedAt",
+    header: () => <div className="text-left w-44">Last Downloaded At</div>,
+    cell: ({ row }) => (
+      <div className="text-left">
+        {row.original.downloadAudits?.[0]?.createdAt
+          ? new Date(row.original.downloadAudits[0].createdAt).toLocaleString()
+          : "Never"}
+      </div>
+    ),
+  },
 ];
-

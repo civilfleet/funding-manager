@@ -41,6 +41,7 @@ model Organization {
 
 
   Transaction Transaction[]
+  fileDownloadAudits FileDownloadAudit[]
 }
 
 
@@ -120,6 +121,33 @@ model File {
 
 
   Transaction Transaction[]
+  downloadAudits FileDownloadAudit[]
+}
+
+enum FileDownloadType {
+  SINGLE
+  BULK
+}
+
+model FileDownloadAudit {
+  id             String           @id @default(uuid()) @unique
+  type           FileDownloadType
+  fileCount      Int              @default(1)
+  query          String?          @db.Text
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileId         String?
+  file           File?            @relation(fields: [fileId], references: [id], onDelete: SetNull)
+  teamId         String?
+  team           Teams?           @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  organizationId String?
+  organization   Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  createdAt      DateTime         @default(now()) @db.Timestamptz(6)
+
+  @@index([teamId, createdAt])
+  @@index([organizationId, createdAt])
+  @@index([fileId, createdAt])
+  @@index([userId, createdAt])
 }
 
 enum Roles {
@@ -187,6 +215,7 @@ model Teams {
   zammadGroupSettings ZammadGroupSetting[]
   contactFieldAccesses ContactFieldAccess[]
   organizationEngagements OrganizationEngagement[]
+  fileDownloadAudits FileDownloadAudit[]
 }
 
 model OrganizationType {
@@ -295,6 +324,7 @@ model User {
 
   createdBy       File[]           @relation("CreatedByRelation") // One-to-Many relation
   updatedBy       File[]           @relation("UpdatedByRelation") // One-to-Many relation
+  fileDownloadAudits FileDownloadAudit[]
   accounts      Account[]
   sessions      Session[]
 
