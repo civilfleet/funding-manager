@@ -161,9 +161,9 @@ and `PUT`.
 Set these env vars before running the scripts:
 
 ```env
-NEXT_AWS_S3_ENDPOINT="https://s3.fr-par.scw.cloud"
-NEXT_AWS_S3_BUCKET_REGION="fr-par"
-NEXT_AWS_S3_BUCKET_NAME="funding-manager-civilfleet"
+NEXT_AWS_S3_ENDPOINT="https://s3.<your-region>.scw.cloud"
+NEXT_AWS_S3_BUCKET_REGION="<your-region>"
+NEXT_AWS_S3_BUCKET_NAME="<your-bucket-name>"
 NEXT_AWS_S3_ACCESS_KEY="..."
 NEXT_AWS_S3_ACCESS_SECRET="..."
 
@@ -179,7 +179,7 @@ S3_FORCE_PATH_STYLE="true"
 The script auto-loads environment files via `dotenv` in this order:
 `.env` -> `.env.local` -> `.env.{NODE_ENV}` -> `.env.{NODE_ENV}.local`.
 
-Use a base endpoint (for example `https://s3.fr-par.scw.cloud`) rather than a
+Use a base endpoint (for example `https://s3.<your-region>.scw.cloud`) rather than a
 bucket-specific host/path. If unsure, keep `S3_FORCE_PATH_STYLE` unset and the
 script will auto-try both styles.
 
