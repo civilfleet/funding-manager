@@ -16,6 +16,7 @@ import React, { useState } from "react";
 import useSWR from "swr";
 import ContactEngagementForm from "@/components/forms/contact-engagement";
 import { Loader } from "@/components/helper/loader";
+import MentionText from "@/components/mention-text";
 import { CONTACT_SUBMODULE_LABELS } from "@/constants/contact-submodules";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +64,12 @@ interface ContactEngagementHistoryProps {
     email?: string | null;
   };
 }
+
+type TeamUser = {
+  id: string;
+  name?: string | null;
+  email: string;
+};
 
 const getSourceColor = (source: EngagementSource) => {
   switch (source) {
@@ -428,11 +435,15 @@ function EngagementRow({
   engagement,
   showConnector,
   onReply,
+  teamId,
+  teamUsersByEmail,
   useHeader = false,
 }: {
   engagement: ContactEngagement;
   showConnector: boolean;
   onReply: (engagement: ContactEngagement) => void;
+  teamId: string;
+  teamUsersByEmail: Map<string, TeamUser>;
   useHeader?: boolean;
 }) {
   const parsed = engagement.source === EngagementSource.NOTE
@@ -584,7 +595,17 @@ function EngagementRow({
         {useHeader ? (
           <div className="space-y-2">
             {previewText && (
-              <p className="text-sm text-muted-foreground">{previewText}</p>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">
+                {engagement.source === EngagementSource.NOTE ? (
+                  <MentionText
+                    text={previewText}
+                    teamId={teamId}
+                    usersByEmail={teamUsersByEmail}
+                  />
+                ) : (
+                  previewText
+                )}
+              </p>
             )}
           </div>
         ) : engagement.source === EngagementSource.NOTE ? (
@@ -594,7 +615,11 @@ function EngagementRow({
             </h4>
             <div className="rounded-md border bg-background px-3 py-3">
               <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
-                {engagement.message}
+                <MentionText
+                  text={engagement.message}
+                  teamId={teamId}
+                  usersByEmail={teamUsersByEmail}
+                />
               </p>
             </div>
           </div>
@@ -745,8 +770,16 @@ export default function ContactEngagementHistory({
     `/api/contact-engagements?contactId=${contactId}&teamId=${teamId}`,
     fetcher,
   );
+  const { data: teamUsersData } = useSWR(`/api/teams/${teamId}/users`, fetcher);
 
   const engagements = (data?.data || []) as ContactEngagement[];
+  const teamUsers = ((teamUsersData?.data || []) as TeamUser[]).filter(
+    (user) => Boolean(user.email),
+  );
+  const teamUsersByEmail = React.useMemo(
+    () => new Map(teamUsers.map((user) => [user.email.toLowerCase(), user])),
+    [teamUsers],
+  );
   const engagementItems = React.useMemo(
     () => buildEngagementList(engagements),
     [engagements],
@@ -921,6 +954,8 @@ export default function ContactEngagementHistory({
                       engagement={item.engagement}
                       showConnector={false}
                       onReply={handleReplyOpen}
+                      teamId={teamId}
+                      teamUsersByEmail={teamUsersByEmail}
                       useHeader
                     />
                     </div>
@@ -1021,6 +1056,8 @@ export default function ContactEngagementHistory({
                             engagement={engagement}
                             showConnector={idx < item.engagements.length - 1}
                             onReply={handleReplyOpen}
+                            teamId={teamId}
+                            teamUsersByEmail={teamUsersByEmail}
                             useHeader
                           />
                           {idx < item.engagements.length - 1 && (

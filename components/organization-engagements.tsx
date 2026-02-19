@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import type { z } from "zod";
+import MentionText from "@/components/mention-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,14 +71,13 @@ export default function OrganizationEngagements({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mentionMatch, setMentionMatch] = useState<MentionMatch | null>(null);
   const [activeMentionIndex, setActiveMentionIndex] = useState(0);
-  const [shouldLoadMentionUsers, setShouldLoadMentionUsers] = useState(false);
 
   const { data: engagementsData, mutate } = useSWR(
     `/api/organization-engagements?organizationId=${organizationId}&teamId=${teamId}`,
     fetcher,
   );
   const { data: teamUsersData } = useSWR(
-    shouldLoadMentionUsers ? `/api/teams/${teamId}/users` : null,
+    `/api/teams/${teamId}/users`,
     fetcher,
   );
 
@@ -88,6 +88,11 @@ export default function OrganizationEngagements({
   const teamUsers = useMemo<TeamUser[]>(
     () => teamUsersData?.data || [],
     [teamUsersData],
+  );
+  const teamUsersByEmail = useMemo(
+    () =>
+      new Map(teamUsers.map((user) => [user.email.toLowerCase(), user])),
+    [teamUsers],
   );
   const mentionSuggestions = useMemo(() => {
     if (!mentionMatch) {
@@ -184,9 +189,6 @@ export default function OrganizationEngagements({
 
   const updateMentionState = (value: string, caretIndex: number) => {
     const nextMatch = findMentionMatch(value, caretIndex);
-    if (nextMatch && !shouldLoadMentionUsers) {
-      setShouldLoadMentionUsers(true);
-    }
     setMentionMatch(nextMatch);
     setActiveMentionIndex(0);
   };
@@ -401,8 +403,12 @@ export default function OrganizationEngagements({
                   </span>
                 </div>
                 {engagement.note && (
-                  <p className="text-sm text-muted-foreground">
-                    {engagement.note}
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">
+                    <MentionText
+                      text={engagement.note}
+                      teamId={teamId}
+                      usersByEmail={teamUsersByEmail}
+                    />
                   </p>
                 )}
               </div>
