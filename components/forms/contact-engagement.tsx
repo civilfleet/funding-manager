@@ -470,13 +470,11 @@ export default function ContactEngagementForm({
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {teamUsers.map(
-                      (user: { id: string; name?: string; email: string }) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.name || user.email}
-                        </SelectItem>
-                      ),
-                    )}
+                    {teamUsers.map((user: TeamUser) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name || user.email}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormDescription>
