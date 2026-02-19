@@ -63,7 +63,25 @@ const sendTagMentionNotifications = async ({
   itemPath,
 }: MentionNotificationInput): Promise<number> => {
   const mentionedEmails = extractMentionedEmails(text);
+  logger.info(
+    {
+      teamId,
+      actorUserId,
+      itemLabel,
+      mentionCount: mentionedEmails.length,
+      mentionedEmails,
+    },
+    "Processing mention notifications",
+  );
+
   if (mentionedEmails.length === 0) {
+    logger.info(
+      {
+        teamId,
+        itemLabel,
+      },
+      "No mention notifications to send",
+    );
     return 0;
   }
 
@@ -86,7 +104,26 @@ const sendTagMentionNotifications = async ({
   });
 
   const recipients = mentionedUsers.filter((user) => user.id !== actorUserId);
+  logger.info(
+    {
+      teamId,
+      itemLabel,
+      matchedUserCount: mentionedUsers.length,
+      recipientCount: recipients.length,
+      recipientEmails: recipients.map((recipient) => recipient.email),
+    },
+    "Resolved mention notification recipients",
+  );
+
   if (recipients.length === 0) {
+    logger.warn(
+      {
+        teamId,
+        actorUserId,
+        mentionedEmails,
+      },
+      "Mentions found but no eligible recipients",
+    );
     return 0;
   }
 
@@ -130,6 +167,17 @@ const sendTagMentionNotifications = async ({
       "Failed to send mention notification email",
     );
   });
+
+  logger.info(
+    {
+      teamId,
+      itemLabel,
+      attemptedCount: recipients.length,
+      sentCount,
+      failedCount: recipients.length - sentCount,
+    },
+    "Completed mention notification processing",
+  );
 
   return sentCount;
 };

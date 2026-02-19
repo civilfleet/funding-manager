@@ -12,6 +12,9 @@ const transporter = nodemailer.createTransport({
 
 // Log the email provider being used
 logger.info({ provider: mailProvider }, "Email provider configured");
+if (mailProvider === "None") {
+  logger.warn("SMTP is not configured; email delivery will fail");
+}
 
 const templateCache = new Map<string, handlebars.TemplateDelegate>();
 
@@ -79,11 +82,26 @@ async function sendEmail(
 
     return info;
   } catch (error) {
+    const errorDetails =
+      error && typeof error === "object"
+        ? {
+            code: "code" in error ? error.code : undefined,
+            command: "command" in error ? error.command : undefined,
+            responseCode:
+              "responseCode" in error ? error.responseCode : undefined,
+            response: "response" in error ? error.response : undefined,
+            errno: "errno" in error ? error.errno : undefined,
+            syscall: "syscall" in error ? error.syscall : undefined,
+            hostname: "hostname" in error ? error.hostname : undefined,
+          }
+        : undefined;
+
     logger.error({
       to: emailContent.to,
       subject: emailContent.subject,
       template: emailContent.template ?? "inline-content",
       error,
+      errorDetails,
     }, "Error sending email");
     throw error;
   }

@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
     if (validated.note?.trim()) {
       try {
-        await sendTagMentionNotifications({
+        const sentCount = await sendTagMentionNotifications({
           teamId: validated.teamId,
           text: validated.note,
           actorUserId,
@@ -68,6 +68,16 @@ export async function POST(req: Request) {
           itemLabel: "an organization note",
           itemPath: `/teams/${validated.teamId}/funding/organizations/${validated.organizationId}`,
         });
+
+        logger.info(
+          {
+            teamId: validated.teamId,
+            organizationId: validated.organizationId,
+            actorUserId,
+            sentCount,
+          },
+          "Organization note mention notifications processed",
+        );
       } catch (notificationError) {
         logger.error(
           {

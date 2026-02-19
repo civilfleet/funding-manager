@@ -251,7 +251,7 @@ export async function POST(request: NextRequest) {
 
     if (validatedData.source === EngagementSource.NOTE) {
       try {
-        await sendTagMentionNotifications({
+        const sentCount = await sendTagMentionNotifications({
           teamId: validatedData.teamId,
           text: validatedData.message,
           actorUserId: userId,
@@ -259,6 +259,16 @@ export async function POST(request: NextRequest) {
           itemLabel: "a contact note",
           itemPath: `/teams/${validatedData.teamId}/crm/contacts/${validatedData.contactId}`,
         });
+
+        logger.info(
+          {
+            teamId: validatedData.teamId,
+            contactId: validatedData.contactId,
+            actorUserId: userId,
+            sentCount,
+          },
+          "Contact note mention notifications processed",
+        );
       } catch (notificationError) {
         logger.error(
           {
