@@ -8,7 +8,7 @@ export const createContactListSchema = z.object({
   description: z.string().optional(),
   type: z.nativeEnum(ContactListType),
   filters: contactFiltersSchema.optional(),
-  contactIds: z.array(z.string().uuid()),
+  contactIds: z.array(z.string().uuid()).default([]),
 });
 
 export const updateContactListSchema = z.object({

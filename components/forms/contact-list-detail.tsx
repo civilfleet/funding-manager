@@ -1,14 +1,16 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Download, Loader2, Save, X } from "lucide-react";
+import { AlertTriangle, Download, Loader2, Save, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import type { FieldErrors } from "react-hook-form";
 import type { z } from "zod";
 import useSWR from "swr";
 import { ContactListFiltersBuilder } from "@/components/forms/contact-list-filters-builder";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -78,6 +80,32 @@ const buildFormValues = (
 });
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+const getFirstErrorMessage = (errors: FieldErrors<FormValues>): string | null => {
+  const queue: unknown[] = [errors];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || typeof current !== "object") {
+      continue;
+    }
+
+    if (
+      "message" in current &&
+      typeof (current as { message?: unknown }).message === "string"
+    ) {
+      return (current as { message: string }).message;
+    }
+
+    for (const value of Object.values(current)) {
+      if (value && typeof value === "object") {
+        queue.push(value);
+      }
+    }
+  }
+
+  return null;
+};
 
 interface ContactListDetailProps {
   teamId: string;
@@ -209,6 +237,7 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
 
   const selectedCount = isSmartList ? 0 : contactIdsValue.length;
   const previewCount = contacts.length;
+  const formErrorMessage = getFirstErrorMessage(form.formState.errors);
 
   const handleRemoveContact = async (contactId: string) => {
     if (!list || list.type !== ContactListType.MANUAL) {
@@ -510,6 +539,14 @@ export function ContactListDetail({ teamId, listId }: ContactListDetailProps) {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {formErrorMessage ? (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Form validation failed</AlertTitle>
+                  <AlertDescription>{formErrorMessage}</AlertDescription>
+                </Alert>
+              ) : null}
+
               <FormField
                 control={typedControl}
                 name="name"
