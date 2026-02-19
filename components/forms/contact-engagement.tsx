@@ -485,8 +485,8 @@ export default function ContactEngagementForm({
                 {isTodo
                   ? "Describe the todo task and any relevant details"
                   : isNote
-                    ? "This note is internal and visible based on the selected visibility."
-                  : "Describe the content or outcome of this engagement"}
+                    ? "This note is internal and visible based on the selected visibility. Use @teammate@example.com to tag someone."
+                    : "Describe the content or outcome of this engagement"}
               </FormDescription>
               <FormMessage />
             </FormItem>

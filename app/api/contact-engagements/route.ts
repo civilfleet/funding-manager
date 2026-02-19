@@ -8,7 +8,9 @@ import {
   type ContactSubmodule,
 } from "@/constants/contact-submodules";
 import prisma from "@/lib/prisma";
+import logger from "@/lib/logger";
 import { handlePrismaError } from "@/lib/utils";
+import { sendTagMentionNotifications } from "@/services/mentions";
 import {
   createEngagement,
   getContactEngagements,
@@ -246,6 +248,28 @@ export async function POST(request: NextRequest) {
         ? new Date(validatedData.dueDate)
         : undefined,
     });
+
+    if (validatedData.source === EngagementSource.NOTE) {
+      try {
+        await sendTagMentionNotifications({
+          teamId: validatedData.teamId,
+          text: validatedData.message,
+          actorUserId: userId,
+          actorName: session?.user?.name ?? session?.user?.email,
+          itemLabel: "a contact note",
+          itemPath: `/teams/${validatedData.teamId}/crm/contacts/${validatedData.contactId}`,
+        });
+      } catch (notificationError) {
+        logger.error(
+          {
+            error: notificationError,
+            teamId: validatedData.teamId,
+            contactId: validatedData.contactId,
+          },
+          "Failed to process contact note mentions",
+        );
+      }
+    }
 
     return NextResponse.json({ data: engagement }, { status: 201 });
   } catch (e) {

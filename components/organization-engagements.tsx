@@ -174,6 +174,9 @@ export default function OrganizationEngagements({
                       value={field.value ?? ""}
                     />
                   </FormControl>
+                  <FormDescription>
+                    Use @teammate@example.com to tag a teammate and notify them.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

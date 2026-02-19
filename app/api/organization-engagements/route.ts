@@ -1,5 +1,9 @@
+import { auth } from "@/auth";
+import logger from "@/lib/logger";
 import { NextResponse } from "next/server";
 import { handlePrismaError } from "@/lib/utils";
+import prisma from "@/lib/prisma";
+import { sendTagMentionNotifications } from "@/services/mentions";
 import {
   createOrganizationEngagement,
   getOrganizationEngagements,
@@ -37,8 +41,44 @@ export async function POST(req: Request) {
   try {
     const payload = await req.json();
     const validated = createOrganizationEngagementSchema.parse(payload);
+    const session = await auth();
+
+    let actorUserId = session?.user?.userId ?? undefined;
+    if (!actorUserId && session?.user?.email) {
+      const actor = await prisma.user.findUnique({
+        where: {
+          email: session.user.email,
+        },
+        select: {
+          id: true,
+        },
+      });
+      actorUserId = actor?.id;
+    }
 
     const engagement = await createOrganizationEngagement(validated);
+
+    if (validated.note?.trim()) {
+      try {
+        await sendTagMentionNotifications({
+          teamId: validated.teamId,
+          text: validated.note,
+          actorUserId,
+          actorName: session?.user?.name ?? session?.user?.email,
+          itemLabel: "an organization note",
+          itemPath: `/teams/${validated.teamId}/funding/organizations/${validated.organizationId}`,
+        });
+      } catch (notificationError) {
+        logger.error(
+          {
+            error: notificationError,
+            teamId: validated.teamId,
+            organizationId: validated.organizationId,
+          },
+          "Failed to process organization note mentions",
+        );
+      }
+    }
 
     return NextResponse.json({ data: engagement }, { status: 201 });
   } catch (e) {
