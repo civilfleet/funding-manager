@@ -2,16 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
-
-import {
-  CONTACT_SUBMODULE_LABELS,
-  CONTACT_SUBMODULES,
-  type ContactSubmodule,
-} from "@/constants/contact-submodules";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -31,6 +25,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  CONTACT_SUBMODULE_LABELS,
+  CONTACT_SUBMODULES,
+  type ContactSubmodule,
+} from "@/constants/contact-submodules";
 import { useToast } from "@/hooks/use-toast";
 import { EngagementDirection, EngagementSource, TodoStatus } from "@/types";
 
@@ -42,14 +41,14 @@ const engagementSchema = z.object({
     EngagementDirection.OUTBOUND,
   ]),
   source: z.enum([
-  EngagementSource.EMAIL,
-  EngagementSource.PHONE,
-  EngagementSource.SMS,
-  EngagementSource.MEETING,
-  EngagementSource.EVENT,
-  EngagementSource.TODO,
-  EngagementSource.NOTE,
-  EngagementSource.OTHER,
+    EngagementSource.EMAIL,
+    EngagementSource.PHONE,
+    EngagementSource.SMS,
+    EngagementSource.MEETING,
+    EngagementSource.EVENT,
+    EngagementSource.TODO,
+    EngagementSource.NOTE,
+    EngagementSource.OTHER,
   ]),
   subject: z.string().optional(),
   message: z.string().min(1, "Message is required"),
@@ -70,6 +69,17 @@ const engagementSchema = z.object({
 });
 
 type EngagementFormValues = z.infer<typeof engagementSchema>;
+type TeamUser = {
+  id: string;
+  name?: string | null;
+  email: string;
+};
+
+type MentionMatch = {
+  query: string;
+  start: number;
+  end: number;
+};
 
 interface ContactEngagementFormProps {
   contactId: string;
@@ -99,15 +109,9 @@ export default function ContactEngagementForm({
 }: ContactEngagementFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { data: usersData } = useSWR(`/api/teams/${teamId}/users`, fetcher);
-  const teamUsers = usersData?.data || [];
-  const { data: submodulesData } = useSWR(
-    `/api/contacts/submodules?teamId=${teamId}`,
-    fetcher,
-  );
-  const availableSubmodules = (submodulesData?.data ||
-    []) as ContactSubmodule[];
+  const [mentionMatch, setMentionMatch] = useState<MentionMatch | null>(null);
+  const [activeMentionIndex, setActiveMentionIndex] = useState(0);
+  const [shouldLoadMentionUsers, setShouldLoadMentionUsers] = useState(false);
 
   const form = useForm<EngagementFormValues>({
     resolver: zodResolver(engagementSchema),
@@ -125,12 +129,103 @@ export default function ContactEngagementForm({
   const isTodo = selectedSource === EngagementSource.TODO;
   const isNote = selectedSource === EngagementSource.NOTE;
   const showEngagedAt = !isTodo && !isNote;
+  const shouldLoadTeamUsers = isTodo || shouldLoadMentionUsers;
+
+  const { data: usersData } = useSWR(
+    shouldLoadTeamUsers ? `/api/teams/${teamId}/users` : null,
+    fetcher,
+  );
+  const teamUsers = useMemo<TeamUser[]>(
+    () => usersData?.data || [],
+    [usersData],
+  );
+  const { data: submodulesData } = useSWR(
+    `/api/contacts/submodules?teamId=${teamId}`,
+    fetcher,
+  );
+  const availableSubmodules = (submodulesData?.data ||
+    []) as ContactSubmodule[];
+  const mentionSuggestions = useMemo(() => {
+    if (!isNote || !mentionMatch) {
+      return [];
+    }
+
+    const query = mentionMatch.query.trim().toLowerCase();
+    return teamUsers
+      .filter((user) => {
+        if (!query) {
+          return true;
+        }
+        const name = user.name?.toLowerCase() || "";
+        return name.includes(query) || user.email.toLowerCase().includes(query);
+      })
+      .slice(0, 6);
+  }, [isNote, mentionMatch, teamUsers]);
 
   useEffect(() => {
     if (isNote) {
       form.setValue("direction", EngagementDirection.OUTBOUND);
     }
   }, [form, isNote]);
+
+  useEffect(() => {
+    if (!isNote) {
+      setMentionMatch(null);
+      setActiveMentionIndex(0);
+    }
+  }, [isNote]);
+
+  const findMentionMatch = (
+    value: string,
+    caretIndex: number,
+  ): MentionMatch | null => {
+    const beforeCaret = value.slice(0, caretIndex);
+    const match = beforeCaret.match(/(^|\s)@([^\s@]*)$/);
+    if (!match) {
+      return null;
+    }
+
+    const matchIndex = match.index ?? 0;
+    const leadingPart = match[1] || "";
+    const query = match[2] || "";
+    const start = matchIndex + leadingPart.length;
+
+    return {
+      query,
+      start,
+      end: caretIndex,
+    };
+  };
+
+  const updateMentionState = (value: string, caretIndex: number) => {
+    if (!isNote) {
+      setMentionMatch(null);
+      setActiveMentionIndex(0);
+      return;
+    }
+
+    const nextMatch = findMentionMatch(value, caretIndex);
+    if (nextMatch && !shouldLoadMentionUsers) {
+      setShouldLoadMentionUsers(true);
+    }
+    setMentionMatch(nextMatch);
+    setActiveMentionIndex(0);
+  };
+
+  const applyMention = (
+    user: TeamUser,
+    fieldValue: string,
+    onChange: (value: string) => void,
+  ) => {
+    if (!mentionMatch) {
+      return;
+    }
+
+    const nextValue = `${fieldValue.slice(0, mentionMatch.start)}@${user.email} ${fieldValue.slice(mentionMatch.end)}`;
+    onChange(nextValue);
+    setMentionMatch(null);
+    setActiveMentionIndex(0);
+  };
 
   const onSubmit = async (values: EngagementFormValues) => {
     try {
@@ -190,6 +285,8 @@ export default function ContactEngagementForm({
         dueDate: undefined,
         restrictedToSubmodule: undefined,
       });
+      setMentionMatch(null);
+      setActiveMentionIndex(0);
 
       if (onSuccess) {
         onSuccess();
@@ -443,7 +540,7 @@ export default function ContactEngagementForm({
                       ? "e.g., Follow up with contact"
                       : isNote
                         ? "e.g., Quick note about the contact"
-                      : "e.g., Follow-up on funding request"
+                        : "e.g., Follow-up on funding request"
                   }
                   {...field}
                 />
@@ -453,7 +550,7 @@ export default function ContactEngagementForm({
                   ? "Optional title for the todo"
                   : isNote
                     ? "Optional title for this note"
-                  : "Optional subject or title for the engagement"}
+                    : "Optional subject or title for the engagement"}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -469,23 +566,114 @@ export default function ContactEngagementForm({
                 {isTodo ? "Description" : isNote ? "Note" : "Message"} *
               </FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder={
-                    isTodo
-                      ? "Describe what needs to be done..."
-                      : isNote
-                        ? "Write your internal note..."
-                      : "Enter details about this engagement..."
-                  }
-                  className="min-h-24"
-                  {...field}
-                />
+                <div className="relative">
+                  <Textarea
+                    placeholder={
+                      isTodo
+                        ? "Describe what needs to be done..."
+                        : isNote
+                          ? "Write your internal note..."
+                          : "Enter details about this engagement..."
+                    }
+                    className="min-h-24"
+                    {...field}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      field.onChange(value);
+                      updateMentionState(value, event.target.selectionStart);
+                    }}
+                    onClick={(event) => {
+                      const target = event.currentTarget;
+                      updateMentionState(target.value, target.selectionStart);
+                    }}
+                    onKeyUp={(event) => {
+                      const target = event.currentTarget;
+                      updateMentionState(target.value, target.selectionStart);
+                    }}
+                    onBlur={() => {
+                      window.setTimeout(() => {
+                        setMentionMatch(null);
+                        setActiveMentionIndex(0);
+                      }, 120);
+                    }}
+                    onKeyDown={(event) => {
+                      if (!isNote || mentionSuggestions.length === 0) {
+                        return;
+                      }
+
+                      if (event.key === "ArrowDown") {
+                        event.preventDefault();
+                        setActiveMentionIndex((current) =>
+                          current + 1 >= mentionSuggestions.length
+                            ? 0
+                            : current + 1,
+                        );
+                        return;
+                      }
+
+                      if (event.key === "ArrowUp") {
+                        event.preventDefault();
+                        setActiveMentionIndex((current) =>
+                          current - 1 < 0
+                            ? mentionSuggestions.length - 1
+                            : current - 1,
+                        );
+                        return;
+                      }
+
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        const selectedUser =
+                          mentionSuggestions[activeMentionIndex];
+                        if (selectedUser) {
+                          applyMention(
+                            selectedUser,
+                            field.value,
+                            field.onChange,
+                          );
+                        }
+                        return;
+                      }
+
+                      if (event.key === "Escape") {
+                        setMentionMatch(null);
+                        setActiveMentionIndex(0);
+                      }
+                    }}
+                  />
+                  {isNote && mentionSuggestions.length > 0 && (
+                    <div className="absolute z-20 mt-1 max-h-52 w-full overflow-auto rounded-md border bg-popover p-1 shadow-md">
+                      {mentionSuggestions.map((user, index) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          className={`flex w-full items-start justify-between rounded-sm px-2 py-1.5 text-left text-sm transition-colors ${
+                            index === activeMentionIndex
+                              ? "bg-accent text-accent-foreground"
+                              : "hover:bg-accent/70"
+                          }`}
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            applyMention(user, field.value, field.onChange);
+                          }}
+                        >
+                          <span className="truncate pr-3">
+                            {user.name?.trim() || user.email}
+                          </span>
+                          <span className="truncate text-xs text-muted-foreground">
+                            {user.email}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </FormControl>
               <FormDescription>
                 {isTodo
                   ? "Describe the todo task and any relevant details"
                   : isNote
-                    ? "This note is internal and visible based on the selected visibility. Use @teammate@example.com to tag someone."
+                    ? "This note is internal and visible based on the selected visibility. Type @ to tag someone."
                     : "Describe the content or outcome of this engagement"}
               </FormDescription>
               <FormMessage />
@@ -506,11 +694,7 @@ export default function ContactEngagementForm({
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isTodo
-                  ? "Creating..."
-                  : isNote
-                    ? "Saving..."
-                    : "Recording..."}
+                {isTodo ? "Creating..." : isNote ? "Saving..." : "Recording..."}
               </>
             ) : isTodo ? (
               "Create Todo"
