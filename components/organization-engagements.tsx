@@ -36,6 +36,18 @@ type OrganizationEngagement = {
   engagedAt: string;
 };
 
+type TeamUser = {
+  id: string;
+  name?: string | null;
+  email: string;
+};
+
+type MentionMatch = {
+  query: string;
+  start: number;
+  end: number;
+};
+
 interface OrganizationEngagementsProps {
   organizationId: string;
   teamId: string;
@@ -56,9 +68,16 @@ export default function OrganizationEngagements({
 }: OrganizationEngagementsProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mentionMatch, setMentionMatch] = useState<MentionMatch | null>(null);
+  const [activeMentionIndex, setActiveMentionIndex] = useState(0);
+  const [shouldLoadMentionUsers, setShouldLoadMentionUsers] = useState(false);
 
   const { data: engagementsData, mutate } = useSWR(
     `/api/organization-engagements?organizationId=${organizationId}&teamId=${teamId}`,
+    fetcher,
+  );
+  const { data: teamUsersData } = useSWR(
+    shouldLoadMentionUsers ? `/api/teams/${teamId}/users` : null,
     fetcher,
   );
 
@@ -66,6 +85,26 @@ export default function OrganizationEngagements({
     () => engagementsData?.data || [],
     [engagementsData],
   );
+  const teamUsers = useMemo<TeamUser[]>(
+    () => teamUsersData?.data || [],
+    [teamUsersData],
+  );
+  const mentionSuggestions = useMemo(() => {
+    if (!mentionMatch) {
+      return [];
+    }
+
+    const query = mentionMatch.query.trim().toLowerCase();
+    return teamUsers
+      .filter((user) => {
+        if (!query) {
+          return true;
+        }
+        const name = user.name?.toLowerCase() || "";
+        return name.includes(query) || user.email.toLowerCase().includes(query);
+      })
+      .slice(0, 6);
+  }, [mentionMatch, teamUsers]);
 
   const form = useForm<z.infer<typeof createOrganizationEngagementSchema>>({
     resolver: zodResolver(createOrganizationEngagementSchema),
@@ -121,6 +160,52 @@ export default function OrganizationEngagements({
     }
   };
 
+  const findMentionMatch = (
+    value: string,
+    caretIndex: number,
+  ): MentionMatch | null => {
+    const beforeCaret = value.slice(0, caretIndex);
+    const match = beforeCaret.match(/(^|\s)@([^\s@]*)$/);
+    if (!match) {
+      return null;
+    }
+
+    const matchIndex = match.index ?? 0;
+    const leadingPart = match[1] || "";
+    const query = match[2] || "";
+    const start = matchIndex + leadingPart.length;
+
+    return {
+      query,
+      start,
+      end: caretIndex,
+    };
+  };
+
+  const updateMentionState = (value: string, caretIndex: number) => {
+    const nextMatch = findMentionMatch(value, caretIndex);
+    if (nextMatch && !shouldLoadMentionUsers) {
+      setShouldLoadMentionUsers(true);
+    }
+    setMentionMatch(nextMatch);
+    setActiveMentionIndex(0);
+  };
+
+  const applyMention = (
+    user: TeamUser,
+    fieldValue: string,
+    onChange: (value: string) => void,
+  ) => {
+    if (!mentionMatch) {
+      return;
+    }
+
+    const nextValue = `${fieldValue.slice(0, mentionMatch.start)}@${user.email} ${fieldValue.slice(mentionMatch.end)}`;
+    onChange(nextValue);
+    setMentionMatch(null);
+    setActiveMentionIndex(0);
+  };
+
   return (
     <Card>
       <CardHeader className="border-b">
@@ -138,7 +223,7 @@ export default function OrganizationEngagements({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Type</FormLabel>
-                    <FormControl>
+                  <FormControl>
                     <Input placeholder="Type of engagement" {...field} />
                   </FormControl>
                   <FormDescription>
@@ -168,14 +253,118 @@ export default function OrganizationEngagements({
                 <FormItem>
                   <FormLabel>Notes</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Add details about this collaboration..."
-                      {...field}
-                      value={field.value ?? ""}
-                    />
+                    <div className="relative">
+                      <Textarea
+                        placeholder="Add details about this collaboration..."
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          field.onChange(value);
+                          updateMentionState(
+                            value,
+                            event.target.selectionStart,
+                          );
+                        }}
+                        onClick={(event) => {
+                          const target = event.currentTarget;
+                          updateMentionState(
+                            target.value,
+                            target.selectionStart,
+                          );
+                        }}
+                        onKeyUp={(event) => {
+                          const target = event.currentTarget;
+                          updateMentionState(
+                            target.value,
+                            target.selectionStart,
+                          );
+                        }}
+                        onBlur={() => {
+                          window.setTimeout(() => {
+                            setMentionMatch(null);
+                            setActiveMentionIndex(0);
+                          }, 120);
+                        }}
+                        onKeyDown={(event) => {
+                          if (mentionSuggestions.length === 0) {
+                            return;
+                          }
+
+                          if (event.key === "ArrowDown") {
+                            event.preventDefault();
+                            setActiveMentionIndex((current) =>
+                              current + 1 >= mentionSuggestions.length
+                                ? 0
+                                : current + 1,
+                            );
+                            return;
+                          }
+
+                          if (event.key === "ArrowUp") {
+                            event.preventDefault();
+                            setActiveMentionIndex((current) =>
+                              current - 1 < 0
+                                ? mentionSuggestions.length - 1
+                                : current - 1,
+                            );
+                            return;
+                          }
+
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            const selectedUser =
+                              mentionSuggestions[activeMentionIndex];
+                            if (selectedUser) {
+                              applyMention(
+                                selectedUser,
+                                field.value ?? "",
+                                field.onChange,
+                              );
+                            }
+                            return;
+                          }
+
+                          if (event.key === "Escape") {
+                            setMentionMatch(null);
+                            setActiveMentionIndex(0);
+                          }
+                        }}
+                      />
+                      {mentionSuggestions.length > 0 && (
+                        <div className="absolute z-20 mt-1 max-h-52 w-full overflow-auto rounded-md border bg-popover p-1 shadow-md">
+                          {mentionSuggestions.map((user, index) => (
+                            <button
+                              key={user.id}
+                              type="button"
+                              className={`flex w-full items-start justify-between rounded-sm px-2 py-1.5 text-left text-sm transition-colors ${
+                                index === activeMentionIndex
+                                  ? "bg-accent text-accent-foreground"
+                                  : "hover:bg-accent/70"
+                              }`}
+                              onMouseDown={(event) => {
+                                event.preventDefault();
+                                applyMention(
+                                  user,
+                                  field.value ?? "",
+                                  field.onChange,
+                                );
+                              }}
+                            >
+                              <span className="truncate pr-3">
+                                {user.name?.trim() || user.email}
+                              </span>
+                              <span className="truncate text-xs text-muted-foreground">
+                                {user.email}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </FormControl>
                   <FormDescription>
-                    Use @teammate@example.com to tag a teammate and notify them.
+                    Type @ to mention a teammate and notify them.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
