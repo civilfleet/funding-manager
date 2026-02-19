@@ -35,3 +35,7 @@
 ## Security & Configuration Tips
 - Do not commit secrets. Use `.env.local` for development; required variables are listed in `README.md`.
 - Run and commit Prisma migrations (`prisma/migrations/*`). In prod, run `npx prisma migrate deploy`.
+
+## Mandatory verification
+- After any code change, always run: `yarn typecheck`
+- If typecheck cannot run, explicitly state why in the final response.
